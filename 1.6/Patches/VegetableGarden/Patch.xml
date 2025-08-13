@@ -1,0 +1,48 @@
+<Patch>
+  <Operation Class="PatchOperationFindMod">
+    <mods>
+      <li>VGP Vegetable Garden</li>
+    </mods>
+    <match Class="PatchOperationSequence">
+      <success>Always</success>
+      <operations>
+        <!-- Bamboo -->
+        <li Class="PatchOperationConditional">
+          <xpath>Defs/ThingDef[defName="Bamboo"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+          <nomatch Class="PatchOperationAddModExtension">
+            <xpath>Defs/ThingDef[defName="Bamboo"]</xpath>
+            <value>
+              <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                  <TreeFellingSpeed>0.5</TreeFellingSpeed>
+                  <PlantHarvestingSpeed>0.5</PlantHarvestingSpeed>
+                  <DiggingSpeed>0.5</DiggingSpeed>
+                  <MiningYieldDigging>0.7</MiningYieldDigging>
+                  <ConstructionSpeed>0.5</ConstructionSpeed>
+                </toolStatFactors>
+              </li>
+            </value>
+          </nomatch>
+        </li>
+        <!-- Ironwood log -->
+        <li Class="PatchOperationConditional">
+          <xpath>Defs/ThingDef[defName="VG_IronWoodLog"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+          <nomatch Class="PatchOperationAddModExtension">
+            <xpath>Defs/ThingDef[defName="VG_IronWoodLog"]</xpath>
+            <value>
+              <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                  <TreeFellingSpeed>0.7</TreeFellingSpeed>
+                  <PlantHarvestingSpeed>0.7</PlantHarvestingSpeed>
+                  <DiggingSpeed>0.7</DiggingSpeed>
+                  <MiningYieldDigging>0.85</MiningYieldDigging>
+                  <ConstructionSpeed>0.7</ConstructionSpeed>
+                </toolStatFactors>
+              </li>
+            </value>
+          </nomatch>
+        </li>
+      </operations>
+    </match>
+  </Operation>
+</Patch>

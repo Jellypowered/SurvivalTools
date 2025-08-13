@@ -1,0 +1,128 @@
+<Patch>
+    <!-- ===== Mine ===== -->
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/WorkGiverDef[defName="Mine"]</xpath>
+        <match Class="PatchOperationSequence">
+            <operations>
+                <!-- Ensure our extension exists -->
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="Mine"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]</xpath>
+                    <nomatch Class="PatchOperationAddModExtension">
+                        <xpath>Defs/WorkGiverDef[defName="Mine"]</xpath>
+                        <value>
+                            <li Class="SurvivalTools.WorkGiverExtension">
+                                <requiredStats>
+                                    <li>DiggingSpeed</li>
+                                    <li>MiningYieldDigging</li>
+                                </requiredStats>
+                            </li>
+                        </value>
+                    </nomatch>
+                </li>
+                <!-- Add missing stats if extension already present -->
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="Mine"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats/li[text()="DiggingSpeed"]</xpath>
+                    <nomatch Class="PatchOperationAdd">
+                        <xpath>Defs/WorkGiverDef[defName="Mine"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats</xpath>
+                        <value>
+                            <li>DiggingSpeed</li>
+                        </value>
+                    </nomatch>
+                </li>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="Mine"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats/li[text()="MiningYieldDigging"]</xpath>
+                    <nomatch Class="PatchOperationAdd">
+                        <xpath>Defs/WorkGiverDef[defName="Mine"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats</xpath>
+                        <value>
+                            <li>MiningYieldDigging</li>
+                        </value>
+                    </nomatch>
+                </li>
+            </operations>
+        </match>
+    </Operation>
+    <!-- ===== All Construction WorkGivers ===== -->
+    <Operation Class="PatchOperationSequence">
+        <success>Always</success>
+        <operations>
+            <!-- Add extension everywhere it's missing -->
+            <li Class="PatchOperationAddModExtension">
+                <xpath>Defs/WorkGiverDef[workType="Construction" and not(modExtensions/li[@Class='SurvivalTools.WorkGiverExtension'])]</xpath>
+                <value>
+                    <li Class="SurvivalTools.WorkGiverExtension">
+                        <requiredStats>
+                            <li>ConstructionSpeed</li>
+                        </requiredStats>
+                    </li>
+                </value>
+            </li>
+            <!-- Append missing stat if extension exists but lacks it -->
+            <li Class="PatchOperationAdd">
+                <xpath>Defs/WorkGiverDef[workType="Construction"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats[not(li[text()='ConstructionSpeed'])]</xpath>
+                <value>
+                    <li>ConstructionSpeed</li>
+                </value>
+            </li>
+        </operations>
+    </Operation>
+    <!-- ===== GrowerHarvest ===== -->
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/WorkGiverDef[defName="GrowerHarvest"]</xpath>
+        <match Class="PatchOperationSequence">
+            <operations>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="GrowerHarvest"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]</xpath>
+                    <nomatch Class="PatchOperationAddModExtension">
+                        <xpath>Defs/WorkGiverDef[defName="GrowerHarvest"]</xpath>
+                        <value>
+                            <li Class="SurvivalTools.WorkGiverExtension">
+                                <requiredStats>
+                                    <li>PlantHarvestingSpeed</li>
+                                </requiredStats>
+                            </li>
+                        </value>
+                    </nomatch>
+                </li>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="GrowerHarvest"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats/li[text()="PlantHarvestingSpeed"]</xpath>
+                    <nomatch Class="PatchOperationAdd">
+                        <xpath>Defs/WorkGiverDef[defName="GrowerHarvest"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats</xpath>
+                        <value>
+                            <li>PlantHarvestingSpeed</li>
+                        </value>
+                    </nomatch>
+                </li>
+            </operations>
+        </match>
+    </Operation>
+    <!-- ===== PlantsCut ===== -->
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/WorkGiverDef[defName="PlantsCut"]</xpath>
+        <match Class="PatchOperationSequence">
+            <operations>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="PlantsCut"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]</xpath>
+                    <nomatch Class="PatchOperationAddModExtension">
+                        <xpath>Defs/WorkGiverDef[defName="PlantsCut"]</xpath>
+                        <value>
+                            <li Class="SurvivalTools.WorkGiverExtension">
+                                <requiredStats>
+                                    <li>PlantHarvestingSpeed</li>
+                                </requiredStats>
+                            </li>
+                        </value>
+                    </nomatch>
+                </li>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="PlantsCut"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats/li[text()="PlantHarvestingSpeed"]</xpath>
+                    <nomatch Class="PatchOperationAdd">
+                        <xpath>Defs/WorkGiverDef[defName="PlantsCut"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats</xpath>
+                        <value>
+                            <li>PlantHarvestingSpeed</li>
+                        </value>
+                    </nomatch>
+                </li>
+            </operations>
+        </match>
+    </Operation>
+</Patch>

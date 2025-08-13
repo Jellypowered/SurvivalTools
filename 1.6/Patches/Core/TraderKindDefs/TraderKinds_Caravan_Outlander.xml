@@ -1,0 +1,35 @@
+<Patch>
+    <!-- Outlander Bulk Goods: add Neolithic survival tools if missing -->
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/TraderKindDef[defName="Caravan_Outlander_BulkGoods"]/stockGenerators/li[categoryDef="SurvivalToolsNeolithic"]</xpath>
+        <nomatch Class="PatchOperationAdd">
+            <xpath>Defs/TraderKindDef[defName="Caravan_Outlander_BulkGoods"]/stockGenerators</xpath>
+            <value>
+                <li Class="StockGenerator_Category">
+                    <categoryDef>SurvivalToolsNeolithic</categoryDef>
+                    <countRange>
+                        <min>2</min>
+                        <max>4</max>
+                    </countRange>
+                </li>
+            </value>
+        </nomatch>
+    </Operation>
+    <!-- Outlander Exotic: add Spacer survival tools if missing -->
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/TraderKindDef[defName="Caravan_Outlander_Exotic"]/stockGenerators/li[categoryDef="SurvivalToolsSpacer"]</xpath>
+        <nomatch Class="PatchOperationAdd">
+            <xpath>Defs/TraderKindDef[defName="Caravan_Outlander_Exotic"]/stockGenerators</xpath>
+            <value>
+                <li Class="StockGenerator_Category">
+                    <categoryDef>SurvivalToolsSpacer</categoryDef>
+                    <!-- Use 0..1 instead of negative min; IntRange expects non-negative -->
+                    <countRange>
+                        <min>0</min>
+                        <max>1</max>
+                    </countRange>
+                </li>
+            </value>
+        </nomatch>
+    </Operation>
+</Patch>

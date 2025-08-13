@@ -1,0 +1,33 @@
+<Patch>
+    <Operation Class="PatchOperationConditional">
+        <xpath>            
+            Defs/ThingSetMakerDef[defName="MapGen_AncientTempleContents"]
+            /root[@Class="ThingSetMaker_Sum"]
+            /options/li[
+            thingSetMaker[@Class="ThingSetMaker_Count"]
+            /fixedParams/filter/thingDefs/li[normalize-space(.)='SurvivalTools_Multitool']
+            ]
+        </xpath>
+        <nomatch Class="PatchOperationAdd">
+            <xpath>                
+                Defs/ThingSetMakerDef[defName="MapGen_AncientTempleContents"]
+                /root[@Class="ThingSetMaker_Sum"]/options
+            </xpath>
+            <value>
+                <li>
+                    <chance>0.6</chance>
+                    <thingSetMaker Class="ThingSetMaker_Count">
+                        <fixedParams>
+                            <countRange>1~1</countRange>
+                            <filter>
+                                <thingDefs>
+                                    <li>SurvivalTools_Multitool</li>
+                                </thingDefs>
+                            </filter>
+                        </fixedParams>
+                    </thingSetMaker>
+                </li>
+            </value>
+        </nomatch>
+    </Operation>
+</Patch>

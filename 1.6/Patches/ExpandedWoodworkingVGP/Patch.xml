@@ -1,0 +1,257 @@
+<Patch>
+  <Operation Class="PatchOperationFindMod">
+    <mods>
+      <li>Expanded Woodworking for Vegetable Garden Project</li>
+    </mods>
+    <match Class="PatchOperationSequence">
+      <success>Always</success>
+      <operations>
+        <!-- Nested: VGP Xtra Trees and Flowers -->
+        <li Class="PatchOperationFindMod">
+          <mods>
+            <li>VGP Xtra Trees and Flowers</li>
+          </mods>
+          <match Class="PatchOperationSequence">
+            <success>Always</success>
+            <operations>
+              <!-- LumberAcacia -->
+              <li Class="PatchOperationConditional">
+                <xpath>Defs/ThingDef[defName="LumberAcacia"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+                <nomatch Class="PatchOperationAddModExtension">
+                  <xpath>Defs/ThingDef[defName="LumberAcacia"]</xpath>
+                  <value>
+                    <li Class="SurvivalTools.StuffPropsTool">
+                      <toolStatFactors>
+                        <TreeFellingSpeed>0.65</TreeFellingSpeed>
+                        <PlantHarvestingSpeed>0.65</PlantHarvestingSpeed>
+                        <DiggingSpeed>0.65</DiggingSpeed>
+                        <MiningYieldDigging>0.85</MiningYieldDigging>
+                        <ConstructionSpeed>0.65</ConstructionSpeed>
+                      </toolStatFactors>
+                    </li>
+                  </value>
+                </nomatch>
+              </li>
+              <!-- LumberCamellia -->
+              <li Class="PatchOperationConditional">
+                <xpath>Defs/ThingDef[defName="LumberCamellia"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+                <nomatch Class="PatchOperationAddModExtension">
+                  <xpath>Defs/ThingDef[defName="LumberCamellia"]</xpath>
+                  <value>
+                    <li Class="SurvivalTools.StuffPropsTool">
+                      <toolStatFactors>
+                        <TreeFellingSpeed>0.55</TreeFellingSpeed>
+                        <PlantHarvestingSpeed>0.55</PlantHarvestingSpeed>
+                        <DiggingSpeed>0.55</DiggingSpeed>
+                        <MiningYieldDigging>0.75</MiningYieldDigging>
+                        <ConstructionSpeed>0.55</ConstructionSpeed>
+                      </toolStatFactors>
+                    </li>
+                  </value>
+                </nomatch>
+              </li>
+              <!-- LumberCherryBlossom -->
+              <li Class="PatchOperationConditional">
+                <xpath>Defs/ThingDef[defName="LumberCherryBlossom"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+                <nomatch Class="PatchOperationAddModExtension">
+                  <xpath>Defs/ThingDef[defName="LumberCherryBlossom"]</xpath>
+                  <value>
+                    <li Class="SurvivalTools.StuffPropsTool">
+                      <toolStatFactors>
+                        <TreeFellingSpeed>0.6</TreeFellingSpeed>
+                        <PlantHarvestingSpeed>0.6</PlantHarvestingSpeed>
+                        <DiggingSpeed>0.6</DiggingSpeed>
+                        <MiningYieldDigging>0.8</MiningYieldDigging>
+                        <ConstructionSpeed>0.6</ConstructionSpeed>
+                      </toolStatFactors>
+                    </li>
+                  </value>
+                </nomatch>
+              </li>
+              <!-- LumberJapaneseMaple -->
+              <li Class="PatchOperationConditional">
+                <xpath>Defs/ThingDef[defName="LumberJapaneseMaple"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+                <nomatch Class="PatchOperationAddModExtension">
+                  <xpath>Defs/ThingDef[defName="LumberJapaneseMaple"]</xpath>
+                  <value>
+                    <li Class="SurvivalTools.StuffPropsTool">
+                      <toolStatFactors>
+                        <TreeFellingSpeed>0.55</TreeFellingSpeed>
+                        <PlantHarvestingSpeed>0.55</PlantHarvestingSpeed>
+                        <DiggingSpeed>0.55</DiggingSpeed>
+                        <MiningYieldDigging>0.8</MiningYieldDigging>
+                        <ConstructionSpeed>0.55</ConstructionSpeed>
+                      </toolStatFactors>
+                    </li>
+                  </value>
+                </nomatch>
+              </li>
+              <!-- LumberRedMaple -->
+              <li Class="PatchOperationConditional">
+                <xpath>Defs/ThingDef[defName="LumberRedMaple"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+                <nomatch Class="PatchOperationAddModExtension">
+                  <xpath>Defs/ThingDef[defName="LumberRedMaple"]</xpath>
+                  <value>
+                    <li Class="SurvivalTools.StuffPropsTool">
+                      <toolStatFactors>
+                        <TreeFellingSpeed>0.55</TreeFellingSpeed>
+                        <PlantHarvestingSpeed>0.55</PlantHarvestingSpeed>
+                        <DiggingSpeed>0.55</DiggingSpeed>
+                        <MiningYieldDigging>0.8</MiningYieldDigging>
+                        <ConstructionSpeed>0.55</ConstructionSpeed>
+                      </toolStatFactors>
+                    </li>
+                  </value>
+                </nomatch>
+              </li>
+            </operations>
+          </match>
+        </li>
+        <!-- LumberIronwood -->
+        <li Class="PatchOperationConditional">
+          <xpath>Defs/ThingDef[defName="LumberIronwood"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+          <nomatch Class="PatchOperationAddModExtension">
+            <xpath>Defs/ThingDef[defName="LumberIronwood"]</xpath>
+            <value>
+              <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                  <TreeFellingSpeed>0.7</TreeFellingSpeed>
+                  <PlantHarvestingSpeed>0.7</PlantHarvestingSpeed>
+                  <DiggingSpeed>0.7</DiggingSpeed>
+                  <MiningYieldDigging>0.85</MiningYieldDigging>
+                  <ConstructionSpeed>0.7</ConstructionSpeed>
+                </toolStatFactors>
+              </li>
+            </value>
+          </nomatch>
+        </li>
+        <!-- LumberApple -->
+        <li Class="PatchOperationConditional">
+          <xpath>Defs/ThingDef[defName="LumberApple"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+          <nomatch Class="PatchOperationAddModExtension">
+            <xpath>Defs/ThingDef[defName="LumberApple"]</xpath>
+            <value>
+              <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                  <TreeFellingSpeed>0.6</TreeFellingSpeed>
+                  <PlantHarvestingSpeed>0.6</PlantHarvestingSpeed>
+                  <DiggingSpeed>0.6</DiggingSpeed>
+                  <MiningYieldDigging>0.8</MiningYieldDigging>
+                  <ConstructionSpeed>0.6</ConstructionSpeed>
+                </toolStatFactors>
+              </li>
+            </value>
+          </nomatch>
+        </li>
+        <!-- LumberCherry -->
+        <li Class="PatchOperationConditional">
+          <xpath>Defs/ThingDef[defName="LumberCherry"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+          <nomatch Class="PatchOperationAddModExtension">
+            <xpath>Defs/ThingDef[defName="LumberCherry"]</xpath>
+            <value>
+              <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                  <TreeFellingSpeed>0.6</TreeFellingSpeed>
+                  <PlantHarvestingSpeed>0.6</PlantHarvestingSpeed>
+                  <DiggingSpeed>0.6</DiggingSpeed>
+                  <MiningYieldDigging>0.8</MiningYieldDigging>
+                  <ConstructionSpeed>0.6</ConstructionSpeed>
+                </toolStatFactors>
+              </li>
+            </value>
+          </nomatch>
+        </li>
+        <!-- LumberDatePalm -->
+        <li Class="PatchOperationConditional">
+          <xpath>Defs/ThingDef[defName="LumberDatePalm"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+          <nomatch Class="PatchOperationAddModExtension">
+            <xpath>Defs/ThingDef[defName="LumberDatePalm"]</xpath>
+            <value>
+              <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                  <TreeFellingSpeed>0.65</TreeFellingSpeed>
+                  <PlantHarvestingSpeed>0.65</PlantHarvestingSpeed>
+                  <DiggingSpeed>0.65</DiggingSpeed>
+                  <MiningYieldDigging>0.85</MiningYieldDigging>
+                  <ConstructionSpeed>0.65</ConstructionSpeed>
+                </toolStatFactors>
+              </li>
+            </value>
+          </nomatch>
+        </li>
+        <!-- LumberFig -->
+        <li Class="PatchOperationConditional">
+          <xpath>Defs/ThingDef[defName="LumberFig"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+          <nomatch Class="PatchOperationAddModExtension">
+            <xpath>Defs/ThingDef[defName="LumberFig"]</xpath>
+            <value>
+              <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                  <TreeFellingSpeed>0.6</TreeFellingSpeed>
+                  <PlantHarvestingSpeed>0.6</PlantHarvestingSpeed>
+                  <DiggingSpeed>0.6</DiggingSpeed>
+                  <MiningYieldDigging>0.8</MiningYieldDigging>
+                  <ConstructionSpeed>0.6</ConstructionSpeed>
+                </toolStatFactors>
+              </li>
+            </value>
+          </nomatch>
+        </li>
+        <!-- LumberOrange -->
+        <li Class="PatchOperationConditional">
+          <xpath>Defs/ThingDef[defName="LumberOrange"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+          <nomatch Class="PatchOperationAddModExtension">
+            <xpath>Defs/ThingDef[defName="LumberOrange"]</xpath>
+            <value>
+              <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                  <TreeFellingSpeed>0.55</TreeFellingSpeed>
+                  <PlantHarvestingSpeed>0.55</PlantHarvestingSpeed>
+                  <DiggingSpeed>0.55</DiggingSpeed>
+                  <MiningYieldDigging>0.75</MiningYieldDigging>
+                  <ConstructionSpeed>0.55</ConstructionSpeed>
+                </toolStatFactors>
+              </li>
+            </value>
+          </nomatch>
+        </li>
+        <!-- LumberPeach -->
+        <li Class="PatchOperationConditional">
+          <xpath>Defs/ThingDef[defName="LumberPeach"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+          <nomatch Class="PatchOperationAddModExtension">
+            <xpath>Defs/ThingDef[defName="LumberPeach"]</xpath>
+            <value>
+              <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                  <TreeFellingSpeed>0.6</TreeFellingSpeed>
+                  <PlantHarvestingSpeed>0.6</PlantHarvestingSpeed>
+                  <DiggingSpeed>0.6</DiggingSpeed>
+                  <MiningYieldDigging>0.8</MiningYieldDigging>
+                  <ConstructionSpeed>0.6</ConstructionSpeed>
+                </toolStatFactors>
+              </li>
+            </value>
+          </nomatch>
+        </li>
+        <!-- LumberCoconut (red palm) -->
+        <li Class="PatchOperationConditional">
+          <xpath>Defs/ThingDef[defName="LumberCoconut"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+          <nomatch Class="PatchOperationAddModExtension">
+            <xpath>Defs/ThingDef[defName="LumberCoconut"]</xpath>
+            <value>
+              <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                  <TreeFellingSpeed>0.65</TreeFellingSpeed>
+                  <PlantHarvestingSpeed>0.65</PlantHarvestingSpeed>
+                  <DiggingSpeed>0.65</DiggingSpeed>
+                  <MiningYieldDigging>0.85</MiningYieldDigging>
+                  <ConstructionSpeed>0.65</ConstructionSpeed>
+                </toolStatFactors>
+              </li>
+            </value>
+          </nomatch>
+        </li>
+      </operations>
+    </match>
+  </Operation>
+</Patch>

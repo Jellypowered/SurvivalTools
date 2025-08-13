@@ -1,0 +1,204 @@
+<Patch>
+
+    <Operation Class="PatchOperationFindMod">
+        <mods>
+            <li>Right Tool For The Job (Continued)</li>
+        </mods>
+        <match Class="PatchOperationSequence">
+            <success>Always</success>
+            <operations>
+              
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="RTFTJ_Pickaxe"]</xpath>
+                    <value>
+                     <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <DiggingSpeed>1.0</DiggingSpeed>
+                    <MiningYieldDigging>1.0</MiningYieldDigging>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Miner</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+                    </value>
+                </li>
+
+<li Class="PatchOperationAdd">
+  <xpath>Defs/ThingDef[defName="RTFTJ_Pickaxe"]</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="RTFTJ_Hammer"]</xpath>
+                    <value>
+                     <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <ConstructionSpeed>1.0</ConstructionSpeed>
+                    <ConstructSuccessChance>1.0</ConstructSuccessChance>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Constructor</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+                    </value>
+                </li>
+
+<li Class="PatchOperationAdd">
+  <xpath>Defs/ThingDef[defName="RTFTJ_Hammer"]</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="RTFTJ_Autohammer"]</xpath>
+                    <value>
+                     <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <ConstructionSpeed>1.0</ConstructionSpeed>
+                    <ConstructSuccessChance>1.0</ConstructSuccessChance>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Constructor</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+                    </value>
+                </li>
+
+<li Class="PatchOperationAdd">
+  <xpath>Defs/ThingDef[defName="RTFTJ_Autohammer"]</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="RTFTJ_HandAxe"]</xpath>
+                    <value>
+                      <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                     <TreeFellingSpeed>1.0</TreeFellingSpeed>
+			<PlantHarvestingSpeed>1.0</PlantHarvestingSpeed>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>PlantWorker</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+                    </value>
+                </li>
+
+<li Class="PatchOperationAdd">
+  <xpath>Defs/ThingDef[defName="RTFTJ_HandAxe"]</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="RTFTJ_Chainsaw"]</xpath>
+                    <value>
+                      <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                     <TreeFellingSpeed>1.1</TreeFellingSpeed>
+			<PlantHarvestingSpeed>1.1</PlantHarvestingSpeed>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>PlantWorker</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+                    </value>
+                </li>
+
+<li Class="PatchOperationAdd">
+  <xpath>Defs/ThingDef[defName="RTFTJ_Chainsaw"]</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="RTFTJ_Drill"]</xpath>
+                    <value>
+                     <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <DiggingSpeed>1.1</DiggingSpeed>
+                    <MiningYieldDigging>1.1</MiningYieldDigging>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Miner</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+                    </value>
+                </li>
+
+<li Class="PatchOperationAdd">
+  <xpath>Defs/ThingDef[defName="RTFTJ_Drill"]</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="RTFTJ_Toolbelt"]</xpath>
+                    <value>
+      <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <TreeFellingSpeed>1.0</TreeFellingSpeed>
+                    <DiggingSpeed>1.0</DiggingSpeed>
+                    <MiningYieldDigging>1.0</MiningYieldDigging>
+                    <ConstructionSpeed>1.0</ConstructionSpeed>
+                    <ConstructSuccessChance>1.0</ConstructSuccessChance>
+                    <PlantHarvestingSpeed>1.0</PlantHarvestingSpeed>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Constructor</li>
+                    <li>Miner</li>
+                    <li>PlantWorker</li>
+                </defaultSurvivalToolAssignmentTags>               
+            </li>
+ </value>
+                </li>
+
+<li Class="PatchOperationReplace">
+  <xpath>Defs/ThingDef[defName="RTFTJ_Toolbelt"]/thingClass</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="RTFTJ_ToolbeltAdv"]</xpath>
+                    <value>
+      <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <TreeFellingSpeed>1.1</TreeFellingSpeed>
+                    <DiggingSpeed>1.1</DiggingSpeed>
+                    <MiningYieldDigging>1.1</MiningYieldDigging>
+                    <ConstructionSpeed>1.1</ConstructionSpeed>
+                    <ConstructSuccessChance>1.1</ConstructSuccessChance>
+                    <PlantHarvestingSpeed>1.1</PlantHarvestingSpeed>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Constructor</li>
+                    <li>Miner</li>
+                    <li>PlantWorker</li>
+                </defaultSurvivalToolAssignmentTags>               
+            </li>
+ </value>
+                </li>
+
+<li Class="PatchOperationReplace">
+  <xpath>Defs/ThingDef[defName="RTFTJ_ToolbeltAdv"]/thingClass</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+            </operations>
+        </match>
+    </Operation>
+
+</Patch>

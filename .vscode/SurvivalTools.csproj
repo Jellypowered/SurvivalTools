@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net480</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <!-- Modify [RootNamespace], [AssemblyName], [OutputPath], [VersionPrefix] -->
+    <RootNamespace>SurvivalTools</RootNamespace>
+    <AssemblyName>SurvivalTools</AssemblyName>
+    <OutputPath>../1.6/Assemblies</OutputPath>
+    <VersionPrefix>1.0</VersionPrefix>
+    <!-- Do not generate pdb file -->
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <RimWorldPath Condition="'$(RimWorldPath)' == '' AND '$(OS)' == 'Windows_NT'"
+      >F:/SteamLibrary/steamapps/common/RimWorld/RimWorldWin64_Data/Managed</RimWorldPath
+    >
+    <RimWorldPath Condition="'$(RimWorldPath)' == '' AND '$(OS)' != 'Windows_NT'"
+      >../../../RimWorldLinux_Data/Managed</RimWorldPath
+    >
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Mod -->
+    <Compile Include="../Source/*" />
+    <Compile Include="../Source/AI/*" />
+    <Compile Include="../Source/Alerts/*" />
+    <Compile Include="../Source/DefOfs/*" />
+    <Compile Include="../Source/Harmony/*" />
+    <Compile Include="../Source/ModExtensions/*" />
+    <Compile Include="../Source/Stats/*" />
+    <Compile Include="../Source/ToolAssignments/*" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.4523" />
+    <PackageReference Include="Lib.Harmony" Version="2.3.6" />
+  </ItemGroup>
+</Project>

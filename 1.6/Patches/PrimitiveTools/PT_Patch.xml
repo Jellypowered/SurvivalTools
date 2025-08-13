@@ -1,0 +1,193 @@
+<Patch>
+
+    <Operation Class="PatchOperationFindMod">
+        <mods>
+            <li>Primitive Tools</li>
+        </mods>
+        <match Class="PatchOperationSequence">
+            <success>Always</success>
+            <operations>
+              <li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="VBY_BoneShovel"]</xpath>
+                    <value>
+                     <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>                   
+			<DiggingSpeed>1.0</DiggingSpeed>
+                    <MiningYieldDigging>1.0</MiningYieldDigging>
+		   <PlantHarvestingSpeed>1.0</PlantHarvestingSpeed>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Miner</li>
+			<li>PlantWorker</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+                    </value>
+                </li>
+
+<li Class="PatchOperationAdd">
+  <xpath>Defs/ThingDef[defName="VBY_BoneShovel"]</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="VBY_FlintAxe"]</xpath>
+                    <value>
+                      <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                     <TreeFellingSpeed>1.1</TreeFellingSpeed>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>PlantWorker</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+                    </value>
+                </li>
+
+<li Class="PatchOperationAdd">
+  <xpath>Defs/ThingDef[defName="VBY_FlintAxe"]</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="VBY_FlintHandAxe"]</xpath>
+                    <value>
+                      <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                     <TreeFellingSpeed>1.0</TreeFellingSpeed>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>PlantWorker</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+                    </value>
+                </li>
+
+<li Class="PatchOperationAdd">
+  <xpath>Defs/ThingDef[defName="VBY_FlintHandAxe"]</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="VBY_BoneSaw"]</xpath>
+                    <value>
+                      <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                     <TreeFellingSpeed>1.0</TreeFellingSpeed>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>PlantWorker</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+                    </value>
+                </li>
+
+<li Class="PatchOperationAdd">
+  <xpath>Defs/ThingDef[defName="VBY_BoneSaw"]</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="VBY_FlintSickle"]</xpath>
+                    <value>
+                      <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <PlantHarvestingSpeed>1.0</PlantHarvestingSpeed>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>PlantWorker</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+                    </value>
+                </li>
+
+
+<li Class="PatchOperationAdd">
+  <xpath>Defs/ThingDef[defName="VBY_FlintSickle"]</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="VBY_HammerStone"]</xpath>
+                    <value>
+                     <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <ConstructionSpeed>1.0</ConstructionSpeed>
+                    <ConstructSuccessChance>1.0</ConstructSuccessChance>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Constructor</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+                    </value>
+                </li>
+
+<li Class="PatchOperationAdd">
+  <xpath>Defs/ThingDef[defName="VBY_HammerStone"]</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="VBY_StoneHammer"]</xpath>
+                    <value>
+                     <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <ConstructionSpeed>1.0</ConstructionSpeed>
+                    <ConstructSuccessChance>1.0</ConstructSuccessChance>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Constructor</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+                    </value>
+                </li>
+
+<li Class="PatchOperationAdd">
+  <xpath>Defs/ThingDef[defName="VBY_StoneHammer"]</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="VBY_StoneMallet"]</xpath>
+                    <value>
+                     <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <ConstructionSpeed>1.1</ConstructionSpeed>
+                    <ConstructSuccessChance>1.1</ConstructSuccessChance>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Constructor</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+                    </value>
+                </li>
+
+<li Class="PatchOperationAdd">
+  <xpath>Defs/ThingDef[defName="VBY_StoneMallet"]</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+
+            </operations>
+        </match>
+    </Operation>
+
+</Patch>

@@ -1,0 +1,30 @@
+<Patch>
+  <Operation Class="PatchOperationFindMod">
+    <mods>
+      <li>Rimsenal - Federation</li>
+    </mods>
+    <match Class="PatchOperationSequence">
+      <success>Always</success>
+      <operations>
+        <!-- Foerum -->
+        <li Class="PatchOperationConditional">
+          <xpath>Defs/ThingDef[defName="Foerum"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+          <nomatch Class="PatchOperationAddModExtension">
+            <xpath>Defs/ThingDef[defName="Foerum"]</xpath>
+            <value>
+              <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                  <TreeFellingSpeed>1.3</TreeFellingSpeed>
+                  <PlantHarvestingSpeed>1.3</PlantHarvestingSpeed>
+                  <DiggingSpeed>0.7</DiggingSpeed>
+                  <MiningYieldDigging>0.8</MiningYieldDigging>
+                  <ConstructionSpeed>0.7</ConstructionSpeed>
+                </toolStatFactors>
+              </li>
+            </value>
+          </nomatch>
+        </li>
+      </operations>
+    </match>
+  </Operation>
+</Patch>

@@ -1,0 +1,17 @@
+<Patch>
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/TraderKindDef[defName="Orbital_Exotic"]/stockGenerators/li[categoryDef="SurvivalToolsSpacer"]</xpath>
+        <nomatch Class="PatchOperationAdd">
+            <xpath>Defs/TraderKindDef[defName="Orbital_Exotic"]/stockGenerators</xpath>
+            <value>
+                <li Class="StockGenerator_Category">
+                    <categoryDef>SurvivalToolsSpacer</categoryDef>
+                    <countRange>
+                        <min>0</min>
+                        <max>2</max>
+                    </countRange>
+                </li>
+            </value>
+        </nomatch>
+    </Operation>
+</Patch>

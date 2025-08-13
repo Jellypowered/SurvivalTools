@@ -1,0 +1,34 @@
+<Patch>
+    <!-- Add Neolithic survival tools to Outlander Standard, if not present -->
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/TraderKindDef[defName="Base_Outlander_Standard"]/stockGenerators/li[categoryDef="SurvivalToolsNeolithic"]</xpath>
+        <nomatch Class="PatchOperationAdd">
+            <xpath>Defs/TraderKindDef[defName="Base_Outlander_Standard"]/stockGenerators</xpath>
+            <value>
+                <li Class="StockGenerator_Category">
+                    <categoryDef>SurvivalToolsNeolithic</categoryDef>
+                    <countRange>
+                        <min>3</min>
+                        <max>6</max>
+                    </countRange>
+                </li>
+            </value>
+        </nomatch>
+    </Operation>
+    <!-- Add Spacer survival tools to Outlander Standard, if not present -->
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/TraderKindDef[defName="Base_Outlander_Standard"]/stockGenerators/li[categoryDef="SurvivalToolsSpacer"]</xpath>
+        <nomatch Class="PatchOperationAdd">
+            <xpath>Defs/TraderKindDef[defName="Base_Outlander_Standard"]/stockGenerators</xpath>
+            <value>
+                <li Class="StockGenerator_Category">
+                    <categoryDef>SurvivalToolsSpacer</categoryDef>
+                    <countRange>
+                        <min>0</min>
+                        <max>1</max>
+                    </countRange>
+                </li>
+            </value>
+        </nomatch>
+    </Operation>
+</Patch>

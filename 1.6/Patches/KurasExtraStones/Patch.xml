@@ -1,0 +1,342 @@
+<Patch>
+  <Operation Class="PatchOperationFindMod">
+    <mods>
+      <li>Kura's Extra Stone</li>
+    </mods>
+    <match Class="PatchOperationSequence">
+      <success>Always</success>
+      <operations>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksDunite"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.7</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.7</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksEmperadordark"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.7</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.7</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksAndesite"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.7</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.7</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksBlueschist"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.8</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.8</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksSerpentinite"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.8</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.8</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksObsidian"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.8</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.8</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksAnorthosite"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.8</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.8</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksBasalt"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.8</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.8</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksCharnockite"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.8</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.8</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksDacite"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.8</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.8</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksGabbro"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.8</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.8</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksLherzolite"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.8</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.8</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksMonzonite"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.8</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.8</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksRhyolite"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.8</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.8</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksScoria"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.8</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.8</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksSovite"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.8</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.8</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksChalk"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.6</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.6</PlantHarvestingSpeed>
+                <DiggingSpeed>0.6</DiggingSpeed>
+                <MiningYieldDigging>0.8</MiningYieldDigging>
+                <ConstructionSpeed>0.6</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksJaspillite"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.85</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.85</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksLignite"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.85</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.85</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksSiltstone"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.85</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.85</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksGreenSchist"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.85</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.85</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="BlocksMigmatite"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.85</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.85</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.3</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+      </operations>
+    </match>
+  </Operation>
+</Patch>

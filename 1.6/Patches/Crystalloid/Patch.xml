@@ -1,0 +1,26 @@
+<Patch>
+  <Operation Class="PatchOperationFindMod">
+    <mods>
+      <li>Crystalloid (Rewrite)</li>
+      <li>Crystalloid</li>
+    </mods>
+    <match Class="PatchOperationConditional">
+      <!-- If Crysteel exists and already has our StuffPropsTool, do nothing -->
+      <xpath>Defs/ThingDef[defName="Crysteel"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+      <nomatch Class="PatchOperationAddModExtension">
+        <xpath>Defs/ThingDef[defName="Crysteel"]</xpath>
+        <value>
+          <li Class="SurvivalTools.StuffPropsTool">
+            <toolStatFactors>
+              <TreeFellingSpeed>1.4</TreeFellingSpeed>
+              <PlantHarvestingSpeed>1.4</PlantHarvestingSpeed>
+              <DiggingSpeed>1.1</DiggingSpeed>
+              <MiningYieldDigging>0.9</MiningYieldDigging>
+              <ConstructionSpeed>1.1</ConstructionSpeed>
+            </toolStatFactors>
+          </li>
+        </value>
+      </nomatch>
+    </match>
+  </Operation>
+</Patch>

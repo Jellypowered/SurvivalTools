@@ -1,0 +1,66 @@
+<Patch>
+  <Operation Class="PatchOperationFindMod">
+    <mods>
+      <li>Glitter Tech</li>
+    </mods>
+    <match Class="PatchOperationSequence">
+      <success>Always</success>
+      <operations>
+        <!-- Titanium -->
+        <li Class="PatchOperationConditional">
+          <xpath>Defs/ThingDef[defName="Titanium"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+          <nomatch Class="PatchOperationAddModExtension">
+            <xpath>Defs/ThingDef[defName="Titanium"]</xpath>
+            <value>
+              <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                  <TreeFellingSpeed>2.0</TreeFellingSpeed>
+                  <PlantHarvestingSpeed>2.0</PlantHarvestingSpeed>
+                  <DiggingSpeed>1.6</DiggingSpeed>
+                  <MiningYieldDigging>1.1</MiningYieldDigging>
+                  <ConstructionSpeed>1.6</ConstructionSpeed>
+                </toolStatFactors>
+              </li>
+            </value>
+          </nomatch>
+        </li>
+        <!-- AlphaPoly -->
+        <li Class="PatchOperationConditional">
+          <xpath>Defs/ThingDef[defName="AlphaPoly"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+          <nomatch Class="PatchOperationAddModExtension">
+            <xpath>Defs/ThingDef[defName="AlphaPoly"]</xpath>
+            <value>
+              <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                  <TreeFellingSpeed>1.8</TreeFellingSpeed>
+                  <PlantHarvestingSpeed>1.8</PlantHarvestingSpeed>
+                  <DiggingSpeed>2.0</DiggingSpeed>
+                  <MiningYieldDigging>1.3</MiningYieldDigging>
+                  <ConstructionSpeed>2.0</ConstructionSpeed>
+                </toolStatFactors>
+              </li>
+            </value>
+          </nomatch>
+        </li>
+        <!-- BetaPoly -->
+        <li Class="PatchOperationConditional">
+          <xpath>Defs/ThingDef[defName="BetaPoly"]/modExtensions/li[@Class="SurvivalTools.StuffPropsTool"]</xpath>
+          <nomatch Class="PatchOperationAddModExtension">
+            <xpath>Defs/ThingDef[defName="BetaPoly"]</xpath>
+            <value>
+              <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                  <TreeFellingSpeed>8.0</TreeFellingSpeed>
+                  <PlantHarvestingSpeed>8.0</PlantHarvestingSpeed>
+                  <DiggingSpeed>8.6</DiggingSpeed>
+                  <MiningYieldDigging>2.0</MiningYieldDigging>
+                  <ConstructionSpeed>8.6</ConstructionSpeed>
+                </toolStatFactors>
+              </li>
+            </value>
+          </nomatch>
+        </li>
+      </operations>
+    </match>
+  </Operation>
+</Patch>

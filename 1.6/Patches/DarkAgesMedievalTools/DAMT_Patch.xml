@@ -1,0 +1,80 @@
+<Patch>
+
+    <Operation Class="PatchOperationFindMod">
+        <mods>
+            <li>Dark Ages : Medieval Tools</li>
+        </mods>
+        <match Class="PatchOperationSequence">
+            <success>Always</success>
+            <operations>             
+
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="DA_MeleeWeapon_Hammer"]</xpath>
+                    <value>
+                     <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <ConstructionSpeed>1.1</ConstructionSpeed>
+                    <ConstructSuccessChance>1.1</ConstructSuccessChance>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Constructor</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+                    </value>
+                </li>
+
+<li Class="PatchOperationAdd">
+  <xpath>Defs/ThingDef[defName="DA_MeleeWeapon_Hammer"]</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="DA_MeleeWeapon_Pickaxe"]</xpath>
+                    <value>
+                     <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <DiggingSpeed>1.1</DiggingSpeed>
+                    <MiningYieldDigging>1.1</MiningYieldDigging>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Miner</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+                    </value>
+                </li>
+
+<li Class="PatchOperationAdd">
+  <xpath>Defs/ThingDef[defName="DA_MeleeWeapon_Pickaxe"]</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+<li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="DA_MeleeWeapon_Scythe"]</xpath>
+                    <value>
+                      <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <PlantHarvestingSpeed>1.1</PlantHarvestingSpeed>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>PlantWorker</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+                    </value>
+                </li>
+
+<li Class="PatchOperationAdd">
+  <xpath>Defs/ThingDef[defName="DA_MeleeWeapon_Scythe"]</xpath>
+  <value>
+    <thingClass>SurvivalTools.SurvivalTool</thingClass>
+  </value>
+</li>
+
+            </operations>
+        </match>
+    </Operation>
+
+</Patch>

@@ -1,0 +1,29 @@
+<Patch>
+  <Operation Class="PatchOperationFindMod">
+    <mods>
+      <li>Quarry</li>
+      <!-- If you know the packageId, prefer this op instead:
+      <li Class="PatchOperationFindModByPackageId">
+        <mods><li>sarg.quarry</li></mods>
+        <match Class="PatchOperationSequence"> ... </match>
+      </li>
+      -->
+    </mods>
+    <match Class="PatchOperationConditional">
+      <xpath>Defs/WorkGiverDef[defName="QRY_MineQuarry"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]</xpath>
+      <!-- If not already present, add our extension -->
+      <nomatch Class="PatchOperationAddModExtension">
+        <xpath>Defs/WorkGiverDef[defName="QRY_MineQuarry"]</xpath>
+        <value>
+          <li Class="SurvivalTools.WorkGiverExtension">
+            <requiredStats>
+              <li>DiggingSpeed</li>
+              <li>MiningYieldDigging</li>
+            </requiredStats>
+          </li>
+        </value>
+      </nomatch>
+      <!-- If already present, do nothing -->
+    </match>
+  </Operation>
+</Patch>
