@@ -10,12 +10,17 @@ namespace SurvivalTools
 {
     public class JobGiver_OptimizeSurvivalTools : ThinkNode_JobGiver
     {
-        private void SetNextOptimizeTick(Pawn pawn)
+        // Tuning knobs
+        private const int OPTIMIZE_TICK_MIN = 1200;   // ~0.5 in-game hours
+        private const int OPTIMIZE_TICK_MAX = 2400;   // ~1.0 in-game hours
+        private const bool PICKUP_FROM_STORAGE_ONLY = false; // true = vanilla behavior, false = allow Home-area pickups too
+
+        private void SetNextOptimizeTick(Pawn pawn, int min = OPTIMIZE_TICK_MIN, int max = OPTIMIZE_TICK_MAX)
         {
             var comp = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
             if (comp != null)
             {
-                comp.nextSurvivalToolOptimizeTick = Find.TickManager.TicksGame + Rand.Range(6000, 9000);
+                comp.nextSurvivalToolOptimizeTick = Find.TickManager.TicksGame + Rand.Range(min, max);
             }
         }
 
@@ -25,12 +30,8 @@ namespace SurvivalTools
                 return null;
 
             var assignmentTracker = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
-            if (!pawn.CanUseSurvivalTools() ||
-                assignmentTracker == null ||
-                Find.TickManager.TicksGame < assignmentTracker.nextSurvivalToolOptimizeTick)
-            {
+            if (!pawn.CanUseSurvivalTools() || assignmentTracker == null)
                 return null;
-            }
 
             var map = pawn.MapHeld;
             if (map == null)
@@ -40,8 +41,10 @@ namespace SurvivalTools
             }
 
             var curAssignment = assignmentTracker.CurrentSurvivalToolAssignment;
-            var heldTools = pawn.GetHeldSurvivalTools();
+            var heldToolsEnum = pawn.GetHeldSurvivalTools();
+            var heldTools = heldToolsEnum as IList<Thing> ?? heldToolsEnum.ToList();
 
+            // Drop anything we shouldn't be holding or don't need (unchanged behavior).
             foreach (var tool in heldTools)
             {
                 var st = tool as SurvivalTool;
@@ -51,36 +54,53 @@ namespace SurvivalTools
                 if ((!curAssignment.filter.Allows(st) || !pawn.NeedsSurvivalTool(st)) &&
                     assignmentTracker.forcedHandler.AllowedToAutomaticallyDrop(tool))
                 {
+                    // Short cooldown after a drop so we can re-evaluate again soon.
+                    SetNextOptimizeTick(pawn, 300, 600);
                     return pawn.DequipAndTryStoreSurvivalTool(tool);
                 }
             }
 
-            List<Thing> mapThings = map.listerThings.AllThings;
+            // Make stat list distinct to avoid redundant work.
+            var workRelevantStats = pawn.AssignedToolRelevantWorkGiversStatDefs();
+            if (workRelevantStats == null || workRelevantStats.Count == 0)
+            {
+                SetNextOptimizeTick(pawn);
+                return null;
+            }
+            workRelevantStats = workRelevantStats.Distinct().ToList();
+
+            // If the pawn doesn't have any tool for these stats, bypass the cooldown.
+            bool hasAnyRelevantTool = PawnHasAnyToolForStats(heldTools, workRelevantStats);
+
+            // Respect cooldown unless we have no relevant tool at all.
+            int now = Find.TickManager.TicksGame;
+            if (hasAnyRelevantTool && now < assignmentTracker.nextSurvivalToolOptimizeTick)
+                return null;
+
+            // Consider only SurvivalTools on the map (fast filter over AllThings is fine, but we keep it tight).
+            var mapThings = map.listerThings.AllThings;
             if (mapThings == null || mapThings.Count == 0)
             {
                 SetNextOptimizeTick(pawn);
                 return null;
             }
 
-            var workRelevantStats = pawn.AssignedToolRelevantWorkGiversStatDefs();
             Thing curTool = null;
             SurvivalTool newTool = null;
             float optimality = 0f;
-
-            var heldList = heldTools as IList<Thing> ?? heldTools.ToList();
 
             foreach (var stat in workRelevantStats)
             {
                 curTool = pawn.GetBestSurvivalTool(stat);
                 optimality = SurvivalToolScore(curTool, workRelevantStats);
 
+                // Scan candidates; allow Home-area pickups if enabled.
                 for (int i = 0; i < mapThings.Count; i++)
                 {
                     var potentialTool = mapThings[i] as SurvivalTool;
-                    if (potentialTool == null)
+                    if (potentialTool == null || !potentialTool.Spawned)
                         continue;
 
-                    // Was: StatUtility.StatListContains(potentialTool.WorkStatFactors, stat)
                     if (!ContainsStat(potentialTool.WorkStatFactors, stat))
                         continue;
 
@@ -92,8 +112,11 @@ namespace SurvivalTools
 
                     if (!pawn.CanUseSurvivalTool(potentialTool.def))
                         continue;
-                    if (!potentialTool.IsInAnyStorage())
+
+                    // Storage/Home gating
+                    if (!ToolIsAcquirableByPolicy(pawn, potentialTool))
                         continue;
+
                     if (potentialTool.IsForbidden(pawn) || potentialTool.IsBurning())
                         continue;
 
@@ -129,11 +152,47 @@ namespace SurvivalTools
             {
                 var pickupJob = JobMaker.MakeJob(JobDefOf.TakeInventory, newTool);
                 pickupJob.count = 1;
+
+                // Set a short cooldown so we don't spam evaluations while the pickup is happening.
+                SetNextOptimizeTick(pawn, 600, 900);
                 return pickupJob;
             }
 
             SetNextOptimizeTick(pawn);
             return null;
+        }
+
+        private static bool PawnHasAnyToolForStats(IEnumerable<Thing> heldTools, List<StatDef> stats)
+        {
+            foreach (var t in heldTools)
+            {
+                var st = t as SurvivalTool;
+                if (st == null) continue;
+
+                foreach (var s in stats)
+                {
+                    if (ContainsStat(st.WorkStatFactors, s))
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        private static bool ToolIsAcquirableByPolicy(Pawn pawn, SurvivalTool tool)
+        {
+            if (tool.IsInAnyStorage())
+                return true;
+
+            if (PICKUP_FROM_STORAGE_ONLY)
+#pragma warning disable
+                return false;
+#pragma warning restore
+            var map = pawn.Map;
+            if (map == null || map.areaManager == null)
+                return false;
+
+            var home = map.areaManager.Home;
+            return home != null && home[tool.Position];
         }
 
         private static float SurvivalToolScore(Thing toolThing, List<StatDef> workRelevantStats)
@@ -144,7 +203,6 @@ namespace SurvivalTools
 
             float optimality = 0f;
 
-            // Was: StatUtility.GetStatValueFromList(tool.WorkStatFactors, stat, 0f)
             foreach (var stat in workRelevantStats)
             {
                 optimality += GetStatValueFromEnumerable(tool.WorkStatFactors, stat, 0f);
@@ -160,7 +218,6 @@ namespace SurvivalTools
             return optimality;
         }
 
-        // Helpers that work with IEnumerable<StatModifier> (no List<> required)
         private static bool ContainsStat(IEnumerable<StatModifier> mods, StatDef stat)
         {
             if (mods == null) return false;
