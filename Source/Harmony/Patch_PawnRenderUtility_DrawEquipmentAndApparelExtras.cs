@@ -11,23 +11,72 @@ namespace SurvivalTools.HarmonyStuff
         [HarmonyPostfix]
         public static void Postfix(Pawn pawn, Vector3 drawPos, Rot4 facing, PawnRenderFlags flags)
         {
-            // Skip portraits / invisible
-            if (flags.HasFlag(PawnRenderFlags.Portrait) || flags.HasFlag(PawnRenderFlags.Invisible)) return;
+            bool debug = SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging;
 
-            if (pawn == null || !pawn.Spawned || pawn.Dead || pawn.Downed) return;
+            try
+            {
+                if (pawn == null)
+                {
+                    if (debug) DLog("Skip: pawn == null");
+                    return;
+                }
 
-            // Only when actually working (not drafted/combat/idle)
-            if (pawn.Drafted) return;
-            if (pawn.jobs?.curJob == null || pawn.jobs.curDriver == null) return;
-            if (!IsWorklike(pawn.CurJobDef)) return;
+                if (flags.HasFlag(PawnRenderFlags.Portrait) || flags.HasFlag(PawnRenderFlags.Invisible))
+                {
+                    if (debug) DLog(pawn, $"Skip: flags={FlagsToString(flags)} (Portrait/Invisible)");
+                    return;
+                }
 
-            // North is rendered in the body pass (prefix below) so skip here.
-            if (facing == Rot4.North) return;
+                if (!pawn.Spawned || pawn.Dead || pawn.Downed)
+                {
+                    if (debug) DLog(pawn, $"Skip: Spawned={pawn.Spawned}, Dead={pawn.Dead}, Downed={pawn.Downed}");
+                    return;
+                }
 
-            // Equipment pass already supplies an equipment-layer Y; keep it.
-            float toolAlt = drawPos.y;
+                if (pawn.Drafted)
+                {
+                    if (debug) DLog(pawn, "Skip: pawn is drafted");
+                    return;
+                }
 
-            ActiveToolDrawer.DrawStaticTool(pawn, drawPos, facing, toolAlt);
+                var curJob = pawn.jobs?.curJob;
+                var driver = pawn.jobs?.curDriver;
+                if (curJob == null || driver == null)
+                {
+                    if (debug) DLog(pawn, $"Skip: no curJob/driver (curJob={(curJob?.def?.defName ?? "null")}, driver={(driver?.GetType().Name ?? "null")})");
+                    return;
+                }
+
+                if (!IsWorklike(curJob.def))
+                {
+                    if (debug) DLog(pawn, $"Skip: job '{curJob.def.defName}' not worklike");
+                    return;
+                }
+
+                if (facing == Rot4.North)
+                {
+                    if (debug) DLog(pawn, $"Skip: facing North handled in body pass (job={curJob.def.defName})");
+                    return;
+                }
+
+                // Equipment pass already supplies an equipment-layer Y; keep it.
+                float toolAlt = drawPos.y;
+
+                if (debug)
+                {
+                    DLog(pawn,
+                        $"Draw tool | job={curJob.def.defName} facing={facing} flags={FlagsToString(flags)} " +
+                        $"drawPos=({drawPos.x:F2},{drawPos.y:F2},{drawPos.z:F2}) toolAlt={toolAlt:F2}");
+                }
+
+                ActiveToolDrawer.DrawStaticTool(pawn, drawPos, facing, toolAlt);
+            }
+            catch (System.Exception e)
+            {
+                // Collapse repeats per pawn+method to avoid spam
+                int key = Gen.HashCombineInt("ST_DrawExtras".GetHashCode(), pawn?.thingIDNumber ?? 0);
+                Log.WarningOnce($"[SurvivalTools] DrawEquipmentAndApparelExtras postfix errored for {pawn?.LabelShort ?? "null"}: {e}", key);
+            }
         }
 
         private static bool IsWorklike(JobDef def)
@@ -40,5 +89,26 @@ namespace SurvivalTools.HarmonyStuff
                    s.Contains("uninstall") || s.Contains("deconstruct") || s.Contains("build") ||
                    s.Contains("plant") || s.Contains("sow") || s.Contains("harvest") || s.Contains("cut");
         }
+
+        // ---------- tiny debug helpers (gated by setting) ----------
+
+        private static void DLog(Pawn pawn, string msg)
+        {
+            if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
+                Log.Message($"[SurvivalTools.DrawExtras] {pawn?.LabelShort ?? "null"}: {msg}");
+        }
+
+        private static void DLog(string msg)
+        {
+            if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
+                Log.Message($"[SurvivalTools.DrawExtras] {msg}");
+        }
+
+        private static string FlagsToString(PawnRenderFlags f)
+        {
+            // Let RimWorld’s enum provide the right names for this version
+            return f.ToString();
+        }
     }
 }
+

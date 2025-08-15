@@ -44,6 +44,11 @@ namespace SurvivalTools
         public float toolDegradationFactor = 1f;
         public bool toolOptimization = true;
 
+        public bool autoTool = true;
+
+        public bool debugLogging = false;
+        public bool pickupFromStorageOnly = false;
+
         public bool ToolDegradationEnabled => toolDegradationFactor > 0.001f;
 
         // Offsets used by in-world draw (stored per facing)
@@ -77,6 +82,9 @@ namespace SurvivalTools
             Scribe_Values.Look(ref toolLimit, nameof(toolLimit), true);
             Scribe_Values.Look(ref toolDegradationFactor, nameof(toolDegradationFactor), 1f);
             Scribe_Values.Look(ref toolOptimization, nameof(toolOptimization), true);
+            Scribe_Values.Look(ref debugLogging, nameof(debugLogging), false);
+            Scribe_Values.Look(ref pickupFromStorageOnly, nameof(pickupFromStorageOnly), false);
+            Scribe_Values.Look(ref autoTool, nameof(autoTool), true);
 
             Scribe_Values.Look(ref drawToolsDuringWork, "st_drawToolsDuringWork", true);
             Scribe_Values.Look(ref offsetNorth, "st_offsetNorth", new Vector3(0.10f, 0f, 0.30f));
@@ -86,6 +94,7 @@ namespace SurvivalTools
             base.ExposeData();
         }
 
+        #region Settings Window
         public void DoSettingsWindowContents(Rect inRect)
         {
             var prevAnchor = Text.Anchor;
@@ -100,6 +109,11 @@ namespace SurvivalTools
                 Text.Anchor = TextAnchor.UpperLeft;
 
                 listing.Gap();
+                if (Prefs.DevMode)
+                {
+                    listing.CheckboxLabeled("Settings_DebugLogging".Translate(), ref debugLogging, "Settings_DebugLogging_Tooltip".Translate());
+                    listing.Gap();
+                }
 
                 // Hardcore (red like Merciless)
                 GUI.color = new Color(1f, 0.2f, 0.2f);
@@ -111,7 +125,8 @@ namespace SurvivalTools
                 listing.Gap();
                 listing.CheckboxLabeled("Settings_ToolLimit".Translate(), ref toolLimit, "Settings_ToolLimit_Tooltip".Translate());
                 listing.Gap();
-
+                listing.CheckboxLabeled("Settings_PickupFromStorageOnly".Translate(), ref pickupFromStorageOnly, "Settings_PickupFromStorageOnly_Tooltip".Translate());
+                listing.Gap();
                 // Degradation slider
                 var degrLabel = "Settings_ToolDegradationRate".Translate();
                 listing.Label(degrLabel + ": " + toolDegradationFactor.ToStringByStyle(ToStringStyle.FloatTwo, ToStringNumberSense.Factor));
@@ -120,7 +135,8 @@ namespace SurvivalTools
 
                 listing.Gap();
                 listing.CheckboxLabeled("Draw tools during work", ref drawToolsDuringWork, "Show survival tools in pawns' hands while they work.");
-
+                listing.Gap();
+                listing.CheckboxLabeled("Settings_AutoTool".Translate(), ref autoTool, "Settings_AutoTool_Tooltip".Translate());
                 listing.GapLine();
 
                 // Header + global facing toolbar
@@ -157,8 +173,8 @@ namespace SurvivalTools
                 GUI.color = prevColor;
             }
         }
-
-        // === UI pieces ===
+        #endregion
+        #region UI pieces 
 
         private static void DrawFacingToolbar(Rect rect)
         {
@@ -329,8 +345,28 @@ namespace SurvivalTools
             var center = new Vector2(pivotScreen.x - dx, pivotScreen.y - dy);
             return new Rect(center.x - toolW / 2f, center.y - toolH / 2f, toolW, toolH);
         }
+        private static void LineH(float x, float y, float length, Color color, float thickness = 1f)
+        {
+            var old = GUI.color; GUI.color = color;
+            Widgets.DrawBoxSolid(new Rect(x, y - thickness * 0.5f, length, thickness), color);
+            GUI.color = old;
+        }
 
-        // --- Resets ---
+        private static void LineV(float x, float y, float length, Color color, float thickness = 1f)
+        {
+            var old = GUI.color; GUI.color = color;
+            Widgets.DrawBoxSolid(new Rect(x - thickness * 0.5f, y, thickness, length), color);
+            GUI.color = old;
+        }
+        public static Vector3 OffsetFor(Rot4 facing)
+        {
+            if (facing == Rot4.North) return offsetNorth;
+            if (facing == Rot4.East) return offsetEast;
+            if (facing == Rot4.South) return offsetSouth;
+            return offsetWest;
+        }
+        #endregion
+        #region Resets
 
         private static void ResetOffsetsToDefaults()
         {
@@ -353,34 +389,17 @@ namespace SurvivalTools
             toolDegradationFactor = 1f;
             toolOptimization = true;
             drawToolsDuringWork = true;
+            autoTool = true;
+            debugLogging = false;
 
             previewFacing = Rot4.North;
 
             ResetOffsetsToDefaults();
         }
+        #endregion
 
-        private static void LineH(float x, float y, float length, Color color, float thickness = 1f)
-        {
-            var old = GUI.color; GUI.color = color;
-            Widgets.DrawBoxSolid(new Rect(x, y - thickness * 0.5f, length, thickness), color);
-            GUI.color = old;
-        }
-
-        private static void LineV(float x, float y, float length, Color color, float thickness = 1f)
-        {
-            var old = GUI.color; GUI.color = color;
-            Widgets.DrawBoxSolid(new Rect(x - thickness * 0.5f, y, thickness, length), color);
-            GUI.color = old;
-        }
-        public static Vector3 OffsetFor(Rot4 facing)
-        {
-            if (facing == Rot4.North) return offsetNorth;
-            if (facing == Rot4.East) return offsetEast;
-            if (facing == Rot4.South) return offsetSouth;
-            return offsetWest;
-        }
     }
-
+    #region Settings Handler
     public class SurvivalTools : Mod
     {
         public static SurvivalToolsSettings Settings;
@@ -397,4 +416,5 @@ namespace SurvivalTools
             Settings.DoSettingsWindowContents(inRect);
         }
     }
+    #endregion
 }

@@ -26,13 +26,18 @@ namespace SurvivalTools.HarmonyStuff
         // Tunables (can be surfaced as mod settings later)
         private const int SearchRadius = 28;
         private const bool AllowForbidden = false;
-        private const bool PICKUP_FROM_STORAGE_ONLY = false; // false => allow Home-area pickups too
 
         public static void Postfix(Pawn pawn, JobIssueParams jobParams, ref ThinkResult __result)
         {
             try
             {
-                bool debug = Prefs.DevMode;
+                // User Settings: Do you want pawns to optimize tools before jobs?
+                bool autoTool = (SurvivalTools.Settings != null && SurvivalTools.Settings.autoTool);
+
+                // If autoTool checkbox is not enabled, bail out. 
+                if (!autoTool) return;
+
+                bool debug = (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging);//Prefs.DevMode;
 
                 var job = __result.Job;
                 if (pawn == null || pawn.Map == null || job == null)
@@ -393,10 +398,9 @@ namespace SurvivalTools.HarmonyStuff
             if (tool.IsInAnyStorage())
                 return true;
 
-            if (PICKUP_FROM_STORAGE_ONLY)
-#pragma warning disable
+            bool storageOnly = SurvivalTools.Settings != null && SurvivalTools.Settings.pickupFromStorageOnly;
+            if (storageOnly)
                 return false;
-#pragma warning restore
 
             var map = pawn.Map;
             if (map == null || map.areaManager == null)

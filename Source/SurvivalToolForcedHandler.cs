@@ -30,7 +30,10 @@ namespace SurvivalTools
 
             if (tool.Destroyed)
             {
-                Log.Error($"SurvivalTool was forced while Destroyed: {tool}");
+                if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
+                {
+                    Log.Error($"SurvivalTool was forced while Destroyed: {tool}");
+                }
                 forcedTools?.Remove(tool);
                 return false;
             }

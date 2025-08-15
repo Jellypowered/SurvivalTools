@@ -11,9 +11,8 @@ namespace SurvivalTools
     public class JobGiver_OptimizeSurvivalTools : ThinkNode_JobGiver
     {
         // Tuning knobs
-        private const int OPTIMIZE_TICK_MIN = 1200;   // ~0.5 in-game hours
-        private const int OPTIMIZE_TICK_MAX = 2400;   // ~1.0 in-game hours
-        private const bool PICKUP_FROM_STORAGE_ONLY = false; // true = vanilla behavior, false = allow Home-area pickups too
+        private const int OPTIMIZE_TICK_MIN = 3600;   // ~3.0 in-game hours
+        private const int OPTIMIZE_TICK_MAX = 14400;   // ~6.0 in-game hours
 
         private void SetNextOptimizeTick(Pawn pawn, int min = OPTIMIZE_TICK_MIN, int max = OPTIMIZE_TICK_MAX)
         {
@@ -183,10 +182,10 @@ namespace SurvivalTools
             if (tool.IsInAnyStorage())
                 return true;
 
-            if (PICKUP_FROM_STORAGE_ONLY)
-#pragma warning disable
+            bool storageOnly = SurvivalTools.Settings != null && SurvivalTools.Settings.pickupFromStorageOnly;
+            if (storageOnly)
                 return false;
-#pragma warning restore
+
             var map = pawn.Map;
             if (map == null || map.areaManager == null)
                 return false;

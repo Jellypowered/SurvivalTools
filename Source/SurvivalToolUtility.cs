@@ -5,6 +5,7 @@ using Verse;
 using Verse.AI;
 using RimWorld;
 using RimWorld.Planet;
+using System.Diagnostics;
 
 namespace SurvivalTools
 {
@@ -71,7 +72,10 @@ namespace SurvivalTools
             var props = def?.GetModExtension<SurvivalToolProperties>();
             if (props == null)
             {
-                Log.Error($"Tried to check if {def} is a usable tool but has null tool properties");
+                if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
+                {
+                    Log.Error($"Tried to check if {def} is a usable tool but has null tool properties");
+                }
                 return false;
             }
             if (props.baseWorkStatFactors == null) return false;
@@ -203,7 +207,13 @@ namespace SurvivalTools
             var workSettings = pawn.workSettings;
             if (workSettings == null)
             {
-                Log.ErrorOnce($"Tried to get tool-relevant work givers for {pawn} but has null workSettings", 11227);
+                if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
+                {
+                    Log.ErrorOnce(
+                        $"Tried to get tool-relevant work givers for {pawn} but has null workSettings",
+                        11227
+                    );
+                }
                 yield break;
             }
 
@@ -251,7 +261,10 @@ namespace SurvivalTools
             var statPart = stat.GetStatPart<StatPart_SurvivalTool>();
             if (statPart == null)
             {
-                Log.ErrorOnce($"Tried to check if {tool} is better than working toolless for {stat} which has no StatPart_SurvivalTool", 8120196);
+                if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
+                {
+                    Log.ErrorOnce($"Tried to check if {tool} is better than working toolless for {stat} which has no StatPart_SurvivalTool", 8120196);
+                }
                 return false;
             }
             return StatUtility.GetStatValueFromList(tool.WorkStatFactors.ToList(), stat, 0f) > statPart.NoToolStatFactor;

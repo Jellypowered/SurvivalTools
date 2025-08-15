@@ -17,7 +17,7 @@ namespace SurvivalTools.HarmonyStuff
         private static readonly Type patchType = typeof(HarmonyPatches);
 
         // One Harmony instance for all manual patches
-        private static readonly HarmonyLib.Harmony H = new HarmonyLib.Harmony("Jelly.SurvivalTools");
+        private static readonly HarmonyLib.Harmony H = new HarmonyLib.Harmony("Jelly.SurvivalToolsReborn");
 
         // Stat/Method lookups used in several transpilers
         private static readonly FieldInfo ConstructionSpeed =
@@ -39,7 +39,10 @@ namespace SurvivalTools.HarmonyStuff
         {
             if (original == null)
             {
-                Log.Warning($"[SurvivalTools] Skipping patch '{label}' — method not found.");
+                if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
+                {
+                    Log.Warning($"[SurvivalTools] Skipping patch '{label}' — method not found.");
+                }
                 return;
             }
             try
@@ -369,7 +372,10 @@ namespace SurvivalTools.HarmonyStuff
 
             if (displayToilField == null)
             {
-                Log.Warning("[SurvivalTools] AffectRoof tick transpiler: could not find captured Toil field; passing through.");
+                if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
+                {
+                    Log.Warning("[SurvivalTools] AffectRoof tick transpiler: could not find captured Toil field; passing through.");
+                }
                 foreach (var ins in code) yield return ins;   // <-- yield, not return
                 yield break;
             }
