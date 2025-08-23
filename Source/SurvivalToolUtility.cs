@@ -20,6 +20,102 @@ namespace SurvivalTools
         public static List<WorkGiverDef> SurvivalToolWorkGivers { get; } =
             DefDatabase<WorkGiverDef>.AllDefsListForReading.Where(w => w.HasModExtension<WorkGiverExtension>()).ToList();
 
+        // ---------------- New shared helpers: WG/Job -> required stats ----------------
+
+        /// <summary>
+        /// Returns the list of stats relevant to this work giver / job.
+        /// Priority: WorkGiverExtension.requiredStats -> job-based mapping.
+        /// </summary>
+        public static List<StatDef> RelevantStatsFor(WorkGiverDef wg, Job job)
+        {
+            var fromWg = wg?.GetModExtension<WorkGiverExtension>()?.requiredStats;
+            if (fromWg != null && fromWg.Count > 0)
+                return fromWg.Where(s => s != null).Distinct().ToList();
+
+            var fallback = StatsForJob(job);
+            if ((SurvivalTools.Settings?.debugLogging ?? false) && job?.def != null)
+            {
+                Log.Message($"[SurvivalTools] Using job fallback stats for WGD='{wg?.defName ?? "null"}' Job='{job.def.defName}'.");
+            }
+            return fallback;
+        }
+
+        public static List<StatDef> RelevantStatsFor(WorkGiverDef wg, JobDef jobDef)
+        {
+            var fromWg = wg?.GetModExtension<WorkGiverExtension>()?.requiredStats;
+            if (fromWg != null && fromWg.Count > 0)
+                return fromWg.Where(s => s != null).Distinct().ToList();
+
+            var fallback = StatsForJob(jobDef);
+            if ((SurvivalTools.Settings?.debugLogging ?? false) && jobDef != null)
+            {
+                Log.Message($"[SurvivalTools] Using job fallback stats for WGD='{wg?.defName ?? "null"}' Job='{jobDef.defName}'.");
+            }
+            return fallback;
+        }
+
+        /// <summary>
+        /// Minimal job->stat mapping used when WG doesn't declare requiredStats.
+        /// Extend as you add new tool-gated workflows (e.g., StonecuttingSpeed).
+        /// </summary>
+        public static List<StatDef> StatsForJob(Job job) => StatsForJob(job?.def);
+
+        public static List<StatDef> StatsForJob(JobDef jobDef)
+        {
+            var list = new List<StatDef>(2);
+            if (jobDef == null) return list;
+
+            // Strong exact matches first
+            if (jobDef == JobDefOf.Mine)
+            {
+                // Use ST stats so pickaxes qualify
+                list.Add(ST_StatDefOf.DiggingSpeed);
+                // If you want mining yield to influence selection too, uncomment:
+                // list.Add(ST_StatDefOf.MiningYieldDigging);
+                return list;
+            }
+
+            // String-based heuristics (safe fallback)
+            var j = jobDef.defName ?? string.Empty;
+            var s = j.ToLowerInvariant();
+
+            // Construction-ish (use vanilla ConstructionSpeed unless you add an ST stat for it)
+            if (s.Contains("construct") || s.Contains("build") || s.Contains("frame") ||
+                s.Contains("repair") || s.Contains("smooth") || s.Contains("install") ||
+                s.Contains("uninstall") || s.Contains("deconstruct") || s.Contains("buildroof") ||
+                s.Contains("removeroof"))
+            {
+                list.Add(StatDefOf.ConstructionSpeed);
+                return list;
+            }
+
+            // Plants (use ST PlantHarvestingSpeed so hatchets/sickles matter)
+            if (s.Contains("plant") || s.Contains("sow") || s.Contains("harvest") || s.Contains("cut"))
+            {
+                list.Add(ST_StatDefOf.PlantHarvestingSpeed);
+                return list;
+            }
+
+            // Tree felling (your custom jobs)
+            if (jobDef == ST_JobDefOf.FellTree || jobDef == ST_JobDefOf.FellTreeDesignated
+                || jobDef == ST_JobDefOf.HarvestTree || jobDef == ST_JobDefOf.HarvestTreeDesignated)
+            {
+                list.Add(ST_StatDefOf.TreeFellingSpeed);
+                return list;
+            }
+
+            // Example for future: stonecutting tools
+            // if (s.Contains("stonecut") || s.Contains("makestoneblocks"))
+            // {
+            //     list.Add(ST_StatDefOf.StonecuttingSpeed);
+            //     return list;
+            // }
+
+            return list;
+        }
+
+        // ------------------------------------------------------------------------------
+
         public static bool RequiresSurvivalTool(this StatDef stat)
         {
             if (stat?.parts == null) return false;
@@ -98,8 +194,12 @@ namespace SurvivalTools
         public static bool HasSurvivalTool(this Pawn pawn, ThingDef tool) =>
             pawn.GetHeldSurvivalTools().Any(t => t.def == tool);
 
-        public static bool HasSurvivalToolFor(this Pawn pawn, StatDef stat) =>
-            pawn.GetBestSurvivalTool(stat) != null;
+        public static bool HasSurvivalToolFor(this Pawn pawn, StatDef stat)
+        {
+            if (stat == null || stat.GetStatPart<StatPart_SurvivalTool>() == null)
+                return false;
+            return pawn.GetBestSurvivalTool(stat) != null;
+        }
 
         public static bool HasSurvivalToolFor(this Pawn pawn, StatDef stat, out SurvivalTool tool, out float statFactor)
         {
@@ -110,17 +210,21 @@ namespace SurvivalTools
 
         public static SurvivalTool GetBestSurvivalTool(this Pawn pawn, StatDef stat)
         {
-            if (!pawn.CanUseSurvivalTools()) return null;
+            if (!pawn.CanUseSurvivalTools() || stat == null) return null;
+
+            var statPart = stat.GetStatPart<StatPart_SurvivalTool>();
+            if (statPart == null) return null; // not a survival-tool-gated stat
 
             SurvivalTool best = null;
-            float bestFactor = stat.GetStatPart<StatPart_SurvivalTool>().NoToolStatFactor;
+            float bestFactor = statPart.NoToolStatFactor;
 
             var usable = pawn.GetAllUsableSurvivalTools().ToList();
             foreach (SurvivalTool cur in usable)
             {
+                if (cur == null) continue;
                 foreach (var mod in cur.WorkStatFactors)
                 {
-                    if (mod.stat == stat && mod.value > bestFactor)
+                    if (mod?.stat == stat && mod.value > bestFactor)
                     {
                         best = cur;
                         bestFactor = mod.value;
@@ -195,12 +299,46 @@ namespace SurvivalTools
 
         public static bool MeetsWorkGiverStatRequirements(this Pawn pawn, List<StatDef> requiredStats)
         {
-            if (requiredStats == null || requiredStats.Count == 0) return true;
+            if (requiredStats == null || requiredStats.Count == 0)
+                return true;
+
+            var s = SurvivalTools.Settings;
+
+            if (s != null && s.hardcoreMode)
+            {
+                // Only tool-gated stats matter for Hardcore tool checks
+                var toolStats = requiredStats.Where(st => st != null && st.RequiresSurvivalTool()).ToList();
+                if (toolStats.Count == 0) return true;
+
+                foreach (var stat in toolStats)
+                {
+                    if (!pawn.HasSurvivalToolFor(stat))
+                    {
+                        // If AutoTool is allowed, don't hard-fail here — let the finder try.
+                        if (s.autoTool)
+                        {
+                            if (s.debugLogging)
+                                Log.Message($"[SurvivalTools] {pawn.LabelShort} missing required tool for stat {stat.defName}, but AutoTool will attempt acquisition.");
+                            continue;
+                        }
+
+                        // AutoTool disabled: this pawn is blocked.
+                        if (s.debugLogging)
+                            Log.Message($"[SurvivalTools] {pawn.LabelShort} cannot start job: missing required tool for stat {stat.defName}");
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            // Non-hardcore: original behavior (stat must be > 0)
             foreach (var stat in requiredStats)
-                if (pawn.GetStatValue(stat) <= 0f)
+                if (stat != null && pawn.GetStatValue(stat) <= 0f)
                     return false;
+
             return true;
         }
+
 
         public static IEnumerable<WorkGiver> AssignedToolRelevantWorkGivers(this Pawn pawn)
         {

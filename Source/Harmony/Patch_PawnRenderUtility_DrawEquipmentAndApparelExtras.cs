@@ -17,25 +17,25 @@ namespace SurvivalTools.HarmonyStuff
             {
                 if (pawn == null)
                 {
-                    if (debug) DLog("Skip: pawn == null");
+                    //if (debug) DLog("Skip: pawn == null");
                     return;
                 }
 
                 if (flags.HasFlag(PawnRenderFlags.Portrait) || flags.HasFlag(PawnRenderFlags.Invisible))
                 {
-                    if (debug) DLog(pawn, $"Skip: flags={FlagsToString(flags)} (Portrait/Invisible)");
+                    //if (debug) DLog(pawn, $"Skip: flags={FlagsToString(flags)} (Portrait/Invisible)");
                     return;
                 }
 
                 if (!pawn.Spawned || pawn.Dead || pawn.Downed)
                 {
-                    if (debug) DLog(pawn, $"Skip: Spawned={pawn.Spawned}, Dead={pawn.Dead}, Downed={pawn.Downed}");
+                    //if (debug) DLog(pawn, $"Skip: Spawned={pawn.Spawned}, Dead={pawn.Dead}, Downed={pawn.Downed}");
                     return;
                 }
 
                 if (pawn.Drafted)
                 {
-                    if (debug) DLog(pawn, "Skip: pawn is drafted");
+                    //if (debug) DLog(pawn, "Skip: pawn is drafted");
                     return;
                 }
 
@@ -43,19 +43,19 @@ namespace SurvivalTools.HarmonyStuff
                 var driver = pawn.jobs?.curDriver;
                 if (curJob == null || driver == null)
                 {
-                    if (debug) DLog(pawn, $"Skip: no curJob/driver (curJob={(curJob?.def?.defName ?? "null")}, driver={(driver?.GetType().Name ?? "null")})");
+                    //if (debug) DLog(pawn, $"Skip: no curJob/driver (curJob={(curJob?.def?.defName ?? "null")}, driver={(driver?.GetType().Name ?? "null")})");
                     return;
                 }
 
                 if (!IsWorklike(curJob.def))
                 {
-                    if (debug) DLog(pawn, $"Skip: job '{curJob.def.defName}' not worklike");
+                    //if (debug) DLog(pawn, $"Skip: job '{curJob.def.defName}' not worklike");
                     return;
                 }
 
                 if (facing == Rot4.North)
                 {
-                    if (debug) DLog(pawn, $"Skip: facing North handled in body pass (job={curJob.def.defName})");
+                    // if (debug) DLog(pawn, $"Skip: facing North handled in body pass (job={curJob.def.defName})");
                     return;
                 }
 
@@ -64,9 +64,9 @@ namespace SurvivalTools.HarmonyStuff
 
                 if (debug)
                 {
-                    DLog(pawn,
-                        $"Draw tool | job={curJob.def.defName} facing={facing} flags={FlagsToString(flags)} " +
-                        $"drawPos=({drawPos.x:F2},{drawPos.y:F2},{drawPos.z:F2}) toolAlt={toolAlt:F2}");
+                    //  DLog(pawn,
+                    //    $"Draw tool | job={curJob.def.defName} facing={facing} flags={FlagsToString(flags)} " +
+                    //  $"drawPos=({drawPos.x:F2},{drawPos.y:F2},{drawPos.z:F2}) toolAlt={toolAlt:F2}");
                 }
 
                 ActiveToolDrawer.DrawStaticTool(pawn, drawPos, facing, toolAlt);
@@ -94,14 +94,14 @@ namespace SurvivalTools.HarmonyStuff
 
         private static void DLog(Pawn pawn, string msg)
         {
-            if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
-                Log.Message($"[SurvivalTools.DrawExtras] {pawn?.LabelShort ?? "null"}: {msg}");
+            if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging) ;
+            //Log.Message($"[SurvivalTools.DrawExtras] {pawn?.LabelShort ?? "null"}: {msg}");
         }
 
         private static void DLog(string msg)
         {
-            if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
-                Log.Message($"[SurvivalTools.DrawExtras] {msg}");
+            if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging) ;
+            //Log.Message($"[SurvivalTools.DrawExtras] {msg}");
         }
 
         private static string FlagsToString(PawnRenderFlags f)

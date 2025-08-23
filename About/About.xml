@@ -1,24 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
-  <packageId>jellypowered.survivaltools</packageId>
-  <name>Survival Tools Reborn</name>
-  <author>Jellypowered</author>
-  <url>https://github.com/Jellypowered/SurvivalTools/</url>
+    <packageId>jellypowered.survivaltools</packageId>
+    <name>Survival Tools Reborn</name>
+    <author>Jellypowered</author>
+    <url>https://github.com/Jellypowered/SurvivalTools/</url>
+    <supportedVersions>
+        <li>1.6</li>
+    </supportedVersions>
+    <description><![CDATA[
+Current version: v1.6 (August 2025)
 
-  <supportedVersions>
-    <li>1.6</li>
-  </supportedVersions>
+Adds survival tools and the need to manage them to RimWorld.
 
-  <description>
-    <![CDATA[
-Current version: v1.0 (11th August 2025)
+• Colonists work far less efficiently without the correct tool
+• Tools can be carried in inventory or equipped in hand
+• Hardcore Mode: pawns cannot perform certain jobs at all without the proper tool
+• Automatic tool pickup and swap logic before jobs
+• Smarter detection of job–tool requirements (WorkGiver & job fallbacks)
+• Acquire tools through crafting, trade, or loot
+• Different materials affect durability and effectiveness
+• Tools wear down with use and can break
+• Configurable mod settings with debugging options
 
-Adds tools and the need to manage tools to RimWorld.
-• Colonists work much less efficiently in certain tasks without the relevant tools
-• Colonists can use tools from their inventory as well as their main hand
-• Acquire tools through production, purchase and plunder
-• Different materials affect tools in different ways
-• Tools will degrade over use
-    ]]>
-  </description>
+Originally by XeoNovaDan. Updated and maintained with permission for RimWorld 1.6.
+    ]]></description>
 </ModMetaData>
