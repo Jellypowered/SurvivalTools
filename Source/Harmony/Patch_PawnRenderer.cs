@@ -2,86 +2,69 @@ using HarmonyLib;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using Verse.AI;
 
 namespace SurvivalTools.HarmonyStuff
 {
-    [HarmonyPatch(typeof(PawnRenderer), "RenderPawnInternal")]
-    public static class PawnRenderer_RenderPawnInternal_Prefix
+    // Draw in the same pass vanilla uses for guns/apparel extras.
+    // We run VERY LOW priority so other mods (e.g. Yayo, Dark Ages) go first.
+    [HarmonyPatch(typeof(PawnRenderUtility), nameof(PawnRenderUtility.DrawEquipmentAndApparelExtras))]
+    [HarmonyPriority(Priority.VeryLow)]
+    public static class ShowWhileWorking_Draw_Postfix
     {
-        [HarmonyPrefix]
-        public static void Prefix(PawnRenderer __instance, PawnDrawParms parms)
+        [HarmonyPostfix]
+        public static void Postfix(Pawn pawn, Vector3 drawPos, Rot4 facing, PawnRenderFlags flags)
         {
-            bool debug = SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging;
+            // Skip non-play renders
+            if (flags.HasFlag(PawnRenderFlags.Portrait) || flags.HasFlag(PawnRenderFlags.Invisible)) return;
+            if (pawn == null || !pawn.Spawned || pawn.Dead || pawn.Downed) return;
 
-            // Skip portraits / invisible
-            if (parms.Portrait || parms.flags.HasFlag(PawnRenderFlags.Invisible))
+            // Only show while actually working
+            if (pawn.Drafted) return;
+            Job job = pawn.CurJob;
+            if (job == null || pawn.jobs?.curDriver == null) return;
+
+            // Ask logic which tool is in use
+            var tool = ActiveToolResolver.TryGetActiveTool(pawn) as ThingWithComps;
+            if (tool == null) return;
+
+            // If another mod already causes this SAME item to be drawn as Primary, don't double-draw
+            if (pawn.equipment?.Primary != null && pawn.equipment.Primary == tool) return;
+
+            // Use vanilla equipment-distance factor (children hold things a bit closer)
+            float distFactor = pawn.ageTracker?.CurLifeStage?.equipmentDrawDistanceFactor ?? 1f;
+
+            // If pawn is "aiming" per vanilla rules, use the aiming helper; else use the carried helper
+            var stanceBusy = pawn.stances?.curStance as Stance_Busy;
+            bool canAim = !flags.HasFlag(PawnRenderFlags.NeverAimWeapon)
+                          && stanceBusy != null && !stanceBusy.neverAimWeapon && stanceBusy.focusTarg.IsValid;
+
+            if (canAim)
             {
-                if (debug)
-                    //Log.Message($"[SurvivalTools] Skipping draw for {parms.pawn?.LabelShort ?? "null"} — Portrait or Invisible.");
-                    return;
-            }
+                // Compute aim angle (mirror of vanilla logic shape)
+                Vector3 target = stanceBusy.focusTarg.HasThing
+                    ? stanceBusy.focusTarg.Thing.DrawPos
+                    : stanceBusy.focusTarg.Cell.ToVector3Shifted();
 
-            var pawn = parms.pawn;
-            if (pawn == null || !pawn.Spawned || pawn.Dead || pawn.Downed)
+                float aimAngle = 0f;
+                if ((target - pawn.DrawPos).sqrMagnitude > 0.001f)
+                    aimAngle = (target - pawn.DrawPos).AngleFlat();
+
+                var verb = pawn.CurrentEffectiveVerb;
+                if (verb != null && verb.AimAngleOverride.HasValue)
+                    aimAngle = verb.AimAngleOverride.Value;
+
+                // Vanilla pushes the held item forward along aim:
+                drawPos += new Vector3(0f, 0f, 0.4f + tool.def.equippedDistanceOffset)
+                           .RotatedBy(aimAngle) * distFactor;
+
+                PawnRenderUtility.DrawEquipmentAiming(tool, drawPos, aimAngle);
+            }
+            else
             {
-                if (debug)
-                    //Log.Message($"[SurvivalTools] Skipping draw — Pawn is null, not spawned, dead, or downed.");
-                    return;
+                // Static carry look, handled by vanilla helper (uses built-in EqLoc offsets & flip)
+                PawnRenderUtility.DrawCarriedWeapon(tool, drawPos, facing, distFactor);
             }
-
-            // Only when actually working (not drafted/combat/idle)
-            if (pawn.Drafted)
-            {
-                if (debug)
-                    //Log.Message($"[SurvivalTools] Skipping draw for {pawn.LabelShort} — Drafted.");
-                    return;
-            }
-            if (pawn.jobs?.curJob == null || pawn.jobs.curDriver == null)
-            {
-                if (debug)
-                    //Log.Message($"[SurvivalTools] Skipping draw for {pawn.LabelShort} — No current job/driver.");
-                    return;
-            }
-            if (!IsWorklike(pawn.CurJobDef))
-            {
-                //if (debug)
-                //    Log.Message($"[SurvivalTools] Skipping draw for {pawn.LabelShort} — Job '{pawn.CurJobDef.defName}' not worklike.");
-                return;
-            }
-
-            // Only handle North here (we want it behind the body). E/S/W happen in equipment pass.
-            if (parms.facing != Rot4.North)
-            {
-                //if (debug)
-                //    Log.Message($"[SurvivalTools] Skipping draw for {pawn.LabelShort} — Facing {parms.facing}, handled elsewhere.");
-                return;
-            }
-
-            // World position from the renderer matrix
-            Vector3 rootLoc = parms.matrix.MultiplyPoint3x4(Vector3.zero);
-
-            // Push slightly below the body so the body draws over it
-            float baseAlt = AltitudeLayer.Pawn.AltitudeFor();
-            float toolAlt = baseAlt - Altitudes.AltInc * 0.25f;
-
-            //if (debug)
-            //{
-            //    Log.Message($"[SurvivalTools] Drawing tool for {pawn.LabelShort} — Facing {parms.facing}, " +
-            //                $"Job: {pawn.CurJobDef.defName}, RootLoc: {rootLoc}, ToolAlt: {toolAlt}, Flags: {parms.flags}");
-            //}
-
-            ActiveToolDrawer.DrawStaticTool(pawn, rootLoc, parms.facing, toolAlt);
-        }
-
-        private static bool IsWorklike(JobDef def)
-        {
-            if (def == null) return false;
-            var s = def.defName.ToLowerInvariant();
-            return s.Contains("mine") || s.Contains("deepdrill") ||
-                   s.Contains("construct") || s.Contains("frame") || s.Contains("repair") || s.Contains("smooth") ||
-                   s.Contains("buildroof") || s.Contains("removeroof") || s.Contains("install") ||
-                   s.Contains("uninstall") || s.Contains("deconstruct") || s.Contains("build") ||
-                   s.Contains("plant") || s.Contains("sow") || s.Contains("harvest") || s.Contains("cut");
         }
     }
 }

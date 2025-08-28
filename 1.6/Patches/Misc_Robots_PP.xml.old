@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Patch>
 	<Operation Class="PatchOperationFindMod">
-		<mods><li>Misc. Robots++</li></mods>
-        <match Class="PatchOperationSequence">
-            <success>Always</success>
+		<mods>
+			<li>Misc. Robots++</li>
+		</mods>
+		<match Class="PatchOperationSequence">
+			<success>Always</success>
 			<operations>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Hauler"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Hauler"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_AIRobot_Hauler</defName>
@@ -16,12 +18,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Hauler_II"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Hauler_II"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_AIRobot_Hauler_II</defName>
@@ -29,12 +31,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Hauler_III"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Hauler_III"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_AIRobot_Hauler_III</defName>
@@ -42,12 +44,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Hauler_IV"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Hauler_IV"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_AIRobot_Hauler_IV</defName>
@@ -55,12 +57,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Hauler_V"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Hauler_V"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_AIRobot_Hauler_V</defName>
@@ -68,12 +70,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Cleaner"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Cleaner"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_AIRobot_Cleaner</defName>
@@ -81,12 +83,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Cleaner_II"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Cleaner_II"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_AIRobot_Cleaner_II</defName>
@@ -94,12 +96,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Cleaner_III"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Cleaner_III"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_AIRobot_Cleaner_III</defName>
@@ -107,12 +109,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Cleaner_IV"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Cleaner_IV"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_AIRobot_Cleaner_IV</defName>
@@ -120,12 +122,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Cleaner_V"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_AIRobot_Cleaner_V"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_AIRobot_Cleaner_V</defName>
@@ -133,12 +135,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_Builder_I"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_Builder_I"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_Builder_I</defName>
@@ -146,12 +148,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_Builder_II"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_Builder_II"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_Builder_II</defName>
@@ -159,12 +161,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_Builder_III"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_Builder_III"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_Builder_III</defName>
@@ -172,12 +174,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_Builder_IV"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_Builder_IV"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_Builder_IV</defName>
@@ -185,12 +187,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_Builder_V"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_Builder_V"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_Builder_V</defName>
@@ -198,12 +200,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_Crafter_I"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_Crafter_I"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_Crafter_I</defName>
@@ -211,12 +213,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_Crafter_II"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_Crafter_II"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_Crafter_II</defName>
@@ -224,12 +226,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_Crafter_III"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_Crafter_III"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_Crafter_III</defName>
@@ -237,12 +239,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_Crafter_IV"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_Crafter_IV"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_Crafter_IV</defName>
@@ -250,12 +252,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_Crafter_V"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_Crafter_V"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_Crafter_V</defName>
@@ -263,12 +265,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_ER_I"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_ER_I"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_ER_I</defName>
@@ -276,12 +278,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_ER_II"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_ER_II"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_ER_II</defName>
@@ -289,12 +291,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_ER_III"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_ER_III"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_ER_III</defName>
@@ -302,12 +304,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_ER_IV"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_ER_IV"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_ER_IV</defName>
@@ -315,12 +317,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_ER_V"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_ER_V"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_ER_V</defName>
@@ -328,12 +330,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_Kitchen_I"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_Kitchen_I"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_Kitchen_I</defName>
@@ -341,12 +343,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_Kitchen_II"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_Kitchen_II"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_Kitchen_II</defName>
@@ -354,12 +356,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_Kitchen_III"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_Kitchen_III"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_Kitchen_III</defName>
@@ -367,12 +369,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_Kitchen_IV"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_Kitchen_IV"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_Kitchen_IV</defName>
@@ -380,12 +382,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_Kitchen_V"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_Kitchen_V"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_Kitchen_V</defName>
@@ -393,12 +395,12 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-			<li Class="PatchOperationConditional">
-				<xpath>/Defs/RaceExemption[defName="RPP_Bot_Omni_V"]</xpath>
-				<nomatch Class="PatchOperationAdd">
-					<xpath>/Defs</xpath>
+					</nomatch>
+				</li>
+				<li Class="PatchOperationConditional">
+					<xpath>/Defs/RaceExemption[defName="RPP_Bot_Omni_V"]</xpath>
+					<nomatch Class="PatchOperationAdd">
+						<xpath>/Defs</xpath>
 						<value>
 							<SurvivalTools.RaceExemption>
 								<defName>RPP_Bot_Omni_V</defName>
@@ -406,9 +408,9 @@
 								<all>true</all>
 							</SurvivalTools.RaceExemption>
 						</value>
-				</nomatch>
-			</li>
-            </operations>
-        </match>
+					</nomatch>
+				</li>
+			</operations>
+		</match>
 	</Operation>
 </Patch>

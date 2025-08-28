@@ -6,81 +6,81 @@
         </mods>
         <match Class="PatchOperationSequence">
             <success>Always</success>
-            <operations>             
+            <operations>
 
-<li Class="PatchOperationAddModExtension">
+                <li Class="PatchOperationAddModExtension">
                     <xpath>Defs/ThingDef[defName="VWE_Zal_Hammer"]</xpath>
                     <value>
-                     <li Class="SurvivalTools.SurvivalToolProperties">
-                <baseWorkStatFactors>
-                    <ConstructionSpeed>1.0</ConstructionSpeed>
-                    <ConstructSuccessChance>1.0</ConstructSuccessChance>
-                </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Constructor</li>
-                </defaultSurvivalToolAssignmentTags>
-            </li>
+                        <li Class="SurvivalTools.SurvivalToolProperties">
+                            <baseWorkStatFactors>
+                                <ConstructionSpeed>1.0</ConstructionSpeed>
+                                <ConstructSuccessChance>1.0</ConstructSuccessChance>
+                            </baseWorkStatFactors>
+                            <defaultSurvivalToolAssignmentTags>
+                                <li>Constructor</li>
+                            </defaultSurvivalToolAssignmentTags>
+                        </li>
                     </value>
                 </li>
 
-<li Class="PatchOperationAddModExtension">
+                <li Class="PatchOperationAddModExtension">
                     <xpath>Defs/ThingDef[defName="VWE_Zal_Pickaxe"]</xpath>
                     <value>
-                     <li Class="SurvivalTools.SurvivalToolProperties">
-                <baseWorkStatFactors>
-                    <DiggingSpeed>1.1</DiggingSpeed>
-                    <MiningYieldDigging>1.1</MiningYieldDigging>
-                </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Miner</li>
-                </defaultSurvivalToolAssignmentTags>
-            </li>
+                        <li Class="SurvivalTools.SurvivalToolProperties">
+                            <baseWorkStatFactors>
+                                <DiggingSpeed>1.1</DiggingSpeed>
+                                <MiningYieldDigging>1.1</MiningYieldDigging>
+                            </baseWorkStatFactors>
+                            <defaultSurvivalToolAssignmentTags>
+                                <li>Miner</li>
+                            </defaultSurvivalToolAssignmentTags>
+                        </li>
                     </value>
                 </li>
 
-<li Class="PatchOperationAddModExtension">
+                <li Class="PatchOperationAddModExtension">
                     <xpath>Defs/ThingDef[defName="VWE_Zal_Hatchet"]</xpath>
                     <value>
-                      <li Class="SurvivalTools.SurvivalToolProperties">
-                <baseWorkStatFactors>
-                    <PlantHarvestingSpeed>1.1</PlantHarvestingSpeed>
-                </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>PlantWorker</li>
-                </defaultSurvivalToolAssignmentTags>
-            </li>
+                        <li Class="SurvivalTools.SurvivalToolProperties">
+                            <baseWorkStatFactors>
+                                <PlantHarvestingSpeed>1.1</PlantHarvestingSpeed>
+                            </baseWorkStatFactors>
+                            <defaultSurvivalToolAssignmentTags>
+                                <li>PlantWorker</li>
+                            </defaultSurvivalToolAssignmentTags>
+                        </li>
                     </value>
                 </li>
 
- <li Class="PatchOperationAddModExtension">
+                <li Class="PatchOperationAddModExtension">
                     <xpath>Defs/ThingDef[defName="VWE_Zal_Shovel"]</xpath>
                     <value>
-                     <li Class="SurvivalTools.SurvivalToolProperties">
-                <baseWorkStatFactors>                   
-			<DiggingSpeed>1.1</DiggingSpeed>
-                    <MiningYieldDigging>1.1</MiningYieldDigging>
-		   <PlantHarvestingSpeed>1.1</PlantHarvestingSpeed>
-                </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Miner</li>
-			<li>PlantWorker</li>
-                </defaultSurvivalToolAssignmentTags>
-				</li>
-				</value>
-            </li>
+                        <li Class="SurvivalTools.SurvivalToolProperties">
+                            <baseWorkStatFactors>
+                                <DiggingSpeed>1.1</DiggingSpeed>
+                                <MiningYieldDigging>1.1</MiningYieldDigging>
+                                <PlantHarvestingSpeed>1.1</PlantHarvestingSpeed>
+                            </baseWorkStatFactors>
+                            <defaultSurvivalToolAssignmentTags>
+                                <li>Miner</li>
+                                <li>PlantWorker</li>
+                            </defaultSurvivalToolAssignmentTags>
+                        </li>
+                    </value>
+                </li>
 
-<li Class="PatchOperationAddModExtension">
+                <li Class="PatchOperationAddModExtension">
                     <xpath>Defs/ThingDef[defName="VWE_Zal_Wrench"]</xpath>
                     <value>
-                     <li Class="SurvivalTools.SurvivalToolProperties">
-                <baseWorkStatFactors>
-                    <ConstructionSpeed>1.1</ConstructionSpeed>
-                    <ConstructSuccessChance>1.1</ConstructSuccessChance>
-                </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Constructor</li>
-                </defaultSurvivalToolAssignmentTags>
-            </li>
+                        <li Class="SurvivalTools.SurvivalToolProperties">
+                            <baseWorkStatFactors>
+                                <ConstructionSpeed>1.1</ConstructionSpeed>
+                                <ConstructSuccessChance>1.1</ConstructSuccessChance>
+                            </baseWorkStatFactors>
+                            <defaultSurvivalToolAssignmentTags>
+                                <li>Constructor</li>
+                            </defaultSurvivalToolAssignmentTags>
+                        </li>
                     </value>
                 </li>
 

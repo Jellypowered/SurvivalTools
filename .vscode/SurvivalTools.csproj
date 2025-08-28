@@ -12,25 +12,17 @@
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <RimWorldPath Condition="'$(RimWorldPath)' == '' AND '$(OS)' == 'Windows_NT'">F:/SteamLibrary/steamapps/common/RimWorld/RimWorldWin64_Data/Managed</RimWorldPath
-    >
-    <RimWorldPath Condition="'$(RimWorldPath)' == '' AND '$(OS)' != 'Windows_NT'">../../../RimWorldLinux_Data/Managed</RimWorldPath
-    >
+    <RimWorldPath Condition="'$(RimWorldPath)' == '' AND '$(OS)' == 'Windows_NT'">F:/SteamLibrary/steamapps/common/RimWorld/RimWorldWin64_Data/Managed</RimWorldPath>
+    <RimWorldPath Condition="'$(RimWorldPath)' == '' AND '$(OS)' != 'Windows_NT'">../../../RimWorldLinux_Data/Managed</RimWorldPath>
   </PropertyGroup>
   <ItemGroup>
     <!-- Mod -->
-    <Compile Include="../Source/AI/*" />
-    <Compile Include="../Source/Alerts/*" />
-    <Compile Include="../Source/DefOfs/*" />
-    <Compile Include="../Source/Harmony/*" />
-    <Compile Include="../Source/ModExtensions/*" />
-    <Compile Include="../Source/Rendering/*" />
-    <Compile Include="../Source/Stats/*" />
-    <Compile Include="../Source/ToolAssignments/*" />
-    <Compile Include="../Source/*" />
+    <Compile Include="..\Source/**" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.4523" />
-    <PackageReference Include="Lib.Harmony" Version="2.3.6" />
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.4543" />
+    <PackageReference Include="Lib.Harmony" Version="2.4.1" ExcludeAssets="runtime">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 </Project>

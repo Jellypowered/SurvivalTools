@@ -1,12 +1,14 @@
 <Patch>
+
   <!-- Only run if RimBees is loaded -->
   <Operation Class="PatchOperationFindMod">
     <mods>
-      <li>RimBees</li>
+      <li>Alpha Bees</li>
     </mods>
     <match Class="PatchOperationSequence">
       <success>Always</success>
       <operations>
+
         <!-- 1) Define a new stuff category once (safe if already present) -->
         <li Class="PatchOperationConditional">
           <xpath>Defs/StuffCategoryDef[defName="SurvivalTools_Wax"]</xpath>
@@ -20,9 +22,12 @@
             </value>
           </nomatch>
         </li>
+
         <!-- Helper: ensure a ThingDef has stuffProps/categories path -->
         <!-- We repeat the same ensure-then-add pattern per wax def for safety. -->
+
         <!-- 2) Tag RimBees waxes with the new category -->
+
         <!-- RB_Beeswax -->
         <li Class="PatchOperationSequence">
           <success>Always</success>
@@ -61,6 +66,7 @@
             </li>
           </operations>
         </li>
+
         <!-- RB_Brittlewax -->
         <li Class="PatchOperationSequence">
           <success>Always</success>
@@ -96,6 +102,7 @@
             </li>
           </operations>
         </li>
+
         <!-- RB_RedBeeswax -->
         <li Class="PatchOperationSequence">
           <success>Always</success>
@@ -131,6 +138,7 @@
             </li>
           </operations>
         </li>
+
         <!-- RB_WhiteBeeswax -->
         <li Class="PatchOperationSequence">
           <success>Always</success>
@@ -166,12 +174,14 @@
             </li>
           </operations>
         </li>
+
         <!-- RB_BlackBeeswax -->
         <li Class="PatchOperationSequence">
           <success>Always</success>
           <operations>
             <li Class="PatchOperationConditional">
               <xpath>Defs/ThingDef[defName="RB_BlackBeeswax"]/stuffProps</xpath>
+
               <nomatch Class="PatchOperationAdd">
                 <xpath>Defs/ThingDef[defName="RB_BlackBeeswax"]</xpath>
                 <value>
@@ -183,6 +193,7 @@
             </li>
             <li Class="PatchOperationConditional">
               <xpath>Defs/ThingDef[defName="RB_BlackBeeswax"]/stuffProps/categories</xpath>
+
               <nomatch Class="PatchOperationAdd">
                 <xpath>Defs/ThingDef[defName="RB_BlackBeeswax"]/stuffProps</xpath>
                 <value>
@@ -201,8 +212,10 @@
             </li>
           </operations>
         </li>
+
         <!-- 3) Allow your tools to accept that category (Axe, Pickaxe, Hammer, Sickle). 
                Add Multitool here too if you want waxable sci-fi madness. -->
+
         <!-- Helper sequence to ensure a tool has stuffCategories, then add our category if missing -->
         <!-- Axe -->
         <li Class="PatchOperationSequence">
@@ -228,77 +241,83 @@
             </li>
           </operations>
         </li>
+
         <!-- Pickaxe -->
         <li Class="PatchOperationSequence">
           <success>Always</success>
           <operations>
             <li Class="PatchOperationConditional">
               <xpath>Defs/ThingDef[defName="SurvivalTools_Pickaxe"]/stuffCategories</xpath>
+
               <xpath>Defs/ThingDef[defName="SurvivalTools_Pickaxe"]</xpath>
               <value>
                 <stuffCategories/>
               </value>
-            </li>
-            <li Class="PatchOperationConditional">
-              <xpath>Defs/ThingDef[defName="SurvivalTools_Pickaxe"]/stuffCategories/li[text()="SurvivalTools_Wax"]</xpath>
-              <nomatch Class="PatchOperationAdd">
-                <xpath>Defs/ThingDef[defName="SurvivalTools_Pickaxe"]/stuffCategories</xpath>
-                <value>
-                  <li>SurvivalTools_Wax</li>
-                </value>
-              </nomatch>
-            </li>
-          </operations>
-        </li>
-        <!-- Hammer -->
-        <li Class="PatchOperationSequence">
-          <success>Always</success>
-          <operations>
-            <li Class="PatchOperationConditional">
+            </nomatch>
+          </li>
+          <li Class="PatchOperationConditional">
+            <xpath>Defs/ThingDef[defName="SurvivalTools_Pickaxe"]/stuffCategories/li[text()="SurvivalTools_Wax"]</xpath>
+            <nomatch Class="PatchOperationAdd">
+              <xpath>Defs/ThingDef[defName="SurvivalTools_Pickaxe"]/stuffCategories</xpath>
+              <value>
+                <li>SurvivalTools_Wax</li>
+              </value>
+            </nomatch>
+          </li>
+        </operations>
+      </li>
+
+      <!-- Hammer -->
+      <li Class="PatchOperationSequence">
+        <success>Always</success>
+        <operations>
+          <li Class="PatchOperationConditional">
+            <xpath>Defs/ThingDef[defName="SurvivalTools_Hammer"]/stuffCategories</xpath>
+            <nomatch Class="PatchOperationAdd">
+              <xpath>Defs/ThingDef[defName="SurvivalTools_Hammer"]</xpath>
+              <value>
+                <stuffCategories/>
+              </value>
+            </nomatch>
+          </li>
+          <li Class="PatchOperationConditional">
+            <xpath>Defs/ThingDef[defName="SurvivalTools_Hammer"]/stuffCategories/li[text()="SurvivalTools_Wax"]</xpath>
+            <nomatch Class="PatchOperationAdd">
               <xpath>Defs/ThingDef[defName="SurvivalTools_Hammer"]/stuffCategories</xpath>
-              <nomatch Class="PatchOperationAdd">
-                <xpath>Defs/ThingDef[defName="SurvivalTools_Hammer"]</xpath>
-                <value>
-                  <stuffCategories/>
-                </value>
-              </nomatch>
-            </li>
-            <li Class="PatchOperationConditional">
-              <xpath>Defs/ThingDef[defName="SurvivalTools_Hammer"]/stuffCategories/li[text()="SurvivalTools_Wax"]</xpath>
-              <nomatch Class="PatchOperationAdd">
-                <xpath>Defs/ThingDef[defName="SurvivalTools_Hammer"]/stuffCategories</xpath>
-                <value>
-                  <li>SurvivalTools_Wax</li>
-                </value>
-              </nomatch>
-            </li>
-          </operations>
-        </li>
-        <!-- Sickle -->
-        <li Class="PatchOperationSequence">
-          <success>Always</success>
-          <operations>
-            <li Class="PatchOperationConditional">
+              <value>
+                <li>SurvivalTools_Wax</li>
+              </value>
+            </nomatch>
+          </li>
+        </operations>
+      </li>
+
+      <!-- Sickle -->
+      <li Class="PatchOperationSequence">
+        <success>Always</success>
+        <operations>
+          <li Class="PatchOperationConditional">
+            <xpath>Defs/ThingDef[defName="SurvivalTools_Sickle"]/stuffCategories</xpath>
+            <nomatch Class="PatchOperationAdd">
+              <xpath>Defs/ThingDef[defName="SurvivalTools_Sickle"]</xpath>
+              <value>
+                <stuffCategories/>
+              </value>
+            </nomatch>
+          </li>
+          <li Class="PatchOperationConditional">
+            <xpath>Defs/ThingDef[defName="SurvivalTools_Sickle"]/stuffCategories/li[text()="SurvivalTools_Wax"]</xpath>
+            <nomatch Class="PatchOperationAdd">
               <xpath>Defs/ThingDef[defName="SurvivalTools_Sickle"]/stuffCategories</xpath>
-              <nomatch Class="PatchOperationAdd">
-                <xpath>Defs/ThingDef[defName="SurvivalTools_Sickle"]</xpath>
-                <value>
-                  <stuffCategories/>
-                </value>
-              </nomatch>
-            </li>
-            <li Class="PatchOperationConditional">
-              <xpath>Defs/ThingDef[defName="SurvivalTools_Sickle"]/stuffCategories/li[text()="SurvivalTools_Wax"]</xpath>
-              <nomatch Class="PatchOperationAdd">
-                <xpath>Defs/ThingDef[defName="SurvivalTools_Sickle"]/stuffCategories</xpath>
-                <value>
-                  <li>SurvivalTools_Wax</li>
-                </value>
-              </nomatch>
-            </li>
-          </operations>
-        </li>
-        <!-- Uncomment if you want the Multitool to allow wax as well
+              <value>
+                <li>SurvivalTools_Wax</li>
+              </value>
+            </nomatch>
+          </li>
+        </operations>
+      </li>
+
+      <!-- Uncomment if you want the Multitool to allow wax as well
         <li Class="PatchOperationSequence">
           <success>Always</success>
           <operations>
@@ -321,7 +340,9 @@
           </operations>
         </li>
         -->
-      </operations>
-    </match>
-  </Operation>
+
+    </operations>
+  </match>
+</Operation>
+
 </Patch>
