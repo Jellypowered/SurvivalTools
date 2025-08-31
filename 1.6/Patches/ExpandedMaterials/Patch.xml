@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Patch>
+  <Operation Class="PatchOperationFindMod">
+    <mods>
+      <li>Expanded Materials - Metals</li>
+    </mods>
+    <match Class="PatchOperationSequence">
+      <success>Always</success>
+      <operations>
+
+        <!-- Copper -->
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="EM_Copper"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.75</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.75</PlantHarvestingSpeed>
+                <DiggingSpeed>0.7</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.7</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.2</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+
+        <!-- Lead -->
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="EM_Lead"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.7</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.7</PlantHarvestingSpeed>
+                <DiggingSpeed>0.65</DiggingSpeed>
+                <MiningYieldDigging>0.85</MiningYieldDigging>
+                <ConstructionSpeed>1.1</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.25</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+
+        <!-- Bronze -->
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="EM_Bronze"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.85</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.85</PlantHarvestingSpeed>
+                <DiggingSpeed>0.8</DiggingSpeed>
+                <MiningYieldDigging>0.9</MiningYieldDigging>
+                <ConstructionSpeed>0.8</ConstructionSpeed>
+              </toolStatFactors>
+              <wearFactorMultiplier>1.15</wearFactorMultiplier>
+            </li>
+          </value>
+        </li>
+
+        <!-- Iron (add MiningYieldDigging for consistency) -->
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="EM_Iron"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.9</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.9</PlantHarvestingSpeed>
+                <DiggingSpeed>0.9</DiggingSpeed>
+                <MiningYieldDigging>0.95</MiningYieldDigging>
+                <ConstructionSpeed>0.9</ConstructionSpeed>
+              </toolStatFactors>
+            </li>
+          </value>
+        </li>
+
+        <!-- Mild Steel -->
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="EM_MildSteel"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>0.95</TreeFellingSpeed>
+                <PlantHarvestingSpeed>0.95</PlantHarvestingSpeed>
+                <DiggingSpeed>0.95</DiggingSpeed>
+                <ConstructionSpeed>0.95</ConstructionSpeed>
+              </toolStatFactors>
+            </li>
+          </value>
+        </li>
+
+        <!-- Stainless Steel -->
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="EM_StainlessSteel"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                <TreeFellingSpeed>1.1</TreeFellingSpeed>
+                <PlantHarvestingSpeed>1.1</PlantHarvestingSpeed>
+                <DiggingSpeed>1.05</DiggingSpeed>
+                <ConstructionSpeed>1.05</ConstructionSpeed>
+              </toolStatFactors>
+            </li>
+          </value>
+        </li>
+
+        <!-- Tempered Steel -->
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="EM_TemperedSteel"]</xpath>
+          <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+              <toolStatFactors>
+                  <TreeFellingSpeed>1.25</TreeFellingSpeed>
+                  <PlantHarvestingSpeed>1.25</PlantHarvestingSpeed>
+                  <DiggingSpeed>1.1</DiggingSpeed>
+                  <MiningYieldDigging>1.1</MiningYieldDigging>
+                  <ConstructionSpeed>1.1</ConstructionSpeed>
+                </toolStatFactors>
+                <wearFactorMultiplier>0.9</wearFactorMultiplier>
+              </li>
+            </value>
+        </li>
+
+        <!-- Titanium -->
+        <li Class="PatchOperationAddModExtension">
+            <xpath>Defs/ThingDef[defName="EM_Titanium"]</xpath>
+            <value>
+              <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                  <TreeFellingSpeed>1.3</TreeFellingSpeed>
+                  <PlantHarvestingSpeed>1.3</PlantHarvestingSpeed>
+                  <DiggingSpeed>0.95</DiggingSpeed>
+                  <ConstructionSpeed>0.95</ConstructionSpeed>
+                </toolStatFactors>
+              </li>
+            </value>
+        </li>
+
+      </operations>
+    </match>
+  </Operation>
+</Patch>
