@@ -85,20 +85,16 @@ namespace SurvivalTools
             staGeneral.label = "General Worker"; // This will be the default assignment
             staGeneral.filter.SetDisallowAll();
 
-            // Add all essential tool types to the default assignment
+            // Add ALL tool types to the default assignment - let colonists use any appropriate tool
             foreach (ThingDef tDef in DefDatabase<ThingDef>.AllDefs)
             {
                 var toolProps = tDef.GetModExtension<SurvivalToolProperties>();
                 var tags = toolProps?.defaultSurvivalToolAssignmentTags;
                 if (tags == null) continue;
 
-                // Include Constructor, PlantWorker, Researcher, and Cleaner tools in the default
-                // (but not specialized Miner, Medical, or Butcher tools unless needed)
-                if (tags.Contains("Constructor") || tags.Contains("PlantWorker") ||
-                    tags.Contains("Researcher") || tags.Contains("Cleaner"))
-                {
-                    staGeneral.filter.SetAllow(tDef, true);
-                }
+                // Include ALL tools in the default assignment - this allows maximum flexibility
+                // Colonists will automatically pick up and use any tool that helps their assigned work
+                staGeneral.filter.SetAllow(tDef, true);
             }
 
             var staAnything = MakeNewSurvivalToolAssignment();
