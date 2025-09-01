@@ -12,46 +12,38 @@ namespace SurvivalTools.HarmonyStuff
     {
         public static void Postfix(ThingDef __instance, ref IEnumerable<StatDrawEntry> __result, StatRequest req)
         {
-            // Start with the original list
             var list = (__result as List<StatDrawEntry>) ?? __result.ToList();
 
             // Tool def (not a concrete thing)
-            SurvivalToolProperties tProps;
-            if (req.Thing == null && __instance.IsSurvivalTool(out tProps) && tProps?.baseWorkStatFactors != null)
+            if (req.Thing == null && __instance.IsSurvivalTool(out var tProps) && tProps?.baseWorkStatFactors != null)
             {
-                foreach (var modifier in tProps.baseWorkStatFactors)
-                {
-                    if (modifier?.stat == null) continue;
-
-                    list.Add(new StatDrawEntry(
-                        ST_StatCategoryDefOf.SurvivalTool,
-                        modifier.stat.LabelCap,
-                        modifier.value.ToStringByStyle(ToStringStyle.PercentZero, ToStringNumberSense.Factor),
-                        modifier.stat.description,
-                        displayPriorityWithinCategory: 0
-                    ));
-                }
+                AddStatDrawEntries(list, tProps.baseWorkStatFactors, ST_StatCategoryDefOf.SurvivalTool);
             }
 
             // Stuff defs that affect tools
             var sPropsTool = __instance.IsStuff ? __instance.GetModExtension<StuffPropsTool>() : null;
             if (sPropsTool?.toolStatFactors != null)
             {
-                foreach (var modifier in sPropsTool.toolStatFactors)
-                {
-                    if (modifier?.stat == null) continue;
-
-                    list.Add(new StatDrawEntry(
-                        ST_StatCategoryDefOf.SurvivalToolMaterial,
-                        modifier.stat.LabelCap,
-                        modifier.value.ToStringByStyle(ToStringStyle.PercentZero, ToStringNumberSense.Factor),
-                        modifier.stat.description,
-                        displayPriorityWithinCategory: 0
-                    ));
-                }
+                AddStatDrawEntries(list, sPropsTool.toolStatFactors, ST_StatCategoryDefOf.SurvivalToolMaterial);
             }
 
             __result = list;
+        }
+
+        private static void AddStatDrawEntries(List<StatDrawEntry> list, IEnumerable<StatModifier> modifiers, StatCategoryDef category)
+        {
+            foreach (var modifier in modifiers)
+            {
+                if (modifier?.stat == null) continue;
+
+                list.Add(new StatDrawEntry(
+                    category,
+                    modifier.stat.LabelCap,
+                    modifier.value.ToStringByStyle(ToStringStyle.PercentZero, ToStringNumberSense.Factor),
+                    modifier.stat.description,
+                    displayPriorityWithinCategory: 0
+                ));
+            }
         }
     }
 }

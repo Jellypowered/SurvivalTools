@@ -2,17 +2,42 @@
 
     <ConceptDef>
         <defName>UsingSurvivalTools</defName>
-        <label>Survival Tools: Using tools</label>
+        <label>Survival Tools: Intelligent Tool Usage</label>
         <priority>50</priority>
-        <helpText>Colonists will automatically use any tools that they're capable of using from their main hand and their inventory, and will only use the best tools that they have for certain work tasks. Any tools that a colonist is currently using will be marked as 'in use'.</helpText>
+        <helpText>The mod features advanced tool management systems that maximize efficiency and productivity:
+
+AUTOMATIC OPTIMIZATION:
+• Colonists automatically select the best available tools for each task
+• They prioritize equipped tools over inventory tools when multiple options exist
+• Tools currently being used are marked as 'in use' to prevent conflicts
+
+SMART FEATURES:
+• Pre-work tool pickup: Colonists acquire optimal tools before starting jobs
+• Automatic tool swapping: They'll upgrade to better tools when available
+• Intelligent inventory management: Excess or inferior tools are dropped as needed
+
+This creates a seamless workflow where colonists always work with the most effective equipment available.</helpText>
         <needsOpportunity>true</needsOpportunity>
     </ConceptDef>
 
     <ConceptDef>
         <defName>SurvivalToolDegradation</defName>
-        <label>Survival Tools: Tool degradation</label>
+        <label>Survival Tools: Maintenance and Durability</label>
         <priority>50</priority>
-        <helpText>As colonists use tools that are either in their inventory or main hand, those tools will degrade over use and eventually break.\n\nYou can see how much continous use a tool can take before breaking by viewing its info card, though the readout doesn't factor in the tool's current condition.</helpText>
+        <helpText>Tools are not permanent and require ongoing maintenance to remain effective:
+
+DEGRADATION MECHANICS:
+• Tools wear down with each use, eventually breaking completely
+• Degradation rate varies by difficulty mode (up to 87.5% faster in Extra Hardcore)
+• Different materials and tool quality affect durability significantly
+
+MANAGEMENT STRATEGIES:
+• Check tool condition via info cards to plan replacements
+• Maintain backup tools for critical tasks
+• Monitor the "Tools need replacing" alert for tools near failure
+• Consider material choice when crafting - better materials last longer
+
+The estimated lifespan shown on tool info cards reflects continuous usage but doesn't account for current condition, so damaged tools will break sooner than indicated.</helpText>
         <needsOpportunity>true</needsOpportunity>
     </ConceptDef>
 

@@ -25,10 +25,9 @@ namespace SurvivalTools
         public override void DoCell(Rect rect, Pawn pawn, PawnTable table)
         {
             var tracker = pawn?.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
-            if (tracker == null)
-                return;
+            if (tracker == null) return;
 
-            bool somethingIsForced = tracker.forcedHandler != null && tracker.forcedHandler.SomethingForced;
+            bool somethingIsForced = tracker.forcedHandler?.SomethingForced == true;
 
             int leftWidth = Mathf.FloorToInt((rect.width - 4f) * 0.71428573f);
             int rightWidth = Mathf.FloorToInt((rect.width - 4f) * 0.2857143f);

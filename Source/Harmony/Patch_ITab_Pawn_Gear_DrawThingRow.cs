@@ -30,120 +30,53 @@ namespace SurvivalTools.HarmonyStuff
             {
                 var ins = list[i];
 
-                // When we reach the call to Widgets.Label(Rect, string), the stack is: ..., rect, label
                 if (!didPatch && ins.Calls(MI_Widgets_Label))
                 {
-                    // Inject BEFORE the call so we transform the label argument:
-                    // Stack: ..., rect, label
-                    //   ldarg.3                  // Thing thing
-                    //   ldarg.0
-                    //   call     get_SelPawnForGear -> Pawn
-                    //   call     AdjustDisplayedLabel(string, Thing, Pawn) -> string
-                    // Result: ..., rect, adjustedLabel
-                    yield return new CodeInstruction(OpCodes.Ldarg_3);
-                    yield return new CodeInstruction(OpCodes.Ldarg_0);
-                    yield return new CodeInstruction(OpCodes.Call, MI_SelPawnForGear);
-                    yield return new CodeInstruction(OpCodes.Call, MI_Adjust);
-
+                    yield return new CodeInstruction(OpCodes.Ldarg_3); // thing
+                    yield return new CodeInstruction(OpCodes.Ldarg_0); // this
+                    yield return new CodeInstruction(OpCodes.Call, MI_SelPawnForGear); // SelPawnForGear
+                    yield return new CodeInstruction(OpCodes.Call, MI_Adjust); // AdjustDisplayedLabel(original, thing, pawn)
                     didPatch = true;
                 }
 
                 yield return ins;
             }
 
-            if (!didPatch)
+            if (!didPatch && SurvivalToolUtility.IsDebugLoggingEnabled)
             {
-                if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
-                {
-                    Log.Warning("[SurvivalTools] Failed to patch ITab_Pawn_Gear.DrawThingRow: Widgets.Label call not found.");
-                }
+                Log.Warning("[SurvivalTools] Failed to patch ITab_Pawn_Gear.DrawThingRow: Widgets.Label call not found.");
             }
         }
 
-        // unchanged logic—only called at the draw site now, so it can't be overwritten later
         public static string AdjustDisplayedLabel(string originalLabel, Thing thing, Pawn pawn)
         {
-            try
+            if (!(thing is SurvivalTool tool))
+                return originalLabel;
+
+            var tracker = pawn?.GetComp<Pawn_SurvivalToolAssignmentTracker>();
+            if (tracker != null && tracker.forcedHandler.IsForced(tool))
             {
-                if (thing is SurvivalTool tool)
+                originalLabel += $", {"ApparelForcedLower".Translate()}";
+            }
+
+            if (tool.InUse)
+            {
+                originalLabel += $", {"ToolInUse".Translate()}";
+
+                if (SurvivalToolUtility.IsDebugLoggingEnabled && pawn?.jobs?.curJob != null)
                 {
-                    // Forced tag (unchanged)
-                    var tracker = pawn?.GetComp<Pawn_SurvivalToolAssignmentTracker>();
-                    if (tracker != null && tracker.forcedHandler.IsForced(tool))
-                    {
-                        originalLabel += $", {"ApparelForcedLower".Translate()}";
-                    }
+                    var job = pawn.jobs.curJob;
+                    var relevantStats = SurvivalToolUtility.RelevantStatsFor(job.workGiverDef, job);
+                    var bestTool = pawn.GetBestSurvivalTool(relevantStats);
 
-                    // Active use check + info for Dev
-                    if (TryGetActiveUseInfo(tool, pawn, out var jobDef, out var activeStat, out var statFactor))
+                    if (bestTool == tool)
                     {
-                        originalLabel += $", {"ToolInUse".Translate()}";
-
-                        // Dev/Debug readout
-                        if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
-                        {
-                            string factorStr = statFactor.ToStringByStyle(ToStringStyle.Integer, ToStringNumberSense.Factor); // e.g., x125%
-                            originalLabel += $"  [job={(jobDef?.defName ?? "null")} • stat={(activeStat?.defName ?? "null")} • factor={factorStr}]";
-                        }
-                    }
-                    else if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
-                    {
-                        Log.Message($"[SurvivalTools.GearTab] Not in use: pawn='{pawn?.LabelShort ?? "null"}' " +
-                                    $"tool='{tool.LabelCap}' job='{pawn?.jobs?.curJob?.def?.defName ?? "null"}'.");
+                        originalLabel += $" [job={job.def.defName}]";
                     }
                 }
-            }
-            catch (System.Exception e)
-            {
-                Log.Warning($"[SurvivalTools] AdjustDisplayedLabel error: {e}");
             }
 
             return originalLabel;
         }
-
-        /// <summary>
-        /// Returns true if 'tool' is actively used for pawn's CURRENT job, and outputs the job, the deciding stat, and the tool's factor.
-        /// </summary>
-        private static bool TryGetActiveUseInfo(SurvivalTool tool, Pawn pawn, out JobDef jobDef, out StatDef decidingStat, out float factor)
-        {
-            jobDef = null;
-            decidingStat = null;
-            factor = 0f;
-
-            if (tool == null || pawn == null) return false;
-            if (!pawn.Spawned || pawn.Dead || pawn.Downed) return false;
-            if (pawn.Drafted || pawn.InMentalState) return false;
-            if (!pawn.CanUseSurvivalTools()) return false;
-
-            var job = pawn.jobs?.curJob;
-            var wg = job?.workGiverDef;
-            if (wg == null) return false;
-
-            var reqStats = wg.GetModExtension<WorkGiverExtension>()?.requiredStats;
-            if (reqStats == null || reqStats.Count == 0) return false;
-
-            // If this tool is the pawn's best for ANY required stat (and better than toolless), treat as "in use".
-            for (int i = 0; i < reqStats.Count; i++)
-            {
-                var stat = reqStats[i];
-                if (stat == null) continue;
-
-                SurvivalTool best;
-                float bestFactor;
-                if (pawn.HasSurvivalToolFor(stat, out best, out bestFactor))
-                {
-                    if (best == tool && tool.BetterThanWorkingToollessFor(stat))
-                    {
-                        jobDef = job.def;
-                        decidingStat = stat;
-                        factor = bestFactor; // already the factor from your utility (respects Hardcore no-tool baseline)
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
     }
 }

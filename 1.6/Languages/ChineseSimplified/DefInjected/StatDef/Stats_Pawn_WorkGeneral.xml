@@ -11,6 +11,29 @@
   <!-- Plant-related -->
   <PlantHarvestingSpeed.label>植物收获速度</PlantHarvestingSpeed.label>
   <PlantHarvestingSpeed.description>殖民者收获植物的速度.</PlantHarvestingSpeed.description>
+  <SowingSpeed.label>播种速度</SowingSpeed.label>
+  <SowingSpeed.description>殖民者播种和种植作物的速度.</SowingSpeed.description>
   <TreeFellingSpeed.label>伐木速度</TreeFellingSpeed.label>
   <TreeFellingSpeed.description>殖民者砍伐树木的速度.</TreeFellingSpeed.description>
+  <!-- Maintenance and repair-related -->
+  <MaintenanceSpeed.label>维护速度</MaintenanceSpeed.label>
+  <MaintenanceSpeed.description>殖民者对建筑物和设备进行维护和修理的速度.</MaintenanceSpeed.description>
+  <DeconstructionSpeed.label>拆除速度</DeconstructionSpeed.label>
+  <DeconstructionSpeed.description>殖民者拆除建筑物和设备的速度.</DeconstructionSpeed.description>
+  <!-- Research-related -->
+  <ResearchSpeed.label>研究速度</ResearchSpeed.label>
+  <ResearchSpeed.description>殖民者进行研究和实验的速度.</ResearchSpeed.description>
+  <!-- Cleaning-related -->
+  <CleaningSpeed.label>清洁速度</CleaningSpeed.label>
+  <CleaningSpeed.description>殖民者清理污垢和杂物的速度。任何人都可以清洁，但使用合适的工具会更快.</CleaningSpeed.description>
+  <!-- Medical-related -->
+  <MedicalOperationSpeed.label>医疗手术速度</MedicalOperationSpeed.label>
+  <MedicalOperationSpeed.description>殖民者进行医疗手术的速度.</MedicalOperationSpeed.description>
+  <MedicalSurgerySuccessChance.label>医疗手术成功率</MedicalSurgerySuccessChance.label>
+  <MedicalSurgerySuccessChance.description>殖民者的医疗手术成功而无并发症的可能性.</MedicalSurgerySuccessChance.description>
+  <!-- Butchery-related -->
+  <ButcheryFleshSpeed.label>屠宰速度</ButcheryFleshSpeed.label>
+  <ButcheryFleshSpeed.description>殖民者屠宰动物和处理肉类的速度.</ButcheryFleshSpeed.description>
+  <ButcheryFleshEfficiency.label>屠宰效率</ButcheryFleshEfficiency.label>
+  <ButcheryFleshEfficiency.description>殖民者从动物尸体中提取肉类和其他产品的数量.</ButcheryFleshEfficiency.description>
 </LanguageData>

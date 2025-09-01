@@ -8,27 +8,31 @@ namespace SurvivalTools
 {
     public class Alert_ColonistNeedsSurvivalTool : Alert
     {
-        public Alert_ColonistNeedsSurvivalTool()
-        {
-            defaultPriority = AlertPriority.High;
-        }
+        private List<Pawn> _culprits;
 
-        private IEnumerable<Pawn> ToollessWorkers
+        private List<Pawn> Culprits
         {
             get
             {
-                foreach (var pawn in PawnsFinder.AllMaps_FreeColonistsSpawned)
+                if (_culprits == null || Find.TickManager.TicksGame % 60 == 0)
                 {
-                    if (pawn != null && pawn.Spawned && pawn.CanUseSurvivalTools() && WorkingToolless(pawn))
-                        yield return pawn;
+                    _culprits = PawnsFinder.AllMaps_FreeColonistsSpawned
+                        .Where(p => p.Spawned && p.CanUseSurvivalTools() && IsWorkingToolless(p))
+                        .ToList();
                 }
+                return _culprits;
             }
         }
 
-        private static bool WorkingToolless(Pawn pawn)
+        private static bool IsWorkingToolless(Pawn pawn)
         {
-            var stats = pawn.AssignedToolRelevantWorkGiversStatDefs();
-            if (stats == null) return false;
+            // In hardcore mode, show alerts for all missing tools including optional ones (cleaning, butchery)
+            // In normal mode, only show alerts for tools that would actually block work
+            var stats = SurvivalTools.Settings?.hardcoreMode == true
+                ? pawn.AssignedToolRelevantWorkGiversStatDefsForAlerts()
+                : pawn.AssignedToolRelevantWorkGiversStatDefs();
+
+            if (stats.NullOrEmpty()) return false;
 
             foreach (var stat in stats)
             {
@@ -38,24 +42,26 @@ namespace SurvivalTools
             return false;
         }
 
-        private static string ToollessWorkTypesString(Pawn pawn)
+        private static string GetToollessWorkTypesString(Pawn pawn)
         {
             var types = new HashSet<string>();
             var givers = pawn.AssignedToolRelevantWorkGivers();
-            if (givers != null)
+            if (givers == null) return string.Empty;
+
+            foreach (var giver in givers)
             {
-                foreach (var giver in givers)
+                var ext = giver.def.GetModExtension<WorkGiverExtension>();
+                if (ext?.requiredStats == null) continue;
+
+                foreach (var stat in ext.requiredStats)
                 {
-                    if (giver?.def == null) continue;
-
-                    var ext = giver.def.GetModExtension<WorkGiverExtension>();
-                    if (ext?.requiredStats == null) continue;
-
-                    var label = giver.def.workType?.gerundLabel ?? giver.def.label;
-                    foreach (var stat in ext.requiredStats)
+                    // Only include stats that have tools available and the pawn lacks them
+                    if (SurvivalToolUtility.ToolsExistForStat(stat) && !pawn.HasSurvivalToolFor(stat))
                     {
-                        if (!pawn.HasSurvivalToolFor(stat))
-                            types.Add(label);
+                        // Use custom labels based on stat categories rather than work type
+                        var label = GetWorkTypeDisplayLabel(giver.def, ext.requiredStats);
+                        types.Add(label);
+                        break;
                     }
                 }
             }
@@ -63,22 +69,53 @@ namespace SurvivalTools
             return GenText.ToCommaList(types).CapitalizeFirst();
         }
 
+        private static string GetWorkTypeDisplayLabel(WorkGiverDef workGiverDef, List<StatDef> requiredStats)
+        {
+            // Check what kind of stats are required and return appropriate labels
+            var hasButcheryStats = requiredStats.Any(s => s == ST_StatDefOf.ButcheryFleshSpeed || s == ST_StatDefOf.ButcheryFleshEfficiency);
+            var hasMedicalStats = requiredStats.Any(s => s == ST_StatDefOf.MedicalOperationSpeed || s == ST_StatDefOf.MedicalSurgerySuccessChance);
+            var hasCleaningStats = requiredStats.Any(s => s == ST_StatDefOf.CleaningSpeed);
+
+            // Use descriptive labels based on the tool category rather than work type
+            if (hasButcheryStats)
+                return "butchering";
+            if (hasMedicalStats)
+                return "medical work";
+            if (hasCleaningStats)
+                return "cleaning";
+
+            // For other stats, use a generic description or fall back to work type
+            var stat = requiredStats.FirstOrDefault();
+            if (stat == ST_StatDefOf.TreeFellingSpeed)
+                return "tree felling";
+            if (stat == ST_StatDefOf.PlantHarvestingSpeed)
+                return "plant harvesting";
+            if (stat == ST_StatDefOf.SowingSpeed)
+                return "sowing";
+            if (stat == ST_StatDefOf.DiggingSpeed)
+                return "mining";
+            if (stat == ST_StatDefOf.ResearchSpeed)
+                return "research";
+            if (stat == StatDefOf.ConstructionSpeed)
+                return "construction";
+            if (stat == ST_StatDefOf.MaintenanceSpeed)
+                return "maintenance";
+
+            // Fallback to work type label
+            return workGiverDef.workType?.gerundLabel ?? workGiverDef.label;
+        }
+
         public override TaggedString GetExplanation()
         {
-            var culprits = ToollessWorkers.ToList();
-            if (culprits.Count == 0)
+            var culprits = Culprits;
+            if (culprits.NullOrEmpty())
                 return TaggedString.Empty;
 
             var sb = new StringBuilder();
-            sb.Append("ColonistNeedsSurvivalToolDesc".Translate()).Append(":\n");
-            for (int i = 0; i < culprits.Count; i++)
+            sb.AppendLine("ColonistNeedsSurvivalToolDesc".Translate());
+            foreach (var p in culprits)
             {
-                var p = culprits[i];
-                sb.Append("\n    ")
-                  .Append(p.LabelShort)
-                  .Append(" (")
-                  .Append(ToollessWorkTypesString(p))
-                  .Append(")");
+                sb.AppendLine($"    • {p.LabelShort} ({GetToollessWorkTypesString(p)})");
             }
 
             return sb.ToString();
@@ -86,14 +123,13 @@ namespace SurvivalTools
 
         public override string GetLabel()
         {
-            int count = ToollessWorkers.Take(2).Count();
-            return (count <= 1 ? "ColonistNeedsSurvivalTool" : "ColonistsNeedSurvivalTool").Translate();
+            int count = Culprits.Count;
+            return (count <= 1 ? "ColonistNeedsSurvivalTool" : "ColonistsNeedSurvivalTool").Translate(count);
         }
 
         public override AlertReport GetReport()
         {
-            var culprits = ToollessWorkers.ToList();
-            return culprits.Count == 0 ? AlertReport.Inactive : AlertReport.CulpritsAre(culprits);
+            return Culprits.Any() ? AlertReport.CulpritsAre(Culprits) : AlertReport.Inactive;
         }
     }
 }

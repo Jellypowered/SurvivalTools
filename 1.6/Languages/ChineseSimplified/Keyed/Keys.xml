@@ -5,28 +5,46 @@
   <!-- Settings -->
   <SurvivalToolsSettingsCategory>基础工具</SurvivalToolsSettingsCategory>
   <Settings_HardcoreMode>极限模式</Settings_HardcoreMode>
-  <Settings_HardcoreMode_Tooltip>工具磨损更快50%，并且大多数需要工具才能完成的任务在没有工具的情况下不再是可执行的。</Settings_HardcoreMode_Tooltip>
-  <Settings_ToolMapGen>废墟模式</Settings_ToolMapGen>
-  <Settings_ToolMapGen_Tooltip>无论工具是否劣质，都有可能产生于废墟中。</Settings_ToolMapGen_Tooltip>
-  <Settings_ToolLimit>工具极限</Settings_ToolLimit>
-  <Settings_ToolLimit_Tooltip>无论殖民者是否被限制都只能在背包中同时携带3个工具（除了商队任务）。</Settings_ToolLimit_Tooltip>
+  <Settings_HardcoreMode_Tooltip>大幅提升游戏难度，使工具成为生存必需品。没有合适的工具，殖民者将无法有效执行大多数工作任务。工具磨损速度也会增加50%，需要更频繁的更换和更好的工具管理。将游戏转变为真正依赖工具的生存体验。</Settings_HardcoreMode_Tooltip>
+  <Settings_ExtraHardcoreMode>超极限模式</Settings_ExtraHardcoreMode>
+  <Settings_ExtraHardcoreMode_Tooltip>终极难度：最极端的生存挑战。与极限模式结合时，殖民者在没有合适工具的情况下将变得完全无助。原本只是效率较低的任务（如徒手清洁或临时医疗护理）变得完全无法尝试。工具磨损速度比正常情况快87.5%，对工具生产和维护造成持续压力。使用下方复选框精确控制哪些工作类型需要工具依赖。警告：早期游戏变得极其困难——工具获取成为殖民地生存的关键！</Settings_ExtraHardcoreMode_Tooltip>
+  <Settings_RequireCleaningTools>需要清洁工具</Settings_RequireCleaningTools>
+  <Settings_RequireCleaningTools_Tooltip>强制殖民者在所有清洁任务中使用适当的清洁工具（如扫帚或拖把）。没有合适的工具，他们无法清洁地板、清除污垢或清理积雪。在极端难度模式下维持殖民地卫生的必要条件。</Settings_RequireCleaningTools_Tooltip>
+  <Settings_RequireButcheryTools>需要屠宰工具</Settings_RequireButcheryTools>
+  <Settings_RequireButcheryTools_Tooltip>要求在所有屠宰和宰杀作业中使用适当的切割工具（如刀具或切肉刀）。殖民者没有合适的刀具就无法处理肉类或宰杀动物。在硬核场景中对食物生产链至关重要。</Settings_RequireButcheryTools_Tooltip>
+  <Settings_RequireMedicalTools>需要医疗工具</Settings_RequireMedicalTools>
+  <Settings_RequireMedicalTools_Tooltip>强制在外科手术和高级医疗护理中使用专业医疗器械。没有适当的手术工具就无法进行手术，使医疗设备获取对殖民地健康和生存至关重要。</Settings_RequireMedicalTools_Tooltip>
+  <Settings_ToolMapGen>废墟建筑中的工具</Settings_ToolMapGen>
+  <Settings_ToolMapGen_Tooltip>在地图生成期间在古代废墟和坠毁结构中生成基本生存工具。这些风化的工具提供重要的早期游戏资源，但通常质量较低。在严酷难度模式下对于初期工具获取至关重要的殖民地来说是无价的。</Settings_ToolMapGen_Tooltip>
+  <Settings_ToolLimit>工具携带限制</Settings_ToolLimit>
+  <Settings_ToolLimit_Tooltip>限制殖民者同时在库存中最多携带2-3个工具（商队旅行除外）。强制殖民者之间进行战略工具管理和专业化。工具带和类似装备可以增加此限制。为工具使用添加现实的库存约束。</Settings_ToolLimit_Tooltip>
   <Settings_ToolDegradation>工具老化</Settings_ToolDegradation>
   <Settings_ToolDegradation_Tooltip>无论工具是否被使用都会老化。</Settings_ToolDegradation_Tooltip>
   <Settings_ToolDegradationRate>工具老化速度</Settings_ToolDegradationRate>
-  <Settings_ToolOptimization>工具优化</Settings_ToolOptimization>
-  <Settings_ToolOptimization_Tooltip>殖民者可能会优化他们背包中的工具，也可能不优化。禁用此项可以提高性能，并修复一些由其它材料mod制作基础工具带来的问题。</Settings_ToolOptimization_Tooltip>
+  <Settings_ToolOptimization>自动工具优化</Settings_ToolOptimization>
+  <Settings_ToolOptimization_Tooltip>启用智能工具管理，殖民者会自动选择并携带最有效的工具来完成分配的工作。他们会根据需要升级到更好的工具并丢弃劣质的工具。如果您更喜欢手动工具控制或遇到模组材料的性能问题，请禁用此功能。</Settings_ToolOptimization_Tooltip>
+  <Settings_PickupFromStorageOnly>限制从储存区域获取工具</Settings_PickupFromStorageOnly>
+  <Settings_PickupFromStorageOnly_Tooltip>启用时，殖民者只能从指定的储存区域获取工具，保持更好的组织性并防止他们从工作区域抓取工具。禁用时，他们可以拾取家园区域中任何可访问的工具（排除被禁止或燃烧的物品），提供更多灵活性但控制性较少。</Settings_PickupFromStorageOnly_Tooltip>
+  <Settings_DebugLogging>启用详细调试日志</Settings_DebugLogging>
+  <Settings_DebugLogging_Tooltip>激活工具选择决策、自动拾取行为和工作-工具匹配逻辑的全面日志记录。对于故障排除工具问题或了解殖民者为什么选择特定工具至关重要。仅建议用于模组开发或遇到工具相关问题时使用。大量日志输出可能影响性能。</Settings_DebugLogging_Tooltip>
+  <Settings_AutoTool>智能工作前工具拾取</Settings_AutoTool>
+  <Settings_AutoTool_Tooltip>通过让殖民者在开始任何工作前自动获取最优工具来革命性地提高工作流程效率。他们会智能地交换工具、升级到更好的变体，并确保拥有合适的设备以实现最大生产力。基于工具的无缝游戏体验的核心功能。</Settings_AutoTool_Tooltip>
   <!-- Alerts -->
-  <ColonistNeedsSurvivalTool>殖民者缺乏工具</ColonistNeedsSurvivalTool>
-  <ColonistsNeedSurvivalTool>殖民者们缺乏工具</ColonistsNeedSurvivalTool>
-  <ColonistNeedsSurvivalToolDesc>以下殖民者被分配的工作任务需要工具才能有效地执行，但是缺少工具来完成这些任务。</ColonistNeedsSurvivalToolDesc>
-  <SurvivalToolsNeedReplacing>工具需要更换</SurvivalToolsNeedReplacing>
-  <SurvivalToolNeedsReplacingDesc>以下殖民者使用的工具将在半日内损毁。</SurvivalToolNeedsReplacingDesc>
+  <ColonistNeedsSurvivalTool>殖民者缺乏必要工具</ColonistNeedsSurvivalTool>
+  <ColonistsNeedSurvivalTool>殖民者们缺乏必要工具</ColonistsNeedSurvivalTool>
+  <ColonistNeedsSurvivalToolDesc>这些殖民者需要适当的工具来完成分配的工作，但缺乏必要的设备。他们的生产力严重受损。</ColonistNeedsSurvivalToolDesc>
+  <SurvivalToolsNeedReplacing>工具即将损坏</SurvivalToolsNeedReplacing>
+  <SurvivalToolNeedsReplacingDesc>这些殖民者正在使用即将损坏的工具。立即更换以避免工作中断。</SurvivalToolNeedsReplacingDesc>
   <!-- Tool assignment management -->
   <ManageSurvivalToolAssignments>管理工具配置</ManageSurvivalToolAssignments>
   <SurvivalToolAssignment>工具分配</SurvivalToolAssignment>
   <SurvivalToolAssignmentConstructor>建造</SurvivalToolAssignmentConstructor>
   <SurvivalToolAssignmentMiner>采矿</SurvivalToolAssignmentMiner>
   <SurvivalToolAssignmentPlantWorker>种植</SurvivalToolAssignmentPlantWorker>
+  <SurvivalToolAssignmentResearcher>研究</SurvivalToolAssignmentResearcher>
+  <SurvivalToolAssignmentCleaner>清洁</SurvivalToolAssignmentCleaner>
+  <SurvivalToolAssignmentMedical>医疗</SurvivalToolAssignmentMedical>
+  <SurvivalToolAssignmentButcher>屠宰</SurvivalToolAssignmentButcher>
   <SelectSurvivalToolAssignment>选择工具配置…</SelectSurvivalToolAssignment>
   <NewSurvivalToolAssignment>新工具配置</NewSurvivalToolAssignment>
   <DeleteSurvivalToolAssignment>删除工具配置…</DeleteSurvivalToolAssignment>

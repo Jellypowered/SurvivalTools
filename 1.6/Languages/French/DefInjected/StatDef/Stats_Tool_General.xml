@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <ToolEstimatedLifespan.label>durée de vie estimée de l'outil</ToolEstimatedLifespan.label>
+    <ToolEstimatedLifespan.description>La quantité d'utilisation continue que cet outil peut supporter avant de se casser. Cela ne prend pas en compte l'état actuel de l'outil.</ToolEstimatedLifespan.description>
+    <ToolEffectivenessFactor.label>facteur d'efficacité de l'outil</ToolEffectivenessFactor.label>
+    <ToolEffectivenessFactor.description>Un multiplicateur global des modificateurs de statistiques de cet outil.</ToolEffectivenessFactor.description>
+</LanguageData>

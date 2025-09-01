@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+    <!-- Tool-related stats -->
+    <ToolEstimatedLifespan.label>道具の推定寿命</ToolEstimatedLifespan.label>
+    <ToolEstimatedLifespan.description>この道具が壊れるまでに耐えられる連続使用時間。道具の現在の状態は考慮されません。</ToolEstimatedLifespan.description>
+
+    <ToolEffectivenessFactor.label>道具効果係数</ToolEffectivenessFactor.label>
+    <ToolEffectivenessFactor.description>この道具の能力値修正の全体的な倍率。</ToolEffectivenessFactor.description>
+
+</LanguageData>

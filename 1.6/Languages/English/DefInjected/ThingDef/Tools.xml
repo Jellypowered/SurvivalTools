@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+    <!-- Basic/Primitive Tools -->
+    <SurvivalTools_Axe.label>axe</SurvivalTools_Axe.label>
+    <SurvivalTools_Axe.description>A fundamental forestry tool designed for efficient tree felling. Its weighted head delivers powerful cutting strikes, making it indispensable for colonists working with wood. The balance and leverage make it far superior to improvised cutting methods. Also serves as a reliable melee weapon when survival demands it.</SurvivalTools_Axe.description>
+
+    <SurvivalTools_Pickaxe.label>pickaxe</SurvivalTools_Pickaxe.label>
+    <SurvivalTools_Pickaxe.description>An essential mining implement featuring a heavy, pointed head mounted on a sturdy handle. Specifically engineered to break through solid rock and extract valuable materials efficiently. The concentrated force and leverage it provides are crucial for productive mining operations. Can double as an improvised weapon when circumstances require it.</SurvivalTools_Pickaxe.description>
+
+    <SurvivalTools_Hammer.label>hammer</SurvivalTools_Hammer.label>
+    <SurvivalTools_Hammer.description>The cornerstone tool of any construction project. This versatile hammer provides the precision and force needed for driving fasteners, shaping materials, and assembling structures. Essential for colonists engaged in building and maintenance work. Its balanced design ensures effective strikes while minimizing fatigue during extended construction tasks.</SurvivalTools_Hammer.description>
+
+    <SurvivalTools_Sickle.label>sickle</SurvivalTools_Sickle.label>
+    <SurvivalTools_Sickle.description>A specialized agricultural tool featuring a curved cutting blade perfectly designed for harvesting crops and cutting plant matter. The ergonomic design allows for efficient, repetitive cutting motions while reducing strain on the user. Essential for productive farming operations and plant maintenance tasks.</SurvivalTools_Sickle.description>
+
+    <SurvivalTools_Hoe.label>hoe</SurvivalTools_Hoe.label>
+    <SurvivalTools_Hoe.description>A fundamental agricultural implement engineered for soil preparation and seed planting. The pointed design efficiently breaks through earth and creates optimal planting conditions. Indispensable for establishing productive farming operations and maintaining crop yields. Its sturdy construction ensures reliable performance season after season.</SurvivalTools_Hoe.description>
+
+    <SurvivalTools_Knife.label>knife</SurvivalTools_Knife.label>
+    <SurvivalTools_Knife.description>A versatile cutting implement with a sharp blade essential for precise work. Perfect for butchery operations, medical procedures, and general cutting tasks. The balanced design allows for controlled, accurate cuts while the keen edge ensures clean work. An indispensable tool for any serious colonist.</SurvivalTools_Knife.description>
+
+    <SurvivalTools_HandSaw.label>hand saw</SurvivalTools_HandSaw.label>
+    <SurvivalTools_HandSaw.description>A traditional woodworking tool featuring a metal blade with precisely cut teeth designed for manual lumber processing. Essential for construction projects requiring custom-cut timber and detailed woodwork. The steady rhythm of hand-sawing may take longer than power tools, but provides excellent control and precision.</SurvivalTools_HandSaw.description>
+
+    <SurvivalTools_BoneSickle.label>bone sickle</SurvivalTools_BoneSickle.label>
+    <SurvivalTools_BoneSickle.description>A primitive harvesting tool crafted from carved bone with a sharpened edge. While not as durable as metal variants, this traditional implement serves admirably for crop harvesting and plant cutting. The curved design follows ancient patterns proven effective across countless generations of agricultural work.</SurvivalTools_BoneSickle.description>
+
+    <SurvivalTools_PrimitiveLever.label>pry bar</SurvivalTools_PrimitiveLever.label>
+    <SurvivalTools_PrimitiveLever.description>A primitive but effective leverage tool crafted from durable materials. Essential for dismantling structures, prying apart materials, and performing basic mechanical operations. Represents the ingenuity of early civilizations in developing practical solutions for construction and deconstruction tasks without advanced technology.</SurvivalTools_PrimitiveLever.description>
+
+    <SurvivalTools_Abacus.label>abacus</SurvivalTools_Abacus.label>
+    <SurvivalTools_Abacus.description>An ancient calculating instrument featuring movable beads arranged on rods for performing arithmetic operations. Essential for organizing research data, managing complex calculations, and maintaining accurate records in societies without advanced computational devices. Represents the foundation of mathematical thinking and data organization.</SurvivalTools_Abacus.description>
+
+    <!-- Industrial Tools -->
+    <SurvivalTools_SteelKnife.label>steel knife</SurvivalTools_SteelKnife.label>
+    <SurvivalTools_SteelKnife.description>A precision-forged steel knife with superior edge retention and durability. The high-carbon steel blade maintains its sharpness through extensive use, making it ideal for demanding butchery and medical work. The ergonomic handle provides excellent control for delicate operations.</SurvivalTools_SteelKnife.description>
+
+    <SurvivalTools_CrosscutSaw.label>crosscut saw</SurvivalTools_CrosscutSaw.label>
+    <SurvivalTools_CrosscutSaw.description>A precision industrial saw designed for efficient lumber processing and construction work. The specially designed teeth and reinforced steel construction allow for clean, accurate cuts through various materials. Essential for large-scale construction projects and advanced woodworking operations.</SurvivalTools_CrosscutSaw.description>
+
+    <SurvivalTools_Wrench.label>wrench</SurvivalTools_Wrench.label>
+    <SurvivalTools_Wrench.description>A precision mechanical tool engineered for gripping, turning, and manipulating fasteners and mechanical components. Critical for maintenance operations, machinery repair, and construction projects requiring exact adjustments. The adjustable jaw design accommodates various sizes while providing optimal leverage and control.</SurvivalTools_Wrench.description>
+
+    <SurvivalTools_Microscope.label>microscope</SurvivalTools_Microscope.label>
+    <SurvivalTools_Microscope.description>A precision optical instrument that magnifies small objects and specimens for detailed examination. Essential for advanced research, biological studies, and scientific analysis.</SurvivalTools_Microscope.description>
+
+    <!-- Precision Tools -->
+    <SurvivalTools_CarbidePick.label>carbide pickaxe</SurvivalTools_CarbidePick.label>
+    <SurvivalTools_CarbidePick.description>An advanced mining implement featuring carbide-tipped edges that maintain their sharpness through the most demanding excavation work. The precision-engineered head cuts through rock more efficiently than standard tools, while the reinforced construction ensures exceptional durability in harsh mining conditions.</SurvivalTools_CarbidePick.description>
+
+    <SurvivalTools_PrecisionScalpel.label>precision scalpel</SurvivalTools_PrecisionScalpel.label>
+    <SurvivalTools_PrecisionScalpel.description>An ultra-sharp surgical instrument crafted from the finest steel alloys. The carefully balanced blade maintains its edge through repeated sterilization and use, while the ergonomic handle ensures precise control during delicate medical procedures. Standard equipment in advanced medical facilities.</SurvivalTools_PrecisionScalpel.description>
+
+    <SurvivalTools_PowerDrill.label>power drill</SurvivalTools_PowerDrill.label>
+    <SurvivalTools_PowerDrill.description>A mechanized drilling tool powered by an internal motor, capable of boring through tough materials with precision and speed. The variable-speed motor and interchangeable bits make it invaluable for construction and mechanical work. Requires periodic maintenance to keep the motor running smoothly.</SurvivalTools_PowerDrill.description>
+
+    <!-- Spacer Tools -->
+    <SurvivalTools_Multitool.label>glitterworld multitool</SurvivalTools_Multitool.label>
+    <SurvivalTools_Multitool.description>A high-tech universal tool commonly used by domestic mechanoids in glitterworld societies. This advanced device can seamlessly adapt to any task - construction, mining, forestry, maintenance, and deconstruction - making it the ultimate all-in-one survival tool. Though designed for mechanoids, it's perfectly usable by humanoids due to physiological similarities.</SurvivalTools_Multitool.description>
+
+</LanguageData>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <NoTool>Sin herramienta</NoTool>
+    <ToolInUse>(en uso)</ToolInUse>
+
+    <!-- Settings -->
+    <SurvivalToolsSettingsCategory>Herramientas de Supervivencia</SurvivalToolsSettingsCategory>
+
+    <Settings_HardcoreMode>Modo hardcore</Settings_HardcoreMode>
+    <Settings_HardcoreMode_Tooltip>Aumenta significativamente la dificultad haciendo que las herramientas sean esenciales para la supervivencia. Sin herramientas adecuadas, los colonos se vuelven incapaces de ejecutar efectivamente la mayoría de las tareas de trabajo. Las herramientas también se desgastan 50% más rápido, requiriendo reemplazo más frecuente y mejor gestión de herramientas. Transforma el juego en una verdadera experiencia de supervivencia dependiente de herramientas.</Settings_HardcoreMode_Tooltip>
+
+    <Settings_ExtraHardcoreMode>Modo hardcore extremo</Settings_ExtraHardcoreMode>
+    <Settings_ExtraHardcoreMode_Tooltip>DIFICULTAD MÁXIMA: El desafío de supervivencia definitivo. Cuando se combina con el modo hardcore, los colonos se vuelven completamente indefensos sin las herramientas correctas. Las tareas que eran meramente ineficientes (como limpiar a mano o cuidado médico improvisado) se vuelven imposibles de intentar. Las herramientas se degradan 87.5% más rápido de lo normal, creando presión constante para la producción y mantenimiento de herramientas. Use las casillas de verificación de abajo para controlar exactamente qué tipos de trabajo se vuelven dependientes de herramientas. ¡ADVERTENCIA: El juego temprano se vuelve extremadamente desafiante - la adquisición de herramientas se vuelve crítica para la supervivencia de la colonia!</Settings_ExtraHardcoreMode_Tooltip>
+
+    <Settings_RequireCleaningTools>Herramientas de limpieza requeridas</Settings_RequireCleaningTools>
+    <Settings_RequireCleaningTools_Tooltip>Fuerza a los colonos a usar herramientas de limpieza adecuadas (como escobas o trapeadores) para todas las tareas de limpieza. Sin las herramientas correctas, no pueden limpiar pisos, remover suciedad o limpiar nieve. Esencial para mantener la higiene de la colonia en modos de dificultad extrema.</Settings_RequireCleaningTools_Tooltip>
+
+    <Settings_RequireButcheryTools>Herramientas de carnicería requeridas</Settings_RequireButcheryTools>
+    <Settings_RequireButcheryTools_Tooltip>Obliga a usar herramientas de corte adecuadas (como cuchillos o machetas) para todas las operaciones de carnicería y sacrificio. Los colonos no pueden procesar carne o sacrificar animales sin hojas adecuadas. Crítico para las cadenas de producción de alimentos en escenarios hardcore.</Settings_RequireButcheryTools_Tooltip>
+
+    <Settings_RequireMedicalTools>Herramientas médicas requeridas</Settings_RequireMedicalTools>
+    <Settings_RequireMedicalTools_Tooltip>Impone el uso de instrumentos médicos especializados para procedimientos quirúrgicos y cuidado médico avanzado. Las operaciones se vuelven imposibles sin herramientas quirúrgicas adecuadas, haciendo que la adquisición de equipo médico sea vital para la salud y supervivencia de la colonia.</Settings_RequireMedicalTools_Tooltip>
+
+    <Settings_ToolMapGen>Herramientas en edificios en ruinas</Settings_ToolMapGen>
+    <Settings_ToolMapGen_Tooltip>Genera herramientas de supervivencia básicas en ruinas antiguas y estructuras estrelladas durante la generación del mapa. Estas herramientas erosionadas proporcionan recursos importantes del juego temprano pero son típicamente de baja calidad. Invaluables para colonias iniciantes en modos de dificultad duros donde el acceso inicial a herramientas es crítico.</Settings_ToolMapGen_Tooltip>
+
+    <Settings_ToolLimit>Límite de carga de herramientas</Settings_ToolLimit>
+    <Settings_ToolLimit_Tooltip>Restringe a los colonos a cargar un máximo de 2-3 herramientas simultáneamente en su inventario (excluyendo viajes de caravana). Fuerza la gestión estratégica de herramientas y especialización entre colonos. Los cinturones de herramientas y equipo similar pueden aumentar este límite más allá del valor base. Añade restricciones de inventario realistas al uso de herramientas.</Settings_ToolLimit_Tooltip>
+
+    <Settings_ToolDegradationRate>Tasa de degradación de herramientas</Settings_ToolDegradationRate>
+
+    <Settings_ToolOptimization>Optimización automática de herramientas</Settings_ToolOptimization>
+    <Settings_ToolOptimization_Tooltip>Habilita la gestión inteligente de herramientas donde los colonos automáticamente seleccionan y cargan las herramientas más efectivas para su trabajo asignado. Mejoran a mejores herramientas y descartan las inferiores según sea necesario. Deshabilite esto si prefiere control manual de herramientas o experimenta problemas de rendimiento con materiales modificados.</Settings_ToolOptimization_Tooltip>
+
+    <Settings_PickupFromStorageOnly>Restringir recogida de herramientas a áreas de almacenamiento</Settings_PickupFromStorageOnly>
+    <Settings_PickupFromStorageOnly_Tooltip>Cuando está habilitado, los colonos solo adquirirán herramientas de zonas de almacenamiento designadas, manteniendo mejor organización y evitando que tomen herramientas de áreas de trabajo. Cuando está deshabilitado, pueden recoger cualquier herramienta accesible en el área del Hogar (excluyendo objetos prohibidos o en llamas), proporcionando más flexibilidad pero menos control.</Settings_PickupFromStorageOnly_Tooltip>
+
+    <Settings_DebugLogging>Habilitar registro de depuración detallado</Settings_DebugLogging>
+    <Settings_DebugLogging_Tooltip>Activa el registro comprensivo de decisiones de selección de herramientas, comportamiento de recogida automática y lógica de emparejamiento trabajo-herramienta. Esencial para solucionar problemas de herramientas o entender por qué los colonos eligen herramientas específicas. Recomendado solo para desarrollo de mods o cuando se experimentan problemas relacionados con herramientas. Puede afectar el rendimiento con salida de registro extensiva.</Settings_DebugLogging_Tooltip>
+
+    <Settings_AutoTool>Recogida inteligente de herramientas pre-trabajo</Settings_AutoTool>
+    <Settings_AutoTool_Tooltip>Revoluciona la eficiencia del flujo de trabajo haciendo que los colonos automáticamente adquieran la herramienta óptima antes de comenzar cualquier trabajo. Intercambian herramientas inteligentemente, mejoran a mejores variantes y aseguran tener el equipo correcto para máxima productividad. La función fundamental para gameplay basado en herramientas sin costuras.</Settings_AutoTool_Tooltip>
+
+    <!-- Alerts -->
+    <ColonistNeedsSurvivalTool>El colono necesita herramientas esenciales</ColonistNeedsSurvivalTool>
+    <ColonistsNeedSurvivalTool>Los colonos necesitan herramientas esenciales</ColonistsNeedSurvivalTool>
+    <ColonistNeedsSurvivalToolDesc>Estos colonos necesitan herramientas adecuadas para su trabajo asignado, pero carecen del equipo necesario. Su productividad está severamente comprometida.</ColonistNeedsSurvivalToolDesc>
+
+    <SurvivalToolsNeedReplacing>Herramientas acercándose al fallo</SurvivalToolsNeedReplacing>
+    <SurvivalToolNeedsReplacingDesc>Estos colonos están usando herramientas que pronto se romperán. Reemplácelas inmediatamente para evitar interrupciones del trabajo.</SurvivalToolNeedsReplacingDesc>
+
+    <!-- Tool assignment management -->
+    <ManageSurvivalToolAssignments>Gestionar asignaciones de herramientas</ManageSurvivalToolAssignments>
+    <SurvivalToolAssignment>Asignación de herramienta</SurvivalToolAssignment>
+    <SurvivalToolAssignmentConstructor>Constructor</SurvivalToolAssignmentConstructor>
+    <SurvivalToolAssignmentMiner>Minero</SurvivalToolAssignmentMiner>
+    <SurvivalToolAssignmentPlantWorker>Trabajador de plantas</SurvivalToolAssignmentPlantWorker>
+    <SurvivalToolAssignmentResearcher>Investigador</SurvivalToolAssignmentResearcher>
+    <SurvivalToolAssignmentCleaner>Limpiador</SurvivalToolAssignmentCleaner>
+    <SurvivalToolAssignmentMedical>Médico</SurvivalToolAssignmentMedical>
+    <SurvivalToolAssignmentButcher>Carnicero</SurvivalToolAssignmentButcher>
+    <SelectSurvivalToolAssignment>Seleccionar asignación de herramienta...</SelectSurvivalToolAssignment>
+    <NewSurvivalToolAssignment>Nueva asignación de herramienta</NewSurvivalToolAssignment>
+    <DeleteSurvivalToolAssignment>Eliminar asignación de herramienta...</DeleteSurvivalToolAssignment>
+    <SurvivalToolAssignmentInUse>La asignación de herramienta está siendo usada por {0}</SurvivalToolAssignmentInUse>
+    <NoSurvivalToolAssignmentSelected>No hay asignación de herramienta seleccionada</NoSurvivalToolAssignmentSelected>
+    <ForcedSurvivalTools>Herramientas forzadas</ForcedSurvivalTools>
+
+</LanguageData>

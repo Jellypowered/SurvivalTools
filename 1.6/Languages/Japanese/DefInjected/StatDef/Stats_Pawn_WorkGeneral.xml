@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+    <!-- Pawn work stats -->
+    <SurvivalToolCarryCapacity.label>道具運搬能力</SurvivalToolCarryCapacity.label>
+    <SurvivalToolCarryCapacity.description>このポーンがインベントリに運ぶことができる道具の数。運搬能力を超える道具を持っている場合、余分な道具は使用できません。</SurvivalToolCarryCapacity.description>
+
+    <!-- Mining-related -->
+    <DiggingSpeed.label>掘削速度</DiggingSpeed.label>
+    <DiggingSpeed.description>この人が壁を掘る速度。</DiggingSpeed.description>
+
+    <MiningYieldDigging.label>採掘収量（掘削）</MiningYieldDigging.label>
+    <MiningYieldDigging.description>採掘者が産出する採掘資源の割合。これは壁の採掘にのみ適用されます。岩塊の生産率には影響しません。</MiningYieldDigging.description>
+
+    <!-- Plant-related -->
+    <PlantHarvestingSpeed.label>植物収穫速度</PlantHarvestingSpeed.label>
+    <PlantHarvestingSpeed.description>この人が植物を収穫する速度。</PlantHarvestingSpeed.description>
+
+    <SowingSpeed.label>播種速度</SowingSpeed.label>
+    <SowingSpeed.description>この人が種を播き、作物を植える速度。</SowingSpeed.description>
+
+    <TreeFellingSpeed.label>伐木速度</TreeFellingSpeed.label>
+    <TreeFellingSpeed.description>この人が木を伐採する速度。</TreeFellingSpeed.description>
+
+    <!-- Maintenance and repair-related -->
+    <MaintenanceSpeed.label>保守速度</MaintenanceSpeed.label>
+    <MaintenanceSpeed.description>この人が建物や設備の保守・修理を行う速度。</MaintenanceSpeed.description>
+
+    <DeconstructionSpeed.label>解体速度</DeconstructionSpeed.label>
+    <DeconstructionSpeed.description>この人が建物や設備を解体する速度。</DeconstructionSpeed.description>
+
+    <!-- Research-related -->
+    <ResearchSpeed.label>研究速度</ResearchSpeed.label>
+    <ResearchSpeed.description>この人が研究や実験を行う速度。</ResearchSpeed.description>
+
+    <!-- Cleaning-related -->
+    <CleaningSpeed.label>清掃速度</CleaningSpeed.label>
+    <CleaningSpeed.description>この人が汚れや破片を清掃する速度。誰でも清掃はできますが、適切な道具があればはるかに速くなります。</CleaningSpeed.description>
+
+    <!-- Medical-related -->
+    <MedicalOperationSpeed.label>医療手術速度</MedicalOperationSpeed.label>
+    <MedicalOperationSpeed.description>この人が医療手術や外科手術を行う速度。</MedicalOperationSpeed.description>
+
+    <MedicalSurgerySuccessChance.label>医療手術成功率</MedicalSurgerySuccessChance.label>
+    <MedicalSurgerySuccessChance.description>この人の医療手術が合併症なく成功する可能性。</MedicalSurgerySuccessChance.description>
+
+    <!-- Butchery-related -->
+    <ButcheryFleshSpeed.label>屠殺速度</ButcheryFleshSpeed.label>
+    <ButcheryFleshSpeed.description>この人が動物を屠殺し、肉を処理する速度。</ButcheryFleshSpeed.description>
+
+    <ButcheryFleshEfficiency.label>屠殺効率</ButcheryFleshEfficiency.label>
+    <ButcheryFleshEfficiency.description>この人が動物の死骸から抽出できる肉やその他の製品の量。</ButcheryFleshEfficiency.description>
+
+</LanguageData>

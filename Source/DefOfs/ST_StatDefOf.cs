@@ -11,7 +11,16 @@ namespace SurvivalTools
         public static StatDef DiggingSpeed;
         public static StatDef MiningYieldDigging;
         public static StatDef PlantHarvestingSpeed;
+        public static StatDef SowingSpeed;
         public static StatDef TreeFellingSpeed;
+        public static StatDef MaintenanceSpeed;
+        public static StatDef DeconstructionSpeed;
+        public static StatDef ResearchSpeed;
+        public static StatDef CleaningSpeed;
+        public static StatDef MedicalOperationSpeed;
+        public static StatDef MedicalSurgerySuccessChance;
+        public static StatDef ButcheryFleshSpeed;
+        public static StatDef ButcheryFleshEfficiency;
 
         // Thing
         public static StatDef ToolEstimatedLifespan;

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <SurvivalToolCarryCapacity.label>грузоподъёмность инструментов</SurvivalToolCarryCapacity.label>
+    <SurvivalToolCarryCapacity.description>Сколько инструментов этот персонаж может нести в своём инвентаре. Если у него больше инструментов, чем он может нести, он не сможет использовать лишние инструменты.</SurvivalToolCarryCapacity.description>
+    <DiggingSpeed.label>скорость копания</DiggingSpeed.label>
+    <DiggingSpeed.description>Скорость, с которой этот человек копает стены.</DiggingSpeed.description>
+    <CleaningSpeed.label>скорость уборки</CleaningSpeed.label>
+    <CleaningSpeed.description>Скорость, с которой этот человек убирает грязь и мусор. Любой может убираться, но с правильными инструментами это намного быстрее.</CleaningSpeed.description>
+    <ButcheryFleshSpeed.label>скорость разделки</ButcheryFleshSpeed.label>
+    <ButcheryFleshSpeed.description>Скорость, с которой этот человек разделывает животных и обрабатывает мясо.</ButcheryFleshSpeed.description>
+</LanguageData>

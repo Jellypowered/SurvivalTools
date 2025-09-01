@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <NoTool>Kein Werkzeug</NoTool>
+    <ToolInUse>(im Gebrauch)</ToolInUse>
+
+    <!-- Settings -->
+    <SurvivalToolsSettingsCategory>Überlebenswerkzeuge</SurvivalToolsSettingsCategory>
+
+    <Settings_HardcoreMode>Hardcore-Modus</Settings_HardcoreMode>
+    <Settings_HardcoreMode_Tooltip>Erhöht die Schwierigkeit erheblich, indem Werkzeuge für das Überleben unverzichtbar werden. Ohne geeignete Werkzeuge können Kolonisten die meisten Arbeitsaufgaben nicht effektiv ausführen. Werkzeuge verschleißen auch 50% schneller und erfordern häufigeren Austausch und besseres Werkzeugmanagement. Verwandelt das Spiel in eine echte werkzeugabhängige Überlebenserfahrung.</Settings_HardcoreMode_Tooltip>
+
+    <Settings_ExtraHardcoreMode>Extrem-Hardcore-Modus</Settings_ExtraHardcoreMode>
+    <Settings_ExtraHardcoreMode_Tooltip>MAXIMALE SCHWIERIGKEIT: Die ultimative Überlebensherausforderung. In Kombination mit dem Hardcore-Modus werden Kolonisten ohne die richtigen Werkzeuge völlig hilflos. Aufgaben, die nur ineffizient waren (wie Reinigung von Hand oder improvisierte medizinische Versorgung), werden unmöglich zu versuchen. Werkzeuge verschleißen 87,5% schneller als normal und erzeugen ständigen Druck für Werkzeugproduktion und -wartung. Verwenden Sie die Kontrollkästchen unten, um genau zu steuern, welche Arbeitstypen werkzeugabhängig werden. WARNUNG: Das frühe Spiel wird extrem herausfordernd - Werkzeugbeschaffung wird kritisch für das Kolonieüberleben!</Settings_ExtraHardcoreMode_Tooltip>
+
+    <Settings_RequireCleaningTools>Reinigungswerkzeuge erforderlich</Settings_RequireCleaningTools>
+    <Settings_RequireCleaningTools_Tooltip>Zwingt Kolonisten, geeignete Reinigungswerkzeuge (wie Besen oder Wischmöpps) für alle Reinigungsaufgaben zu verwenden. Ohne die richtigen Werkzeuge können sie keine Böden reinigen, Schmutz entfernen oder Schnee räumen. Unverzichtbar für die Aufrechterhaltung der Koloniehygiene in extremen Schwierigkeitsmodi.</Settings_RequireCleaningTools_Tooltip>
+
+    <Settings_RequireButcheryTools>Schlachterwerkzeuge erforderlich</Settings_RequireButcheryTools>
+    <Settings_RequireButcheryTools_Tooltip>Verlangt geeignete Schneidwerkzeuge (wie Messer oder Hackmesser) für alle Schlachtungs- und Tötungsoperationen. Kolonisten können ohne geeignete Klingen kein Fleisch verarbeiten oder Tiere schlachten. Kritisch für Nahrungsproduktionsketten in Hardcore-Szenarien.</Settings_RequireButcheryTools_Tooltip>
+
+    <Settings_RequireMedicalTools>Medizinische Werkzeuge erforderlich</Settings_RequireMedicalTools>
+    <Settings_RequireMedicalTools_Tooltip>Erzwingt die Verwendung spezialisierter medizinischer Instrumente für chirurgische Eingriffe und fortgeschrittene medizinische Versorgung. Operationen werden ohne geeignete chirurgische Werkzeuge unmöglich, wodurch die Beschaffung medizinischer Ausrüstung für Koloniegesundheit und Überleben lebenswichtig wird.</Settings_RequireMedicalTools_Tooltip>
+
+    <Settings_ToolMapGen>Werkzeuge in verfallenen Gebäuden</Settings_ToolMapGen>
+    <Settings_ToolMapGen_Tooltip>Erzeugt grundlegende Überlebenswerkzeuge in antiken Ruinen und abgestürzten Strukturen während der Kartengenerierung. Diese verwitterten Werkzeuge bieten wichtige Ressourcen für das frühe Spiel, sind aber typischerweise von geringer Qualität. Unschätzbar wertvoll für startende Kolonien in harten Schwierigkeitsmodi, wo anfänglicher Werkzeugzugang kritisch ist.</Settings_ToolMapGen_Tooltip>
+
+    <Settings_ToolLimit>Werkzeugtragelimit</Settings_ToolLimit>
+    <Settings_ToolLimit_Tooltip>Beschränkt Kolonisten darauf, maximal 2-3 Werkzeuge gleichzeitig in ihrem Inventar zu tragen (außer Karawanenreisen). Erzwingt strategisches Werkzeugmanagement und Spezialisierung unter Kolonisten. Werkzeuggürtel und ähnliche Ausrüstung können dieses Limit über den Grundwert hinaus erhöhen. Fügt realistische Inventarbeschränkungen zur Werkzeugnutzung hinzu.</Settings_ToolLimit_Tooltip>
+
+    <Settings_ToolDegradationRate>Werkzeugverschleißrate</Settings_ToolDegradationRate>
+
+    <Settings_ToolOptimization>Automatische Werkzeugoptimierung</Settings_ToolOptimization>
+    <Settings_ToolOptimization_Tooltip>Ermöglicht intelligentes Werkzeugmanagement, bei dem Kolonisten automatisch die effektivsten Werkzeuge für ihre zugewiesene Arbeit auswählen und tragen. Sie upgraden zu besseren Werkzeugen und lassen schlechtere fallen, wie benötigt. Deaktivieren Sie dies, wenn Sie manuelle Werkzeugkontrolle bevorzugen oder Leistungsprobleme mit modierten Materialien erleben.</Settings_ToolOptimization_Tooltip>
+
+    <Settings_PickupFromStorageOnly>Werkzeugaufnahme auf Lagerbereiche beschränken</Settings_PickupFromStorageOnly>
+    <Settings_PickupFromStorageOnly_Tooltip>Wenn aktiviert, erhalten Kolonisten nur Werkzeuge aus bestimmten Lagerzonen, wodurch bessere Organisation gewährleistet und verhindert wird, dass sie Werkzeuge aus Arbeitsbereichen greifen. Wenn deaktiviert, können sie jedes zugängliche Werkzeug im Heimbereich aufheben (außer verbotene oder brennende Gegenstände), was mehr Flexibilität bietet, aber weniger Kontrolle.</Settings_PickupFromStorageOnly_Tooltip>
+
+    <Settings_DebugLogging>Detaillierte Debug-Protokollierung aktivieren</Settings_DebugLogging>
+    <Settings_DebugLogging_Tooltip>Aktiviert umfassende Protokollierung von Werkzeugauswahlentscheidungen, automatischem Aufnahmeverhalten und Job-Werkzeug-Matching-Logik. Wesentlich für die Fehlerbehebung bei Werkzeugproblemen oder das Verstehen, warum Kolonisten bestimmte Werkzeuge wählen. Nur für Mod-Entwicklung oder bei werkzeugbezogenen Problemen empfohlen. Kann die Leistung mit umfangreicher Protokollausgabe beeinträchtigen.</Settings_DebugLogging_Tooltip>
+
+    <Settings_AutoTool>Intelligente Werkzeugaufnahme vor der Arbeit</Settings_AutoTool>
+    <Settings_AutoTool_Tooltip>Revolutioniert die Workflow-Effizienz, indem Kolonisten automatisch das optimale Werkzeug erhalten, bevor sie mit einer Arbeit beginnen. Sie tauschen intelligent Werkzeuge aus, upgraden zu besseren Varianten und sorgen dafür, dass sie die richtige Ausrüstung für maximale Produktivität haben. Die Grundlagenfunktion für nahtloses werkzeugbasiertes Gameplay.</Settings_AutoTool_Tooltip>
+
+    <!-- Alerts -->
+    <ColonistNeedsSurvivalTool>Kolonist benötigt unverzichtbare Werkzeuge</ColonistNeedsSurvivalTool>
+    <ColonistsNeedSurvivalTool>Kolonisten benötigen unverzichtbare Werkzeuge</ColonistsNeedSurvivalTool>
+    <ColonistNeedsSurvivalToolDesc>Diese Kolonisten benötigen geeignete Werkzeuge für ihre zugewiesene Arbeit, aber ihnen fehlt die notwendige Ausrüstung. Ihre Produktivität ist schwer beeinträchtigt.</ColonistNeedsSurvivalToolDesc>
+
+    <SurvivalToolsNeedReplacing>Werkzeuge nähern sich dem Versagen</SurvivalToolsNeedReplacing>
+    <SurvivalToolNeedsReplacingDesc>Diese Kolonisten verwenden Werkzeuge, die bald brechen werden. Ersetzen Sie sie sofort, um Arbeitsunterbrechungen zu vermeiden.</SurvivalToolNeedsReplacingDesc>
+
+    <!-- Tool assignment management -->
+    <ManageSurvivalToolAssignments>Werkzeugzuweisungen verwalten</ManageSurvivalToolAssignments>
+    <SurvivalToolAssignment>Werkzeugzuweisung</SurvivalToolAssignment>
+    <SurvivalToolAssignmentConstructor>Bauarbeiter</SurvivalToolAssignmentConstructor>
+    <SurvivalToolAssignmentMiner>Bergarbeiter</SurvivalToolAssignmentMiner>
+    <SurvivalToolAssignmentPlantWorker>Pflanzenarbeiter</SurvivalToolAssignmentPlantWorker>
+    <SurvivalToolAssignmentResearcher>Forscher</SurvivalToolAssignmentResearcher>
+    <SurvivalToolAssignmentCleaner>Reiniger</SurvivalToolAssignmentCleaner>
+    <SurvivalToolAssignmentMedical>Medizinisch</SurvivalToolAssignmentMedical>
+    <SurvivalToolAssignmentButcher>Schlachter</SurvivalToolAssignmentButcher>
+    <SelectSurvivalToolAssignment>Werkzeugzuweisung auswählen...</SelectSurvivalToolAssignment>
+    <NewSurvivalToolAssignment>Neue Werkzeugzuweisung</NewSurvivalToolAssignment>
+    <DeleteSurvivalToolAssignment>Werkzeugzuweisung löschen...</DeleteSurvivalToolAssignment>
+    <SurvivalToolAssignmentInUse>Werkzeugzuweisung wird von {0} verwendet</SurvivalToolAssignmentInUse>
+    <NoSurvivalToolAssignmentSelected>Keine Werkzeugzuweisung ausgewählt</NoSurvivalToolAssignmentSelected>
+    <ForcedSurvivalTools>Erzwungene Werkzeuge</ForcedSurvivalTools>
+
+</LanguageData>

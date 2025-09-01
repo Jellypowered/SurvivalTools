@@ -23,6 +23,13 @@
                     </value>
                 </li>
 
+                <li Class="PatchOperationAdd">
+                    <xpath>Defs/ThingDef[defName="VWE_Zal_Hammer"]</xpath>
+                    <value>
+                        <thingClass>SurvivalTools.SurvivalTool</thingClass>
+                    </value>
+                </li>
+
                 <li Class="PatchOperationAddModExtension">
                     <xpath>Defs/ThingDef[defName="VWE_Zal_Pickaxe"]</xpath>
                     <value>
@@ -38,12 +45,19 @@
                     </value>
                 </li>
 
+                <li Class="PatchOperationAdd">
+                    <xpath>Defs/ThingDef[defName="VWE_Zal_Pickaxe"]</xpath>
+                    <value>
+                        <thingClass>SurvivalTools.SurvivalTool</thingClass>
+                    </value>
+                </li>
+                <!-- hatchets are wood cutters (tree felling) -->
                 <li Class="PatchOperationAddModExtension">
                     <xpath>Defs/ThingDef[defName="VWE_Zal_Hatchet"]</xpath>
                     <value>
                         <li Class="SurvivalTools.SurvivalToolProperties">
                             <baseWorkStatFactors>
-                                <PlantHarvestingSpeed>1.1</PlantHarvestingSpeed>
+                                <TreeFellingSpeed>1.1</TreeFellingSpeed>
                             </baseWorkStatFactors>
                             <defaultSurvivalToolAssignmentTags>
                                 <li>PlantWorker</li>
@@ -52,6 +66,14 @@
                     </value>
                 </li>
 
+                <li Class="PatchOperationAdd">
+                    <xpath>Defs/ThingDef[defName="VWE_Zal_Hatchet"]</xpath>
+                    <value>
+                        <thingClass>SurvivalTools.SurvivalTool</thingClass>
+                    </value>
+                </li>
+
+                <!-- shovels can dig and be used for basic plant work -->
                 <li Class="PatchOperationAddModExtension">
                     <xpath>Defs/ThingDef[defName="VWE_Zal_Shovel"]</xpath>
                     <value>
@@ -59,7 +81,7 @@
                             <baseWorkStatFactors>
                                 <DiggingSpeed>1.1</DiggingSpeed>
                                 <MiningYieldDigging>1.1</MiningYieldDigging>
-                                <PlantHarvestingSpeed>1.1</PlantHarvestingSpeed>
+                                <SowingSpeed>0.8</SowingSpeed>
                             </baseWorkStatFactors>
                             <defaultSurvivalToolAssignmentTags>
                                 <li>Miner</li>
@@ -69,18 +91,34 @@
                     </value>
                 </li>
 
+                <li Class="PatchOperationAdd">
+                    <xpath>Defs/ThingDef[defName="VWE_Zal_Shovel"]</xpath>
+                    <value>
+                        <thingClass>SurvivalTools.SurvivalTool</thingClass>
+                    </value>
+                </li>
+
+                <!-- wrenches for maintenance and repair -->
                 <li Class="PatchOperationAddModExtension">
                     <xpath>Defs/ThingDef[defName="VWE_Zal_Wrench"]</xpath>
                     <value>
                         <li Class="SurvivalTools.SurvivalToolProperties">
                             <baseWorkStatFactors>
                                 <ConstructionSpeed>1.1</ConstructionSpeed>
-                                <ConstructSuccessChance>1.1</ConstructSuccessChance>
+                                <MaintenanceSpeed>1.2</MaintenanceSpeed>
+                                <DeconstructionSpeed>1.1</DeconstructionSpeed>
                             </baseWorkStatFactors>
                             <defaultSurvivalToolAssignmentTags>
                                 <li>Constructor</li>
                             </defaultSurvivalToolAssignmentTags>
                         </li>
+                    </value>
+                </li>
+
+                <li Class="PatchOperationAdd">
+                    <xpath>Defs/ThingDef[defName="VWE_Zal_Wrench"]</xpath>
+                    <value>
+                        <thingClass>SurvivalTools.SurvivalTool</thingClass>
                     </value>
                 </li>
 

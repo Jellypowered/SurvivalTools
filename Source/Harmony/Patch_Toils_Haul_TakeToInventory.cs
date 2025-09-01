@@ -20,23 +20,24 @@ namespace SurvivalTools.HarmonyStuff
                 origInit?.Invoke();
 
                 var actor = __result.actor;
-                var job = actor?.CurJob;
-                var thing = job?.GetTarget(ind).Thing;
+                if (actor?.CanUseSurvivalTools() != true) return;
 
-                // Only mark survival tools as forced if:
-                // - pawn can use tools
-                // - the picked-up thing is a SurvivalTool
-                // - the tool is actually in inventory after the vanilla action
-                // - the job was player-forced
-                if (actor != null
-                    && actor.CanUseSurvivalTools()
-                    && thing is SurvivalTool
-                    && actor.inventory != null
-                    && actor.inventory.Contains(thing)
-                    && job != null
-                    && job.playerForced)
+                var job = actor.CurJob;
+                if (job?.playerForced != true) return;
+
+                var thing = job.GetTarget(ind).Thing;
+                if (!(thing is SurvivalTool tool)) return;
+
+                // Only mark as forced if the tool is actually in inventory after the vanilla action
+                if (actor.inventory?.Contains(tool) == true)
                 {
-                    actor.GetComp<Pawn_SurvivalToolAssignmentTracker>()?.forcedHandler.SetForced(thing, true);
+                    var tracker = actor.GetComp<Pawn_SurvivalToolAssignmentTracker>();
+                    tracker?.forcedHandler.SetForced(tool, true);
+
+                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                    {
+                        Log.Message($"[SurvivalTools] Marked {tool.Label} as forced for {actor.Name}");
+                    }
                 }
             };
         }

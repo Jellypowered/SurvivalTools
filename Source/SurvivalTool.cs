@@ -22,11 +22,7 @@ namespace SurvivalTools
             }
         }
 
-        public bool InUse =>
-            HoldingPawn != null
-            && HoldingPawn.CanUseSurvivalTools()
-            && HoldingPawn.CanUseSurvivalTool(def)
-            && SurvivalToolUtility.BestSurvivalToolsFor(HoldingPawn).Contains(this);
+        public bool InUse => SurvivalToolUtility.IsToolInUse(this);
 
         public int WorkTicksToDegrade
         {
@@ -38,44 +34,8 @@ namespace SurvivalTools
             }
         }
 
-        public IEnumerable<StatModifier> WorkStatFactors
-        {
-            get
-            {
-                var tProps = SurvivalToolProperties.For(def);
-                var sProps = StuffPropsTool.For(Stuff);
-                float eff = this.GetStatValue(ST_StatDefOf.ToolEffectivenessFactor);
-
-                if (tProps.baseWorkStatFactors != null)
-                {
-                    foreach (var modifier in tProps.baseWorkStatFactors)
-                    {
-                        if (modifier?.stat == null) continue;
-
-                        float newFactor = modifier.value * eff;
-
-                        var toolStatFactors = sProps.toolStatFactors;
-                        if (toolStatFactors != null && toolStatFactors.Count > 0)
-                        {
-                            for (int i = 0; i < toolStatFactors.Count; i++)
-                            {
-                                var sMod = toolStatFactors[i];
-                                if (sMod?.stat == modifier.stat)
-                                {
-                                    newFactor *= sMod.value;
-                                }
-                            }
-                        }
-
-                        yield return new StatModifier
-                        {
-                            stat = modifier.stat,
-                            value = newFactor
-                        };
-                    }
-                }
-            }
-        }
+        public IEnumerable<StatModifier> WorkStatFactors =>
+            SurvivalToolUtility.CalculateWorkStatFactors(this);
 
         #endregion
 

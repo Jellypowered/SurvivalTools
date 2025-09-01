@@ -8,20 +8,31 @@
         <li>1.6</li>
     </supportedVersions>
     <description><![CDATA[
-Current version: v1.6 (August 2025)
+Current version: v1.6 (September 2025)
 
-Adds survival tools and the need to manage them to RimWorld.
+Transforms RimWorld into a challenging tool-dependent survival experience where proper equipment becomes essential for colony success.
 
-• Colonists work far less efficiently without the correct tool
-• Tools can be carried in inventory or equipped in hand
-• Hardcore Mode: pawns cannot perform certain jobs at all without the proper tool
-• Automatic tool pickup and swap logic before jobs
-• Smarter detection of job–tool requirements (WorkGiver & job fallbacks)
-• Acquire tools through crafting, trade, or loot
-• Different materials affect durability and effectiveness
-• Tools wear down with use and can break
-• Configurable mod settings with debugging options
+KEY FEATURES:
+• Smart Tool System: Colonists automatically acquire optimal tools before starting work
+• Hardcore Mode: Tools become essential - most work impossible without proper equipment
+• Extra Hardcore Mode: Ultimate difficulty with 87.5% faster tool wear and strict tool requirements
+• Granular Controls: Choose exactly which tasks require tools (cleaning, butchery, medical)
+• Intelligent Management: Advanced tool optimization and automatic swapping systems
+• Realistic Degradation: Tools wear down with use and must be maintained or replaced
+• Early Game Survival: Find tools in ruins or craft them to establish your colony
 
-Originally by XeoNovaDan. Updated and maintained with permission for RimWorld 1.6.
-    ]]></description>
+DIFFICULTY MODES:
+• Normal: Tools improve efficiency but work remains possible without them
+• Hardcore: Most tasks become impossible without proper tools, 50% faster wear
+• Extra Hardcore: Maximum challenge - strict tool requirements, 87.5% faster wear
+
+QUALITY OF LIFE:
+• Automatic tool pickup before jobs begin
+• Smart tool swapping for optimal efficiency
+• Detailed alerts for missing or worn tools
+• Comprehensive mod compatibility patches
+• Extensive debugging and logging options
+
+Originally by XeoNovaDan. Rebuilt and enhanced for RimWorld 1.6 with improvements to tool mechanics, hardcore survival features, and intelligent automation systems.
+    ]]>    </description>
 </ModMetaData>

@@ -9,7 +9,10 @@ namespace SurvivalTools
     {
         // Once per hour of continuous work, or ~40 mins with hardcore enabled.
         public static int BaseWearInterval =>
-            Mathf.RoundToInt(GenDate.TicksPerHour * ((SurvivalTools.Settings != null && SurvivalTools.Settings.hardcoreMode) ? 0.67f : 1f));
+            Mathf.RoundToInt(GenDate.TicksPerHour * (SurvivalToolUtility.IsHardcoreModeEnabled ? 0.67f : 1f));
+
+        private static float DegradationFactor => SurvivalTools.Settings?.EffectiveToolDegradationFactor ?? 1f;
+        private static bool IsDegradationEnabled => DegradationFactor > 0.001f;
 
         public override bool ShouldShowFor(StatRequest req)
         {
@@ -17,8 +20,7 @@ namespace SurvivalTools
             var bdef = req.Def as BuildableDef;
             if (bdef == null || !bdef.IsSurvivalTool()) return false;
 
-            var s = SurvivalTools.Settings;
-            return s != null && s.toolDegradationFactor > 0.001f;
+            return IsDegradationEnabled;
         }
 
         public override float GetValueUnfinalized(StatRequest req, bool applyPostProcess = true)
@@ -62,16 +64,14 @@ namespace SurvivalTools
 
         public override void FinalizeValue(StatRequest req, ref float val, bool applyPostProcess)
         {
-            var s = SurvivalTools.Settings;
-            var factor = (s != null && s.toolDegradationFactor > 0.001f) ? s.toolDegradationFactor : 1f;
+            var factor = IsDegradationEnabled ? DegradationFactor : 1f;
             if (factor != 1f) val /= factor;
             base.FinalizeValue(req, ref val, applyPostProcess);
         }
 
         public override string GetExplanationFinalizePart(StatRequest req, ToStringNumberSense numberSense, float finalVal)
         {
-            var s = SurvivalTools.Settings;
-            var factor = (s != null && s.toolDegradationFactor > 0.001f) ? s.toolDegradationFactor : 1f;
+            var factor = IsDegradationEnabled ? DegradationFactor : 1f;
 
             var sb = new StringBuilder();
             sb.AppendLine($"{"Settings_ToolDegradationRate".Translate()}: {(1f / factor).ToStringByStyle(ToStringStyle.FloatTwo, ToStringNumberSense.Factor)}");

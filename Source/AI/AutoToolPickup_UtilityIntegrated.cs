@@ -1,6 +1,3 @@
-// SurvivalTools – Auto tool pickup before work (Hardcore-aware + verbose logging)
-// RimWorld 1.6, C# 7.3
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,418 +11,455 @@ namespace SurvivalTools.HarmonyStuff
     [HarmonyPatch(typeof(JobGiver_Work), nameof(JobGiver_Work.TryIssueJobPackage))]
     public static class Patch_JobGiver_Work_TryIssueJobPackage_AutoTool
     {
-        // Tunables (surface as settings if you like)
         private const int SearchRadius = 28;
-        private const bool AllowForbidden = false;
 
         public static void Postfix(Pawn pawn, JobIssueParams jobParams, ref ThinkResult __result)
         {
-            try
+            // Initial checks for applicability
+            if (!ShouldAttemptAutoTool(__result.Job, pawn, out var requiredStats))
             {
-                bool autoTool = SurvivalTools.Settings?.autoTool == true;
-                if (!autoTool) return;
-
-                bool debug = SurvivalTools.Settings?.debugLogging == true;
-
-                var job = __result.Job;
-                if (pawn == null || pawn.Map == null || job == null)
-                {
-                    if (debug) Log.Message("[SurvivalTools] Skip: null pawn/map/job");
-                    return;
-                }
-
-                if (debug)
-                    Log.Message($"[SurvivalTools] Postfix enter | Pawn='{pawn.LabelShort}' Job='{job.def?.defName ?? "null"}' WGD='{job.workGiverDef?.defName ?? "null"}'");
-
-                // Guard rails
-                if (!pawn.RaceProps.Humanlike) { if (debug) Log.Message("[SurvivalTools] Skip: non-humanlike"); return; }
-                if (pawn.Drafted) { if (debug) Log.Message("[SurvivalTools] Skip: drafted"); return; }
-                if (pawn.InMentalState) { if (debug) Log.Message("[SurvivalTools] Skip: mental state"); return; }
-                if (job.def == JobDefOf.TakeInventory) { if (debug) Log.Message("[SurvivalTools] Skip: TakeInventory recursion"); return; }
-                if (!pawn.CanUseSurvivalTools()) { if (debug) Log.Message("[SurvivalTools] Skip: pawn.CanUseSurvivalTools()==false"); return; }
-
-                var wg = job.workGiverDef;
-                if (wg == null) { if (debug) Log.Message("[SurvivalTools] Skip: null workGiverDef"); return; }
-
-                // Prefer extension; fall back to our job mapping (now ST-stat aware)
-                var requiredStats = SurvivalToolUtility.RelevantStatsFor(wg, job);
-                if (requiredStats == null || requiredStats.Count == 0)
-                {
-                    if (debug) Log.Message($"[SurvivalTools] Skip: no requiredStats (WGD='{wg.defName}', Job='{job.def?.defName ?? "null"}')");
-                    return;
-                }
-
-                // Let vanilla gates run (skills, work tags etc.). For Hardcore, we *don't* hard-fail
-                // here on missing tool (that check moved to the Hardcore section below).
-                if (!pawn.MeetsWorkGiverStatRequirements(requiredStats))
-                {
-                    if (debug) Log.Message("[SurvivalTools] Skip: pawn doesn't meet workgiver base/stat requirements");
-                    return;
-                }
-
-                // ---------------- Hardcore backstop ----------------
-                var s = SurvivalTools.Settings;
-                if (s != null && s.hardcoreMode)
-                {
-                    bool hasAnyTool = false;
-                    for (int i = 0; i < requiredStats.Count; i++)
-                        if (pawn.HasSurvivalToolFor(requiredStats[i])) { hasAnyTool = true; break; }
-
-                    bool canAcquireNow = hasAnyTool
-                        || CanAcquireHelpfulToolNow(pawn, wg, requiredStats, SearchRadius, AllowForbidden, debug);
-
-                    if (!canAcquireNow)
-                    {
-                        if (debug)
-                            Log.Message($"[SurvivalTools] Hardcore cancel | Pawn='{pawn.LabelShort}' Job='{job.def?.defName}' WGD='{wg?.defName}' — no required tool and none reachable.");
-                        __result = ThinkResult.NoJob; // cancel so pawn picks a different job
-                        return;
-                    }
-                }
-                // ---------------------------------------------------
-
-                // If we already have something helpful, nothing to do.
-                if (PawnHasHelpfulTool(pawn, requiredStats))
-                {
-                    if (debug) Log.Message("[SurvivalTools] Skip: pawn already has a helpful tool");
-                    return;
-                }
-
-                // Try to find the best tool we can get right now (with verbose reasons)
-                var best = FindBestHelpfulTool(pawn, wg, requiredStats, SearchRadius, AllowForbidden, verbose: debug);
-                if (best == null)
-                {
-                    if (debug) Log.Message("[SurvivalTools] Result: no suitable tool found");
-                    return;
-                }
-
-                if (debug)
-                {
-                    float score = SurvivalToolScore(best, requiredStats);
-                    Log.Message(
-                        $"[SurvivalTools] Selected | Tool='{best.LabelCap}' pos={best.Position} HP={best.HitPoints}/{best.MaxHitPoints} " +
-                        $"Score={score:F3} Stats=[{string.Join(", ", requiredStats.Select(sdef => sdef.defName))}] " +
-                        $"InStorage={best.IsInAnyStorage()} Forbidden={best.IsForbidden(pawn)}"
-                    );
-                }
-
-                // If we lack capacity, try to drop something first (always on here)
-                bool allowSwap = true;
-                var tracker = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
-                SurvivalTool droppable = null;
-                if (allowSwap && !pawn.CanCarryAnyMoreSurvivalTools())
-                {
-                    droppable = FindDroppableHeldTool(pawn, requiredStats, tracker, best);
-                    if (debug)
-                    {
-                        Log.Message(droppable != null
-                            ? $"[SurvivalTools] Swap: will drop '{droppable.LabelCap}' to make room"
-                            : "[SurvivalTools] Swap: no droppable tool found (will try pickup anyway if capacity allows)");
-                    }
-                }
-
-                // Queue: original job (last), pickup, (optional dropNear)
-                pawn.jobs?.jobQueue?.EnqueueFirst(DuplicateJob(job));
-
-                var pickup = JobMaker.MakeJob(JobDefOf.TakeInventory, best);
-                pickup.count = 1;
-                pickup.playerForced = job.playerForced;
-                pawn.jobs?.jobQueue?.EnqueueFirst(DuplicateJob(pickup));
-
-                if (droppable != null)
-                {
-                    var dropNear = DequipAndTryStoreSurvivalToolNear(pawn, droppable, best.Position, enqueueCurrent: false);
-                    pawn.jobs?.jobQueue?.EnqueueFirst(DuplicateJob(dropNear));
-
-                    var gotoBest = JobMaker.MakeJob(JobDefOf.Goto, best.Position);
-                    gotoBest.playerForced = job.playerForced;
-
-                    // Start NOW with a fresh instance too (not a reference that might be shared)
-                    __result = new ThinkResult(gotoBest, __result.SourceNode, __result.Tag, fromQueue: false);
-                }
-                else
-                {
-                    // Start NOW with a fresh pickup job instance (not the one we enqueued)
-                    var pickupNow = DuplicateJob(pickup);
-                    __result = new ThinkResult(pickupNow, __result.SourceNode, __result.Tag, fromQueue: false);
-                }
-            }
-
-            catch (Exception e)
-            {
-                int key = Gen.HashCombineInt(Gen.HashCombineInt("ST_AutoTool_Patch".GetHashCode(), pawn?.thingIDNumber ?? 0), __result.Job?.def?.shortHash ?? 0);
-                Log.WarningOnce($"[SurvivalTools] AutoTool pre-work pickup failed: {e}", key);
-            }
-        }
-
-        // Create a fresh Job instance so the cached driver isn’t shared between pawns.
-        private static Job DuplicateJob(Job src)
-        {
-            if (src == null) return null;
-
-            // New job with the same def & primary targets
-            var j = JobMaker.MakeJob(src.def, src.targetA, src.targetB, src.targetC);
-
-            // Common, safe-to-copy fields
-            j.count = src.count;
-            j.playerForced = src.playerForced;
-            j.locomotionUrgency = src.locomotionUrgency;
-            j.haulMode = src.haulMode;
-            j.ignoreForbidden = src.ignoreForbidden;
-            j.expiryInterval = src.expiryInterval;
-            j.checkOverrideOnExpire = src.checkOverrideOnExpire;
-
-            // Queues (clone lists if present)
-            j.targetQueueA = src.targetQueueA != null ? new List<LocalTargetInfo>(src.targetQueueA) : null;
-            j.targetQueueB = src.targetQueueB != null ? new List<LocalTargetInfo>(src.targetQueueB) : null;
-            j.countQueue = src.countQueue != null ? new List<int>(src.countQueue) : null;
-
-            // Try to copy a few optional members by name (exist in some versions/mods, not others)
-            TryCopyMemberByName(j, src, "exitMapOnArrival");
-            TryCopyMemberByName(j, src, "haulOpportunisticDuplicates");
-            TryCopyMemberByName(j, src, "ignoreDesignations");
-            TryCopyMemberByName(j, src, "killIncappedTarget");
-            TryCopyMemberByName(j, src, "takesTime");
-            TryCopyMemberByName(j, src, "chopWoodAmount"); // example of mod-added fields
-            TryCopyMemberByName(j, src, "failIfCantJoinOrBeginNow"); // present in some RW versions
-            TryCopyMemberByName(j, src, "endIfCantJoinColony");      // present in some RW versions
-
-            return j;
-        }
-
-        // Copy a field or property named `member` from src -> dst if it exists on both.
-        private static void TryCopyMemberByName(object dst, object src, string member)
-        {
-            if (dst == null || src == null || string.IsNullOrEmpty(member)) return;
-
-            var srcType = src.GetType();
-            var dstType = dst.GetType();
-
-            var sField = AccessTools.Field(srcType, member);
-            var dField = AccessTools.Field(dstType, member);
-            if (sField != null && dField != null && sField.FieldType == dField.FieldType)
-            {
-                dField.SetValue(dst, sField.GetValue(src));
                 return;
             }
 
-            var sProp = AccessTools.Property(srcType, member);
-            var dProp = AccessTools.Property(dstType, member);
-            if (sProp != null && dProp != null && sProp.CanRead && dProp.CanWrite &&
-                sProp.PropertyType == dProp.PropertyType)
+            bool isDebug = SurvivalToolUtility.IsDebugLoggingEnabled;
+            string logKey = $"AutoTool_Running_{pawn.ThingID}_{__result.Job.def.defName}";
+            if (isDebug && SurvivalToolUtility.ShouldLogWithCooldown(logKey))
+                Log.Message($"[SurvivalTools.AutoTool] Running for {pawn.LabelShort} doing {__result.Job.def.defName} (needs {string.Join(", ", requiredStats.Select(s => s.defName))})");
+
+            // If pawn already has a suitable tool, we're done.
+            if (PawnHasHelpfulTool(pawn, requiredStats))
             {
-                dProp.SetValue(dst, sProp.GetValue(src, null), null);
+                string skipLogKey = $"AutoTool_Skip_{pawn.ThingID}";
+                if (isDebug && SurvivalToolUtility.ShouldLogWithCooldown(skipLogKey))
+                    Log.Message($"[SurvivalTools.AutoTool] Pawn already has a helpful tool. Skipping.");
+                return;
             }
-        }
 
-        // --------- Verbose helper for Hardcore pre-check ---------
-        private static bool CanAcquireHelpfulToolNow(Pawn pawn, WorkGiverDef wg, List<StatDef> stats, int radius, bool allowForbidden, bool verbose)
-        {
-            var best = FindBestHelpfulTool(pawn, wg, stats, radius, allowForbidden, verbose);
-            return best != null;
-        }
-
-        // Pick a held tool to drop
-        private static SurvivalTool FindDroppableHeldTool(Pawn pawn, List<StatDef> requiredStats, Pawn_SurvivalToolAssignmentTracker tracker, SurvivalTool toolWeWant)
-        {
-            if (!pawn.CanRemoveExcessSurvivalTools()) return null;
-
-            var held = pawn.GetHeldSurvivalTools().ToList();
-            if (held.Count == 0) return null;
-
-            var droppables = new List<SurvivalTool>();
-            for (int i = 0; i < held.Count; i++)
+            // In hardcore mode, if no tool is held or can be acquired, cancel the job entirely.
+            // EXCEPTION: Cleaning, butchery, and medical jobs are usually allowed (just less effective without tools)
+            // EXTRA HARDCORE: Even optional jobs can be blocked if extra hardcore mode is enabled
+            if (SurvivalTools.Settings.hardcoreMode)
             {
-                var st = held[i] as SurvivalTool;
-                if (st == null) continue;
-                if (tracker != null && !tracker.forcedHandler.AllowedToAutomaticallyDrop(st)) continue;
-                droppables.Add(st);
-            }
-            if (droppables.Count == 0) return null;
+                bool shouldBlockJob = false;
 
-            for (int i = 0; i < droppables.Count; i++)
-                if (!ToolImprovesAnyRequiredStat(droppables[i], requiredStats))
-                    return droppables[i];
-
-            float wantScore = 0f;
-            for (int i = 0; i < requiredStats.Count; i++)
-                wantScore += GetStatValueFromEnumerable(toolWeWant.WorkStatFactors, requiredStats[i], 0f);
-
-            SurvivalTool worst = null;
-            float worstScore = float.MaxValue;
-
-            for (int i = 0; i < droppables.Count; i++)
-            {
-                float s = 0f;
-                for (int j = 0; j < requiredStats.Count; j++)
-                    s += GetStatValueFromEnumerable(droppables[i].WorkStatFactors, requiredStats[j], 0f);
-
-                if (s < wantScore && s < worstScore)
+                foreach (var stat in requiredStats)
                 {
-                    worstScore = s;
-                    worst = droppables[i];
-                }
-            }
-
-            return worst;
-        }
-
-        // ---------- Selection & scoring (with verbose reasoned logging) ----------
-        public static class Patch_JobGiver_Work_TryIssueJobPackage_AutoTool_FindBest
-        {
-            public static SurvivalTool FindBestHelpfulTool(Pawn pawn, WorkGiverDef wg, List<StatDef> stats)
-                => Patch_JobGiver_Work_TryIssueJobPackage_AutoTool.FindBestHelpfulTool(pawn, wg, stats, 28, false, false);
-        }
-
-        private static SurvivalTool FindBestHelpfulTool(Pawn pawn, WorkGiverDef wg, List<StatDef> requiredStats, int radius, bool allowForbidden, bool verbose = false)
-        {
-            var map = pawn.Map;
-            if (map == null) return null;
-
-            // Counters for diagnostics
-            int cNotTool = 0, cForbidden = 0, cNoStat = 0, cAssignBlock = 0, cPolicyBlock = 0, cUnreach = 0, cScoreLE = 0;
-
-            var tracker = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
-            var assignment = tracker != null ? tracker.CurrentSurvivalToolAssignment : null;
-            bool storageOnly = SurvivalTools.Settings != null && SurvivalTools.Settings.pickupFromStorageOnly;
-
-            // First: inventory + equipment (fast path)
-            SurvivalTool best = null;
-            float bestScore = 0f;
-
-            foreach (var t in pawn.GetUsableHeldSurvivalTools())
-            {
-                var st = t as SurvivalTool;
-                if (st == null) { cNotTool++; continue; }
-                if (!AllowedByAssignment(assignment, st)) { cAssignBlock++; continue; }
-                if (!ToolImprovesAnyRequiredStat(st, requiredStats)) { cNoStat++; continue; }
-
-                float sc = SurvivalToolScore(st, requiredStats);
-                if (sc > bestScore) { bestScore = sc; best = st; }
-            }
-
-            if (pawn.equipment != null)
-            {
-                var eq = pawn.equipment.AllEquipmentListForReading;
-                for (int i = 0; i < eq.Count; i++)
-                {
-                    var st = eq[i] as SurvivalTool;
-                    if (st == null) { cNotTool++; continue; }
-                    if (!AllowedByAssignment(assignment, st)) { cAssignBlock++; continue; }
-                    if (!ToolImprovesAnyRequiredStat(st, requiredStats)) { cNoStat++; continue; }
-
-                    float sc = SurvivalToolScore(st, requiredStats);
-                    if (sc > bestScore) { bestScore = sc; best = st; }
-                }
-            }
-
-            if (best != null)
-            {
-                if (verbose)
-                {
-                    Log.Message(
-                        $"[SurvivalTools] Finder: selected from held/equipped '{best.LabelCap}' Score={bestScore:F3}"
-                    );
-                }
-                return best;
-            }
-
-            // Ground search in radius
-            SurvivalTool bestGround = null;
-            float bestGroundScore = float.MinValue;
-
-            foreach (var c in GenRadial.RadialCellsAround(pawn.Position, radius, true))
-            {
-                if (!c.InBounds(map)) continue;
-                var list = c.GetThingList(map);
-                for (int i = 0; i < list.Count; i++)
-                {
-                    var st = list[i] as SurvivalTool;
-                    if (st == null || !st.Spawned) { cNotTool++; continue; }
-
-                    if (!pawn.CanUseSurvivalTool(st.def)) { cNoStat++; continue; } // no usable work stats for pawn
-                    if (!AllowedByAssignment(assignment, st)) { cAssignBlock++; continue; }
-                    if (!ToolIsAcquirableByPolicy(pawn, st)) { cPolicyBlock++; continue; }
-                    if (!allowForbidden && st.IsForbidden(pawn)) { cForbidden++; continue; }
-                    if (st.IsBurning()) { cPolicyBlock++; continue; }
-                    if (!pawn.CanReserveAndReach(st, PathEndMode.OnCell, pawn.NormalMaxDanger())) { cUnreach++; continue; }
-                    if (!ToolImprovesAnyRequiredStat(st, requiredStats)) { cNoStat++; continue; }
-
-                    float sc = SurvivalToolScore(st, requiredStats);
-                    if (sc <= 0f) { cScoreLE++; continue; }
-
-                    sc -= 0.01f * c.DistanceTo(pawn.Position); // prefer closer on ties
-
-                    if (sc > bestGroundScore)
+                    // Check if this stat should block work when tools are missing
+                    if (ShouldBlockJobForMissingStat(stat) && !CanAcquireHelpfulToolNow(pawn, requiredStats, isDebug))
                     {
-                        bestGroundScore = sc;
-                        bestGround = st;
+                        shouldBlockJob = true;
+                        break;
                     }
                 }
+
+                if (shouldBlockJob)
+                {
+                    if (isDebug) Log.Message($"[SurvivalTools.AutoTool] Hardcore mode: No tool available for {pawn.LabelShort} doing {__result.Job.def.defName}. Cancelling job.");
+                    __result = ThinkResult.NoJob;
+                    return;
+                }
             }
 
-            if (verbose)
+            // Find the best tool available on the map
+            var bestTool = FindBestHelpfulTool(pawn, requiredStats, isDebug);
+            if (bestTool == null)
             {
-                if (bestGround != null)
+                if (isDebug) Log.Message($"[SurvivalTools.AutoTool] No suitable tool found for {pawn.LabelShort}.");
+                return;
+            }
+
+            // We found a tool. Now, construct the job sequence to get it.
+            __result = CreateToolPickupJobs(pawn, __result.Job, bestTool, requiredStats, __result.SourceNode);
+        }
+
+        private static bool ShouldAttemptAutoTool(Job job, Pawn pawn, out List<StatDef> requiredStats)
+        {
+            requiredStats = null;
+
+            if (SurvivalTools.Settings?.autoTool != true ||
+                job == null ||
+                pawn?.Map == null ||
+                !pawn.CanUseSurvivalTools() ||
+                pawn.Drafted ||
+                pawn.InMentalState ||
+                job.def == JobDefOf.TakeInventory)
+            {
+                return false;
+            }
+
+            // Special case: if this is a tree felling job (FellTree or tree CutPlant), use TreeFellingSpeed
+            if (job.def == ST_JobDefOf.FellTree || job.def == ST_JobDefOf.FellTreeDesignated ||
+                (job.def == JobDefOf.CutPlant && job.targetA.Thing?.def?.plant?.IsTree == true))
+            {
+                requiredStats = new List<StatDef> { ST_StatDefOf.TreeFellingSpeed };
+                return true;
+            }
+
+            requiredStats = SurvivalToolUtility.RelevantStatsFor(job.workGiverDef, job);
+            return !requiredStats.NullOrEmpty();
+        }
+
+        private static bool PawnHasHelpfulTool(Pawn pawn, List<StatDef> requiredStats)
+        {
+            return pawn.GetAllUsableSurvivalTools().Any(t => t is SurvivalTool st && ToolImprovesAnyRequiredStat(st, requiredStats));
+        }
+
+        private static bool CanAcquireHelpfulToolNow(Pawn pawn, List<StatDef> stats, bool isDebug)
+        {
+            return FindBestHelpfulTool(pawn, stats, isDebug) != null;
+        }
+
+        private static SurvivalTool FindBestHelpfulTool(Pawn pawn, List<StatDef> requiredStats, bool isDebug)
+        {
+            var assignment = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>()?.CurrentSurvivalToolAssignment;
+
+            SurvivalTool bestTool = null;
+            float bestScore = 0f;
+
+            var potentialTools = GenRadial.RadialDistinctThingsAround(pawn.Position, pawn.Map, SearchRadius, true)
+                                          .OfType<SurvivalTool>();
+
+            if (isDebug)
+                Log.Message($"[SurvivalTools.AutoTool] Found {potentialTools.Count()} potential tools in search radius");
+
+            foreach (var tool in potentialTools)
+            {
+                if (!IsViableCandidate(tool, pawn, assignment, requiredStats, out string reason))
                 {
-                    Log.Message(
-                        $"[SurvivalTools] Finder: ground pick '{bestGround.LabelCap}' pos={bestGround.Position} Score={bestGroundScore:F3} " +
-                        $"InStorage={bestGround.IsInAnyStorage()} Forbidden={bestGround.IsForbidden(pawn)}"
-                    );
+                    if (isDebug)
+                        Log.Message($"[SurvivalTools.AutoTool] Rejecting {tool.def.defName}: {reason}");
+                    continue;
+                }
+
+                float score = SurvivalToolScore(tool, requiredStats);
+
+                // In hardcore mode, allow tools even with score 0 if they have the required stat
+                // In non-hardcore mode, don't consider tools that have no relevant stats (score would be 0)
+                if (score <= 0f && !SurvivalToolUtility.IsHardcoreModeEnabled)
+                    continue;
+
+                score -= 0.01f * tool.Position.DistanceTo(pawn.Position); // Tie-breaker for distance
+
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestTool = tool;
+                }
+            }
+
+            if (isDebug && bestTool != null)
+            {
+                Log.Message($"[SurvivalTools.AutoTool] Found best tool: {bestTool.LabelCap} at {bestTool.Position} with score {bestScore:F2}");
+            }
+
+            return bestTool;
+        }
+
+        private static bool IsViableCandidate(SurvivalTool tool, Pawn pawn, SurvivalToolAssignment assignment, List<StatDef> requiredStats, out string reason)
+        {
+            reason = null;
+            if (!tool.Spawned) { reason = "Not spawned"; return false; }
+            if (tool.IsForbidden(pawn)) { reason = "Is forbidden"; return false; }
+            if (tool.IsBurning()) { reason = "Is burning"; return false; }
+            if (assignment?.filter != null && !assignment.filter.Allows(tool)) { reason = "Disallowed by assignment"; return false; }
+            if (!ToolIsAcquirableByPolicy(pawn, tool)) { reason = "Disallowed by storage policy"; return false; }
+            if (!ToolImprovesAnyRequiredStat(tool, requiredStats))
+            {
+                string statsNeeded = requiredStats?.Any() == true ? $" ({string.Join(", ", requiredStats.Select(s => s.defName))})" : "";
+                reason = $"Does not improve required stat{statsNeeded}";
+                return false;
+            }
+            if (!pawn.CanReserveAndReach(tool, PathEndMode.OnCell, pawn.NormalMaxDanger())) { reason = "Cannot reserve or reach"; return false; }
+
+            return true;
+        }
+
+        private static ThinkResult CreateToolPickupJobs(Pawn pawn, Job originalJob, SurvivalTool toolToGet, List<StatDef> requiredStats, ThinkNode sourceNode)
+        {
+            var jobQueue = pawn.jobs.jobQueue;
+            jobQueue.EnqueueFirst(originalJob);
+
+            var pickupJob = JobMaker.MakeJob(JobDefOf.TakeInventory, toolToGet);
+            pickupJob.count = 1;
+
+            // Check if pawn already has a tool of the same type
+            var sameTypeTool = FindSameTypeHeldTool(pawn, toolToGet);
+            if (sameTypeTool != null)
+            {
+                // Compare the tools to see which is better for the required stats
+                float currentToolScore = SurvivalToolScore(sameTypeTool, requiredStats);
+                float newToolScore = SurvivalToolScore(toolToGet, requiredStats);
+
+                if (newToolScore > currentToolScore)
+                {
+                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                        Log.Message($"[SurvivalTools.AutoTool] {pawn.LabelShort} will replace {sameTypeTool.LabelShort} (score: {currentToolScore:F2}) with better {toolToGet.LabelShort} (score: {newToolScore:F2}).");
+
+                    // Drop the worse tool of the same type
+                    jobQueue.EnqueueFirst(pickupJob);
+                    var dropJob = pawn.DequipAndTryStoreSurvivalTool(sameTypeTool, false);
+                    return new ThinkResult(dropJob, sourceNode, JobTag.Misc, false);
                 }
                 else
                 {
-                    Log.Message(
-                        "[SurvivalTools] Finder: no candidate found.\n" +
-                        $"  NotTool={cNotTool} Forbidden={cForbidden} NoRelevantStat={cNoStat}\n" +
-                        $"  AssignmentBlocked={cAssignBlock} PolicyBlocked={cPolicyBlock}\n" +
-                        $"  Unreachable={cUnreach} Score<=0={cScoreLE} Radius={radius} AllowForbidden={allowForbidden} PickupFromStorageOnly={storageOnly}"
-                    );
+                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                        Log.Message($"[SurvivalTools.AutoTool] {pawn.LabelShort} already has better tool of same type: {sameTypeTool.LabelShort} (score: {currentToolScore:F2}) vs {toolToGet.LabelShort} (score: {newToolScore:F2}). Skipping pickup.");
+
+                    // Don't pick up the inferior tool of the same type
+                    return new ThinkResult(originalJob, sourceNode, JobTag.Misc, false);
                 }
             }
 
-            return bestGround;
+            // If we need to make space for a different type of tool, find a tool to drop.
+            if (!pawn.CanCarryAnyMoreSurvivalTools())
+            {
+                var toolToDrop = FindDroppableHeldTool(pawn, requiredStats, toolToGet);
+                if (toolToDrop != null)
+                {
+                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                        Log.Message($"[SurvivalTools.AutoTool] {pawn.LabelShort} will drop {toolToDrop.LabelShort} to pick up {toolToGet.LabelShort}.");
+
+                    jobQueue.EnqueueFirst(pickupJob);
+                    var dropJob = pawn.DequipAndTryStoreSurvivalTool(toolToDrop, false);
+                    return new ThinkResult(dropJob, sourceNode, JobTag.Misc, false);
+                }
+            }
+
+            return new ThinkResult(pickupJob, sourceNode, JobTag.Misc, false);
         }
 
-        private static bool AllowedByAssignment(SurvivalToolAssignment assignment, SurvivalTool tool)
-            => assignment == null || assignment.filter == null || assignment.filter.Allows(tool);
+        private static SurvivalTool FindDroppableHeldTool(Pawn pawn, List<StatDef> requiredStats, SurvivalTool toolWeWant)
+        {
+            var droppableTools = pawn.GetHeldSurvivalTools()
+                .OfType<SurvivalTool>()
+                .Where(t => pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>()?.forcedHandler.AllowedToAutomaticallyDrop(t) ?? true)
+                .ToList();
 
-        // Hardcore-aware helpfulness via StatPart_SurvivalTool
+            if (droppableTools.NullOrEmpty()) return null;
+
+            // First, try to drop a tool that is irrelevant to the current job (specific stats needed).
+            var irrelevantTool = droppableTools.FirstOrDefault(t => !ToolImprovesAnyRequiredStat(t, requiredStats));
+            if (irrelevantTool != null)
+            {
+                if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                    Log.Message($"[SurvivalTools.AutoTool] {pawn.LabelShort} will drop irrelevant tool {irrelevantTool.LabelShort} for current job.");
+                return irrelevantTool;
+            }
+
+            // If all held tools are relevant to the current job, drop the one with the lowest score,
+            // but only if the new tool is better.
+            float wantScore = SurvivalToolScore(toolWeWant, requiredStats);
+            var worstTool = droppableTools
+                .Select(t => new { Tool = t, Score = SurvivalToolScore(t, requiredStats) })
+                .Where(x => x.Score < wantScore)
+                .OrderBy(x => x.Score)
+                .FirstOrDefault()?.Tool;
+
+            if (worstTool != null && SurvivalToolUtility.IsDebugLoggingEnabled)
+                Log.Message($"[SurvivalTools.AutoTool] {pawn.LabelShort} will drop lower-scoring tool {worstTool.LabelShort} for current job.");
+
+            return worstTool;
+        }
+
         private static bool ToolImprovesAnyRequiredStat(SurvivalTool tool, List<StatDef> requiredStats)
         {
-            for (int i = 0; i < requiredStats.Count; i++)
-                if (tool.BetterThanWorkingToollessFor(requiredStats[i]))
+            // Handle special stat groups that only require at least one stat to be present
+            var workStatFactors = tool.WorkStatFactors.ToList();
+
+            // Check for medical stats group (either MedicalOperationSpeed OR MedicalSurgerySuccessChance)
+            var medicalStats = new[] { ST_StatDefOf.MedicalOperationSpeed, ST_StatDefOf.MedicalSurgerySuccessChance };
+            if (requiredStats.Any(s => medicalStats.Contains(s)))
+            {
+                bool hasMedicalStat = workStatFactors.Any(m => medicalStats.Contains(m.stat));
+                if (hasMedicalStat)
+                {
+                    // In hardcore mode, any medical tool with the required stat is useful
+                    if (SurvivalToolUtility.IsHardcoreModeEnabled)
+                        return true;
+                    // In non-hardcore mode, only if it actually improves the stat
+                    return workStatFactors.Any(m => medicalStats.Contains(m.stat) && m.value > 1.0f);
+                }
+            }
+
+            // Check for butchery stats group (either ButcheryFleshSpeed OR ButcheryFleshEfficiency)
+            var butcheryStats = new[] { ST_StatDefOf.ButcheryFleshSpeed, ST_StatDefOf.ButcheryFleshEfficiency };
+            if (requiredStats.Any(s => butcheryStats.Contains(s)))
+            {
+                bool hasButcheryStat = workStatFactors.Any(m => butcheryStats.Contains(m.stat));
+                if (hasButcheryStat)
+                {
+                    // In hardcore mode, any butchery tool with the required stat is useful
+                    if (SurvivalToolUtility.IsHardcoreModeEnabled)
+                        return true;
+                    // In non-hardcore mode, only if it actually improves the stat
+                    return workStatFactors.Any(m => butcheryStats.Contains(m.stat) && m.value > 1.0f);
+                }
+            }
+
+            // For cleaning, it's always optional (never required in hardcore mode)
+            if (requiredStats.Contains(ST_StatDefOf.CleaningSpeed))
+            {
+                bool hasCleaningStat = workStatFactors.Any(m => m.stat == ST_StatDefOf.CleaningSpeed);
+                if (hasCleaningStat)
+                {
+                    // Cleaning tools are always beneficial but never required
+                    return workStatFactors.Any(m => m.stat == ST_StatDefOf.CleaningSpeed && m.value > 1.0f);
+                }
+            }
+
+            // Handle other individual stats (traditional logic)
+            var otherStats = requiredStats.Except(medicalStats).Except(butcheryStats).Where(s => s != ST_StatDefOf.CleaningSpeed).ToList();
+            if (otherStats.Any())
+            {
+                bool hasRequiredStat = otherStats.Any(stat => workStatFactors.Any(m => m.stat == stat));
+
+                // In hardcore mode, any tool with the required stat is useful (even 1.0x factor)
+                // because it allows the job to proceed when it would otherwise be blocked
+                if (hasRequiredStat && SurvivalToolUtility.IsHardcoreModeEnabled)
                     return true;
+
+                // In non-hardcore mode, only consider tools that actually improve stats (>1.0x)
+                return otherStats.Any(stat =>
+                    workStatFactors.Any(m => m.stat == stat && m.value > 1.0f));
+            }
+
             return false;
         }
 
-        // Sum of relevant factors, adjusted by remaining lifespan curve
-        private static float SurvivalToolScore(Thing toolThing, List<StatDef> workRelevantStats)
+        private static float SurvivalToolScore(SurvivalTool tool, List<StatDef> workRelevantStats)
         {
-            var tool = toolThing as SurvivalTool;
-            if (tool == null) return 0f;
-
             float optimality = 0f;
-            for (int i = 0; i < workRelevantStats.Count; i++)
-                optimality += GetStatValueFromEnumerable(tool.WorkStatFactors, workRelevantStats[i], 0f);
+            var workStatFactors = tool.WorkStatFactors.ToList();
+            bool hasAnyRequiredStat = false;
+
+            foreach (var stat in workRelevantStats)
+            {
+                // Only count stats that the tool actually has modifiers for
+                var modifier = workStatFactors.FirstOrDefault(m => m.stat == stat);
+                if (modifier != null)
+                {
+                    // In hardcore mode, enforce tool type restrictions for specific stats
+                    if (SurvivalToolUtility.IsHardcoreModeEnabled && !IsMultitool(tool))
+                    {
+                        // Only sickles can provide PlantHarvestingSpeed in hardcore mode
+                        if (stat == ST_StatDefOf.PlantHarvestingSpeed &&
+                            ToolUtility.ToolKindOf(tool) != STToolKind.Sickle)
+                        {
+                            continue; // Skip this stat modifier for non-sickle tools
+                        }
+
+                        // Add restrictions for other stats based on tool type
+                        // Note: Medical and butchery stats don't have tool type restrictions
+                        // since any tool with those stats should work (scalpels, cleavers, etc.)
+                    }
+
+                    hasAnyRequiredStat = true;
+                    optimality += modifier.value;
+                }
+            }
+
+            // In hardcore mode, ensure tools with required stats get a minimum viable score
+            if (SurvivalToolUtility.IsHardcoreModeEnabled && hasAnyRequiredStat && optimality <= 0f)
+            {
+                optimality = 0.1f; // Minimum score to make it viable
+            }
 
             if (tool.def.useHitPoints)
             {
                 float hpFrac = tool.MaxHitPoints > 0 ? (float)tool.HitPoints / tool.MaxHitPoints : 0f;
-                float lifespanDays = tool.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan);
-                float lifespanRemaining = lifespanDays * hpFrac;
+                float lifespanRemaining = tool.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) * hpFrac;
                 optimality *= LifespanDaysToOptimalityMultiplierCurve.Evaluate(lifespanRemaining);
             }
             return optimality;
         }
 
-        private static float GetStatValueFromEnumerable(IEnumerable<StatModifier> mods, StatDef stat, float @default)
+        private static bool ToolIsAcquirableByPolicy(Pawn pawn, SurvivalTool tool)
         {
-            if (mods != null)
-                foreach (var m in mods)
-                    if (m != null && m.stat == stat)
-                        return m.value;
-            return @default;
+            if (tool.IsInAnyStorage())
+                return true;
+
+            if (SurvivalTools.Settings?.pickupFromStorageOnly == true)
+                return false;
+
+            return pawn.Map.areaManager.Home[tool.Position];
+        }
+
+        private static SurvivalTool FindSameTypeHeldTool(Pawn pawn, SurvivalTool targetTool)
+        {
+            return pawn.GetHeldSurvivalTools()
+                .OfType<SurvivalTool>()
+                .FirstOrDefault(heldTool => AreSameToolType(heldTool, targetTool));
+        }
+
+        private static bool AreSameToolType(SurvivalTool tool1, SurvivalTool tool2)
+        {
+            // Tools are the same type if they modify the same set of stats
+            var tool1Stats = tool1.WorkStatFactors.Select(f => f.stat).ToHashSet();
+            var tool2Stats = tool2.WorkStatFactors.Select(f => f.stat).ToHashSet();
+
+            // If both tools have no stat modifiers, they're not useful tools
+            if (tool1Stats.Count == 0 || tool2Stats.Count == 0)
+                return false;
+
+            // Tools are same type if they have the same set of stat modifiers
+            return tool1Stats.SetEquals(tool2Stats);
+        }
+
+        /// <summary>
+        /// Checks if a tool is a multitool that can perform all jobs regardless of hardcore mode restrictions.
+        /// A multitool is identified by either being the specific multitool def or having stat modifiers for 
+        /// multiple different job types (3+ different stats covering different tool categories).
+        /// </summary>
+        private static bool IsMultitool(SurvivalTool tool)
+        {
+            if (tool?.def == null) return false;
+
+            // Check if it's the specific multitool def
+            if (tool.def == ST_ThingDefOf.SurvivalTools_Multitool) return true;
+
+            // Check if it has "multitool" in the name
+            string defName = tool.def.defName?.ToLowerInvariant() ?? string.Empty;
+            if (defName.Contains("multitool") || defName.Contains("omni") || defName.Contains("universal")) return true;
+
+            // Check if it has stat modifiers for multiple job categories (3+ different stats suggests multitool)
+            var statCount = tool.WorkStatFactors.Count();
+            return statCount >= 3;
+        }
+
+        /// <summary>
+        /// Determines if a job should be blocked when tools for the given stat are missing.
+        /// In regular hardcore mode, only required stats block jobs.
+        /// In extra hardcore mode, optional stats can also block jobs based on user settings.
+        /// </summary>
+        private static bool ShouldBlockJobForMissingStat(StatDef stat)
+        {
+            var settings = SurvivalTools.Settings;
+            if (settings == null) return false;
+
+            // Always block for required stats in hardcore mode
+            bool isOptionalStat = IsOptionalStat(stat);
+            if (!isOptionalStat) return true; // Required stats always block in hardcore mode
+
+            // For optional stats, check extra hardcore mode settings
+            if (settings.extraHardcoreMode && settings.IsStatRequiredInExtraHardcore(stat))
+            {
+                return true;
+            }
+
+            return false; // Optional stats don't block by default
+        }
+
+        /// <summary>
+        /// Checks if a stat is considered "optional" (cleaning, butchery, medical)
+        /// vs required (mining, construction, etc.)
+        /// </summary>
+        private static bool IsOptionalStat(StatDef stat)
+        {
+            return stat == ST_StatDefOf.CleaningSpeed ||
+                   stat == ST_StatDefOf.ButcheryFleshSpeed ||
+                   stat == ST_StatDefOf.ButcheryFleshEfficiency ||
+                   stat == ST_StatDefOf.MedicalOperationSpeed ||
+                   stat == ST_StatDefOf.MedicalSurgerySuccessChance;
         }
 
         private static readonly SimpleCurve LifespanDaysToOptimalityMultiplierCurve = new SimpleCurve
@@ -437,109 +471,5 @@ namespace SurvivalTools.HarmonyStuff
             new CurvePoint(4f,   1.00f),
             new CurvePoint(999f, 1.00f)
         };
-
-        // Drop the tool near a preferred location (e.g., the new tool), and enqueue a HaulToCell into a nearby stockpile if possible.
-        private static Job DequipAndTryStoreSurvivalToolNear(Pawn pawn, Thing tool, IntVec3 preferredNear, bool enqueueCurrent = true)
-        {
-            if (pawn.CurJob != null && enqueueCurrent)
-                pawn.jobs.jobQueue.EnqueueFirst(DuplicateJob(pawn.CurJob));
-
-            var map = pawn.MapHeld;
-            var zoneManager = map?.zoneManager;
-            Zone_Stockpile nearStock = zoneManager?.ZoneAt(preferredNear) as Zone_Stockpile;
-
-            // Try to keep it in/near the target stockpile if it accepts the tool
-            bool enqueuedHaul = false;
-
-            if (nearStock != null && nearStock.settings?.filter?.Allows(tool) == true)
-            {
-                // Find the closest empty, valid cell within that stockpile
-                var cells = nearStock.slotGroup?.CellsList ?? new List<IntVec3>();
-                IntVec3 bestCell = IntVec3.Invalid;
-                float bestDist = float.MaxValue;
-
-                for (int i = 0; i < cells.Count; i++)
-                {
-                    var c = cells[i];
-                    if (!c.Walkable(map)) continue;
-                    if (!pawn.CanReserve(c)) continue;
-
-                    // Can we haul it there? (avoid blocking things)
-                    if (StoreUtility.IsGoodStoreCell(c, map, tool, pawn, tool.Faction))
-                    {
-                        float d = c.DistanceToSquared(preferredNear);
-                        if (d < bestDist)
-                        {
-                            bestDist = d;
-                            bestCell = c;
-                        }
-                    }
-                }
-
-                if (bestCell.IsValid)
-                {
-                    var haulJob = new Job(JobDefOf.HaulToCell, tool, bestCell) { count = 1 };
-                    pawn.jobs.jobQueue.EnqueueFirst(DuplicateJob(haulJob));
-                    enqueuedHaul = true;
-                }
-            }
-
-            // If we couldn't find a “near” cell, fall back to global best storage
-            if (!enqueuedHaul)
-            {
-                if ((zoneManager?.ZoneAt(pawn.PositionHeld) as Zone_Stockpile)?.settings?.filter?.Allows(tool) != true
-                    && StoreUtility.TryFindBestBetterStoreCellFor(tool, pawn, map, StoreUtility.CurrentStoragePriorityOf(tool), pawn.Faction, out IntVec3 c2))
-                {
-                    var haulJob = new Job(JobDefOf.HaulToCell, tool, c2) { count = 1 };
-                    pawn.jobs.jobQueue.EnqueueFirst(DuplicateJob(haulJob));
-                }
-            }
-
-            // Do the actual dequip NOW (so the following Haul can pick it up)
-            return new Job(ST_JobDefOf.DropSurvivalTool, tool);
-        }
-
-
-        // Does the pawn already hold/equip ANY tool that helps with these stats?
-        private static bool PawnHasHelpfulTool(Pawn pawn, List<StatDef> requiredStats)
-        {
-            if (pawn == null || requiredStats == null || requiredStats.Count == 0)
-                return false;
-
-            // Equipment first
-            var eqTracker = pawn.equipment;
-            if (eqTracker != null)
-            {
-                var eq = eqTracker.AllEquipmentListForReading;
-                for (int i = 0; i < eq.Count; i++)
-                {
-                    if (eq[i] is SurvivalTool st && ToolImprovesAnyRequiredStat(st, requiredStats))
-                        return true;
-                }
-            }
-
-            // Inventory (only tools under the carry limit)
-            foreach (var t in pawn.GetUsableHeldSurvivalTools())
-            {
-                if (t is SurvivalTool st && ToolImprovesAnyRequiredStat(st, requiredStats))
-                    return true;
-            }
-
-            return false;
-        }
-        // ---------- Storage/Home policy ----------
-        private static bool ToolIsAcquirableByPolicy(Pawn pawn, SurvivalTool tool)
-        {
-            if (tool.IsInAnyStorage())
-                return true;
-
-            bool storageOnly = SurvivalTools.Settings != null && SurvivalTools.Settings.pickupFromStorageOnly;
-            if (storageOnly) return false;
-
-            var map = pawn.Map;
-            if (map == null || map.areaManager == null) return false;
-            var home = map.areaManager.Home;
-            return home != null && home[tool.Position];
-        }
     }
 }

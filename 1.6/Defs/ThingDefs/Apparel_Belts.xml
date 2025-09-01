@@ -37,6 +37,9 @@
         <thingCategories>
             <li>Apparel</li>
         </thingCategories>
+        <recipeMaker>
+            <researchPrerequisite>Smithing</researchPrerequisite>
+        </recipeMaker>
         <apparel>
             <careIfWornByCorpse>false</careIfWornByCorpse>
             <bodyPartGroups>

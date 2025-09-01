@@ -8,28 +8,35 @@ using Verse;
 
 namespace SurvivalTools.HarmonyStuff
 {
-    [HarmonyPatch(typeof(Mineable))]
-    [HarmonyPatch(nameof(Mineable.Notify_TookMiningDamage))]
+    [HarmonyPatch(typeof(Mineable), nameof(Mineable.Notify_TookMiningDamage))]
     public static class Patch_Mineable_Notify_TookMiningDamage
     {
+        private static readonly FieldInfo FI_MiningYield = AccessTools.Field(typeof(StatDefOf), nameof(StatDefOf.MiningYield));
+        private static readonly FieldInfo FI_DiggingYield = AccessTools.Field(typeof(ST_StatDefOf), nameof(ST_StatDefOf.MiningYieldDigging));
+
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            var list = instructions.ToList();
+            var codes = instructions.ToList();
+            bool patched = false;
 
-            // Cache FieldInfos once
-            FieldInfo miningYieldField = AccessTools.Field(typeof(StatDefOf), nameof(StatDefOf.MiningYield));
-            FieldInfo diggingYieldField = AccessTools.Field(typeof(ST_StatDefOf), nameof(ST_StatDefOf.MiningYieldDigging));
-
-            for (int i = 0; i < list.Count; i++)
+            for (int i = 0; i < codes.Count; i++)
             {
-                var ins = list[i];
+                var instruction = codes[i];
 
-                if (ins.opcode == OpCodes.Ldsfld && Equals(ins.operand, miningYieldField))
+                if (instruction.opcode == OpCodes.Ldsfld && instruction.operand.Equals(FI_MiningYield))
                 {
-                    ins.operand = diggingYieldField;
+                    yield return new CodeInstruction(OpCodes.Ldsfld, FI_DiggingYield);
+                    patched = true;
                 }
+                else
+                {
+                    yield return instruction;
+                }
+            }
 
-                yield return ins;
+            if (!patched && SurvivalToolUtility.IsDebugLoggingEnabled)
+            {
+                Log.Warning("[SurvivalTools] Failed to patch Mineable.Notify_TookMiningDamage: ldsfld for MiningYield not found.");
             }
         }
     }

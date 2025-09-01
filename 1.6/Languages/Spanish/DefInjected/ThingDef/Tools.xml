@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+    <!-- Basic/Primitive Tools -->
+    <SurvivalTools_Axe.label>hacha</SurvivalTools_Axe.label>
+    <SurvivalTools_Axe.description>Una herramienta forestal básica diseñada para trabajo eficiente de tala. Su cabeza pesada proporciona fuerza de golpe poderosa, convirtiéndola en una herramienta indispensable para colonos comprometidos con el trabajo de madera. Su equilibrio y efecto de palanca la hacen mucho más efectiva que métodos de corte improvisados. También sirve como un arma cuerpo a cuerpo confiable cuando la supervivencia lo requiere.</SurvivalTools_Axe.description>
+
+    <SurvivalTools_Pickaxe.label>pico</SurvivalTools_Pickaxe.label>
+    <SurvivalTools_Pickaxe.description>Una herramienta de minería esencial que presenta una cabeza pesada y puntiaguda unida a un mango robusto. Especialmente diseñada para romper roca dura y extraer materiales valiosos de manera eficiente. Su fuerza concentrada y efecto de palanca son esenciales para operaciones mineras productivas. También puede servir como arma improvisada cuando las circunstancias lo requieren.</SurvivalTools_Pickaxe.description>
+
+    <SurvivalTools_Hammer.label>martillo</SurvivalTools_Hammer.label>
+    <SurvivalTools_Hammer.description>Una herramienta fundamental para cualquier proyecto de construcción. Este martillo versátil proporciona la precisión y fuerza necesarias para clavar sujetadores, dar forma a materiales y ensamblar estructuras. Indispensable para colonos comprometidos con trabajos de construcción y mantenimiento. Su diseño equilibrado asegura golpes efectivos con fatiga mínima durante trabajos de construcción prolongados.</SurvivalTools_Hammer.description>
+
+    <SurvivalTools_Sickle.label>hoz</SurvivalTools_Sickle.label>
+    <SurvivalTools_Sickle.description>Una herramienta agrícola especializada que presenta una hoja curva perfectamente diseñada para cosechar cultivos y cortar material vegetal. Su diseño ergonómico permite movimientos de corte eficientes y repetitivos con tensión mínima en el usuario. Indispensable para operaciones agrícolas productivas y trabajos de mantenimiento de plantas.</SurvivalTools_Sickle.description>
+
+    <SurvivalTools_Hoe.label>azada</SurvivalTools_Hoe.label>
+    <SurvivalTools_Hoe.description>Una herramienta agrícola básica diseñada para preparación del suelo y plantación de semillas. Su diseño puntiagudo rompe el suelo eficientemente, creando condiciones óptimas de plantación. Indispensable para establecer operaciones agrícolas productivas y mantener rendimientos de cultivos. Su construcción resistente asegura rendimiento confiable a través de las estaciones.</SurvivalTools_Hoe.description>
+
+    <SurvivalTools_Knife.label>cuchillo</SurvivalTools_Knife.label>
+    <SurvivalTools_Knife.description>Una herramienta de corte versátil con una hoja afilada indispensable para trabajos de precisión. Ideal para trabajos de carnicería, procedimientos médicos y tareas generales de corte. Su diseño equilibrado permite cortes controlados y precisos, mientras la hoja afilada asegura trabajo limpio. Una herramienta indispensable para cualquier colono serio.</SurvivalTools_Knife.description>
+
+    <SurvivalTools_HandSaw.label>sierra de mano</SurvivalTools_HandSaw.label>
+    <SurvivalTools_HandSaw.description>Una herramienta de carpintería tradicional que presenta una hoja de metal con dientes cortados precisamente para trabajo manual de madera. Indispensable para proyectos de construcción que requieren madera cortada a medida y trabajo detallado de carpintería. El ritmo constante de una sierra de mano puede tomar más tiempo que herramientas eléctricas, pero ofrece excelente control y precisión.</SurvivalTools_HandSaw.description>
+
+    <SurvivalTools_BoneSickle.label>hoz de hueso</SurvivalTools_BoneSickle.label>
+    <SurvivalTools_BoneSickle.description>Una herramienta de cosecha primitiva hecha de hueso tallado con un borde afilado. Aunque no tan duradero como sus contrapartes metálicas, este instrumento tradicional sirve admirablemente para cosechar cultivos y cortar plantas. Su diseño curvo sigue patrones antiguos que han probado su efectividad a través de incontables generaciones de trabajo agrícola.</SurvivalTools_BoneSickle.description>
+
+    <SurvivalTools_PrimitiveLever.label>palanca</SurvivalTools_PrimitiveLever.label>
+    <SurvivalTools_PrimitiveLever.description>Una herramienta de palanca primitiva pero efectiva hecha de materiales duraderos. Indispensable para desarmar estructuras, separar materiales y realizar operaciones mecánicas básicas. Representa el ingenio de civilizaciones tempranas en desarrollar soluciones prácticas para trabajos de construcción y demolición sin tecnología avanzada.</SurvivalTools_PrimitiveLever.description>
+
+    <SurvivalTools_Abacus.label>ábaco</SurvivalTools_Abacus.label>
+    <SurvivalTools_Abacus.description>Un instrumento de cálculo antiguo con cuentas móviles dispuestas en varillas para realizar operaciones aritméticas. Indispensable para organizar datos de investigación, manejar cálculos complejos y mantener registros precisos en sociedades sin dispositivos de cálculo avanzados. Representa la fundación del pensamiento matemático y organización de datos.</SurvivalTools_Abacus.description>
+
+    <!-- Industrial Tools -->
+    <SurvivalTools_SteelKnife.label>cuchillo de acero</SurvivalTools_SteelKnife.label>
+    <SurvivalTools_SteelKnife.description>Un cuchillo de acero forjado con precisión con retención de filo superior y durabilidad. La hoja de acero al carbono mantiene su filo a través de uso extensivo, haciéndolo ideal para trabajos exigentes de carnicería y médicos. El mango ergonómico proporciona excelente control para trabajos finos.</SurvivalTools_SteelKnife.description>
+
+    <SurvivalTools_CrosscutSaw.label>sierra de tronzar</SurvivalTools_CrosscutSaw.label>
+    <SurvivalTools_CrosscutSaw.description>Una sierra industrial de precisión diseñada para trabajo eficiente de carpintería y construcción. Sus dientes especialmente diseñados y construcción de acero reforzado permiten cortes limpios y precisos a través de varios materiales. Indispensable para grandes proyectos de construcción y trabajos avanzados de carpintería.</SurvivalTools_CrosscutSaw.description>
+
+    <SurvivalTools_Wrench.label>llave inglesa</SurvivalTools_Wrench.label>
+    <SurvivalTools_Wrench.description>Una herramienta mecánica de precisión diseñada para agarrar, girar y manipular sujetadores y componentes mecánicos. Crucial para trabajos de mantenimiento, reparaciones de máquinas y proyectos de construcción que requieren ajustes precisos. El sistema de mordazas ajustables se adapta a varios tamaños mientras proporciona palanca y control óptimos.</SurvivalTools_Wrench.description>
+
+    <SurvivalTools_Microscope.label>microscopio</SurvivalTools_Microscope.label>
+    <SurvivalTools_Microscope.description>Un instrumento óptico de precisión que magnifica objetos pequeños y muestras para examen detallado. Indispensable para investigación avanzada, estudios biológicos y análisis científico.</SurvivalTools_Microscope.description>
+
+    <!-- Precision Tools -->
+    <SurvivalTools_CarbidePick.label>pico de carburo</SurvivalTools_CarbidePick.label>
+    <SurvivalTools_CarbidePick.description>Una herramienta de minería avanzada que presenta una punta de carburo que mantiene su filo a través de los trabajos de excavación más exigentes. La cabeza diseñada con precisión corta roca más eficientemente que herramientas estándar, mientras su construcción reforzada asegura durabilidad excepcional bajo condiciones mineras duras.</SurvivalTools_CarbidePick.description>
+
+    <SurvivalTools_PrecisionScalpel.label>bisturí de precisión</SurvivalTools_PrecisionScalpel.label>
+    <SurvivalTools_PrecisionScalpel.description>Un instrumento quirúrgico ultra-afilado fabricado de aleaciones de acero de grado superior. La hoja cuidadosamente equilibrada mantiene su filo a través de esterilización y uso repetidos, mientras el mango ergonómico asegura control preciso durante procedimientos médicos finos. Equipo estándar para instalaciones médicas avanzadas.</SurvivalTools_PrecisionScalpel.description>
+
+    <SurvivalTools_PowerDrill.label>taladro eléctrico</SurvivalTools_PowerDrill.label>
+    <SurvivalTools_PowerDrill.description>Una herramienta de perforación mecanizada impulsada por un motor incorporado capaz de perforar materiales duros con precisión y velocidad. El motor de velocidad variable y brocas intercambiables la hacen extremadamente valiosa para trabajos de construcción y mecánicos. Requiere mantenimiento regular para mantener el motor funcionando suavemente.</SurvivalTools_PowerDrill.description>
+
+    <!-- Spacer Tools -->
+    <SurvivalTools_Multitool.label>multiherramienta del glitterworld</SurvivalTools_Multitool.label>
+    <SurvivalTools_Multitool.description>Una herramienta universal de alta tecnología comúnmente utilizada por mecánicos domésticos en sociedades del glitterworld. Este dispositivo avanzado se adapta sin esfuerzo a cualquier tarea - construcción, minería, silvicultura, mantenimiento, demolición - convirtiéndola en la herramienta de supervivencia todo-en-uno definitiva. Aunque diseñada para mecánicos, es perfectamente utilizable por humanoides debido a similitudes fisiológicas.</SurvivalTools_Multitool.description>
+
+</LanguageData>

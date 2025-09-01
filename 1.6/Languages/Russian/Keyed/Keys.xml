@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <NoTool>Нет инструмента</NoTool>
+    <ToolInUse>(используется)</ToolInUse>
+
+    <!-- Settings -->
+    <SurvivalToolsSettingsCategory>Инструменты Выживания</SurvivalToolsSettingsCategory>
+
+    <Settings_HardcoreMode>Хардкор режим</Settings_HardcoreMode>
+    <Settings_HardcoreMode_Tooltip>Значительно повышает сложность, делая инструменты жизненно важными для выживания. Без подходящих инструментов колонисты становятся неспособными эффективно выполнять большинство рабочих задач. Инструменты также изнашиваются на 50% быстрее, требуя более частой замены и лучшего управления инструментами. Превращает игру в настоящий зависимый от инструментов опыт выживания.</Settings_HardcoreMode_Tooltip>
+
+    <Settings_ExtraHardcoreMode>Экстремальный хардкор режим</Settings_ExtraHardcoreMode>
+    <Settings_ExtraHardcoreMode_Tooltip>МАКСИМАЛЬНАЯ СЛОЖНОСТЬ: Окончательный вызов выживания. В сочетании с хардкор режимом колонисты становятся полностью беспомощными без правильных инструментов. Задачи, которые были просто неэффективными (как уборка руками или импровизированная медицинская помощь), становятся невозможными для попытки. Инструменты деградируют на 87,5% быстрее обычного, создавая постоянное давление для производства и обслуживания инструментов. Используйте флажки ниже для точного контроля того, какие типы работ становятся зависимыми от инструментов. ПРЕДУПРЕЖДЕНИЕ: Ранняя игра становится чрезвычайно сложной - приобретение инструментов становится критическим для выживания колонии!</Settings_ExtraHardcoreMode_Tooltip>
+
+    <Settings_RequireCleaningTools>Требуются инструменты для уборки</Settings_RequireCleaningTools>
+    <Settings_RequireCleaningTools_Tooltip>Принуждает колонистов использовать подходящие инструменты для уборки (такие как метлы или швабры) для всех задач по уборке. Без правильных инструментов они не могут убирать полы, удалять грязь или расчищать снег. Необходимо для поддержания гигиены колонии в экстремальных режимах сложности.</Settings_RequireCleaningTools_Tooltip>
+
+    <Settings_RequireButcheryTools>Требуются инструменты для разделки</Settings_RequireButcheryTools>
+    <Settings_RequireButcheryTools_Tooltip>Требует подходящие режущие инструменты (такие как ножи или топорики) для всех операций разделки и забоя. Колонисты не могут обрабатывать мясо или забивать животных без подходящих лезвий. Критично для цепочек производства пищи в хардкор сценариях.</Settings_RequireButcheryTools_Tooltip>
+
+    <Settings_RequireMedicalTools>Требуются медицинские инструменты</Settings_RequireMedicalTools>
+    <Settings_RequireMedicalTools_Tooltip>Принуждает использовать специализированные медицинские инструменты для хирургических процедур и продвинутой медицинской помощи. Операции становятся невозможными без подходящих хирургических инструментов, делая приобретение медицинского оборудования жизненно важным для здоровья и выживания колонии.</Settings_RequireMedicalTools_Tooltip>
+
+    <Settings_ToolMapGen>Инструменты в разрушенных зданиях</Settings_ToolMapGen>
+    <Settings_ToolMapGen_Tooltip>Генерирует базовые инструменты выживания в древних руинах и разбившихся структурах во время генерации карты. Эти выветренные инструменты предоставляют важные ресурсы ранней игры, но обычно низкого качества. Бесценны для стартующих колоний в жестких режимах сложности, где начальный доступ к инструментам критичен.</Settings_ToolMapGen_Tooltip>
+
+    <Settings_ToolLimit>Лимит переноса инструментов</Settings_ToolLimit>
+    <Settings_ToolLimit_Tooltip>Ограничивает колонистов переносить максимум 2-3 инструмента одновременно в их инвентаре (исключая путешествия каравана). Принуждает к стратегическому управлению инструментами и специализации среди колонистов. Пояса для инструментов и похожее снаряжение могут увеличить этот лимит сверх базового значения. Добавляет реалистичные ограничения инвентаря к использованию инструментов.</Settings_ToolLimit_Tooltip>
+
+    <Settings_ToolDegradationRate>Скорость деградации инструментов</Settings_ToolDegradationRate>
+
+    <Settings_ToolOptimization>Автоматическая оптимизация инструментов</Settings_ToolOptimization>
+    <Settings_ToolOptimization_Tooltip>Включает интеллектуальное управление инструментами, где колонисты автоматически выбирают и носят наиболее эффективные инструменты для их назначенной работы. Они улучшают до лучших инструментов и бросают худшие по необходимости. Отключите это, если предпочитаете ручное управление инструментами или испытываете проблемы производительности с модифицированными материалами.</Settings_ToolOptimization_Tooltip>
+
+    <Settings_PickupFromStorageOnly>Ограничить подбор инструментов зонами хранения</Settings_PickupFromStorageOnly>
+    <Settings_PickupFromStorageOnly_Tooltip>Когда включено, колонисты будут получать инструменты только из назначенных зон хранения, поддерживая лучшую организацию и предотвращая захват инструментов из рабочих зон. Когда отключено, они могут поднимать любой доступный инструмент в Домашней зоне (исключая запрещенные или горящие предметы), обеспечивая больше гибкости, но меньше контроля.</Settings_PickupFromStorageOnly_Tooltip>
+
+    <Settings_DebugLogging>Включить детальное отладочное логирование</Settings_DebugLogging>
+    <Settings_DebugLogging_Tooltip>Активирует комплексное логирование решений выбора инструментов, автоматического поведения подбора и логики сопоставления работа-инструмент. Необходимо для устранения проблем с инструментами или понимания того, почему колонисты выбирают конкретные инструменты. Рекомендуется только для разработки модов или при проблемах, связанных с инструментами. Может влиять на производительность с обширным выводом логов.</Settings_DebugLogging_Tooltip>
+
+    <Settings_AutoTool>Умный подбор инструментов перед работой</Settings_AutoTool>
+    <Settings_AutoTool_Tooltip>Революционизирует эффективность рабочего процесса, заставляя колонистов автоматически получать оптимальный инструмент перед началом любой работы. Они интеллектуально меняют инструменты, улучшают до лучших вариантов и обеспечивают наличие подходящего оборудования для максимальной продуктивности. Основная функция для бесшовного геймплея, основанного на инструментах.</Settings_AutoTool_Tooltip>
+
+    <!-- Alerts -->
+    <ColonistNeedsSurvivalTool>Колонисту не хватает необходимых инструментов</ColonistNeedsSurvivalTool>
+    <ColonistsNeedSurvivalTool>Колонистам не хватает необходимых инструментов</ColonistsNeedSurvivalTool>
+    <ColonistNeedsSurvivalToolDesc>Этим колонистам нужны подходящие инструменты для назначенной работы, но им не хватает необходимого оборудования. Их продуктивность серьезно скомпрометирована.</ColonistNeedsSurvivalToolDesc>
+
+    <SurvivalToolsNeedReplacing>Инструменты приближаются к поломке</SurvivalToolsNeedReplacing>
+    <SurvivalToolNeedsReplacingDesc>Эти колонисты используют инструменты, которые скоро сломаются. Замените их немедленно, чтобы избежать прерывания работы.</SurvivalToolNeedsReplacingDesc>
+
+    <!-- Tool assignment management -->
+    <ManageSurvivalToolAssignments>Управление назначениями инструментов</ManageSurvivalToolAssignments>
+    <SurvivalToolAssignment>Назначение инструмента</SurvivalToolAssignment>
+    <SurvivalToolAssignmentConstructor>Строитель</SurvivalToolAssignmentConstructor>
+    <SurvivalToolAssignmentMiner>Шахтер</SurvivalToolAssignmentMiner>
+    <SurvivalToolAssignmentPlantWorker>Работник растений</SurvivalToolAssignmentPlantWorker>
+    <SurvivalToolAssignmentResearcher>Исследователь</SurvivalToolAssignmentResearcher>
+    <SurvivalToolAssignmentCleaner>Уборщик</SurvivalToolAssignmentCleaner>
+    <SurvivalToolAssignmentMedical>Медицинский</SurvivalToolAssignmentMedical>
+    <SurvivalToolAssignmentButcher>Мясник</SurvivalToolAssignmentButcher>
+    <SelectSurvivalToolAssignment>Выбрать назначение инструмента...</SelectSurvivalToolAssignment>
+    <NewSurvivalToolAssignment>Новое назначение инструмента</NewSurvivalToolAssignment>
+    <DeleteSurvivalToolAssignment>Удалить назначение инструмента...</DeleteSurvivalToolAssignment>
+    <SurvivalToolAssignmentInUse>Назначение инструмента используется {0}</SurvivalToolAssignmentInUse>
+    <NoSurvivalToolAssignmentSelected>Назначение инструмента не выбрано</NoSurvivalToolAssignmentSelected>
+    <ForcedSurvivalTools>Принудительные инструменты</ForcedSurvivalTools>
+
+</LanguageData>

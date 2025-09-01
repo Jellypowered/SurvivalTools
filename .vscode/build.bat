@@ -73,9 +73,13 @@ set "OUTDIR=%MODVER%\Assemblies"
 REM ================================
 REM Prepare output folders
 REM ================================
+if exist "%OUTDIR%" (
+    echo Removing existing output directory: "%OUTDIR%"
+    rmdir /s /q "%OUTDIR%"
+)
 if not exist "%OUTDIR%" (
-    echo Creating output dir: "%OUTDIR%"
-    mkdir "%OUTDIR%"
+echo Creating output dir: "%OUTDIR%"
+mkdir "%OUTDIR%"
 )
 if not exist "%BASE%" (
     echo Creating local mirror dir: "%BASE%"

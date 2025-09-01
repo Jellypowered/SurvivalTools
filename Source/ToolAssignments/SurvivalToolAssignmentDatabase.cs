@@ -24,18 +24,19 @@ namespace SurvivalTools
         public override void ExposeData()
         {
             Scribe_Values.Look(ref initialized, "initialized", false);
-            Scribe_Collections.Look(ref survivalToolAssignments, "survivalToolAssignments", LookMode.Deep, new object[] { });
+            Scribe_Collections.Look(ref survivalToolAssignments, "survivalToolAssignments", LookMode.Deep);
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 if (survivalToolAssignments == null) survivalToolAssignments = new List<SurvivalToolAssignment>();
+
                 // Defensive: ensure filters/labels exist on all entries
-                foreach (var a in survivalToolAssignments)
+                foreach (var assignment in survivalToolAssignments)
                 {
-                    if (a != null)
+                    if (assignment != null)
                     {
-                        if (a.filter == null) a.filter = new ThingFilter();
-                        if (a.label.NullOrEmpty()) a.label = "Unnamed";
+                        if (assignment.filter == null) assignment.filter = new ThingFilter();
+                        if (assignment.label.NullOrEmpty()) assignment.label = "Unnamed";
                     }
                 }
             }
@@ -79,30 +80,72 @@ namespace SurvivalTools
 
         private void GenerateStartingSurvivalToolAssignments()
         {
-            var staAnything = MakeNewSurvivalToolAssignment();
-            staAnything.label = "OutfitAnything".Translate();
+            // Create a comprehensive "General Worker" assignment as the default
+            var staGeneral = MakeNewSurvivalToolAssignment();
+            staGeneral.label = "General Worker"; // This will be the default assignment
+            staGeneral.filter.SetDisallowAll();
 
-            var staConstructor = MakeNewSurvivalToolAssignment();
-            staConstructor.label = "SurvivalToolAssignmentConstructor".Translate();
-            staConstructor.filter.SetDisallowAll();
-
-            var staMiner = MakeNewSurvivalToolAssignment();
-            staMiner.label = "SurvivalToolAssignmentMiner".Translate();
-            staMiner.filter.SetDisallowAll();
-
-            var staPlantWorker = MakeNewSurvivalToolAssignment();
-            staPlantWorker.label = "SurvivalToolAssignmentPlantWorker".Translate();
-            staPlantWorker.filter.SetDisallowAll();
-
+            // Add ALL tool types to the default assignment - let colonists use any appropriate tool
             foreach (ThingDef tDef in DefDatabase<ThingDef>.AllDefs)
             {
                 var toolProps = tDef.GetModExtension<SurvivalToolProperties>();
                 var tags = toolProps?.defaultSurvivalToolAssignmentTags;
                 if (tags == null) continue;
 
-                if (tags.Contains("Constructor")) staConstructor.filter.SetAllow(tDef, true);
-                if (tags.Contains("Miner")) staMiner.filter.SetAllow(tDef, true);
-                if (tags.Contains("PlantWorker")) staPlantWorker.filter.SetAllow(tDef, true);
+                // Include ALL tools in the default assignment - this allows maximum flexibility
+                // Colonists will automatically pick up and use any tool that helps their assigned work
+                staGeneral.filter.SetAllow(tDef, true);
+            }
+
+            var staAnything = MakeNewSurvivalToolAssignment();
+            staAnything.label = "OutfitAnything".Translate();
+
+            // Create assignments for each category, but only if tools exist for that category
+            var assignmentsToCreate = new List<(string tag, string labelKey)>
+            {
+                ("Constructor", "SurvivalToolAssignmentConstructor"),
+                ("Miner", "SurvivalToolAssignmentMiner"),
+                ("PlantWorker", "SurvivalToolAssignmentPlantWorker"),
+                ("Researcher", "SurvivalToolAssignmentResearcher"),
+                ("Cleaner", "SurvivalToolAssignmentCleaner"),
+                ("Medical", "SurvivalToolAssignmentMedical"),
+                ("Butcher", "SurvivalToolAssignmentButcher")
+            };
+
+            var createdAssignments = new Dictionary<string, SurvivalToolAssignment>();
+
+            foreach (var (tag, labelKey) in assignmentsToCreate)
+            {
+                // Check if any tools exist with this tag
+                bool hasToolsForTag = DefDatabase<ThingDef>.AllDefs.Any(tDef =>
+                {
+                    var toolProps = tDef.GetModExtension<SurvivalToolProperties>();
+                    return toolProps?.defaultSurvivalToolAssignmentTags?.Contains(tag) == true;
+                });
+
+                if (hasToolsForTag)
+                {
+                    var assignment = MakeNewSurvivalToolAssignment();
+                    assignment.label = labelKey.Translate();
+                    assignment.filter.SetDisallowAll();
+                    createdAssignments[tag] = assignment;
+                }
+            }
+
+            // Now assign tools to the created assignments
+            foreach (ThingDef tDef in DefDatabase<ThingDef>.AllDefs)
+            {
+                var toolProps = tDef.GetModExtension<SurvivalToolProperties>();
+                var tags = toolProps?.defaultSurvivalToolAssignmentTags;
+                if (tags == null) continue;
+
+                foreach (var tag in tags)
+                {
+                    if (createdAssignments.TryGetValue(tag, out var assignment))
+                    {
+                        assignment.filter.SetAllow(tDef, true);
+                    }
+                }
             }
 
             var staNothing = MakeNewSurvivalToolAssignment();

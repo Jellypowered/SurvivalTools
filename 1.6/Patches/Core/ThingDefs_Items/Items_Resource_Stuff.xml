@@ -1,5 +1,56 @@
 <Patch>
     <Operation Class="PatchOperationAddModExtension">
+        <xpath>Defs/ThingDef[defName="Steel"]</xpath>
+        <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                    <TreeFellingSpeed>                        
+                        1.0
+                    </TreeFellingSpeed>
+                    <PlantHarvestingSpeed>                        
+                        1.0
+                    </PlantHarvestingSpeed>
+                    <DiggingSpeed>                        
+                        1.0
+                    </DiggingSpeed>
+                    <MiningYieldDigging>                        
+                        1.0
+                    </MiningYieldDigging>
+                    <ConstructionSpeed>                        
+                        1.0
+                    </ConstructionSpeed>
+                    <MaintenanceSpeed>                        
+                        1.0
+                    </MaintenanceSpeed>
+                    <DeconstructionSpeed>                        
+                        1.0
+                    </DeconstructionSpeed>
+                    <ResearchSpeed>                        
+                        1.0
+                    </ResearchSpeed>
+                    <CleaningSpeed>                        
+                        1.0
+                    </CleaningSpeed>
+                    <MedicalOperationSpeed>                        
+                        1.0
+                    </MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>                        
+                        1.0
+                    </MedicalSurgerySuccessChance>
+                    <ButcheryFleshSpeed>                        
+                        1.0
+                    </ButcheryFleshSpeed>
+                    <ButcheryFleshEfficiency>                        
+                        1.0
+                    </ButcheryFleshEfficiency>
+                    <SowingSpeed>                        
+                        1.0
+                    </SowingSpeed>
+                </toolStatFactors>
+            </li>
+        </value>
+    </Operation>
+    <Operation Class="PatchOperationAddModExtension">
         <xpath>Defs/ThingDef[defName="Silver"]</xpath>
         <value>
             <li Class="SurvivalTools.StuffPropsTool">
@@ -117,6 +168,110 @@
                     <DiggingSpeed>                        
                         1.1
                     </DiggingSpeed>
+                </toolStatFactors>
+            </li>
+        </value>
+    </Operation>
+    <!-- Only if Anomaly is loaded -->
+    <Operation Class="PatchOperationAddModExtension" MayRequire="Ludeon.RimWorld.Anomaly">
+        <xpath>Defs/ThingDef[defName="Bioferrite"]</xpath>
+        <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                    <TreeFellingSpeed>                        
+                        1.1
+                    </TreeFellingSpeed>
+                    <PlantHarvestingSpeed>                        
+                        1.1
+                    </PlantHarvestingSpeed>
+                    <DiggingSpeed>                        
+                        1.2
+                    </DiggingSpeed>
+                    <MiningYieldDigging>                        
+                        1.15
+                    </MiningYieldDigging>
+                    <ConstructionSpeed>                        
+                        1.1
+                    </ConstructionSpeed>
+                    <MaintenanceSpeed>                        
+                        1.1
+                    </MaintenanceSpeed>
+                    <DeconstructionSpeed>                        
+                        1.1
+                    </DeconstructionSpeed>
+                    <ResearchSpeed>                        
+                        1.2
+                    </ResearchSpeed>
+                    <CleaningSpeed>                        
+                        1.0
+                    </CleaningSpeed>
+                    <MedicalOperationSpeed>                        
+                        1.1
+                    </MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>                        
+                        1.05
+                    </MedicalSurgerySuccessChance>
+                    <ButcheryFleshSpeed>                        
+                        1.1
+                    </ButcheryFleshSpeed>
+                    <ButcheryFleshEfficiency>                        
+                        1.05
+                    </ButcheryFleshEfficiency>
+                    <SowingSpeed>                        
+                        1.1
+                    </SowingSpeed>
+                </toolStatFactors>
+            </li>
+        </value>
+    </Operation>
+    <!-- Only if Odyssey is loaded -->
+    <Operation Class="PatchOperationAddModExtension" MayRequire="Ludeon.RimWorld.Odyssey">
+        <xpath>Defs/ThingDef[defName="Obsidian"]</xpath>
+        <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                    <TreeFellingSpeed>                        
+                        0.8
+                    </TreeFellingSpeed>
+                    <PlantHarvestingSpeed>                        
+                        0.8
+                    </PlantHarvestingSpeed>
+                    <DiggingSpeed>                        
+                        0.9
+                    </DiggingSpeed>
+                    <MiningYieldDigging>                        
+                        0.95
+                    </MiningYieldDigging>
+                    <ConstructionSpeed>                        
+                        0.8
+                    </ConstructionSpeed>
+                    <MaintenanceSpeed>                        
+                        0.8
+                    </MaintenanceSpeed>
+                    <DeconstructionSpeed>                        
+                        0.9
+                    </DeconstructionSpeed>
+                    <ResearchSpeed>                        
+                        0.9
+                    </ResearchSpeed>
+                    <CleaningSpeed>                        
+                        1.0
+                    </CleaningSpeed>
+                    <MedicalOperationSpeed>                        
+                        1.2
+                    </MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>                        
+                        1.1
+                    </MedicalSurgerySuccessChance>
+                    <ButcheryFleshSpeed>                        
+                        1.3
+                    </ButcheryFleshSpeed>
+                    <ButcheryFleshEfficiency>                        
+                        1.1
+                    </ButcheryFleshEfficiency>
+                    <SowingSpeed>                        
+                        0.8
+                    </SowingSpeed>
                 </toolStatFactors>
             </li>
         </value>
