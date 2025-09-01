@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <NoTool>ツールなし</NoTool>
+    <ToolInUse>（使用中）</ToolInUse>
+
+    <!-- Settings -->
+    <SurvivalToolsSettingsCategory>サバイバルツール</SurvivalToolsSettingsCategory>
+
+    <Settings_HardcoreMode>ハードコアモード</Settings_HardcoreMode>
+    <Settings_HardcoreMode_Tooltip>ツールを生存に不可欠なものにして、難易度を大幅に向上させます。適切なツールがないと、入植者はほとんどの作業タスクを効果的に実行できなくなります。ツールの摩耗も50%速くなり、より頻繁な交換とより良いツール管理が必要になります。ゲームを真のツール依存のサバイバル体験に変えます。</Settings_HardcoreMode_Tooltip>
+
+    <Settings_ExtraHardcoreMode>エクストリームハードコアモード</Settings_ExtraHardcoreMode>
+    <Settings_ExtraHardcoreMode_Tooltip>最大難易度：究極のサバイバルチャレンジ。ハードコアモードと組み合わせると、入植者は適切なツールなしに完全に無力になります。単に非効率だったタスク（手作業での清掃や即席の医療ケア）が試行不可能になります。ツールは通常よりも87.5%速く劣化し、ツール製造と保守に継続的な圧力をかけます。下のチェックボックスでどの作業タイプがツール依存になるかを正確に制御してください。警告：初期ゲームが極めて困難になります - ツールの獲得がコロニーの生存に重要になります！</Settings_ExtraHardcoreMode_Tooltip>
+
+    <Settings_RequireCleaningTools>清掃ツールが必要</Settings_RequireCleaningTools>
+    <Settings_RequireCleaningTools_Tooltip>すべての清掃タスクで適切な清掃ツール（ほうきやモップなど）の使用を強制します。適切なツールがないと、床を清掃したり、汚れを除去したり、雪を片付けたりできません。極端な難易度モードでコロニーの衛生を維持するために不可欠です。</Settings_RequireCleaningTools_Tooltip>
+
+    <Settings_RequireButcheryTools>屠畜ツールが必要</Settings_RequireButcheryTools>
+    <Settings_RequireButcheryTools_Tooltip>すべての屠畜と殺処分作業で適切な切断ツール（ナイフや肉切り包丁など）を義務付けます。適切な刃物がないと、入植者は肉を処理したり動物を殺処分したりできません。ハードコアシナリオでの食料生産チェーンに重要です。</Settings_RequireButcheryTools_Tooltip>
+
+    <Settings_RequireMedicalTools>医療ツールが必要</Settings_RequireMedicalTools>
+    <Settings_RequireMedicalTools_Tooltip>外科手術と高度な医療ケアで専門の医療器具の使用を強制します。適切な手術ツールがないと手術が不可能になり、医療機器の獲得をコロニーの健康と生存に不可欠にします。</Settings_RequireMedicalTools_Tooltip>
+
+    <Settings_ToolMapGen>廃墟の建物にツール</Settings_ToolMapGen>
+    <Settings_ToolMapGen_Tooltip>マップ生成中に古代の廃墟や墜落した構造物に基本的なサバイバルツールを生成します。これらの風化したツールは重要な初期ゲームリソースを提供しますが、通常は低品質です。初期ツールアクセスが重要な厳しい難易度モードでコロニーを開始するのに非常に価値があります。</Settings_ToolMapGen_Tooltip>
+
+    <Settings_ToolLimit>ツール携帯制限</Settings_ToolLimit>
+    <Settings_ToolLimit_Tooltip>入植者が同時にインベントリに運べるツールを最大2-3個に制限します（キャラバン旅行を除く）。入植者間での戦略的ツール管理と専門化を強制します。ツールベルトと類似の装備はこの制限を増加させることができます。ツール使用に現実的なインベントリ制約を追加します。</Settings_ToolLimit_Tooltip>
+
+    <Settings_ToolDegradationRate>ツール劣化率</Settings_ToolDegradationRate>
+
+    <Settings_ToolOptimization>自動ツール最適化</Settings_ToolOptimization>
+    <Settings_ToolOptimization_Tooltip>入植者が割り当てられた作業のために最も効果的なツールを自動的に選択して運ぶインテリジェントツール管理を有効にします。必要に応じてより良いツールにアップグレードし、劣ったツールを落とします。手動ツール制御を好むか、モッド材料でパフォーマンスの問題を経験する場合はこれを無効にしてください。</Settings_ToolOptimization_Tooltip>
+
+    <Settings_PickupFromStorageOnly>ストレージエリアからのツール取得制限</Settings_PickupFromStorageOnly>
+    <Settings_PickupFromStorageOnly_Tooltip>有効にすると、入植者は指定されたストレージゾーンからのみツールを取得し、より良い組織を維持し、作業エリアからツールを掴むのを防ぎます。無効にすると、ホームエリア内のアクセス可能なツール（禁止されたアイテムや燃えているアイテムを除く）を拾うことができ、より柔軟性を提供しますが制御は少なくなります。</Settings_PickupFromStorageOnly_Tooltip>
+
+    <Settings_DebugLogging>詳細デバッグログを有効</Settings_DebugLogging>
+    <Settings_DebugLogging_Tooltip>ツール選択決定、自動取得行動、ジョブ-ツールマッチングロジックの包括的なログ記録を有効にします。ツールの問題のトラブルシューティングや入植者が特定のツールを選ぶ理由を理解するために不可欠です。モッド開発やツール関連の問題を経験している場合のみ推奨します。広範なログ出力でパフォーマンスに影響する可能性があります。</Settings_DebugLogging_Tooltip>
+
+    <Settings_AutoTool>スマート作業前ツール取得</Settings_AutoTool>
+    <Settings_AutoTool_Tooltip>入植者が任意の仕事を始める前に自動的に最適なツールを取得することで、ワークフロー効率を革命的に改善します。ツールをインテリジェントに交換し、より良いバリエーションにアップグレードし、最大生産性のために適切な機器を確保します。シームレスなツールベースのゲームプレイの基盤機能です。</Settings_AutoTool_Tooltip>
+
+    <!-- Alerts -->
+    <ColonistNeedsSurvivalTool>入植者が必要なツールを欠いている</ColonistNeedsSurvivalTool>
+    <ColonistsNeedSurvivalTool>入植者が必要なツールを欠いている</ColonistsNeedSurvivalTool>
+    <ColonistNeedsSurvivalToolDesc>これらの入植者は割り当てられた作業に適切なツールが必要ですが、必要な機器がありません。生産性が深刻に損なわれています。</ColonistNeedsSurvivalToolDesc>
+
+    <SurvivalToolsNeedReplacing>ツールが故障近い</SurvivalToolsNeedReplacing>
+    <SurvivalToolNeedsReplacingDesc>これらの入植者は間もなく壊れる危険な状態のツールを使用しています。作業中断を避けるため即座に交換してください。</SurvivalToolNeedsReplacingDesc>
+
+    <!-- Tool assignment management -->
+    <ManageSurvivalToolAssignments>ツール割り当て管理</ManageSurvivalToolAssignments>
+    <SurvivalToolAssignment>ツール割り当て</SurvivalToolAssignment>
+    <SurvivalToolAssignmentConstructor>建設者</SurvivalToolAssignmentConstructor>
+    <SurvivalToolAssignmentMiner>採掘者</SurvivalToolAssignmentMiner>
+    <SurvivalToolAssignmentPlantWorker>植物作業者</SurvivalToolAssignmentPlantWorker>
+    <SurvivalToolAssignmentResearcher>研究者</SurvivalToolAssignmentResearcher>
+    <SurvivalToolAssignmentCleaner>清掃者</SurvivalToolAssignmentCleaner>
+    <SurvivalToolAssignmentMedical>医療</SurvivalToolAssignmentMedical>
+    <SurvivalToolAssignmentButcher>屠畜者</SurvivalToolAssignmentButcher>
+    <SelectSurvivalToolAssignment>ツール割り当てを選択...</SelectSurvivalToolAssignment>
+    <NewSurvivalToolAssignment>新しいツール割り当て</NewSurvivalToolAssignment>
+    <DeleteSurvivalToolAssignment>ツール割り当てを削除...</DeleteSurvivalToolAssignment>
+    <SurvivalToolAssignmentInUse>ツール割り当ては{0}によって使用されています</SurvivalToolAssignmentInUse>
+    <NoSurvivalToolAssignmentSelected>ツール割り当てが選択されていません</NoSurvivalToolAssignmentSelected>
+    <ForcedSurvivalTools>強制ツール</ForcedSurvivalTools>
+
+</LanguageData>

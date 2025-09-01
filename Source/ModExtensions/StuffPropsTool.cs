@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using RimWorld;
 using Verse;
 
@@ -21,6 +22,27 @@ namespace SurvivalTools
         public static StuffPropsTool For(ThingDef stuffDef)
         {
             return stuffDef?.GetModExtension<StuffPropsTool>() ?? defaultValues;
+        }
+
+        /// <summary>
+        /// Check if this stuff has any tool stat factors defined.
+        /// </summary>
+        public bool HasToolStatFactors => toolStatFactors?.Count > 0;
+
+        /// <summary>
+        /// Get the modifier for a specific stat, or null if not found.
+        /// </summary>
+        public StatModifier GetStatModifier(StatDef stat)
+        {
+            return toolStatFactors?.FirstOrDefault(m => m.stat == stat);
+        }
+
+        /// <summary>
+        /// Get the factor value for a specific stat (1.0 if not found).
+        /// </summary>
+        public float GetStatFactor(StatDef stat)
+        {
+            return GetStatModifier(stat)?.value ?? 1f;
         }
     }
 }

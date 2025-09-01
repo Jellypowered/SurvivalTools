@@ -1,106 +1,60 @@
 using HarmonyLib;
 using RimWorld;
 using Verse;
-using Verse.AI;
-using SurvivalTools;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SurvivalTools.HarmonyStuff
 {
-    // Gate job assignment on tool availability in Hardcore
     [HarmonyPatch(typeof(WorkGiver_Scanner))]
-    public static class Patch_WorkGiverScanner_ToolGate
+    public static class Patch_WorkGiver_Scanner_ToolGate
     {
-        // HasJobOnThing
         [HarmonyPrefix]
         [HarmonyPatch(nameof(WorkGiver_Scanner.HasJobOnThing))]
         public static bool Prefix_HasJobOnThing(WorkGiver_Scanner __instance, Pawn pawn, Thing t, bool forced, ref bool __result)
         {
-            if (!ShouldGate(__instance, pawn, out var requiredStats, out var jobDef))
-                return true;
-
-            if (HasRequiredToolOrCanAcquire(pawn, __instance.def, requiredStats))
-                return true;
-
-            // Block job
-            __result = false;
-            DLog(pawn, __instance.def, jobDef, "Gate: missing required tool and no acquirable tool (thing scan).");
-            return false;
+            return CheckToolRequirements(__instance, pawn, ref __result);
         }
 
-        // HasJobOnCell
         [HarmonyPrefix]
         [HarmonyPatch(nameof(WorkGiver_Scanner.HasJobOnCell))]
         public static bool Prefix_HasJobOnCell(WorkGiver_Scanner __instance, Pawn pawn, IntVec3 c, bool forced, ref bool __result)
         {
-            if (!ShouldGate(__instance, pawn, out var requiredStats, out var jobDef))
-                return true;
-
-            if (HasRequiredToolOrCanAcquire(pawn, __instance.def, requiredStats))
-                return true;
-
-            __result = false;
-            DLog(pawn, __instance.def, jobDef, "Gate: missing required tool and no acquirable tool (cell scan).");
-            return false;
+            return CheckToolRequirements(__instance, pawn, ref __result);
         }
 
-        // ---------------- helpers ----------------
-
-        private static bool ShouldGate(WorkGiver_Scanner scanner, Pawn pawn, out List<StatDef> requiredStats, out JobDef jobDef)
+        private static bool CheckToolRequirements(WorkGiver_Scanner instance, Pawn pawn, ref bool result)
         {
-            requiredStats = null;
-            jobDef = pawn?.jobs?.curJob?.def;
+            if (SurvivalTools.Settings?.hardcoreMode != true || !pawn.CanUseSurvivalTools())
+                return true;
 
-            // Hardcore only; also make sure pawn can even use survival tools
-            var s = SurvivalTools.Settings;
-            if (s == null || !s.hardcoreMode) return false;
-            if (pawn == null || !pawn.CanUseSurvivalTools()) return false;
+            var requiredStats = GetRequiredToolStats(instance.def);
+            if (requiredStats.NullOrEmpty())
+                return true;
 
-            var wg = scanner?.def;
-            if (wg == null) return false;
+            // EXCEPTION: Cleaning and butchery jobs are always allowed (just less effective without tools)
+            bool isCleaningJob = requiredStats.Contains(ST_StatDefOf.CleaningSpeed);
+            bool isButcheryJob = requiredStats.Contains(ST_StatDefOf.ButcheryFleshSpeed) ||
+                               requiredStats.Contains(ST_StatDefOf.ButcheryFleshEfficiency);
+            if (isCleaningJob || isButcheryJob)
+                return true;
 
-            // Prefer WG extension, else fall back to job-based mapping.
-            requiredStats = SurvivalToolUtility.RelevantStatsFor(wg, jobDef);
-            if (requiredStats == null || requiredStats.Count == 0)
-                return false; // nothing tool-gated here → let vanilla proceed
+            if (pawn.MeetsWorkGiverStatRequirements(requiredStats, instance.def))
+                return true;
 
-            // If pawn fails vanilla stat gates, let vanilla handle it (don’t double-filter here)
-            if (!pawn.MeetsWorkGiverStatRequirements(requiredStats))
-                return false;
-
-            return true;
-        }
-
-        private static bool HasRequiredToolOrCanAcquire(Pawn pawn, WorkGiverDef wg, List<StatDef> requiredStats)
-        {
-            // Already has a helpful tool?
-            for (int i = 0; i < requiredStats.Count; i++)
-                if (pawn.HasSurvivalToolFor(requiredStats[i]))
-                    return true;
-
-            // If autoTool is enabled, allow the job if a helpful tool is reachable now
-            var s = SurvivalTools.Settings;
-            if (s != null && s.autoTool)
+            result = false;
+            if (SurvivalToolUtility.IsDebugLoggingEnabled)
             {
-                var best = FindBestWrapper(pawn, wg, requiredStats);
-                if (best != null) return true;
+                Log.Message($"[SurvivalTools.ToolGate] {pawn.LabelShort} blocked from job {instance.def.defName} due to missing tool.");
             }
-
             return false;
         }
 
-        // Small indirection so we can call your existing finder without making it public.
-        private static SurvivalTool FindBestWrapper(Pawn pawn, WorkGiverDef wg, List<StatDef> stats)
+        private static List<StatDef> GetRequiredToolStats(WorkGiverDef wgDef)
         {
-            return Patch_JobGiver_Work_TryIssueJobPackage_AutoTool
-                   .Patch_JobGiver_Work_TryIssueJobPackage_AutoTool_FindBest
-                   .FindBestHelpfulTool(pawn, wg, stats);
-        }
-
-        private static void DLog(Pawn pawn, WorkGiverDef wg, JobDef jobDef, string msg)
-        {
-            if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
-                Log.Message($"[SurvivalTools.ToolGate] {pawn?.LabelShort ?? "null"} | WGD='{wg?.defName ?? "null"}' | Job='{jobDef?.defName ?? "null"}' | {msg}");
+            return wgDef?.GetModExtension<WorkGiverExtension>()
+                        ?.requiredStats?.Where(s => s.RequiresSurvivalTool())
+                        .ToList();
         }
     }
 }

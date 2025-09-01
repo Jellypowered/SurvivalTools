@@ -67,7 +67,7 @@ namespace SurvivalTools
 
         public override AlertReport GetReport()
         {
-            if (SurvivalTools.Settings == null || SurvivalTools.Settings.toolDegradationFactor <= 0.001f)
+            if (!SurvivalToolUtility.IsToolDegradationEnabled)
                 return AlertReport.Inactive;
 
             var culprits = WorkersDamagedTools.ToList();

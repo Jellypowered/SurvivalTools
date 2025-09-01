@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+    <!-- Tool-related stats -->
+    <ToolEstimatedLifespan.label>estimated tool lifespan</ToolEstimatedLifespan.label>
+    <ToolEstimatedLifespan.description>The amount of continuous use this tool can withstand before breaking. This doesn't take the current condition of the tool into account.</ToolEstimatedLifespan.description>
+
+    <ToolEffectivenessFactor.label>tool effectiveness factor</ToolEffectivenessFactor.label>
+    <ToolEffectivenessFactor.description>A global multiplier of this tool's stat modifiers.</ToolEffectivenessFactor.description>
+
+</LanguageData>

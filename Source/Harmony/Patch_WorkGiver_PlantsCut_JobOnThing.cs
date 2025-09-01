@@ -11,9 +11,14 @@ namespace SurvivalTools.HarmonyStuff
     {
         public static void Postfix(ref Job __result, Thing t, Pawn pawn)
         {
-            var plant = t?.def?.plant;
-            if (plant != null && plant.IsTree)
+            // Prevent PlantsCut work giver from handling trees
+            // Trees should be handled by our specialized tree felling logic
+            if (t?.def?.plant?.IsTree == true)
             {
+                if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                {
+                    Log.Message($"[SurvivalTools] PlantsCut work giver blocked from cutting tree {t.def.defName} - should use tree felling instead");
+                }
                 __result = null;
             }
         }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using RimWorld;
 using Verse;
 
@@ -25,6 +26,40 @@ namespace SurvivalTools
         public static SurvivalToolProperties For(ThingDef def)
         {
             return def?.GetModExtension<SurvivalToolProperties>() ?? defaultValues;
+        }
+
+        /// <summary>
+        /// Check if this tool has any work stat factors defined.
+        /// </summary>
+        public bool HasWorkStatFactors => baseWorkStatFactors?.Count > 0;
+
+        /// <summary>
+        /// Check if this tool has any assignment tags defined.
+        /// </summary>
+        public bool HasAssignmentTags => defaultSurvivalToolAssignmentTags?.Count > 0;
+
+        /// <summary>
+        /// Get the modifier for a specific stat, or null if not found.
+        /// </summary>
+        public StatModifier GetStatModifier(StatDef stat)
+        {
+            return baseWorkStatFactors?.FirstOrDefault(m => m.stat == stat);
+        }
+
+        /// <summary>
+        /// Get the factor value for a specific stat (1.0 if not found).
+        /// </summary>
+        public float GetStatFactor(StatDef stat)
+        {
+            return GetStatModifier(stat)?.value ?? 1f;
+        }
+
+        /// <summary>
+        /// Check if this tool has a specific assignment tag.
+        /// </summary>
+        public bool HasAssignmentTag(string tag)
+        {
+            return !string.IsNullOrEmpty(tag) && defaultSurvivalToolAssignmentTags?.Contains(tag) == true;
         }
     }
 }

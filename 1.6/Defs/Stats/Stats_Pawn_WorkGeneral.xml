@@ -4,7 +4,7 @@
     <StatDef>
         <defName>SurvivalToolCarryCapacity</defName>
         <label>tool carrying capacity</label>
-        <description>How many tools this pawn can carry in their inventory. If they have more tools than they can carry, they won't be able to use the excess tools.</description>
+        <description>Determines the maximum number of tools this colonist can effectively carry and manage in their personal inventory. Higher capacity allows for greater versatility and preparedness, enabling colonists to handle multiple types of work without constantly returning to storage. Tool belts and similar equipment can increase this limit beyond the base value.</description>
         <category>PawnWork</category>
         <displayPriorityInCategory>100</displayPriorityInCategory>
         <defaultBaseValue>2</defaultBaseValue>
@@ -17,7 +17,7 @@
     <StatDef>
         <defName>DiggingSpeed</defName>
         <label>digging speed</label>
-        <description>The speed at which this person digs at walls.</description>
+        <description>Measures how quickly this colonist can excavate walls, break through rock formations, and extract materials from solid stone. Critical for mining operations, tunnel construction, and accessing buried resources. Without proper tools (pickaxes), this task becomes extremely difficult or impossible in hardcore modes.</description>
         <category>PawnWork</category>
         <defaultBaseValue>1</defaultBaseValue>
         <minValue>0</minValue>
@@ -63,7 +63,7 @@
     <StatDef>
         <defName>MiningYieldDigging</defName>
         <label>mining yield (digging)</label>
-        <description>The percentage of mined resources a miner will produce. This only applies to wall mining. This doesn't affect the production rate of rock chunks.</description>
+        <description>Determines what percentage of available mineral resources this colonist successfully extracts when mining walls and rock formations. Higher yields mean less waste and more efficient resource gathering. Quality mining tools significantly improve extraction efficiency. This stat only affects wall mining operations and doesn't influence rock chunk production from other sources.</description>
         <category>PawnWork</category>
         <defaultBaseValue>1</defaultBaseValue>
         <minValue>0</minValue>
@@ -121,7 +121,7 @@
     <StatDef>
         <defName>PlantHarvestingSpeed</defName>
         <label>plant harvesting speed</label>
-        <description>The speed at which this person harvests plants.</description>
+        <description>Determines how efficiently this colonist can gather crops, berries, and other harvestable plant materials. Proper harvesting tools like sickles dramatically improve both speed and yield, ensuring maximum food production from available plants. Essential for maintaining sustainable food supplies and managing large agricultural operations.</description>
         <category>PawnWork</category>
         <defaultBaseValue>1</defaultBaseValue>
         <minValue>0</minValue>
@@ -156,9 +156,47 @@
     </StatDef>
 
     <StatDef>
+        <defName>SowingSpeed</defName>
+        <label>sowing speed</label>
+        <description>Measures the efficiency with which this colonist can plant seeds and establish new crops. Specialized planting tools like hoes ensure proper soil preparation and optimal seed placement, leading to better germination rates and crop establishment. Critical for expanding agricultural operations and food security.</description>
+        <category>PawnWork</category>
+        <defaultBaseValue>1</defaultBaseValue>
+        <minValue>0</minValue>
+        <toStringStyle>PercentZero</toStringStyle>
+        <neverDisabled>true</neverDisabled>
+        <statFactors>
+            <li>WorkSpeedGlobal</li>
+        </statFactors>
+        <skillNeedFactors>
+            <li Class="SkillNeed_BaseBonus">
+                <skill>Plants</skill>
+                <baseValue>0.08</baseValue>
+                <bonusPerLevel>0.115</bonusPerLevel>
+            </li>
+        </skillNeedFactors>
+        <capacityFactors>
+            <li>
+                <capacity>Manipulation</capacity>
+                <weight>1</weight>
+            </li>
+            <li>
+                <capacity>Sight</capacity>
+                <weight>0.3</weight>
+                <max>1</max>
+            </li>
+        </capacityFactors>
+        <parts>
+            <li Class="SurvivalTools.StatPart_SurvivalTool">
+                <noToolStatFactor>0.7</noToolStatFactor>
+                <noToolStatFactorHardcore>0</noToolStatFactorHardcore>
+            </li>
+        </parts>
+    </StatDef>
+
+    <StatDef>
         <defName>TreeFellingSpeed</defName>
         <label>tree felling speed</label>
-        <description>The speed at which this person fells trees.</description>
+        <description>Determines how quickly this colonist can cut down trees and process large woody vegetation. Axes and similar cutting tools are absolutely essential for efficient forestry operations. Without proper tools, tree felling becomes extremely slow or impossible in hardcore modes, making this stat critical for wood production and land clearing.</description>
         <category>PawnWork</category>
         <defaultBaseValue>1</defaultBaseValue>
         <minValue>0</minValue>
@@ -188,6 +226,311 @@
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
                 <noToolStatFactorHardcore>0</noToolStatFactorHardcore>
+            </li>
+        </parts>
+    </StatDef>
+
+    <!-- Maintenance and repair-related -->
+    <StatDef>
+        <defName>MaintenanceSpeed</defName>
+        <label>maintenance speed</label>
+        <description>Measures how efficiently this colonist can repair, maintain, and service buildings, equipment, and mechanical devices. Proper maintenance tools like wrenches and repair kits are essential for keeping colony infrastructure in optimal condition. Regular maintenance prevents costly breakdowns and extends equipment lifespan significantly.</description>
+        <category>PawnWork</category>
+        <defaultBaseValue>1</defaultBaseValue>
+        <minValue>0</minValue>
+        <toStringStyle>PercentZero</toStringStyle>
+        <statFactors>
+            <li>WorkSpeedGlobal</li>
+        </statFactors>
+        <skillNeedFactors>
+            <li Class="SkillNeed_BaseBonus">
+                <skill>Construction</skill>
+                <baseValue>0.08</baseValue>
+                <bonusPerLevel>0.115</bonusPerLevel>
+            </li>
+        </skillNeedFactors>
+        <capacityFactors>
+            <li>
+                <capacity>Manipulation</capacity>
+                <weight>1</weight>
+            </li>
+            <li>
+                <capacity>Sight</capacity>
+                <weight>0.5</weight>
+                <max>1</max>
+            </li>
+        </capacityFactors>
+        <parts>
+            <li Class="SurvivalTools.StatPart_SurvivalTool">
+                <noToolStatFactor>0.5</noToolStatFactor>
+                <noToolStatFactorHardcore>0</noToolStatFactorHardcore>
+            </li>
+        </parts>
+    </StatDef>
+
+    <StatDef>
+        <defName>DeconstructionSpeed</defName>
+        <label>deconstruction speed</label>
+        <description>Determines how rapidly this colonist can safely dismantle structures, equipment, and buildings to recover valuable materials. Proper deconstruction tools ensure maximum material recovery while minimizing waste and preventing accidental damage. Essential for resource management and colony reorganization efforts.</description>
+        <category>PawnWork</category>
+        <defaultBaseValue>1</defaultBaseValue>
+        <minValue>0</minValue>
+        <toStringStyle>PercentZero</toStringStyle>
+        <statFactors>
+            <li>WorkSpeedGlobal</li>
+        </statFactors>
+        <skillNeedFactors>
+            <li Class="SkillNeed_BaseBonus">
+                <skill>Construction</skill>
+                <baseValue>0.08</baseValue>
+                <bonusPerLevel>0.115</bonusPerLevel>
+            </li>
+        </skillNeedFactors>
+        <capacityFactors>
+            <li>
+                <capacity>Manipulation</capacity>
+                <weight>1</weight>
+            </li>
+            <li>
+                <capacity>Sight</capacity>
+                <weight>0.3</weight>
+                <max>1</max>
+            </li>
+        </capacityFactors>
+        <parts>
+            <li Class="SurvivalTools.StatPart_SurvivalTool">
+                <noToolStatFactor>0.7</noToolStatFactor>
+                <noToolStatFactorHardcore>0</noToolStatFactorHardcore>
+            </li>
+        </parts>
+    </StatDef>
+
+    <!-- Research-related -->
+    <StatDef>
+        <defName>ResearchSpeed</defName>
+        <label>research speed</label>
+        <description>The speed at which this person conducts research and experiments.</description>
+        <category>PawnWork</category>
+        <defaultBaseValue>1</defaultBaseValue>
+        <minValue>0</minValue>
+        <toStringStyle>PercentZero</toStringStyle>
+        <statFactors>
+            <li>WorkSpeedGlobal</li>
+        </statFactors>
+        <skillNeedFactors>
+            <li Class="SkillNeed_BaseBonus">
+                <skill>Intellectual</skill>
+                <baseValue>0.08</baseValue>
+                <bonusPerLevel>0.115</bonusPerLevel>
+            </li>
+        </skillNeedFactors>
+        <capacityFactors>
+            <li>
+                <capacity>Manipulation</capacity>
+                <weight>0.8</weight>
+            </li>
+            <li>
+                <capacity>Sight</capacity>
+                <weight>1</weight>
+                <max>1</max>
+            </li>
+            <li>
+                <capacity>Consciousness</capacity>
+                <weight>1</weight>
+                <max>1</max>
+            </li>
+        </capacityFactors>
+        <parts>
+            <li Class="SurvivalTools.StatPart_SurvivalTool">
+                <noToolStatFactor>0.7</noToolStatFactor>
+                <noToolStatFactorHardcore>0</noToolStatFactorHardcore>
+            </li>
+        </parts>
+    </StatDef>
+
+    <!-- Cleaning-related -->
+    <StatDef>
+        <defName>CleaningSpeed</defName>
+        <label>cleaning speed</label>
+        <description>The speed at which this person cleans filth and debris. Anyone can clean, but it's much faster with proper tools.</description>
+        <category>PawnWork</category>
+        <defaultBaseValue>1</defaultBaseValue>
+        <minValue>0</minValue>
+        <toStringStyle>PercentZero</toStringStyle>
+        <statFactors>
+            <li>WorkSpeedGlobal</li>
+        </statFactors>
+        <capacityFactors>
+            <li>
+                <capacity>Manipulation</capacity>
+                <weight>1</weight>
+            </li>
+            <li>
+                <capacity>Moving</capacity>
+                <weight>0.5</weight>
+                <max>1</max>
+            </li>
+        </capacityFactors>
+        <parts>
+            <li Class="SurvivalTools.StatPart_SurvivalTool">
+                <noToolStatFactor>0.5</noToolStatFactor>
+                <noToolStatFactorHardcore>0.5</noToolStatFactorHardcore>
+            </li>
+        </parts>
+    </StatDef>
+
+    <!-- Medical-related -->
+    <StatDef>
+        <defName>MedicalOperationSpeed</defName>
+        <label>medical operation speed</label>
+        <description>The speed at which this person performs medical operations and surgery.</description>
+        <category>PawnWork</category>
+        <defaultBaseValue>1</defaultBaseValue>
+        <minValue>0</minValue>
+        <toStringStyle>PercentZero</toStringStyle>
+        <statFactors>
+            <li>WorkSpeedGlobal</li>
+        </statFactors>
+        <skillNeedFactors>
+            <li Class="SkillNeed_BaseBonus">
+                <skill>Medicine</skill>
+                <baseValue>0.08</baseValue>
+                <bonusPerLevel>0.115</bonusPerLevel>
+            </li>
+        </skillNeedFactors>
+        <capacityFactors>
+            <li>
+                <capacity>Manipulation</capacity>
+                <weight>1</weight>
+            </li>
+            <li>
+                <capacity>Sight</capacity>
+                <weight>0.8</weight>
+                <max>1</max>
+            </li>
+            <li>
+                <capacity>Consciousness</capacity>
+                <weight>0.5</weight>
+                <max>1</max>
+            </li>
+        </capacityFactors>
+        <parts>
+            <li Class="SurvivalTools.StatPart_SurvivalTool">
+                <noToolStatFactor>0.7</noToolStatFactor>
+                <noToolStatFactorHardcore>0</noToolStatFactorHardcore>
+            </li>
+        </parts>
+    </StatDef>
+
+    <StatDef>
+        <defName>MedicalSurgerySuccessChance</defName>
+        <label>medical surgery success chance</label>
+        <description>The likelihood that this person's medical operations will succeed without complications.</description>
+        <category>PawnWork</category>
+        <defaultBaseValue>1</defaultBaseValue>
+        <minValue>0</minValue>
+        <maxValue>2</maxValue>
+        <toStringStyle>PercentZero</toStringStyle>
+        <skillNeedFactors>
+            <li Class="SkillNeed_BaseBonus">
+                <skill>Medicine</skill>
+                <baseValue>0.5</baseValue>
+                <bonusPerLevel>0.075</bonusPerLevel>
+            </li>
+        </skillNeedFactors>
+        <capacityFactors>
+            <li>
+                <capacity>Manipulation</capacity>
+                <weight>1</weight>
+            </li>
+            <li>
+                <capacity>Sight</capacity>
+                <weight>0.8</weight>
+                <max>1</max>
+            </li>
+            <li>
+                <capacity>Consciousness</capacity>
+                <weight>0.8</weight>
+                <max>1</max>
+            </li>
+        </capacityFactors>
+        <parts>
+            <li Class="SurvivalTools.StatPart_SurvivalTool">
+                <noToolStatFactor>0.8</noToolStatFactor>
+                <noToolStatFactorHardcore>0</noToolStatFactorHardcore>
+            </li>
+        </parts>
+    </StatDef>
+
+    <!-- Butchery-related -->
+    <StatDef>
+        <defName>ButcheryFleshSpeed</defName>
+        <label>butchery speed</label>
+        <description>The speed at which this person butchers animals and processes meat.</description>
+        <category>PawnWork</category>
+        <defaultBaseValue>1</defaultBaseValue>
+        <minValue>0</minValue>
+        <toStringStyle>PercentZero</toStringStyle>
+        <statFactors>
+            <li>WorkSpeedGlobal</li>
+        </statFactors>
+        <skillNeedFactors>
+            <li Class="SkillNeed_BaseBonus">
+                <skill>Cooking</skill>
+                <baseValue>0.08</baseValue>
+                <bonusPerLevel>0.115</bonusPerLevel>
+            </li>
+        </skillNeedFactors>
+        <capacityFactors>
+            <li>
+                <capacity>Manipulation</capacity>
+                <weight>1</weight>
+            </li>
+            <li>
+                <capacity>Sight</capacity>
+                <weight>0.3</weight>
+                <max>1</max>
+            </li>
+        </capacityFactors>
+        <parts>
+            <li Class="SurvivalTools.StatPart_SurvivalTool">
+                <noToolStatFactor>0.6</noToolStatFactor>
+                <noToolStatFactorHardcore>0.4</noToolStatFactorHardcore>
+            </li>
+        </parts>
+    </StatDef>
+
+    <StatDef>
+        <defName>ButcheryFleshEfficiency</defName>
+        <label>butchery efficiency</label>
+        <description>The amount of meat and other products this person can extract from animal carcasses.</description>
+        <category>PawnWork</category>
+        <defaultBaseValue>1</defaultBaseValue>
+        <minValue>0</minValue>
+        <maxValue>2</maxValue>
+        <toStringStyle>PercentZero</toStringStyle>
+        <skillNeedFactors>
+            <li Class="SkillNeed_BaseBonus">
+                <skill>Cooking</skill>
+                <baseValue>0.5</baseValue>
+                <bonusPerLevel>0.075</bonusPerLevel>
+            </li>
+        </skillNeedFactors>
+        <capacityFactors>
+            <li>
+                <capacity>Manipulation</capacity>
+                <weight>0.8</weight>
+            </li>
+            <li>
+                <capacity>Sight</capacity>
+                <weight>0.5</weight>
+                <max>1</max>
+            </li>
+        </capacityFactors>
+        <parts>
+            <li Class="SurvivalTools.StatPart_SurvivalTool">
+                <noToolStatFactor>0.7</noToolStatFactor>
+                <noToolStatFactorHardcore>0.5</noToolStatFactorHardcore>
             </li>
         </parts>
     </StatDef>

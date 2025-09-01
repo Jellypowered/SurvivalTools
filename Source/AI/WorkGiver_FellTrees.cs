@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using RimWorld;
 using Verse;
 using Verse.AI;
@@ -13,16 +14,11 @@ namespace SurvivalTools
 
         public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
         {
-            var desList = pawn.Map.designationManager.AllDesignations;
-            for (int i = 0; i < desList.Count; i++)
-            {
-                var des = desList[i];
-                if ((des.def == DesignationDefOf.CutPlant || des.def == DesignationDefOf.HarvestPlant) &&
-                    des.target.HasThing && !des.target.Thing.Destroyed)
-                {
-                    yield return des.target.Thing;
-                }
-            }
+            return pawn.Map.designationManager.AllDesignations
+                .Where(des => (des.def == DesignationDefOf.CutPlant || des.def == DesignationDefOf.HarvestPlant)
+                             && des.target.HasThing
+                             && !des.target.Thing.Destroyed)
+                .Select(des => des.target.Thing);
         }
 
         public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)

@@ -48,7 +48,9 @@ namespace SurvivalTools
         private void EnsureSelectedHasName()
         {
             if (selSurvivalToolAssignmentInt != null && selSurvivalToolAssignmentInt.label.NullOrEmpty())
+            {
                 selSurvivalToolAssignmentInt.label = "Unnamed";
+            }
         }
 
         public override Vector2 InitialSize => new Vector2(700f, 700f);
@@ -128,7 +130,7 @@ namespace SurvivalTools
             var filterRect = new Rect(0f, TopAreaHeight, 300f, mainRect.height - 45f - 10f);
             var filter = SelectedSurvivalToolAssignment.filter;
             var parentFilter = survivalToolGlobalFilter;
-            const int openMask = 16;
+            const int openMask = 1;
 
             // Use UIState rather than Vector2
             ThingFilterUI.DoThingFilterConfigWindow(filterRect, filterUiState, filter, parentFilter, openMask);

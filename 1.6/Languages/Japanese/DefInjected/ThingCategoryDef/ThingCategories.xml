@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <SurvivalTools.label>道具</SurvivalTools.label>
+    <SurvivalToolsNeolithic.label>基本道具</SurvivalToolsNeolithic.label>
+    <SurvivalToolsIndustrial.label>現代道具</SurvivalToolsIndustrial.label>
+    <SurvivalToolsSpacer.label>先進道具</SurvivalToolsSpacer.label>
+</LanguageData>

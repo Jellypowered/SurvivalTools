@@ -1,62 +1,88 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Verse;
 using Verse.AI;
+using RimWorld;
 
 namespace SurvivalTools
 {
     public class JobDriver_DropSurvivalTool : JobDriver
     {
-        private const int DurationTicks = 30;
+        private const int DurationTicks = 15;
 
-        public override bool TryMakePreToilReservations(bool errorOnFailed)
-        {
-            // No reservations needed; we’re dropping from inventory.
-            return true;
-        }
+        private Thing ToolToDrop => job.targetA.Thing;
+
+        public override bool TryMakePreToilReservations(bool errorOnFailed) => true;
 
         protected override IEnumerable<Toil> MakeNewToils()
         {
-            // If job target becomes invalid at any point, abort.
-            this.FailOn(() => TargetThingA == null);
-            this.FailOn(() => pawn.Dead || pawn.Destroyed);
+            this.FailOnDestroyedOrNull(TargetIndex.A);
+            this.FailOn(() => !pawn.inventory.innerContainer.Contains(ToolToDrop));
 
-            // Must have an inventory and contain the target before we proceed.
-            this.FailOn(() => pawn.inventory == null);
-            this.FailOn(() => !pawn.inventory.innerContainer.Contains(TargetThingA));
+            yield return Toils_General.Wait(DurationTicks, TargetIndex.None);
 
-            // Stop moving and wait a short moment (UI/animation breathing room).
-            yield return new Toil
+            yield return Toils_General.DoAtomic(() =>
             {
-                initAction = () => pawn.pather?.StopDead(),
-                defaultCompleteMode = ToilCompleteMode.Delay,
-                defaultDuration = DurationTicks
-            };
-
-            // Perform the drop from inventory at/near the pawn.
-            yield return new Toil
-            {
-                initAction = () =>
+                if (!pawn.inventory.innerContainer.TryDrop(ToolToDrop, pawn.Position, pawn.Map, ThingPlaceMode.Near, out Thing droppedTool))
                 {
-                    var inv = pawn.inventory?.innerContainer;
-                    if (inv == null)
-                    {
-                        EndJobWith(JobCondition.Incompletable);
-                        return;
-                    }
+                    EndJobWith(JobCondition.Incompletable);
+                    return;
+                }
 
-                    // Try to drop the exact target tool near the pawn.
-                    if (!inv.TryDrop(TargetThingA, pawn.Position, pawn.MapHeld, ThingPlaceMode.Near, out var _))
+                // Try to find appropriate storage for the dropped tool
+                if (TryFindStorageForTool(droppedTool, out IntVec3 storageCell))
+                {
+                    // Create a haul job to move the tool to storage
+                    var haulJob = HaulAIUtility.HaulToStorageJob(pawn, droppedTool, false);
+                    if (haulJob != null)
                     {
-                        EndJobWith(JobCondition.Incompletable);
-                        return;
+                        pawn.jobs.jobQueue.EnqueueFirst(haulJob);
                     }
+                }
+            });
+        }
 
-                    // If we get here, drop succeeded.
-                    ReadyForNextToil();
-                },
-                defaultCompleteMode = ToilCompleteMode.Instant
-            };
+        private bool TryFindStorageForTool(Thing tool, out IntVec3 storageCell)
+        {
+            storageCell = IntVec3.Invalid;
+
+            // Try to find any storage cell that accepts this tool, regardless of priority
+            // Check storage areas and stockpiles
+            var map = pawn.Map;
+            var faction = pawn.Faction;
+
+            // First try: Find best storage with current priority rules
+            if (StoreUtility.TryFindBestBetterStoreCellFor(tool, pawn, map, StoreUtility.CurrentStoragePriorityOf(tool), faction, out storageCell))
+            {
+                return true;
+            }
+
+            // Second try: Find any valid storage cell, even with lower priority
+            if (StoreUtility.TryFindBestBetterStoreCellFor(tool, pawn, map, StoragePriority.Unstored, faction, out storageCell))
+            {
+                return true;
+            }
+
+            // Third try: Look for stockpiles that accept this tool category
+            var stockpiles = map.zoneManager.AllZones.OfType<Zone_Stockpile>();
+            foreach (var stockpile in stockpiles)
+            {
+                if (stockpile.settings.AllowedToAccept(tool))
+                {
+                    // Find a good cell in this stockpile
+                    var validCell = stockpile.cells.FirstOrDefault(cell =>
+                        StoreUtility.IsValidStorageFor(cell, map, tool) &&
+                        pawn.CanReserveAndReach(cell, PathEndMode.OnCell, Danger.Deadly));
+
+                    if (validCell.IsValid)
+                    {
+                        storageCell = validCell;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }
-

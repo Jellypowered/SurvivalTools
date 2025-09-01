@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+    <!-- Pawn work stats -->
+    <SurvivalToolCarryCapacity.label>Werkzeugtragekapazität</SurvivalToolCarryCapacity.label>
+    <SurvivalToolCarryCapacity.description>Wie viele Werkzeuge dieser Charakter in seinem Inventar tragen kann. Wenn er mehr Werkzeuge hat, als er tragen kann, kann er die überschüssigen Werkzeuge nicht verwenden.</SurvivalToolCarryCapacity.description>
+
+    <!-- Mining-related -->
+    <DiggingSpeed.label>Grabgeschwindigkeit</DiggingSpeed.label>
+    <DiggingSpeed.description>Die Geschwindigkeit, mit der diese Person Wände ausgräbt.</DiggingSpeed.description>
+
+    <MiningYieldDigging.label>Abbauertrag (Graben)</MiningYieldDigging.label>
+    <MiningYieldDigging.description>Der Prozentsatz der abgebauten Ressourcen, den ein Bergarbeiter produziert. Dies gilt nur für den Wandabbau. Dies beeinflusst nicht die Produktionsrate von Gesteinsbrocken.</MiningYieldDigging.description>
+
+    <!-- Plant-related -->
+    <PlantHarvestingSpeed.label>Pflanzenernte-Geschwindigkeit</PlantHarvestingSpeed.label>
+    <PlantHarvestingSpeed.description>Die Geschwindigkeit, mit der diese Person Pflanzen erntet.</PlantHarvestingSpeed.description>
+
+    <SowingSpeed.label>Sägeschwindigkeit</SowingSpeed.label>
+    <SowingSpeed.description>Die Geschwindigkeit, mit der diese Person Samen sät und Pflanzen anbaut.</SowingSpeed.description>
+
+    <TreeFellingSpeed.label>Baumfällgeschwindigkeit</TreeFellingSpeed.label>
+    <TreeFellingSpeed.description>Die Geschwindigkeit, mit der diese Person Bäume fällt.</TreeFellingSpeed.description>
+
+    <!-- Maintenance and repair-related -->
+    <MaintenanceSpeed.label>Wartungsgeschwindigkeit</MaintenanceSpeed.label>
+    <MaintenanceSpeed.description>Die Geschwindigkeit, mit der diese Person Wartung und Reparaturen an Gebäuden und Ausrüstung durchführt.</MaintenanceSpeed.description>
+
+    <DeconstructionSpeed.label>Abbaugeschwindigkeit</DeconstructionSpeed.label>
+    <DeconstructionSpeed.description>Die Geschwindigkeit, mit der diese Person Gebäude und Ausrüstung abbaut.</DeconstructionSpeed.description>
+
+    <!-- Research-related -->
+    <ResearchSpeed.label>Forschungsgeschwindigkeit</ResearchSpeed.label>
+    <ResearchSpeed.description>Die Geschwindigkeit, mit der diese Person Forschung und Experimente durchführt.</ResearchSpeed.description>
+
+    <!-- Cleaning-related -->
+    <CleaningSpeed.label>Reinigungsgeschwindigkeit</CleaningSpeed.label>
+    <CleaningSpeed.description>Die Geschwindigkeit, mit der diese Person Schmutz und Trümmer reinigt. Jeder kann reinigen, aber es ist viel schneller mit den richtigen Werkzeugen.</CleaningSpeed.description>
+
+    <!-- Medical-related -->
+    <MedicalOperationSpeed.label>Medizinische Operationsgeschwindigkeit</MedicalOperationSpeed.label>
+    <MedicalOperationSpeed.description>Die Geschwindigkeit, mit der diese Person medizinische Operationen und Chirurgie durchführt.</MedicalOperationSpeed.description>
+
+    <MedicalSurgerySuccessChance.label>Medizinische Chirurgie-Erfolgsrate</MedicalSurgerySuccessChance.label>
+    <MedicalSurgerySuccessChance.description>Die Wahrscheinlichkeit, dass die medizinischen Operationen dieser Person ohne Komplikationen erfolgreich sind.</MedicalSurgerySuccessChance.description>
+
+    <!-- Butchery-related -->
+    <ButcheryFleshSpeed.label>Schlachtgeschwindigkeit</ButcheryFleshSpeed.label>
+    <ButcheryFleshSpeed.description>Die Geschwindigkeit, mit der diese Person Tiere schlachtet und Fleisch verarbeitet.</ButcheryFleshSpeed.description>
+
+    <ButcheryFleshEfficiency.label>Schlachteffizienz</ButcheryFleshEfficiency.label>
+    <ButcheryFleshEfficiency.description>Die Menge an Fleisch und anderen Produkten, die diese Person aus Tierkadavern extrahieren kann.</ButcheryFleshEfficiency.description>
+
+</LanguageData>

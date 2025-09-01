@@ -19,7 +19,7 @@ namespace SurvivalTools.HarmonyStuff
 
         public static void Prefix(ResolveParams rp)
         {
-            if (SurvivalTools.Settings == null || !SurvivalTools.Settings.toolMapGen)
+            if (!SurvivalToolUtility.IsToolMapGenEnabled)
                 return;
 
             var setMaker = ST_ThingSetMakerDefOf.MapGen_AncientRuinsSurvivalTools?.root;

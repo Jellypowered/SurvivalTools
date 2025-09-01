@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using HarmonyLib;
 using RimWorld;
@@ -10,155 +11,91 @@ namespace SurvivalTools.HarmonyStuff
     public static class Patch_Pawn_InventoryTracker
     {
         [HarmonyPatch(typeof(Pawn_InventoryTracker), nameof(Pawn_InventoryTracker.FirstUnloadableThing), MethodType.Getter)]
-        public static class FirstUnloadableThing
+        public static class FirstUnloadableThing_Postfix
         {
             public static void Postfix(Pawn_InventoryTracker __instance, ref ThingCount __result)
             {
-                var toolInResult = __result.Thing as SurvivalTool;
-                if (toolInResult != null && toolInResult.InUse)
+                if (!(__result.Thing is SurvivalTool toolInResult) || !toolInResult.InUse)
                 {
-                    var container = __instance != null ? __instance.innerContainer : null;
-                    if (container == null || container.Count == 0)
-                    {
-                        __result = default(ThingCount);
-                        return;
-                    }
-
-                    // Pick the first item that is NOT an in-use SurvivalTool
-                    for (int i = 0; i < container.Count; i++)
-                    {
-                        var candidate = container[i];
-                        var candidateTool = candidate as SurvivalTool;
-                        if (candidateTool == null || !candidateTool.InUse)
-                        {
-                            __result = new ThingCount(candidate, candidate.stackCount);
-                            return;
-                        }
-                    }
-
-                    // No valid alternative
-                    __result = default(ThingCount);
+                    return;
                 }
+
+                // The current unloadable thing is an in-use tool. Find an alternative.
+                var alternative = __instance.innerContainer
+                    .FirstOrDefault(t => !(t is SurvivalTool st) || !st.InUse);
+
+                __result = (alternative != null)
+                    ? new ThingCount(alternative, alternative.stackCount)
+                    : default(ThingCount);
             }
         }
 
-        // -------- Version-agnostic tick patch --------
         [HarmonyPatch(typeof(Pawn_InventoryTracker))]
         public static class InventoryTracker_Tick_Patch
         {
             public static IEnumerable<MethodBase> TargetMethods()
             {
-                var t = typeof(Pawn_InventoryTracker);
-                string[] candidates =
-                {
-                    "InventoryTrackerTick",
-                    "InventoryTrackerTickRare",
-                    "TickRare" // fallback just in case
-                };
+                // Patch common tick methods for version compatibility.
+                var tickMethod = AccessTools.Method(typeof(Pawn_InventoryTracker), "InventoryTrackerTick");
+                var tickRareMethod = AccessTools.Method(typeof(Pawn_InventoryTracker), "InventoryTrackerTickRare");
 
-                for (int i = 0; i < candidates.Length; i++)
+                // Only return methods that actually exist
+                if (tickMethod != null) yield return tickMethod;
+                if (tickRareMethod != null) yield return tickRareMethod;
+
+                // If neither method exists, log a warning in debug mode
+                if (tickMethod == null && tickRareMethod == null && SurvivalToolUtility.IsDebugLoggingEnabled)
                 {
-                    var m = AccessTools.Method(t, candidates[i]);
-                    if (m != null)
-                        yield return m;
+                    Log.Warning("[SurvivalTools] Could not find any inventory tracker tick methods to patch");
                 }
             }
 
             public static void Postfix(Pawn_InventoryTracker __instance)
             {
-                // Settings gate
-                if (SurvivalTools.Settings == null || !SurvivalTools.Settings.toolLimit)
+                var pawn = __instance.pawn;
+                if (pawn?.Map == null || !pawn.IsHashIntervalTick(60) || pawn.jobs.curJob != null)
                     return;
 
-                var pawn = __instance != null ? __instance.pawn : null;
-                if (pawn == null || !pawn.Spawned || pawn.Destroyed || pawn.Dead || pawn.jobs == null)
+                if (SurvivalTools.Settings?.toolLimit != true || !pawn.CanUseSurvivalTools() || !pawn.CanRemoveExcessSurvivalTools())
                     return;
 
-                if (!pawn.CanUseSurvivalTools())
+                int heldCount = pawn.HeldSurvivalToolCount();
+                float carryCap = pawn.GetStatValue(ST_StatDefOf.SurvivalToolCarryCapacity);
+
+                if (heldCount <= carryCap)
                     return;
 
-                // --- Don’t stack/loop jobs: only act when pawn is idle (no current job). ---
-                if (pawn.jobs.curJob != null)
-                    return;
+                // Find a tool to drop. Prioritize tools that are not "in use" by the optimizer.
+                var toolToDrop = pawn.GetHeldSurvivalTools()
+                    .OfType<SurvivalTool>()
+                    .FirstOrDefault(t => !t.InUse);
 
-                // Count tools and pick a NON-in-use candidate if possible.
-                int heldCount = 0;
-                Thing lastTool = null;
-                Thing candidateToDrop = null;
-
-                foreach (var t in pawn.GetHeldSurvivalTools())
+                if (toolToDrop == null)
                 {
-                    heldCount++;
-                    lastTool = t;
-
-                    var st = t as SurvivalTool;
-                    if (st == null || !st.InUse)
-                    {
-                        // keep the last non-in-use tool we see; avoids fighting with the one being used
-                        candidateToDrop = t;
-                    }
+                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                        Log.Message($"[SurvivalTools.InventoryTick] {pawn.LabelShort} is over tool limit, but all tools are marked 'in-use'. Skipping drop.");
+                    return;
                 }
 
-                if (heldCount == 0)
-                    return;
+                if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                    Log.Message($"[SurvivalTools.InventoryTick] {pawn.LabelShort} is idle and over tool limit. Creating job to drop {toolToDrop.LabelShort}.");
 
-                float carryCap = pawn.GetStatValue(ST_StatDefOf.SurvivalToolCarryCapacity, applyPostProcess: true);
-                if (heldCount <= carryCap || !pawn.CanRemoveExcessSurvivalTools())
-                    return;
-
-                // If all tools are currently in use, don’t force a drop this tick.
-                if (candidateToDrop == null)
-                    return;
-
-                // Build the drop job for the chosen tool.
-                var dropJob = pawn.DequipAndTryStoreSurvivalTool(candidateToDrop);
-                if (dropJob == null)
-                    return;
-
-                // Extra safety: if for some reason curJob just became our drop job, skip.
-                if (pawn.jobs.curJob != null && pawn.jobs.curJob.def == dropJob.def)
-                    return;
-
-                try
+                var dropJob = pawn.DequipAndTryStoreSurvivalTool(toolToDrop, false);
+                if (dropJob != null)
                 {
-                    // Start now only because we’re idle; avoids the IsCurrentJobPlayerInterruptible()
-                    // path entirely and prevents StartJob from queue-spamming via finalizer/opportunistic jobs.
-                    pawn.jobs.StartJob(
-                        dropJob,
-                        JobCondition.InterruptForced,
-                        jobGiver: null,
-                        resumeCurJobAfterwards: false,
-                        cancelBusyStances: false,
-                        thinkTree: null,
-                        tag: JobTag.Misc,
-                        fromQueue: false,
-                        canReturnCurJobToPool: false,
-                        keepCarryingThingOverride: null,
-                        continueSleeping: false,
-                        addToJobsThisTick: true,
-                        preToilReservationsCanFail: false
-                    );
-                }
-                catch
-                {
-                    // transient state; skip this tick
+                    pawn.jobs.TryTakeOrderedJob(dropJob, JobTag.Misc);
                 }
             }
-
         }
 
         [HarmonyPatch(typeof(Pawn_InventoryTracker), nameof(Pawn_InventoryTracker.Notify_ItemRemoved))]
-        public static class Notify_ItemRemoved
+        public static class Notify_ItemRemoved_Postfix
         {
             public static void Postfix(Pawn_InventoryTracker __instance, Thing item)
             {
-                if (item is SurvivalTool && __instance != null && __instance.pawn != null)
+                if (item is SurvivalTool)
                 {
-                    var tracker = __instance.pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
-                    if (tracker != null && tracker.forcedHandler != null)
-                    {
-                        tracker.forcedHandler.SetForced(item, false);
-                    }
+                    __instance.pawn?.GetComp<Pawn_SurvivalToolAssignmentTracker>()?.forcedHandler?.SetForced(item, false);
                 }
             }
         }

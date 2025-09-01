@@ -1,5 +1,7 @@
+using System.Linq;
 using HarmonyLib;
 using RimWorld;
+using SurvivalTools;
 using UnityEngine;
 using Verse;
 using Verse.AI;
@@ -24,8 +26,8 @@ namespace SurvivalTools.HarmonyStuff
             Job job = pawn.CurJob;
             if (job == null || pawn.jobs?.curDriver == null) return;
 
-            // Ask logic which tool is in use
-            var tool = ActiveToolResolver.TryGetActiveTool(pawn) as ThingWithComps;
+            // Ask logic which tool is in use - use the actual SurvivalTools system
+            var tool = GetActiveToolForJob(pawn, job) as ThingWithComps;
             if (tool == null) return;
 
             // If another mod already causes this SAME item to be drawn as Primary, don't double-draw
@@ -65,6 +67,31 @@ namespace SurvivalTools.HarmonyStuff
                 // Static carry look, handled by vanilla helper (uses built-in EqLoc offsets & flip)
                 PawnRenderUtility.DrawCarriedWeapon(tool, drawPos, facing, distFactor);
             }
+        }
+
+        /// <summary>
+        /// Gets the best survival tool for the current job using the actual SurvivalTools logic.
+        /// </summary>
+        private static Thing GetActiveToolForJob(Pawn pawn, Job job)
+        {
+            if (!pawn.CanUseSurvivalTools()) return null;
+
+            var requiredStats = SurvivalToolUtility.RelevantStatsFor(job.workGiverDef, job);
+            if (requiredStats.NullOrEmpty()) return null;
+
+            // Debug logging for tool drawing
+            if (SurvivalToolUtility.IsDebugLoggingEnabled)
+            {
+                string logKey = $"Drawing_Tool_{pawn.ThingID}_{job.def.defName}";
+                if (SurvivalToolUtility.ShouldLogWithCooldown(logKey))
+                {
+                    var bestTool = pawn.GetBestSurvivalTool(requiredStats);
+                    Log.Message($"[SurvivalTools.Drawing] {pawn.LabelShort} doing {job.def.defName} (WG: {job.workGiverDef?.defName ?? "null"}) needs {string.Join(", ", requiredStats.Select(s => s.defName))} -> drawing {bestTool?.LabelShort ?? "no tool"}");
+                }
+            }
+
+            // Find the best tool for the required stats
+            return pawn.GetBestSurvivalTool(requiredStats);
         }
     }
 }

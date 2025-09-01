@@ -8,13 +8,13 @@
       <success>Always</success>
       <operations>
 
+        <!-- Building Hammer - Construction -->
         <li Class="PatchOperationAddModExtension">
           <xpath>Defs/ThingDef[defName="DA_MeleeWeapon_Hammer"]</xpath>
           <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <ConstructionSpeed>1.1</ConstructionSpeed>
-                <ConstructSuccessChance>1.1</ConstructSuccessChance>
               </baseWorkStatFactors>
               <defaultSurvivalToolAssignmentTags>
                 <li>Constructor</li>
@@ -30,12 +30,13 @@
           </value>
         </li>
 
+        <!-- Pickaxe - Mining -->
         <li Class="PatchOperationAddModExtension">
           <xpath>Defs/ThingDef[defName="DA_MeleeWeapon_Pickaxe"]</xpath>
           <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
-                <DiggingSpeed>1.1</DiggingSpeed>
+                <DiggingSpeed>1.15</DiggingSpeed>
                 <MiningYieldDigging>1.1</MiningYieldDigging>
               </baseWorkStatFactors>
               <defaultSurvivalToolAssignmentTags>
@@ -52,12 +53,13 @@
           </value>
         </li>
 
+        <!-- Scythe - Plant Cutting & Harvesting -->
         <li Class="PatchOperationAddModExtension">
           <xpath>Defs/ThingDef[defName="DA_MeleeWeapon_Scythe"]</xpath>
           <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
-                <PlantHarvestingSpeed>1.1</PlantHarvestingSpeed>
+                <PlantHarvestingSpeed>1.2</PlantHarvestingSpeed>
               </baseWorkStatFactors>
               <defaultSurvivalToolAssignmentTags>
                 <li>PlantWorker</li>
@@ -68,6 +70,74 @@
 
         <li Class="PatchOperationAdd">
           <xpath>Defs/ThingDef[defName="DA_MeleeWeapon_Scythe"]</xpath>
+          <value>
+            <thingClass>SurvivalTools.SurvivalTool</thingClass>
+          </value>
+        </li>
+
+        <!-- Meat Cleaver - Butchery -->
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="DA_MeleeWeapon_Cleaver"]</xpath>
+          <value>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+              <baseWorkStatFactors>
+                <ButcheryFleshSpeed>1.2</ButcheryFleshSpeed>
+                <ButcheryFleshEfficiency>1.15</ButcheryFleshEfficiency>
+              </baseWorkStatFactors>
+              <defaultSurvivalToolAssignmentTags>
+                <li>Cook</li>
+              </defaultSurvivalToolAssignmentTags>
+            </li>
+          </value>
+        </li>
+
+        <li Class="PatchOperationAdd">
+          <xpath>Defs/ThingDef[defName="DA_MeleeWeapon_Cleaver"]</xpath>
+          <value>
+            <thingClass>SurvivalTools.SurvivalTool</thingClass>
+          </value>
+        </li>
+
+        <!-- Bonesaw - Medical Operations -->
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="DA_MeleeWeapon_Hacksaw"]</xpath>
+          <value>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+              <baseWorkStatFactors>
+                <MedicalOperationSpeed>1.2</MedicalOperationSpeed>
+                <MedicalSurgerySuccessChance>0.9</MedicalSurgerySuccessChance>
+              </baseWorkStatFactors>
+              <defaultSurvivalToolAssignmentTags>
+                <li>Doctor</li>
+              </defaultSurvivalToolAssignmentTags>
+            </li>
+          </value>
+        </li>
+
+        <li Class="PatchOperationAdd">
+          <xpath>Defs/ThingDef[defName="DA_MeleeWeapon_Hacksaw"]</xpath>
+          <value>
+            <thingClass>SurvivalTools.SurvivalTool</thingClass>
+          </value>
+        </li>
+
+        <!-- Broom - Cleaning -->
+        <li Class="PatchOperationAddModExtension">
+          <xpath>Defs/ThingDef[defName="DA_MeleeWeapon_Broom"]</xpath>
+          <value>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+              <baseWorkStatFactors>
+                <CleaningSpeed>1.35</CleaningSpeed>
+              </baseWorkStatFactors>
+              <defaultSurvivalToolAssignmentTags>
+                <li>Cleaner</li>
+              </defaultSurvivalToolAssignmentTags>
+            </li>
+          </value>
+        </li>
+
+        <li Class="PatchOperationAdd">
+          <xpath>Defs/ThingDef[defName="DA_MeleeWeapon_Broom"]</xpath>
           <value>
             <thingClass>SurvivalTools.SurvivalTool</thingClass>
           </value>

@@ -7,42 +7,43 @@
     <SurvivalToolsSettingsCategory>Survival Tools Reborn</SurvivalToolsSettingsCategory>
 
     <Settings_HardcoreMode>Hardcore mode</Settings_HardcoreMode>
-    <Settings_HardcoreMode_Tooltip>Tools wear 50% quicker and most tasks that require tools in order to be done effectively will no longer be doable without their required tools.</Settings_HardcoreMode_Tooltip>
+    <Settings_HardcoreMode_Tooltip>Significantly increases difficulty by making tools essential for survival. Without proper tools, colonists become unable to perform most work tasks effectively. Tools also wear out 50% faster, requiring more frequent replacement and better tool management. Transforms the game into a true tool-dependent survival experience.</Settings_HardcoreMode_Tooltip>
+
+    <Settings_ExtraHardcoreMode>Extra hardcore mode</Settings_ExtraHardcoreMode>
+    <Settings_ExtraHardcoreMode_Tooltip>MAXIMUM DIFFICULTY: The ultimate survival challenge. When combined with hardcore mode, colonists become completely helpless without the right tools. Tasks that were merely inefficient (like cleaning by hand or improvised medical care) become impossible to attempt. Tools degrade 87.5% faster than normal, creating constant pressure for tool production and maintenance. Use the checkboxes below to control exactly which work types become tool-dependent. WARNING: Early game becomes extremely challenging - tool acquisition becomes critical for colony survival!</Settings_ExtraHardcoreMode_Tooltip>
+
+    <Settings_RequireCleaningTools>Require cleaning tools</Settings_RequireCleaningTools>
+    <Settings_RequireCleaningTools_Tooltip>Forces colonists to use proper cleaning tools (like brooms or mops) for all cleaning tasks. Without the right tools, they cannot clean floors, remove filth, or clear snow. Essential for maintaining colony hygiene in extreme difficulty modes.</Settings_RequireCleaningTools_Tooltip>
+
+    <Settings_RequireButcheryTools>Require butchery tools</Settings_RequireButcheryTools>
+    <Settings_RequireButcheryTools_Tooltip>Mandates proper cutting tools (like knives or cleavers) for all butchery and slaughter operations. Colonists cannot process meat or slaughter animals without appropriate bladed implements. Critical for food production chains in hardcore scenarios.</Settings_RequireButcheryTools_Tooltip>
+
+    <Settings_RequireMedicalTools>Require medical tools</Settings_RequireMedicalTools>
+    <Settings_RequireMedicalTools_Tooltip>Enforces the use of specialized medical instruments for surgical procedures and advanced medical care. Operations become impossible without proper surgical tools, making medical equipment acquisition vital for colony health and survival.</Settings_RequireMedicalTools_Tooltip>
 
     <Settings_ToolMapGen>Tools in ruined buildings</Settings_ToolMapGen>
-    <Settings_ToolMapGen_Tooltip>Whether or not low-quality basic tools will generate along with ruined structures upon map generation.</Settings_ToolMapGen_Tooltip>
+    <Settings_ToolMapGen_Tooltip>Generates basic survival tools in ancient ruins and crashed structures during map generation. These weathered tools provide essential early-game resources but are typically low-quality. Invaluable for starting colonies in harsh difficulty modes where initial tool access is critical.</Settings_ToolMapGen_Tooltip>
 
-    <Settings_ToolLimit>Tool limit</Settings_ToolLimit>
-    <Settings_ToolLimit_Tooltip>Whether or not colonists are limited to only being able to carry a certain amount of tools at once in their inventory (other than when caravanning).</Settings_ToolLimit_Tooltip>
+    <Settings_ToolLimit>Tool carrying limit</Settings_ToolLimit>
+    <Settings_ToolLimit_Tooltip>Restricts colonists to carrying a maximum of 2-3 tools in their inventory simultaneously (excluding caravan travel). Forces strategic tool management and specialization among colonists. Tool belts and similar gear can increase this limit. Adds realistic inventory constraints to tool usage.</Settings_ToolLimit_Tooltip>
 
     <Settings_ToolDegradationRate>Tool degradation rate</Settings_ToolDegradationRate>
 
-    <Settings_ToolOptimization>Tool optimization</Settings_ToolOptimization>
-    <Settings_ToolOptimization_Tooltip>Whether or not colonists will attempt to automatically optimize their inventory tools. Disabling may improve performance and fix any oddities with some modded materials.</Settings_ToolOptimization_Tooltip>
-    <Settings_PickupFromStorageOnly>Only pick up tools from storage</Settings_PickupFromStorageOnly>
-    <Settings_PickupFromStorageOnly_Tooltip>
-    When enabled, pawns will only acquire tools that are in valid storage. 
-    When disabled, pawns may also pick up tools in the Home area (but not forbidden or burning items).
-    </Settings_PickupFromStorageOnly_Tooltip>
-    <Settings_DebugLogging>Enable debug logging</Settings_DebugLogging>
-    <Settings_DebugLogging_Tooltip>
-        When enabled, SurvivalTools will log detailed information about tool selection, 
-        swaps, and pre-work pickup logic to the debug console. 
-        Recommended only for troubleshooting or mod development.
-        More to come later. 
-    </Settings_DebugLogging_Tooltip>
-    <Settings_AutoTool>Automatically pick up the right tool before work</Settings_AutoTool>
-    <Settings_AutoTool_Tooltip>
-    When enabled, pawns will check for and pick up the most suitable tool before starting a job.
-    </Settings_AutoTool_Tooltip>
+    <Settings_ToolOptimization>Automatic tool optimization</Settings_ToolOptimization>
+    <Settings_ToolOptimization_Tooltip>Enables intelligent tool management where colonists automatically select and carry the most effective tools for their assigned work. They'll upgrade to better tools and drop inferior ones as needed. Disable this if you prefer manual tool control or experience performance issues with modded materials.</Settings_ToolOptimization_Tooltip>
+    <Settings_PickupFromStorageOnly>Restrict tool pickup to storage areas</Settings_PickupFromStorageOnly>
+    <Settings_PickupFromStorageOnly_Tooltip>When enabled, colonists will only acquire tools from designated storage zones, maintaining better organization and preventing them from grabbing tools from work areas. When disabled, they can pick up any accessible tool in the Home area (excluding forbidden or burning items), providing more flexibility but less control.</Settings_PickupFromStorageOnly_Tooltip>
+    <Settings_DebugLogging>Enable detailed debug logging</Settings_DebugLogging>
+    <Settings_DebugLogging_Tooltip>Activates comprehensive logging of tool selection decisions, automatic pickup behavior, and job-tool matching logic. Essential for troubleshooting tool issues or understanding why colonists choose specific tools. Recommended only for mod development or when experiencing tool-related problems. May impact performance with extensive logging output.</Settings_DebugLogging_Tooltip>
+    <Settings_AutoTool>Smart pre-work tool pickup</Settings_AutoTool>
+    <Settings_AutoTool_Tooltip>Revolutionizes workflow efficiency by having colonists automatically acquire the optimal tool before starting any job. They'll intelligently swap tools, upgrade to better variants, and ensure they have the right equipment for maximum productivity. The cornerstone feature for seamless tool-based gameplay.</Settings_AutoTool_Tooltip>
 
     <!-- Alerts -->
-    <ColonistNeedsSurvivalTool>Colonist lacks tools</ColonistNeedsSurvivalTool>
-    <ColonistsNeedSurvivalTool>Colonists lack tools</ColonistsNeedSurvivalTool>
-    <ColonistNeedsSurvivalToolDesc>The following colonists are assigned to work tasks that require tools in order to be performed effectively but lack the tools to do so</ColonistNeedsSurvivalToolDesc>
+    <ColonistNeedsSurvivalTool>Colonist lacks essential tools</ColonistNeedsSurvivalTool>
+    <ColonistNeedsSurvivalToolDesc>These colonists need proper tools for their assigned work but lack the necessary equipment. Their productivity is severely compromised.</ColonistNeedsSurvivalToolDesc>
 
-    <SurvivalToolsNeedReplacing>Tools need replacing</SurvivalToolsNeedReplacing>
-    <SurvivalToolNeedsReplacingDesc>The following colonists are using tools that will break within half a day of use</SurvivalToolNeedsReplacingDesc>
+    <SurvivalToolsNeedReplacing>Tools approaching failure</SurvivalToolsNeedReplacing>
+    <SurvivalToolNeedsReplacingDesc>These colonists are using tools in critical condition that will break soon. Replace them immediately to avoid work disruption.</SurvivalToolNeedsReplacingDesc>
 
     <!-- Tool assignment management -->
     <ManageSurvivalToolAssignments>Manage tool assignments</ManageSurvivalToolAssignments>
@@ -50,6 +51,10 @@
     <SurvivalToolAssignmentConstructor>Constructor</SurvivalToolAssignmentConstructor>
     <SurvivalToolAssignmentMiner>Miner</SurvivalToolAssignmentMiner>
     <SurvivalToolAssignmentPlantWorker>Plant worker</SurvivalToolAssignmentPlantWorker>
+    <SurvivalToolAssignmentResearcher>Researcher</SurvivalToolAssignmentResearcher>
+    <SurvivalToolAssignmentCleaner>Cleaner</SurvivalToolAssignmentCleaner>
+    <SurvivalToolAssignmentMedical>Medical</SurvivalToolAssignmentMedical>
+    <SurvivalToolAssignmentButcher>Butcher</SurvivalToolAssignmentButcher>
     <SelectSurvivalToolAssignment>Select tool assignment...</SelectSurvivalToolAssignment>
     <NewSurvivalToolAssignment>New tool assignment</NewSurvivalToolAssignment>
     <DeleteSurvivalToolAssignment>Delete tool assignment...</DeleteSurvivalToolAssignment>

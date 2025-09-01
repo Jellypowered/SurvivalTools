@@ -23,6 +23,18 @@ namespace SurvivalTools.HarmonyStuff
         private static readonly FieldInfo ConstructionSpeed =
             AccessTools.Field(typeof(StatDefOf), nameof(StatDefOf.ConstructionSpeed));
 
+        private static readonly FieldInfo MaintenanceSpeedField =
+            AccessTools.Field(typeof(ST_StatDefOf), nameof(ST_StatDefOf.MaintenanceSpeed));
+
+        private static readonly FieldInfo DeconstructionSpeedField =
+            AccessTools.Field(typeof(ST_StatDefOf), nameof(ST_StatDefOf.DeconstructionSpeed));
+
+        private static readonly FieldInfo SowingSpeedField =
+            AccessTools.Field(typeof(ST_StatDefOf), nameof(ST_StatDefOf.SowingSpeed));
+
+        private static readonly FieldInfo ResearchSpeedField =
+            AccessTools.Field(typeof(ST_StatDefOf), nameof(ST_StatDefOf.ResearchSpeed));
+
         private static readonly MethodInfo TryDegradeTool =
             AccessTools.Method(typeof(SurvivalToolUtility), nameof(SurvivalToolUtility.TryDegradeTool),
                 new[] { typeof(Pawn), typeof(StatDef) });
@@ -39,7 +51,7 @@ namespace SurvivalTools.HarmonyStuff
         {
             if (original == null)
             {
-                if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
+                if (SurvivalToolUtility.IsDebugLoggingEnabled)
                 {
                     Log.Warning($"[SurvivalTools] Skipping patch '{label}' — method not found.");
                 }
@@ -120,6 +132,20 @@ namespace SurvivalTools.HarmonyStuff
             TryPatch("JobDriver_Deconstruct.TickActionInterval",
                 AccessTools.Method(typeof(JobDriver_Deconstruct), "TickActionInterval"),
                 prefix: new HarmonyMethod(patchType, nameof(Prefix_JobDriver_Deconstruct_TickActionInterval)));
+
+            // Plant Sowing
+            TryPatch("JobDriver_PlantSow.MakeNewToils",
+                AccessTools.DeclaredMethod(typeof(JobDriver_PlantSow), "MakeNewToils"),
+                transpiler: new HarmonyMethod(patchType, nameof(Transpile_JobDriver_PlantSow_MakeNewToils)));
+
+            // Research
+            var researchDriverType = GenTypes.GetTypeInAnyAssembly("RimWorld.JobDriver_Research");
+            if (researchDriverType != null)
+            {
+                TryPatch("JobDriver_Research.MakeNewToils",
+                    AccessTools.DeclaredMethod(researchDriverType, "MakeNewToils"),
+                    transpiler: new HarmonyMethod(patchType, nameof(Transpile_JobDriver_Research_MakeNewToils)));
+            }
 
             MethodInfo FindAffectRoofTickMethod()
             {
@@ -257,8 +283,7 @@ namespace SurvivalTools.HarmonyStuff
         {
             if (__result?.def == JobDefOf.CutPlant && __result.targetA.Thing?.def?.plant?.IsTree == true)
             {
-                var req = ST_WorkGiverDefOf.FellTrees?.GetModExtension<WorkGiverExtension>()?.requiredStats;
-                if (req == null || worker.MeetsWorkGiverStatRequirements(req))
+                if (worker?.CanFellTrees() == true)
                     __result = new Job(ST_JobDefOf.FellTree, __result.targetA);
                 else
                     __result = null;
@@ -357,7 +382,7 @@ namespace SurvivalTools.HarmonyStuff
 
         public static void Prefix_JobDriver_Deconstruct_TickActionInterval(JobDriver_Deconstruct __instance)
         {
-            SurvivalToolUtility.TryDegradeTool(__instance.pawn, StatDefOf.ConstructionSpeed);
+            SurvivalToolUtility.TryDegradeTool(__instance.pawn, ST_StatDefOf.DeconstructionSpeed);
         }
 
         public static IEnumerable<CodeInstruction> Transpile_AffectRoof_Tick(
@@ -372,7 +397,7 @@ namespace SurvivalTools.HarmonyStuff
 
             if (displayToilField == null)
             {
-                if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
+                if (SurvivalToolUtility.IsDebugLoggingEnabled)
                 {
                     Log.Warning("[SurvivalTools] AffectRoof tick transpiler: could not find captured Toil field; passing through.");
                 }
@@ -414,7 +439,41 @@ namespace SurvivalTools.HarmonyStuff
                 {
                     yield return ins;
                     yield return new CodeInstruction(OpCodes.Ldloc_0);
-                    yield return new CodeInstruction(OpCodes.Ldsfld, ConstructionSpeed);
+                    yield return new CodeInstruction(OpCodes.Ldsfld, MaintenanceSpeedField);
+                    ins = new CodeInstruction(OpCodes.Call, TryDegradeTool);
+                }
+                yield return ins;
+            }
+        }
+
+        public static IEnumerable<CodeInstruction> Transpile_JobDriver_PlantSow_MakeNewToils(IEnumerable<CodeInstruction> instructions)
+        {
+            var list = instructions.ToList();
+            for (int i = 0; i < list.Count; i++)
+            {
+                var ins = list[i];
+                if (ins.opcode == OpCodes.Stloc_0)
+                {
+                    yield return ins;
+                    yield return new CodeInstruction(OpCodes.Ldloc_0);
+                    yield return new CodeInstruction(OpCodes.Ldsfld, SowingSpeedField);
+                    ins = new CodeInstruction(OpCodes.Call, TryDegradeTool);
+                }
+                yield return ins;
+            }
+        }
+
+        public static IEnumerable<CodeInstruction> Transpile_JobDriver_Research_MakeNewToils(IEnumerable<CodeInstruction> instructions)
+        {
+            var list = instructions.ToList();
+            for (int i = 0; i < list.Count; i++)
+            {
+                var ins = list[i];
+                if (ins.opcode == OpCodes.Stloc_0)
+                {
+                    yield return ins;
+                    yield return new CodeInstruction(OpCodes.Ldloc_0);
+                    yield return new CodeInstruction(OpCodes.Ldsfld, ResearchSpeedField);
                     ins = new CodeInstruction(OpCodes.Call, TryDegradeTool);
                 }
                 yield return ins;

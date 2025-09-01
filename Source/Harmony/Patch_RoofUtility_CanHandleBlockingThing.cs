@@ -14,13 +14,15 @@ namespace SurvivalTools.HarmonyStuff
             if (worker == null) return;                 // no worker info
             if (blocker?.def?.plant?.IsTree != true) return;
 
-            var fellWG = ST_WorkGiverDefOf.FellTrees;
-            var ext = fellWG?.GetModExtension<WorkGiverExtension>();
-            var req = ext?.requiredStats;
-            if (req == null || req.Count == 0) return;
-
-            if (!worker.MeetsWorkGiverStatRequirements(req))
+            // Use centralized tree felling check
+            if (!worker.CanFellTrees())
+            {
+                if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                {
+                    Log.Message($"[SurvivalTools] {worker.LabelShort} cannot handle tree blocker {blocker.LabelShort} - missing tree felling tools");
+                }
                 __result = false;
+            }
         }
     }
 }

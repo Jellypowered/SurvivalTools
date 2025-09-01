@@ -10,17 +10,11 @@ namespace SurvivalTools.HarmonyStuff
     {
         public static void Postfix(WorkGiver __instance, ref PawnCapacityDef __result, Pawn pawn)
         {
-            if (__result != null) return;                 // vanilla already set a blocker
-            if (pawn == null) return;
+            // Early exit if vanilla already set a blocker or pawn is null
+            if (__result != null || pawn == null) return;
 
-            var def = __instance?.def;
-            if (def == null) return;
-
-            var ext = def.GetModExtension<WorkGiverExtension>();
-            var required = ext?.requiredStats;
-            if (required == null || required.Count == 0) return;
-
-            if (!pawn.MeetsWorkGiverStatRequirements(required))
+            var required = __instance?.def?.GetModExtension<WorkGiverExtension>()?.requiredStats;
+            if (required?.Count > 0 && !pawn.MeetsWorkGiverStatRequirements(required))
             {
                 __result = PawnCapacityDefOf.Manipulation;
             }

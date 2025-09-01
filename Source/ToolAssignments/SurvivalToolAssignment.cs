@@ -20,7 +20,7 @@ namespace SurvivalTools
         {
             Scribe_Values.Look(ref uniqueId, "uniqueId", 0);
             Scribe_Values.Look(ref label, "label", "Unnamed");
-            Scribe_Deep.Look(ref filter, "filter", new object[] { });
+            Scribe_Deep.Look(ref filter, "filter");
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
@@ -31,9 +31,8 @@ namespace SurvivalTools
         }
 
         // Keep the load ID stable even if the label changes
-        public string GetUniqueLoadID()
-        {
-            return "SurvivalToolAssignment_" + uniqueId;
-        }
+        public string GetUniqueLoadID() => $"SurvivalToolAssignment_{uniqueId}";
+
+        public override string ToString() => $"{label} (ID: {uniqueId})";
     }
 }

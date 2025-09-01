@@ -125,4 +125,246 @@
             </operations>
         </match>
     </Operation>
+    <!-- ===== GrowerSow ===== -->
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/WorkGiverDef[defName="GrowerSow"]</xpath>
+        <match Class="PatchOperationSequence">
+            <operations>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="GrowerSow"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]</xpath>
+                    <nomatch Class="PatchOperationAddModExtension">
+                        <xpath>Defs/WorkGiverDef[defName="GrowerSow"]</xpath>
+                        <value>
+                            <li Class="SurvivalTools.WorkGiverExtension">
+                                <requiredStats>
+                                    <li>SowingSpeed</li>
+                                </requiredStats>
+                            </li>
+                        </value>
+                    </nomatch>
+                </li>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="GrowerSow"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats/li[text()="SowingSpeed"]</xpath>
+                    <nomatch Class="PatchOperationAdd">
+                        <xpath>Defs/WorkGiverDef[defName="GrowerSow"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats</xpath>
+                        <value>
+                            <li>SowingSpeed</li>
+                        </value>
+                    </nomatch>
+                </li>
+            </operations>
+        </match>
+    </Operation>
+    <!-- ===== Research ===== -->
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/WorkGiverDef[defName="Research"]</xpath>
+        <match Class="PatchOperationSequence">
+            <operations>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="Research"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]</xpath>
+                    <nomatch Class="PatchOperationAddModExtension">
+                        <xpath>Defs/WorkGiverDef[defName="Research"]</xpath>
+                        <value>
+                            <li Class="SurvivalTools.WorkGiverExtension">
+                                <requiredStats>
+                                    <li>ResearchSpeed</li>
+                                </requiredStats>
+                            </li>
+                        </value>
+                    </nomatch>
+                </li>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="Research"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats/li[text()="ResearchSpeed"]</xpath>
+                    <nomatch Class="PatchOperationAdd">
+                        <xpath>Defs/WorkGiverDef[defName="Research"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats</xpath>
+                        <value>
+                            <li>ResearchSpeed</li>
+                        </value>
+                    </nomatch>
+                </li>
+            </operations>
+        </match>
+    </Operation>
+    <!-- ===== Cleaning ===== -->
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/WorkGiverDef[defName="CleanFilth" or defName="CleanClearSnow"]</xpath>
+        <match Class="PatchOperationSequence">
+            <operations>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="CleanFilth" or defName="CleanClearSnow"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]</xpath>
+                    <nomatch Class="PatchOperationAddModExtension">
+                        <xpath>Defs/WorkGiverDef[defName="CleanFilth" or defName="CleanClearSnow"]</xpath>
+                        <value>
+                            <li Class="SurvivalTools.WorkGiverExtension">
+                                <requiredStats>
+                                    <li>CleaningSpeed</li>
+                                </requiredStats>
+                            </li>
+                        </value>
+                    </nomatch>
+                </li>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="CleanFilth" or defName="CleanClearSnow"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats/li[text()="CleaningSpeed"]</xpath>
+                    <nomatch Class="PatchOperationAdd">
+                        <xpath>Defs/WorkGiverDef[defName="CleanFilth" or defName="CleanClearSnow"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats</xpath>
+                        <value>
+                            <li>CleaningSpeed</li>
+                        </value>
+                    </nomatch>
+                </li>
+            </operations>
+        </match>
+    </Operation>
+    <!-- ===== Butchery ===== -->
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/WorkGiverDef[defName="DoBillsButcherFlesh"]</xpath>
+        <match Class="PatchOperationSequence">
+            <operations>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="DoBillsButcherFlesh"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]</xpath>
+                    <nomatch Class="PatchOperationAddModExtension">
+                        <xpath>Defs/WorkGiverDef[defName="DoBillsButcherFlesh"]</xpath>
+                        <value>
+                            <li Class="SurvivalTools.WorkGiverExtension">
+                                <requiredStats>
+                                    <li>ButcheryFleshSpeed</li>
+                                    <li>ButcheryFleshEfficiency</li>
+                                </requiredStats>
+                            </li>
+                        </value>
+                    </nomatch>
+                </li>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="DoBillsButcherFlesh"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats/li[text()="ButcheryFleshSpeed"]</xpath>
+                    <nomatch Class="PatchOperationAdd">
+                        <xpath>Defs/WorkGiverDef[defName="DoBillsButcherFlesh"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats</xpath>
+                        <value>
+                            <li>ButcheryFleshSpeed</li>
+                        </value>
+                    </nomatch>
+                </li>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="DoBillsButcherFlesh"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats/li[text()="ButcheryFleshEfficiency"]</xpath>
+                    <nomatch Class="PatchOperationAdd">
+                        <xpath>Defs/WorkGiverDef[defName="DoBillsButcherFlesh"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats</xpath>
+                        <value>
+                            <li>ButcheryFleshEfficiency</li>
+                        </value>
+                    </nomatch>
+                </li>
+            </operations>
+        </match>
+    </Operation>
+    <!-- ===== Medical Operations ===== -->
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/WorkGiverDef[defName="DoBillsMedicalHumanOperation" or defName="DoBillsMedicalAnimalOperation"]</xpath>
+        <match Class="PatchOperationSequence">
+            <operations>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="DoBillsMedicalHumanOperation" or defName="DoBillsMedicalAnimalOperation"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]</xpath>
+                    <nomatch Class="PatchOperationAddModExtension">
+                        <xpath>Defs/WorkGiverDef[defName="DoBillsMedicalHumanOperation" or defName="DoBillsMedicalAnimalOperation"]</xpath>
+                        <value>
+                            <li Class="SurvivalTools.WorkGiverExtension">
+                                <requiredStats>
+                                    <li>MedicalOperationSpeed</li>
+                                    <li>MedicalSurgerySuccessChance</li>
+                                </requiredStats>
+                            </li>
+                        </value>
+                    </nomatch>
+                </li>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="DoBillsMedicalHumanOperation" or defName="DoBillsMedicalAnimalOperation"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats/li[text()="MedicalOperationSpeed"]</xpath>
+                    <nomatch Class="PatchOperationAdd">
+                        <xpath>Defs/WorkGiverDef[defName="DoBillsMedicalHumanOperation" or defName="DoBillsMedicalAnimalOperation"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats</xpath>
+                        <value>
+                            <li>MedicalOperationSpeed</li>
+                        </value>
+                    </nomatch>
+                </li>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="DoBillsMedicalHumanOperation" or defName="DoBillsMedicalAnimalOperation"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats/li[text()="MedicalSurgerySuccessChance"]</xpath>
+                    <nomatch Class="PatchOperationAdd">
+                        <xpath>Defs/WorkGiverDef[defName="DoBillsMedicalHumanOperation" or defName="DoBillsMedicalAnimalOperation"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats</xpath>
+                        <value>
+                            <li>MedicalSurgerySuccessChance</li>
+                        </value>
+                    </nomatch>
+                </li>
+            </operations>
+        </match>
+    </Operation>
+    <!-- ===== Medical Tending (Doctor work type) ===== -->
+    <Operation Class="PatchOperationSequence">
+        <success>Always</success>
+        <operations>
+            <!-- Add extension everywhere it's missing for Doctor workType -->
+            <li Class="PatchOperationAddModExtension">
+                <xpath>Defs/WorkGiverDef[workType="Doctor" and not(modExtensions/li[@Class='SurvivalTools.WorkGiverExtension'])]</xpath>
+                <value>
+                    <li Class="SurvivalTools.WorkGiverExtension">
+                        <requiredStats>
+                            <li>MedicalOperationSpeed</li>
+                            <li>MedicalSurgerySuccessChance</li>
+                        </requiredStats>
+                    </li>
+                </value>
+            </li>
+            <!-- Append missing stats if extension exists but lacks them -->
+            <li Class="PatchOperationAdd">
+                <xpath>Defs/WorkGiverDef[workType="Doctor"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats[not(li[text()='MedicalOperationSpeed'])]</xpath>
+                <value>
+                    <li>MedicalOperationSpeed</li>
+                </value>
+            </li>
+            <li Class="PatchOperationAdd">
+                <xpath>Defs/WorkGiverDef[workType="Doctor"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats[not(li[text()='MedicalSurgerySuccessChance'])]</xpath>
+                <value>
+                    <li>MedicalSurgerySuccessChance</li>
+                </value>
+            </li>
+        </operations>
+    </Operation>
+
+    <!-- ===== Animal Slaughter ===== -->
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/WorkGiverDef[defName="Slaughter"]</xpath>
+        <match Class="PatchOperationSequence">
+            <operations>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="Slaughter"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]</xpath>
+                    <nomatch Class="PatchOperationAddModExtension">
+                        <xpath>Defs/WorkGiverDef[defName="Slaughter"]</xpath>
+                        <value>
+                            <li Class="SurvivalTools.WorkGiverExtension">
+                                <requiredStats>
+                                    <li>ButcheryFleshSpeed</li>
+                                    <li>ButcheryFleshEfficiency</li>
+                                </requiredStats>
+                            </li>
+                        </value>
+                    </nomatch>
+                </li>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="Slaughter"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats/li[text()="ButcheryFleshSpeed"]</xpath>
+                    <nomatch Class="PatchOperationAdd">
+                        <xpath>Defs/WorkGiverDef[defName="Slaughter"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats</xpath>
+                        <value>
+                            <li>ButcheryFleshSpeed</li>
+                        </value>
+                    </nomatch>
+                </li>
+                <li Class="PatchOperationConditional">
+                    <xpath>Defs/WorkGiverDef[defName="Slaughter"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats/li[text()="ButcheryFleshEfficiency"]</xpath>
+                    <nomatch Class="PatchOperationAdd">
+                        <xpath>Defs/WorkGiverDef[defName="Slaughter"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats</xpath>
+                        <value>
+                            <li>ButcheryFleshEfficiency</li>
+                        </value>
+                    </nomatch>
+                </li>
+            </operations>
+        </match>
+    </Operation>
 </Patch>

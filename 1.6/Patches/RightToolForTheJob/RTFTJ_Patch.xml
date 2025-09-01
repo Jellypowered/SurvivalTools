@@ -57,8 +57,8 @@
           <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
-                <ConstructionSpeed>1.0</ConstructionSpeed>
-                <ConstructSuccessChance>1.0</ConstructSuccessChance>
+                <ConstructionSpeed>1.1</ConstructionSpeed>
+                <ConstructSuccessChance>0.9</ConstructSuccessChance>
               </baseWorkStatFactors>
               <defaultSurvivalToolAssignmentTags>
                 <li>Constructor</li>
@@ -81,7 +81,6 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <TreeFellingSpeed>1.0</TreeFellingSpeed>
-                <PlantHarvestingSpeed>1.0</PlantHarvestingSpeed>
               </baseWorkStatFactors>
               <defaultSurvivalToolAssignmentTags>
                 <li>PlantWorker</li>
@@ -103,7 +102,6 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <TreeFellingSpeed>1.1</TreeFellingSpeed>
-                <PlantHarvestingSpeed>1.1</PlantHarvestingSpeed>
               </baseWorkStatFactors>
               <defaultSurvivalToolAssignmentTags>
                 <li>PlantWorker</li>
@@ -168,7 +166,9 @@
             <thingClass>SurvivalTools.SurvivalTool</thingClass>
           </value>
         </li>
-
+        <!-- Should these toolbelts count as a survival tools? 
+It adds a lot of stats but toolbelts are not real tools, just storage for tools 
+Maybe they need to add carrying capacity and tool slots, more for the advanced one of course -->
         <li Class="PatchOperationAddModExtension">
           <xpath>Defs/ThingDef[defName="RTFTJ_ToolbeltAdv"]</xpath>
           <value>

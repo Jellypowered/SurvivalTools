@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <SurvivalTools.label>Werkzeuge</SurvivalTools.label>
+    <SurvivalToolsNeolithic.label>Grundwerkzeuge</SurvivalToolsNeolithic.label>
+    <SurvivalToolsIndustrial.label>Moderne Werkzeuge</SurvivalToolsIndustrial.label>
+    <SurvivalToolsSpacer.label>Fortgeschrittene Werkzeuge</SurvivalToolsSpacer.label>
+</LanguageData>

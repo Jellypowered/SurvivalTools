@@ -17,7 +17,98 @@ namespace SurvivalTools
         public bool debugLogging = false;
         public bool pickupFromStorageOnly = false;
 
+        // Extra Hardcore Mode - requires tools for all work
+        public bool extraHardcoreMode = false;
+
+        // Individual optional tool requirements (only shown when extra hardcore is enabled)
+        public bool requireCleaningTools = true;
+        public bool requireButcheryTools = true;
+        public bool requireMedicalTools = true;
+
+        // Cached availability of optional tool types (performance optimization)
+        private bool? _hasCleaningToolsCache = null;
+        private bool? _hasButcheryToolsCache = null;
+        private bool? _hasMedicalToolsCache = null;
+        private bool _cacheInitialized = false;
+
         public bool ToolDegradationEnabled => toolDegradationFactor > 0.001f;
+
+        /// <summary>
+        /// Gets the effective tool degradation factor, including extra hardcore mode bonus
+        /// </summary>
+        public float EffectiveToolDegradationFactor
+        {
+            get
+            {
+                float factor = toolDegradationFactor;
+
+                // Apply hardcore mode 50% increase
+                if (hardcoreMode)
+                    factor *= 1.5f;
+
+                // Apply extra hardcore mode additional 25% increase (total 87.5% increase)
+                if (extraHardcoreMode)
+                    factor *= 1.25f;
+
+                return factor;
+            }
+        }
+
+        /// <summary>
+        /// Initialize the cache for optional tool availability (called once after game load)
+        /// </summary>
+        public void InitializeOptionalToolCache()
+        {
+            if (_cacheInitialized) return;
+
+            _hasCleaningToolsCache = SurvivalToolUtility.ToolsExistForStat(ST_StatDefOf.CleaningSpeed);
+            _hasButcheryToolsCache = SurvivalToolUtility.ToolsExistForStat(ST_StatDefOf.ButcheryFleshSpeed) ||
+                                   SurvivalToolUtility.ToolsExistForStat(ST_StatDefOf.ButcheryFleshEfficiency);
+            _hasMedicalToolsCache = SurvivalToolUtility.ToolsExistForStat(ST_StatDefOf.MedicalOperationSpeed) ||
+                                  SurvivalToolUtility.ToolsExistForStat(ST_StatDefOf.MedicalSurgerySuccessChance);
+            _cacheInitialized = true;
+
+            if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                Log.Message($"[SurvivalTools.Settings] Optional tool cache initialized: Cleaning={_hasCleaningToolsCache}, Butchery={_hasButcheryToolsCache}, Medical={_hasMedicalToolsCache}");
+        }
+
+        /// <summary>
+        /// Reset the cache (for mod loading/unloading scenarios)
+        /// </summary>
+        public void ResetOptionalToolCache()
+        {
+            _hasCleaningToolsCache = null;
+            _hasButcheryToolsCache = null;
+            _hasMedicalToolsCache = null;
+            _cacheInitialized = false;
+        }
+
+        // Public accessors for cached availability
+        public bool HasCleaningTools => _hasCleaningToolsCache ?? false;
+        public bool HasButcheryTools => _hasButcheryToolsCache ?? false;
+        public bool HasMedicalTools => _hasMedicalToolsCache ?? false;
+
+        /// <summary>
+        /// Whether any optional tool types are available (determines if extra hardcore option should be shown)
+        /// </summary>
+        public bool HasAnyOptionalTools => HasCleaningTools || HasButcheryTools || HasMedicalTools;
+
+        /// <summary>
+        /// Check if a specific stat should be required in extra hardcore mode
+        /// </summary>
+        public bool IsStatRequiredInExtraHardcore(StatDef stat)
+        {
+            if (!extraHardcoreMode) return false;
+
+            if (stat == ST_StatDefOf.CleaningSpeed)
+                return requireCleaningTools && HasCleaningTools;
+            if (stat == ST_StatDefOf.ButcheryFleshSpeed || stat == ST_StatDefOf.ButcheryFleshEfficiency)
+                return requireButcheryTools && HasButcheryTools;
+            if (stat == ST_StatDefOf.MedicalOperationSpeed || stat == ST_StatDefOf.MedicalSurgerySuccessChance)
+                return requireMedicalTools && HasMedicalTools;
+
+            return false;
+        }
 
         public override void ExposeData()
         {
@@ -29,6 +120,12 @@ namespace SurvivalTools
             Scribe_Values.Look(ref debugLogging, nameof(debugLogging), false);
             Scribe_Values.Look(ref pickupFromStorageOnly, nameof(pickupFromStorageOnly), false);
             Scribe_Values.Look(ref autoTool, nameof(autoTool), true);
+
+            // Extra Hardcore Mode settings
+            Scribe_Values.Look(ref extraHardcoreMode, nameof(extraHardcoreMode), false);
+            Scribe_Values.Look(ref requireCleaningTools, nameof(requireCleaningTools), true);
+            Scribe_Values.Look(ref requireButcheryTools, nameof(requireButcheryTools), true);
+            Scribe_Values.Look(ref requireMedicalTools, nameof(requireMedicalTools), true);
 
             base.ExposeData();
         }
@@ -50,7 +147,12 @@ namespace SurvivalTools
                 listing.Gap();
                 if (Prefs.DevMode)
                 {
+                    bool debugLoggingBefore = debugLogging;
                     listing.CheckboxLabeled("Settings_DebugLogging".Translate(), ref debugLogging, "Settings_DebugLogging_Tooltip".Translate());
+                    if (debugLogging != debugLoggingBefore)
+                    {
+                        SurvivalToolUtility.InvalidateDebugLoggingCache();
+                    }
                     listing.Gap();
                 }
 
@@ -58,6 +160,60 @@ namespace SurvivalTools
                 GUI.color = new Color(1f, 0.2f, 0.2f);
                 listing.CheckboxLabeled("Settings_HardcoreMode".Translate(), ref hardcoreMode, "Settings_HardcoreMode_Tooltip".Translate());
                 GUI.color = prevColor;
+
+                // Extra Hardcore Mode (even redder, only shown if hardcore is enabled and optional tools exist)
+                if (hardcoreMode && HasAnyOptionalTools)
+                {
+                    listing.Gap(6f);
+
+                    // Indented extra hardcore checkbox
+                    var extraHardcoreRect = listing.GetRect(Text.LineHeight);
+                    extraHardcoreRect.x += 20f; // Indent to show it's a sub-option
+                    extraHardcoreRect.width -= 20f;
+
+                    GUI.color = new Color(1f, 0.1f, 0.1f); // Even more red
+                    var prevExtraHardcore = extraHardcoreMode;
+                    Widgets.CheckboxLabeled(extraHardcoreRect, "Settings_ExtraHardcoreMode".Translate(), ref extraHardcoreMode);
+
+                    // Add tooltip for extra hardcore checkbox (always show, regardless of checked state)
+                    if (Mouse.IsOver(extraHardcoreRect))
+                        TooltipHandler.TipRegion(extraHardcoreRect, "Settings_ExtraHardcoreMode_Tooltip".Translate());
+
+                    // Auto-enable individual options when extra hardcore is first enabled
+                    if (!prevExtraHardcore && extraHardcoreMode)
+                    {
+                        requireCleaningTools = HasCleaningTools;
+                        requireButcheryTools = HasButcheryTools;
+                        requireMedicalTools = HasMedicalTools;
+                    }
+
+                    // Individual optional tool requirement checkboxes (only if extra hardcore is enabled)
+                    if (extraHardcoreMode)
+                    {
+                        listing.Gap(4f);
+
+                        // Further indented individual options
+                        var individualRect = listing.GetRect(Text.LineHeight * 3 + 8f); // Space for 3 checkboxes
+                        individualRect.x += 40f; // Double indent
+                        individualRect.width -= 40f;
+
+                        var individualListing = new Listing_Standard();
+                        individualListing.Begin(individualRect);
+
+                        if (HasCleaningTools)
+                            individualListing.CheckboxLabeled("Settings_RequireCleaningTools".Translate(), ref requireCleaningTools, "Settings_RequireCleaningTools_Tooltip".Translate());
+
+                        if (HasButcheryTools)
+                            individualListing.CheckboxLabeled("Settings_RequireButcheryTools".Translate(), ref requireButcheryTools, "Settings_RequireButcheryTools_Tooltip".Translate());
+
+                        if (HasMedicalTools)
+                            individualListing.CheckboxLabeled("Settings_RequireMedicalTools".Translate(), ref requireMedicalTools, "Settings_RequireMedicalTools_Tooltip".Translate());
+
+                        individualListing.End();
+                    }
+
+                    GUI.color = prevColor;
+                }
 
                 listing.Gap();
                 listing.CheckboxLabeled("Settings_ToolMapGen".Translate(), ref toolMapGen, "Settings_ToolMapGen_Tooltip".Translate());
@@ -101,6 +257,12 @@ namespace SurvivalTools
             toolOptimization = true;
             autoTool = true;
             debugLogging = false;
+
+            // Extra hardcore settings
+            extraHardcoreMode = false;
+            requireCleaningTools = true;
+            requireButcheryTools = true;
+            requireMedicalTools = true;
         }
         #endregion
 
@@ -119,7 +281,20 @@ namespace SurvivalTools
 
         public override void DoSettingsWindowContents(Rect inRect)
         {
+            // Ensure cache is initialized before showing settings
+            Settings.InitializeOptionalToolCache();
             Settings.DoSettingsWindowContents(inRect);
+        }
+
+        /// <summary>
+        /// Initialize settings cache (called from StaticConstructorClass)
+        /// </summary>
+        public static void InitializeSettings()
+        {
+            if (Settings != null)
+            {
+                Settings.InitializeOptionalToolCache();
+            }
         }
     }
     #endregion

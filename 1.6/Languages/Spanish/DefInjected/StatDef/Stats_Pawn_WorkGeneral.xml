@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <SurvivalToolCarryCapacity.label>capacidad de carga de herramientas</SurvivalToolCarryCapacity.label>
+    <SurvivalToolCarryCapacity.description>Cuántas herramientas puede llevar este personaje en su inventario. Si tiene más herramientas de las que puede cargar, no podrá usar las herramientas excedentes.</SurvivalToolCarryCapacity.description>
+    <DiggingSpeed.label>velocidad de excavación</DiggingSpeed.label>
+    <DiggingSpeed.description>La velocidad a la que esta persona excava paredes.</DiggingSpeed.description>
+    <CleaningSpeed.label>velocidad de limpieza</CleaningSpeed.label>
+    <CleaningSpeed.description>La velocidad a la que esta persona limpia suciedad y escombros. Cualquiera puede limpiar, pero es mucho más rápido con las herramientas adecuadas.</CleaningSpeed.description>
+    <ButcheryFleshSpeed.label>velocidad de carnicería</ButcheryFleshSpeed.label>
+    <ButcheryFleshSpeed.description>La velocidad a la que esta persona sacrifica animales y procesa carne.</ButcheryFleshSpeed.description>
+</LanguageData>

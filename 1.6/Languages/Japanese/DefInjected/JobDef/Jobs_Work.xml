@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <FellTree.reportString>TargetAを伐採しています。</FellTree.reportString>
+    <FellTreeDesignated.reportString>TargetAを伐採しています。</FellTreeDesignated.reportString>
+    <HarvestTree.reportString>TargetAを収穫しています。</HarvestTree.reportString>
+    <HarvestTreeDesignated.reportString>TargetAを収穫しています。</HarvestTreeDesignated.reportString>
+</LanguageData>
