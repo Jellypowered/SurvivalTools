@@ -839,7 +839,7 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
                     <ConstructionSpeed>1.3</ConstructionSpeed>
-                    <FixBrokenDownBuildingSpeed>1.4</FixBrokenDownBuildingSpeed>
+                    <MaintenanceSpeed>1.4</MaintenanceSpeed>
                     <DiggingSpeed>1.2</DiggingSpeed>
                 </baseWorkStatFactors>
                 <defaultSurvivalToolAssignmentTags>

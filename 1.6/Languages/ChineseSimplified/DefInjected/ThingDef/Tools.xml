@@ -1,25 +1,72 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
-  <!-- Tools -->
+
+  <!-- Basic/Primitive Tools -->
   <SurvivalTools_Axe.label>斧头</SurvivalTools_Axe.label>
-  <SurvivalTools_Axe.description>手柄的设计使其更易于伐木。但是紧要关头它也能当近战武器使用。</SurvivalTools_Axe.description>
+  <SurvivalTools_Axe.description>为高效伐木工作而设计的基础林业工具。其重量级头部提供强大的冲击力，使其成为从事木材工作的殖民者不可或缺的工具。其平衡性和杠杆效应使其比临时切割方法更加有效。当生存需要时，也可作为可靠的近战武器。</SurvivalTools_Axe.description>
   <SurvivalTools_Axe.tools.0.label>手柄</SurvivalTools_Axe.tools.0.label>
   <SurvivalTools_Axe.tools.1.label>前端</SurvivalTools_Axe.tools.1.label>
-  <SurvivalTools_Pickaxe.label>十字镐</SurvivalTools_Pickaxe.label>
-  <SurvivalTools_Pickaxe.description>十字镐的前端附有一个坚硬的十字头。它能够有效地挖掘坚硬的矿石。</SurvivalTools_Pickaxe.description>
+
+  <SurvivalTools_Pickaxe.label>镐</SurvivalTools_Pickaxe.label>
+  <SurvivalTools_Pickaxe.description>一种重要的采矿工具，具有固定在坚固手柄上的重型尖头。专门设计用于破碎硬岩石并高效提取有价值的材料。其集中力量和杠杆效应对于高产采矿作业至关重要。当情况需要时，也可作为临时武器使用。</SurvivalTools_Pickaxe.description>
   <SurvivalTools_Pickaxe.tools.0.label>手柄</SurvivalTools_Pickaxe.tools.0.label>
   <SurvivalTools_Pickaxe.tools.1.label>前端</SurvivalTools_Pickaxe.tools.1.label>
+
   <SurvivalTools_Hammer.label>锤子</SurvivalTools_Hammer.label>
-  <SurvivalTools_Hammer.description>一柄简单的锤子，是任何施工工具的重要组成部分。紧要关头它也能当近战武器使用。</SurvivalTools_Hammer.description>
+  <SurvivalTools_Hammer.description>任何建筑项目的基础工具。这把多功能锤子提供了钉入紧固件、塑造材料和组装结构所需的精度和力量。对于从事建筑和维护工作的殖民者来说是不可或缺的。其平衡设计确保在长时间建筑工作期间以最小疲劳度提供有效打击。</SurvivalTools_Hammer.description>
   <SurvivalTools_Hammer.tools.0.label>手柄</SurvivalTools_Hammer.tools.0.label>
   <SurvivalTools_Hammer.tools.1.label>前端</SurvivalTools_Hammer.tools.1.label>
+
   <SurvivalTools_Sickle.label>镰刀</SurvivalTools_Sickle.label>
-  <SurvivalTools_Sickle.description>一把弯曲的刀刃，连接在一个小刀柄上，它通常用来切割植物。紧要关头它也能当近战武器使用。</SurvivalTools_Sickle.description>
+  <SurvivalTools_Sickle.description>一种专用农业工具，具有完美设计的弯曲刀片，用于收割作物和切割植物材料。其人体工程学设计允许高效、重复的切割动作，对用户造成最小的压力。对于高产农业经营和植物维护工作不可或缺。</SurvivalTools_Sickle.description>
   <SurvivalTools_Sickle.tools.0.label>手柄</SurvivalTools_Sickle.tools.0.label>
   <SurvivalTools_Sickle.tools.1.label>前端</SurvivalTools_Sickle.tools.1.label>
-  <!-- Glitterworld Multitool -->
-  <SurvivalTools_Multitool.label>闪耀世界的工具</SurvivalTools_Multitool.label>
-  <SurvivalTools_Multitool.description>一种超高科技的工具，常用于闪耀世界中的家用机器人，又由于它们的结构相似也可用于其他人形机器。</SurvivalTools_Multitool.description>
+
+  <SurvivalTools_Hoe.label>锄头</SurvivalTools_Hoe.label>
+  <SurvivalTools_Hoe.description>为土壤准备和种子种植而设计的基础农业工具。其尖锐设计有效地破碎土壤，创造最佳种植条件。对于建立高产农业经营和维持作物产量不可或缺。其坚固结构确保季节间的可靠性能。</SurvivalTools_Hoe.description>
+
+  <SurvivalTools_Knife.label>刀</SurvivalTools_Knife.label>
+  <SurvivalTools_Knife.description>一种多功能切割工具，具有对精密工作不可或缺的锋利刀刃。非常适合屠宰工作、医疗程序和一般切割任务。其平衡设计允许受控、精确的切割，而锋利的刀刃确保干净的工作。任何认真的殖民者的必备工具。</SurvivalTools_Knife.description>
+
+  <SurvivalTools_HandSaw.label>手锯</SurvivalTools_HandSaw.label>
+  <SurvivalTools_HandSaw.description>一种传统木工工具，具有精确切割齿的金属刀片，用于手动木材加工。对于需要定制切割木材和详细木工的建筑项目不可或缺。手锯的稳定节奏可能比电动工具需要更长时间，但提供出色的控制和精度。</SurvivalTools_HandSaw.description>
+
+  <SurvivalTools_BoneSickle.label>骨镰刀</SurvivalTools_BoneSickle.label>
+  <SurvivalTools_BoneSickle.description>一种由雕刻骨头制成的原始收割工具，具有磨锐的边缘。虽然不如其金属对应物耐用，但这种传统工具在收割作物和切割植物方面表现出色。其弯曲设计遵循已通过无数代农业工作证明其有效性的古老模式。</SurvivalTools_BoneSickle.description>
+
+  <SurvivalTools_PrimitiveLever.label>撬棍</SurvivalTools_PrimitiveLever.label>
+  <SurvivalTools_PrimitiveLever.description>一种由耐用材料制成的原始但有效的杠杆工具。对于拆卸结构、分离材料和执行基本机械操作不可或缺。代表了早期文明在没有先进技术的情况下为建筑和拆除工作开发实用解决方案的聪明才智。</SurvivalTools_PrimitiveLever.description>
+
+  <SurvivalTools_Abacus.label>算盘</SurvivalTools_Abacus.label>
+  <SurvivalTools_Abacus.description>一种古老的计算工具，在杆上排列可移动珠子以执行算术运算。对于组织研究数据、管理复杂计算和在没有先进计算设备的社会中保持准确记录不可或缺。代表数学思维和数据组织的基础。</SurvivalTools_Abacus.description>
+
+  <!-- Industrial Tools -->
+  <SurvivalTools_SteelKnife.label>钢刀</SurvivalTools_SteelKnife.label>
+  <SurvivalTools_SteelKnife.description>一把精密锻造的钢刀，具有卓越的保锐性和耐用性。碳钢刀片通过广泛使用保持其锋利度，使其成为要求苛刻的屠宰和医疗工作的理想选择。人体工程学手柄为精细工作提供出色控制。</SurvivalTools_SteelKnife.description>
+
+  <SurvivalTools_CrosscutSaw.label>横锯</SurvivalTools_CrosscutSaw.label>
+  <SurvivalTools_CrosscutSaw.description>为高效木工和建筑工作设计的精密工业锯。其专门设计的齿和强化钢结构允许通过各种材料进行干净、精确的切割。对于大型建筑项目和先进木工工作不可或缺。</SurvivalTools_CrosscutSaw.description>
+
+  <SurvivalTools_Wrench.label>扳手</SurvivalTools_Wrench.label>
+  <SurvivalTools_Wrench.description>设计用于抓取、转动和操纵紧固件和机械部件的精密机械工具。对于维护工作、机器修理和需要精确调整的建筑项目至关重要。可调夹爪系统适应各种尺寸，同时提供最佳杠杆和控制。</SurvivalTools_Wrench.description>
+
+  <SurvivalTools_Microscope.label>显微镜</SurvivalTools_Microscope.label>
+  <SurvivalTools_Microscope.description>一种精密光学仪器，放大小物体和样本以进行详细检查。对于先进研究、生物学研究和科学分析不可或缺。</SurvivalTools_Microscope.description>
+
+  <!-- Precision Tools -->
+  <SurvivalTools_CarbidePick.label>硬质合金镐</SurvivalTools_CarbidePick.label>
+  <SurvivalTools_CarbidePick.description>一种先进的采矿工具，具有碳化物尖端，在最苛刻的挖掘工作中保持其锋利度。精确设计的头部比标准工具更有效地切割岩石，而其强化结构确保在恶劣的采矿条件下具有卓越的耐用性。</SurvivalTools_CarbidePick.description>
+
+  <SurvivalTools_PrecisionScalpel.label>精密手术刀</SurvivalTools_PrecisionScalpel.label>
+  <SurvivalTools_PrecisionScalpel.description>一种由优质钢合金制成的超锋利外科器械。精心平衡的刀片通过反复消毒和使用保持其锋利度，而人体工程学手柄确保在精细医疗程序中的精确控制。先进医疗设施的标准设备。</SurvivalTools_PrecisionScalpel.description>
+
+  <SurvivalTools_PowerDrill.label>电钻</SurvivalTools_PowerDrill.label>
+  <SurvivalTools_PowerDrill.description>一种由内置电机驱动的机械化钻孔工具，能够精确快速地钻透坚硬材料。可变速电机和可互换钻头使其对建筑和机械工作极其有价值。需要定期维护以保持电机平稳运行。</SurvivalTools_PowerDrill.description>
+
+  <!-- Spacer Tools -->
+  <SurvivalTools_Multitool.label>闪耀世界多用工具</SurvivalTools_Multitool.label>
+  <SurvivalTools_Multitool.description>一种在闪耀世界社会中家用机械体常用的高科技通用工具。这种先进设备能够无缝适应任何任务——建筑、采矿、林业、维护、拆除——使其成为终极的一体化生存工具。虽然为机械体设计，但由于生理相似性，人形生物完全可以使用。</SurvivalTools_Multitool.description>
   <SurvivalTools_Multitool.tools.0.label>手柄</SurvivalTools_Multitool.tools.0.label>
   <SurvivalTools_Multitool.tools.1.label>前端</SurvivalTools_Multitool.tools.1.label>
+
 </LanguageData>

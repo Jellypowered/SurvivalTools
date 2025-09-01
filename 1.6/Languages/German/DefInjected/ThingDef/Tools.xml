@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+    <!-- Basic/Primitive Tools -->
+    <SurvivalTools_Axe.label>Axt</SurvivalTools_Axe.label>
+    <SurvivalTools_Axe.description>Ein grundlegendes Forstwerkzeug, das für effiziente Holzfällerarbeiten entwickelt wurde. Der gewichtige Kopf bietet kraftvolle Schlagkraft und macht es zu einem unverzichtbaren Werkzeug für Siedler, die in der Holzwirtschaft tätig sind. Seine Ausgewogenheit und sein Hebeleffekt machen es weitaus effektiver als improvisierte Schneidemethoden. Fungiert auch als zuverlässige Nahkampfwaffe, wenn das Überleben es erfordert.</SurvivalTools_Axe.description>
+
+    <SurvivalTools_Pickaxe.label>Spitzhacke</SurvivalTools_Pickaxe.label>
+    <SurvivalTools_Pickaxe.description>Ein unverzichtbares Bergbauwerkzeug mit einem schweren, spitzen Kopf, der an einem robusten Griff befestigt ist. Speziell entwickelt, um harte Gesteine aufzubrechen und wertvolle Materialien effizient zu extrahieren. Seine konzentrierte Kraft und sein Hebeleffekt sind für produktive Bergbauoperationen unerlässlich. Kann auch als improvisierte Waffe verwendet werden, wenn es die Umstände erfordern.</SurvivalTools_Pickaxe.description>
+
+    <SurvivalTools_Hammer.label>Hammer</SurvivalTools_Hammer.label>
+    <SurvivalTools_Hammer.description>Ein grundlegendes Werkzeug für jedes Bauprojekt. Dieser vielseitige Hammer bietet die nötige Präzision und Kraft zum Einschlagen von Befestigungselementen, Formen von Materialien und Zusammenbauen von Strukturen. Unverzichtbar für Siedler, die in Bau- und Wartungsarbeiten tätig sind. Sein ausgewogenes Design gewährleistet effektive Schläge bei minimaler Ermüdung während längerer Bauarbeiten.</SurvivalTools_Hammer.description>
+
+    <SurvivalTools_Sickle.label>Sichel</SurvivalTools_Sickle.label>
+    <SurvivalTools_Sickle.description>Ein spezialisiertes landwirtschaftliches Werkzeug mit einer gekrümmten Schneide, die perfekt für das Ernten von Feldfrüchten und das Schneiden von Pflanzenmaterial entwickelt wurde. Das ergonomische Design ermöglicht effiziente, wiederholende Schneidebewegungen bei minimaler Belastung des Benutzers. Unverzichtbar für produktive landwirtschaftliche Betriebe und Pflanzenwartungsarbeiten.</SurvivalTools_Sickle.description>
+
+    <SurvivalTools_Hoe.label>Hacke</SurvivalTools_Hoe.label>
+    <SurvivalTools_Hoe.description>Ein grundlegendes landwirtschaftliches Werkzeug, das für die Bodenbearbeitung und das Pflanzen von Samen entwickelt wurde. Sein spitzes Design bricht den Boden effizient auf und schafft optimale Pflanzenbedingungen. Unverzichtbar für die Etablierung produktiver landwirtschaftlicher Betriebe und die Aufrechterhaltung der Ernteerträge. Seine robuste Konstruktion gewährleistet zuverlässige Leistung durch die Saisons.</SurvivalTools_Hoe.description>
+
+    <SurvivalTools_Knife.label>Messer</SurvivalTools_Knife.label>
+    <SurvivalTools_Knife.description>Ein vielseitiges Schneidewerkzeug mit einer scharfen Klinge, die für Präzisionsarbeiten unverzichtbar ist. Ideal für Fleischzerlegungsarbeiten, medizinische Verfahren und allgemeine Schneidaufgaben. Sein ausgewogenes Design ermöglicht kontrollierte, präzise Schnitte, während die scharfe Klinge saubere Arbeit gewährleistet. Ein unverzichtbares Werkzeug für jeden ernsthaften Siedler.</SurvivalTools_Knife.description>
+
+    <SurvivalTools_HandSaw.label>Handsäge</SurvivalTools_HandSaw.label>
+    <SurvivalTools_HandSaw.description>Ein traditionelles Holzbearbeitungswerkzeug mit einer Metallklinge mit präzise geschnittenen Zähnen für die manuelle Holzbearbeitung. Unverzichtbar für Bauprojekte, die maßgeschnittenes Holz und detaillierte Holzarbeiten erfordern. Das gleichmäßige Tempo einer Handsäge mag länger dauern als Elektrowerkzeuge, bietet aber hervorragende Kontrolle und Präzision.</SurvivalTools_HandSaw.description>
+
+    <SurvivalTools_BoneSickle.label>Knochensichel</SurvivalTools_BoneSickle.label>
+    <SurvivalTools_BoneSickle.description>Ein primitives Erntewerkzeug aus geschnitzten Knochen mit einer geschärften Kante. Obwohl nicht so langlebig wie ihre Metallgegenstücke, dient dieses traditionelle Werkzeug bewundernswert beim Ernten von Feldfrüchten und Schneiden von Pflanzen. Sein gekrümmtes Design folgt alten Mustern, die ihre Wirksamkeit durch unzählige Generationen landwirtschaftlicher Arbeit bewiesen haben.</SurvivalTools_BoneSickle.description>
+
+    <SurvivalTools_PrimitiveLever.label>Brecheisen</SurvivalTools_PrimitiveLever.label>
+    <SurvivalTools_PrimitiveLever.description>Ein primitives, aber effektives Hebelwerkzeug aus langlebigen Materialien. Unverzichtbar zum Auseinandernehmen von Strukturen, Trennen von Materialien und Durchführen grundlegender mechanischer Operationen. Repräsentiert den Einfallsreichtum früher Zivilisationen bei der Entwicklung praktischer Lösungen für Bau- und Abrissarbeiten ohne fortgeschrittene Technologie.</SurvivalTools_PrimitiveLever.description>
+
+    <SurvivalTools_Abacus.label>Abakus</SurvivalTools_Abacus.label>
+    <SurvivalTools_Abacus.description>Ein altes Rechenwerkzeug mit beweglichen Perlen, die auf Stäben angeordnet sind, um arithmetische Operationen durchzuführen. Unverzichtbar für die Organisation von Forschungsdaten, die Verwaltung komplexer Berechnungen und die Führung genauer Aufzeichnungen in Gesellschaften ohne fortgeschrittene Rechengeräte. Repräsentiert die Grundlage mathematischen Denkens und Datenorganisation.</SurvivalTools_Abacus.description>
+
+    <!-- Industrial Tools -->
+    <SurvivalTools_SteelKnife.label>Stahlmesser</SurvivalTools_SteelKnife.label>
+    <SurvivalTools_SteelKnife.description>Ein präzise geschmiedetes Stahlmesser mit überlegener Schärfehaltung und Haltbarkeit. Die Kohlenstoffstahlklinge behält ihre Schärfe durch extensive Nutzung bei und macht es ideal für anspruchsvolle Fleischzerlegungs- und medizinische Arbeiten. Der ergonomische Griff bietet hervorragende Kontrolle bei feinen Arbeiten.</SurvivalTools_SteelKnife.description>
+
+    <SurvivalTools_CrosscutSaw.label>Quersäge</SurvivalTools_CrosscutSaw.label>
+    <SurvivalTools_CrosscutSaw.description>Eine Präzisions-Industriesäge für effiziente Holzbearbeitung und Bauarbeiten. Ihre speziell entwickelten Zähne und verstärkte Stahlkonstruktion ermöglichen saubere, präzise Schnitte durch verschiedene Materialien. Unverzichtbar für große Bauprojekte und fortgeschrittene Holzarbeiten.</SurvivalTools_CrosscutSaw.description>
+
+    <SurvivalTools_Wrench.label>Schraubenschlüssel</SurvivalTools_Wrench.label>
+    <SurvivalTools_Wrench.description>Ein Präzisions-Maschinenwerkzeug zum Greifen, Drehen und Manipulieren von Befestigungselementen und mechanischen Komponenten. Entscheidend für Wartungsarbeiten, Maschinenreparaturen und Bauprojekte, die präzise Anpassungen erfordern. Das verstellbare Backensystem bietet optimalen Hebeleffekt und Kontrolle bei der Anpassung an verschiedene Größen.</SurvivalTools_Wrench.description>
+
+    <SurvivalTools_Microscope.label>Mikroskop</SurvivalTools_Microscope.label>
+    <SurvivalTools_Microscope.description>Ein präzises optisches Instrument, das kleine Objekte und Proben zur detaillierten Untersuchung vergrößert. Unverzichtbar für fortgeschrittene Forschung, biologische Studien und wissenschaftliche Analysen.</SurvivalTools_Microscope.description>
+
+    <!-- Precision Tools -->
+    <SurvivalTools_CarbidePick.label>Hartmetall-Spitzhacke</SurvivalTools_CarbidePick.label>
+    <SurvivalTools_CarbidePick.description>Ein fortgeschrittenes Bergbauwerkzeug mit einer Hartmetall-Spitze, die ihre Schärfe durch die anspruchsvollsten Grabarbeiten behält. Der präzise entwickelte Kopf schneidet Gestein effizienter als Standardwerkzeuge, während seine verstärkte Konstruktion außergewöhnliche Haltbarkeit unter rauen Bergbaubedingungen gewährleistet.</SurvivalTools_CarbidePick.description>
+
+    <SurvivalTools_PrecisionScalpel.label>Präzisionsskalpell</SurvivalTools_PrecisionScalpel.label>
+    <SurvivalTools_PrecisionScalpel.description>Ein ultrascherfer chirurgischer Instrument aus hochwertigen Stahllegierungen gefertigt. Die sorgfältig ausgewogene Klinge behält ihre Schärfe durch wiederholte Sterilisation und Verwendung bei, während der ergonomische Griff präzise Kontrolle während feiner medizinischer Verfahren gewährleistet. Standardausrüstung für fortgeschrittene medizinische Einrichtungen.</SurvivalTools_PrecisionScalpel.description>
+
+    <SurvivalTools_PowerDrill.label>Elektrische Bohrmaschine</SurvivalTools_PowerDrill.label>
+    <SurvivalTools_PowerDrill.description>Ein mechanisiertes Bohrwerkzeug, das von einem eingebauten Motor angetrieben wird und harte Materialien mit Präzision und Geschwindigkeit durchbohren kann. Der variable Geschwindigkeitsmotor und austauschbare Bits machen es äußerst wertvoll für Bau- und Maschinenarbeiten. Erfordert regelmäßige Wartung, um den Motor reibungslos am Laufen zu halten.</SurvivalTools_PowerDrill.description>
+
+    <!-- Spacer Tools -->
+    <SurvivalTools_Multitool.label>Glitterwelt-Multitool</SurvivalTools_Multitool.label>
+    <SurvivalTools_Multitool.description>Ein hochtechnologisches Universalwerkzeug, das häufig von Hausmechanoiden in Glitterwelt-Gesellschaften verwendet wird. Dieses fortgeschrittene Gerät passt sich nahtlos an jede Aufgabe an - Bau, Bergbau, Forstwirtschaft, Wartung, Abriss - und macht es zum ultimativen All-in-One-Überlebenswerkzeug. Obwohl für Mechanoiden entwickelt, ist es aufgrund physiologischer Ähnlichkeiten vollständig von Humanoiden verwendbar.</SurvivalTools_Multitool.description>
+
+</LanguageData>

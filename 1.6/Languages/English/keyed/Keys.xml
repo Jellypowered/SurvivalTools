@@ -40,6 +40,7 @@
 
     <!-- Alerts -->
     <ColonistNeedsSurvivalTool>Colonist lacks essential tools</ColonistNeedsSurvivalTool>
+    <ColonistsNeedSurvivalTool>Colonists lack essential tools</ColonistsNeedSurvivalTool>
     <ColonistNeedsSurvivalToolDesc>These colonists need proper tools for their assigned work but lack the necessary equipment. Their productivity is severely compromised.</ColonistNeedsSurvivalToolDesc>
 
     <SurvivalToolsNeedReplacing>Tools approaching failure</SurvivalToolsNeedReplacing>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+    <!-- Basic/Primitive Tools -->
+    <SurvivalTools_Axe.label>斧</SurvivalTools_Axe.label>
+    <SurvivalTools_Axe.description>効率的な伐採作業のために設計された基本的な林業工具。重みのある刃頭が強力な切断力を発揮し、木材作業に従事する入植者にとって不可欠な道具です。バランスとレバレッジにより、即席の切断方法よりもはるかに優れた性能を発揮します。生存が求められる時には信頼できる近接武器としても機能します。</SurvivalTools_Axe.description>
+
+    <SurvivalTools_Pickaxe.label>つるはし</SurvivalTools_Pickaxe.label>
+    <SurvivalTools_Pickaxe.description>頑丈な柄に取り付けられた重く尖った頭部を特徴とする必須の採掘道具。固い岩を破砕し、貴重な材料を効率的に抽出するために特別に設計されています。集中した力とレバレッジは生産的な採掘作業に不可欠です。状況が必要とする時には即席の武器としても使用できます。</SurvivalTools_Pickaxe.description>
+
+    <SurvivalTools_Hammer.label>ハンマー</SurvivalTools_Hammer.label>
+    <SurvivalTools_Hammer.description>あらゆる建設プロジェクトの基礎となる工具。この多目的ハンマーは、留め具の打ち込み、材料の成形、構造物の組み立てに必要な精度と力を提供します。建設・保守作業に従事する入植者にとって不可欠です。バランスの取れた設計により、長時間の建設作業中の疲労を最小限に抑えながら効果的な打撃を確保します。</SurvivalTools_Hammer.description>
+
+    <SurvivalTools_Sickle.label>鎌</SurvivalTools_Sickle.label>
+    <SurvivalTools_Sickle.description>作物の収穫と植物材料の切断のために完璧に設計された湾曲した切断刃を特徴とする専門的な農業工具。人間工学的設計により、ユーザーの負担を軽減しながら効率的で反復的な切断動作を可能にします。生産的な農業運営と植物保守作業に不可欠です。</SurvivalTools_Sickle.description>
+
+    <SurvivalTools_Hoe.label>鍬</SurvivalTools_Hoe.label>
+    <SurvivalTools_Hoe.description>土壌準備と種子植え付けのために設計された基本的な農業器具。尖った設計により土を効率的に破砕し、最適な植え付け条件を作り出します。生産的な農業運営の確立と作物収量の維持に不可欠です。頑丈な構造により、季節を通じて信頼できる性能を保証します。</SurvivalTools_Hoe.description>
+
+    <SurvivalTools_Knife.label>ナイフ</SurvivalTools_Knife.label>
+    <SurvivalTools_Knife.description>精密作業に不可欠な鋭い刃を持つ多目的切断器具。食肉解体作業、医療処置、一般的な切断作業に最適です。バランスの取れた設計により制御された正確な切断を可能にし、鋭い刃がきれいな作業を保証します。真剣な入植者にとって不可欠な工具です。</SurvivalTools_Knife.description>
+
+    <SurvivalTools_HandSaw.label>手鋸</SurvivalTools_HandSaw.label>
+    <SurvivalTools_HandSaw.description>手動での木材加工のために設計された精密に切断された歯を持つ金属刃を特徴とする伝統的な木工工具。カスタムカットされた木材と詳細な木工を必要とする建設プロジェクトに不可欠です。手鋸の安定したリズムは電動工具よりも時間がかかるかもしれませんが、優れた制御と精度を提供します。</SurvivalTools_HandSaw.description>
+
+    <SurvivalTools_BoneSickle.label>骨の鎌</SurvivalTools_BoneSickle.label>
+    <SurvivalTools_BoneSickle.description>研がれた縁を持つ彫刻された骨から作られた原始的な収穫工具。金属版ほど耐久性はありませんが、この伝統的な器具は作物の収穫と植物の切断に見事に役立ちます。湾曲した設計は、数え切れない世代の農業作業を通じて効果が証明された古代のパターンに従っています。</SurvivalTools_BoneSickle.description>
+
+    <SurvivalTools_PrimitiveLever.label>バール</SurvivalTools_PrimitiveLever.label>
+    <SurvivalTools_PrimitiveLever.description>耐久性のある材料から作られた原始的だが効果的なレバレッジ工具。構造物の解体、材料の分離、基本的な機械操作の実行に不可欠です。先進技術なしに建設・解体作業の実用的な解決策を開発する初期文明の創意工夫を表しています。</SurvivalTools_PrimitiveLever.description>
+
+    <SurvivalTools_Abacus.label>そろばん</SurvivalTools_Abacus.label>
+    <SurvivalTools_Abacus.description>算術演算を実行するためにロッドに配置された可動ビーズを特徴とする古代の計算器具。研究データの整理、複雑な計算の管理、先進的な計算装置のない社会での正確な記録の維持に不可欠です。数学的思考とデータ組織の基礎を表しています。</SurvivalTools_Abacus.description>
+
+    <!-- Industrial Tools -->
+    <SurvivalTools_SteelKnife.label>鋼鉄ナイフ</SurvivalTools_SteelKnife.label>
+    <SurvivalTools_SteelKnife.description>優れた刃保持力と耐久性を持つ精密鍛造された鋼鉄ナイフ。高炭素鋼の刃は広範囲な使用を通じてその鋭さを維持し、要求の厳しい食肉解体と医療作業に理想的です。人間工学的なハンドルは繊細な作業での優れた制御を提供します。</SurvivalTools_SteelKnife.description>
+
+    <SurvivalTools_CrosscutSaw.label>横挽き鋸</SurvivalTools_CrosscutSaw.label>
+    <SurvivalTools_CrosscutSaw.description>効率的な木材加工と建設作業のために設計された精密工業用鋸。特別に設計された歯と強化された鋼構造により、様々な材料を通じてきれいで正確な切断を可能にします。大規模建設プロジェクトと先進的な木工作業に不可欠です。</SurvivalTools_CrosscutSaw.description>
+
+    <SurvivalTools_Wrench.label>レンチ</SurvivalTools_Wrench.label>
+    <SurvivalTools_Wrench.description>留め具と機械部品の把持、回転、操作のために設計された精密機械工具。保守作業、機械修理、正確な調整を必要とする建設プロジェクトに重要です。調整可能なジョー設計により、最適なレバレッジと制御を提供しながら様々なサイズに対応します。</SurvivalTools_Wrench.description>
+
+    <SurvivalTools_Microscope.label>顕微鏡</SurvivalTools_Microscope.label>
+    <SurvivalTools_Microscope.description>小さな物体と標本を詳細に検査するために拡大する精密光学器具。先進的な研究、生物学的研究、科学的分析に不可欠です。</SurvivalTools_Microscope.description>
+
+    <!-- Precision Tools -->
+    <SurvivalTools_CarbidePick.label>カーバイドつるはし</SurvivalTools_CarbidePick.label>
+    <SurvivalTools_CarbidePick.description>最も要求の厳しい掘削作業を通じてその鋭さを維持するカーバイド先端刃を特徴とする先進的な採掘器具。精密設計された頭部は標準工具よりも効率的に岩を切断し、強化された構造は過酷な採掘条件での例外的な耐久性を保証します。</SurvivalTools_CarbidePick.description>
+
+    <SurvivalTools_PrecisionScalpel.label>精密メス</SurvivalTools_PrecisionScalpel.label>
+    <SurvivalTools_PrecisionScalpel.description>最高級の鋼合金から作られた超鋭利な外科器具。慎重にバランス調整された刃は繰り返しの殺菌と使用を通じてその刃を維持し、人間工学的なハンドルは繊細な医療処置中の精密な制御を保証します。先進的な医療施設の標準設備です。</SurvivalTools_PrecisionScalpel.description>
+
+    <SurvivalTools_PowerDrill.label>電動ドリル</SurvivalTools_PowerDrill.label>
+    <SurvivalTools_PowerDrill.description>内蔵モーターによって駆動され、精度と速度で堅い材料を穿孔できる機械化された穿孔工具。可変速度モーターと交換可能なビットにより、建設と機械作業に非常に貴重です。モーターをスムーズに動作させ続けるために定期的なメンテナンスが必要です。</SurvivalTools_PowerDrill.description>
+
+    <!-- Spacer Tools -->
+    <SurvivalTools_Multitool.label>グリッターワールドマルチツール</SurvivalTools_Multitool.label>
+    <SurvivalTools_Multitool.description>グリッターワールド社会で家庭用メカノイドによって一般的に使用される高技術汎用工具。この先進的な装置は、建設、採掘、林業、保守、解体など、あらゆる作業にシームレスに適応でき、究極のオールインワン生存工具となります。メカノイド用に設計されていますが、生理学的類似性により人間型にも完全に使用可能です。</SurvivalTools_Multitool.description>
+
+</LanguageData>
