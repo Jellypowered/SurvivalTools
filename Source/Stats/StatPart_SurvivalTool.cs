@@ -1,4 +1,5 @@
-﻿using Verse;
+﻿using System.Linq;
+using Verse;
 using RimWorld;
 
 namespace SurvivalTools
@@ -7,10 +8,30 @@ namespace SurvivalTools
     {
         public override string ExplanationPart(StatRequest req)
         {
+            if (parentStat == null) return null;
+
             if (req.Thing is Pawn pawn && pawn.CanUseSurvivalTools())
             {
-                if (pawn.HasSurvivalToolFor(parentStat, out SurvivalTool tool, out float statFactor))
-                    return $"{tool.LabelCapNoCount}: x{statFactor.ToStringPercent()}";
+                // First try: actual SurvivalTool instance (best tool)
+                var bestTool = pawn.GetBestSurvivalTool(parentStat);
+                if (bestTool != null)
+                {
+                    float factor = bestTool.WorkStatFactors.ToList().GetStatFactorFromList(parentStat);
+                    return $"{bestTool.LabelCapNoCount}: x{factor.ToStringPercent()}";
+                }
+
+                // Second try: tool-stuff (cloth/wool/etc.) residing on pawn (inventory/equipment)
+                var toolStuff = pawn.GetAllUsableSurvivalTools()
+                                    .FirstOrDefault(t => t.def.IsToolStuff() &&
+                                                         t.def.GetModExtension<SurvivalToolProperties>()?
+                                                           .baseWorkStatFactors?.Any(m => m.stat == parentStat) == true);
+                if (toolStuff != null)
+                {
+                    // get factor from the def's baseWorkStatFactors
+                    var props = toolStuff.def.GetModExtension<SurvivalToolProperties>();
+                    float factor = props?.baseWorkStatFactors.GetStatFactorFromList(parentStat) ?? NoToolStatFactor;
+                    return $"{toolStuff.LabelCapNoCount}: x{factor.ToStringPercent()}";
+                }
 
                 return $"{"NoTool".Translate()}: x{NoToolStatFactor.ToStringPercent()}";
             }
@@ -19,12 +40,34 @@ namespace SurvivalTools
 
         public override void TransformValue(StatRequest req, ref float val)
         {
+            if (parentStat == null) return;
+
             if (req.Thing is Pawn pawn && pawn.CanUseSurvivalTools())
             {
-                if (pawn.HasSurvivalToolFor(parentStat, out _, out float statFactor))
-                    val *= statFactor;
-                else
-                    val *= NoToolStatFactor;
+                // If there's a real SurvivalTool, use it
+                var bestTool = pawn.GetBestSurvivalTool(parentStat);
+                if (bestTool != null)
+                {
+                    float factor = bestTool.WorkStatFactors.ToList().GetStatFactorFromList(parentStat);
+                    val *= factor;
+                    return;
+                }
+
+                // Otherwise, check for tool-stuff
+                var toolStuff = pawn.GetAllUsableSurvivalTools()
+                                    .FirstOrDefault(t => t.def.IsToolStuff() &&
+                                                         t.def.GetModExtension<SurvivalToolProperties>()?
+                                                           .baseWorkStatFactors?.Any(m => m.stat == parentStat) == true);
+                if (toolStuff != null)
+                {
+                    var props = toolStuff.def.GetModExtension<SurvivalToolProperties>();
+                    float factor = props?.baseWorkStatFactors.GetStatFactorFromList(parentStat) ?? NoToolStatFactor;
+                    val *= factor;
+                    return;
+                }
+
+                // No tool at all
+                val *= NoToolStatFactor;
             }
         }
 

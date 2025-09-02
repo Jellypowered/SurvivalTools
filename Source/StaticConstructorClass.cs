@@ -1,8 +1,9 @@
-﻿using System;
+﻿// RimWorld 1.6 / C# 7.3
+// Source/StaticConstructorClass.cs
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using UnityEngine;
 using Verse;
 using RimWorld;
 
@@ -11,35 +12,36 @@ namespace SurvivalTools
     [StaticConstructorOnStartup]
     public static class StaticConstructorClass
     {
+        #region Static ctor
+
         static StaticConstructorClass()
         {
             try
             {
                 if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                {
                     Log.Message("[SurvivalTools] Starting static constructor initialization...");
-                }
 
-                // Limit ancient-ruins tools to neolithic category
+                // 1) MapGen / content constraints
                 ConfigureAncientRuinsTools();
 
-                // Apply mod compatibility patches
+                // 2) Mod compat shims
                 if (ModCompatibilityCheck.MendAndRecycle)
-                {
                     ResolveMendAndRecycleRecipes();
-                }
 
                 ResolveSmeltingRecipeUsers();
+
+                // 3) Data integrity / components
                 CheckStuffForStuffPropsTool();
                 AddSurvivalToolTrackersToHumanlikes();
 
-                // Initialize settings cache for optional tools (performance optimization)
+                // 4) Auto-detect and enhance tools
+                ToolResolver.ResolveAllTools();
+
+                // 5) Warm settings cache (optional/perf)
                 SurvivalTools.InitializeSettings();
 
                 if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                {
                     Log.Message("[SurvivalTools] Static constructor initialization completed successfully");
-                }
             }
             catch (Exception ex)
             {
@@ -48,30 +50,38 @@ namespace SurvivalTools
             }
         }
 
+        #endregion
+
+        #region MapGen constraints
+
         private static void ConfigureAncientRuinsTools()
         {
             var tsm = ST_ThingSetMakerDefOf.MapGen_AncientRuinsSurvivalTools?.root;
-            if (tsm != null)
-            {
-                var p = tsm.fixedParams; // struct copy
-                p.validator = def => def?.IsWithinCategory(ST_ThingCategoryDefOf.SurvivalToolsNeolithic) == true;
-                tsm.fixedParams = p;     // assign back
+            if (tsm == null) return;
 
-                if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                {
-                    Log.Message("[SurvivalTools] Configured ancient ruins tools to neolithic category");
-                }
-            }
+            // fixedParams is a struct; copy-modify-assign
+            var p = tsm.fixedParams;
+            p.validator = def => def?.IsWithinCategory(ST_ThingCategoryDefOf.SurvivalToolsNeolithic) == true;
+            tsm.fixedParams = p;
+
+            if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                Log.Message("[SurvivalTools] Configured ancient ruins tools to neolithic category");
         }
+
+        #endregion
+
+        #region Pawn comps
 
         private static void AddSurvivalToolTrackersToHumanlikes()
         {
             int addedCount = 0;
+
             foreach (var tDef in DefDatabase<ThingDef>.AllDefs.Where(t => t?.race?.Humanlike == true))
             {
-                if (tDef.comps == null) tDef.comps = new List<CompProperties>();
+                if (tDef.comps == null)
+                    tDef.comps = new List<CompProperties>();
 
-                // Avoid duplicate comp entries if patch runs twice for any reason
+                // Avoid duplicates if another mod or reload path already injected it.
                 if (!tDef.comps.Any(c => c?.compClass == typeof(Pawn_SurvivalToolAssignmentTracker)))
                 {
                     tDef.comps.Add(new CompProperties(typeof(Pawn_SurvivalToolAssignmentTracker)));
@@ -80,71 +90,73 @@ namespace SurvivalTools
             }
 
             if (SurvivalToolUtility.IsDebugLoggingEnabled)
-            {
                 Log.Message($"[SurvivalTools] Added SurvivalToolAssignmentTracker to {addedCount} humanlike defs");
-            }
         }
+
+        #endregion
+
+        #region Mod compat
 
         private static void ResolveMendAndRecycleRecipes()
         {
-            var relevantRecipes = DefDatabase<RecipeDef>.AllDefs.Where(r =>
-                r?.defName?.IndexOf("SurvivalTool", StringComparison.OrdinalIgnoreCase) >= 0
-                && r.workerClass != typeof(RecipeWorker)).ToList();
+            // Only recipes that look like ours and are not the vanilla worker
+            var relevant = DefDatabase<RecipeDef>.AllDefs.Where(r =>
+                r?.defName?.IndexOf("SurvivalTool", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                r.workerClass != typeof(RecipeWorker)).ToList();
 
-            int processedCount = 0;
-            int clearedCount = 0;
+            int processed = 0, cleared = 0;
 
-            foreach (var recipe in relevantRecipes)
+            foreach (var recipe in relevant)
             {
-                processedCount++;
+                processed++;
+
+                // Require at least one real SurvivalTool to be a valid ingredient
                 bool hasValidIngredient = DefDatabase<ThingDef>.AllDefsListForReading
-                    .Any(thing => thing?.thingClass == typeof(SurvivalTool) && recipe.IsIngredient(thing));
+                    .Any(td => td?.thingClass == typeof(SurvivalTool) && recipe.IsIngredient(td));
 
                 if (!hasValidIngredient)
                 {
                     recipe.recipeUsers?.Clear();
-                    clearedCount++;
+                    cleared++;
                 }
             }
 
             if (SurvivalToolUtility.IsDebugLoggingEnabled)
-            {
-                Log.Message($"[SurvivalTools] Processed {processedCount} Mend&Recycle recipes, cleared {clearedCount} without valid ingredients");
-            }
+                Log.Message($"[SurvivalTools] Processed {processed} Mend&Recycle recipes, cleared {cleared} without valid ingredients");
         }
 
         private static void ResolveSmeltingRecipeUsers()
         {
-            int benchesProcessed = 0;
-            int smeltRecipesAdded = 0;
-            int destroyRecipesAdded = 0;
+            int benchesProcessed = 0, smeltAdded = 0, destroyAdded = 0;
 
             foreach (var benchDef in DefDatabase<ThingDef>.AllDefs.Where(t => t?.IsWorkTable == true))
             {
                 if (benchDef.recipes == null) continue;
                 benchesProcessed++;
 
-                // Add our tool recipes when the weapon equivalents are present, avoid duplicates
+                // Add our tool recipes when the weapon equivalents are present; avoid duplicates.
                 if (benchDef.recipes.Contains(ST_RecipeDefOf.SmeltWeapon) &&
                     !benchDef.recipes.Contains(ST_RecipeDefOf.SmeltSurvivalTool))
                 {
                     benchDef.recipes.Add(ST_RecipeDefOf.SmeltSurvivalTool);
-                    smeltRecipesAdded++;
+                    smeltAdded++;
                 }
 
                 if (benchDef.recipes.Contains(ST_RecipeDefOf.DestroyWeapon) &&
                     !benchDef.recipes.Contains(ST_RecipeDefOf.DestroySurvivalTool))
                 {
                     benchDef.recipes.Add(ST_RecipeDefOf.DestroySurvivalTool);
-                    destroyRecipesAdded++;
+                    destroyAdded++;
                 }
             }
 
             if (SurvivalToolUtility.IsDebugLoggingEnabled)
-            {
-                Log.Message($"[SurvivalTools] Processed {benchesProcessed} work benches: added {smeltRecipesAdded} smelt recipes, {destroyRecipesAdded} destroy recipes");
-            }
+                Log.Message($"[SurvivalTools] Processed {benchesProcessed} work benches: added {smeltAdded} smelt recipes, {destroyAdded} destroy recipes");
         }
+
+        #endregion
+
+        #region Debug scan (StuffPropsTool)
 
         private static void CheckStuffForStuffPropsTool()
         {
@@ -157,10 +169,8 @@ namespace SurvivalTools
             var hasProps = new StringBuilder("Has props:\n");
             var noProps = new StringBuilder("Doesn't have props:\n");
 
-            // Collect all stuff categories used by survival tools
             var toolCats = GetSurvivalToolStuffCategories();
 
-            // Scan all stuff defs that fall into any tool category
             var (hasPropsCount, noPropsCount) = AnalyzeStuffDefs(toolCats, hasProps, noProps);
 
             sb.AppendLine($"Summary: {hasPropsCount} stuff defs have StuffPropsTool, {noPropsCount} do not");
@@ -177,13 +187,9 @@ namespace SurvivalTools
             var toolCats = new HashSet<StuffCategoryDef>();
             foreach (var tool in DefDatabase<ThingDef>.AllDefsListForReading.Where(t => t?.IsSurvivalTool() == true))
             {
-                if (tool.stuffCategories?.Count > 0)
-                {
-                    foreach (var cat in tool.stuffCategories)
-                    {
-                        if (cat != null) toolCats.Add(cat);
-                    }
-                }
+                if (tool.stuffCategories == null || tool.stuffCategories.Count == 0) continue;
+                foreach (var cat in tool.stuffCategories)
+                    if (cat != null) toolCats.Add(cat);
             }
             return toolCats;
         }
@@ -193,32 +199,34 @@ namespace SurvivalTools
             StringBuilder hasProps,
             StringBuilder noProps)
         {
-            int hasPropsCount = 0, noPropsCount = 0;
+            int withProps = 0, withoutProps = 0;
 
             foreach (var stuff in DefDatabase<ThingDef>.AllDefsListForReading.Where(t => t?.IsStuff == true))
             {
                 var categories = stuff.stuffProps?.categories;
-                if (categories?.Count == 0) continue;
+                if (categories == null || categories.Count == 0) continue;
 
-                // Check if this stuff is relevant to any tool categories
-                bool isRelevant = categories.Any(cat => cat != null && toolCats.Contains(cat));
-                if (!isRelevant) continue;
+                // Consider only stuff used by any ST tool
+                bool relevant = categories.Any(cat => cat != null && toolCats.Contains(cat));
+                if (!relevant) continue;
 
                 string line = $"{stuff.defName} ({stuff.modContentPack?.Name ?? "Core/Unknown"})";
 
                 if (stuff.HasModExtension<StuffPropsTool>())
                 {
                     hasProps.AppendLine(line);
-                    hasPropsCount++;
+                    withProps++;
                 }
                 else
                 {
                     noProps.AppendLine(line);
-                    noPropsCount++;
+                    withoutProps++;
                 }
             }
 
-            return (hasPropsCount, noPropsCount);
+            return (withProps, withoutProps);
         }
+
+        #endregion
     }
 }

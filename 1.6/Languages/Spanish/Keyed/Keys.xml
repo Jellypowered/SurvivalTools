@@ -6,6 +6,9 @@
     <!-- Settings -->
     <SurvivalToolsSettingsCategory>Herramientas de Supervivencia</SurvivalToolsSettingsCategory>
 
+    <Settings_BasicSection>Configuración básica</Settings_BasicSection>
+    <Settings_DebugSection>Configuración de depuración</Settings_DebugSection>
+
     <Settings_HardcoreMode>Modo hardcore</Settings_HardcoreMode>
     <Settings_HardcoreMode_Tooltip>Aumenta significativamente la dificultad haciendo que las herramientas sean esenciales para la supervivencia. Sin herramientas adecuadas, los colonos se vuelven incapaces de ejecutar efectivamente la mayoría de las tareas de trabajo. Las herramientas también se desgastan 50% más rápido, requiriendo reemplazo más frecuente y mejor gestión de herramientas. Transforma el juego en una verdadera experiencia de supervivencia dependiente de herramientas.</Settings_HardcoreMode_Tooltip>
 
@@ -65,5 +68,40 @@
     <SurvivalToolAssignmentInUse>La asignación de herramienta está siendo usada por {0}</SurvivalToolAssignmentInUse>
     <NoSurvivalToolAssignmentSelected>No hay asignación de herramienta seleccionada</NoSurvivalToolAssignmentSelected>
     <ForcedSurvivalTools>Herramientas forzadas</ForcedSurvivalTools>
+
+    <!-- Settings -->
+    <Settings_CompatLogging>Habilitar registro de depuración de compatibilidad</Settings_CompatLogging>
+    <Settings_CompatLogging_Tooltip>Activa el registro detallado para sistemas de compatibilidad de mods incluyendo integración de Research Reinvented, detección de estadísticas y cableado de WorkGiver. Muestra procesos paso a paso de configuración e integración de compatibilidad. Solo se muestra cuando el registro de depuración general está habilitado. Útil para diagnosticar problemas con interacciones de mods.</Settings_CompatLogging_Tooltip>
+
+    <!-- Resizable Settings Window -->
+    <Settings_EnhancedWindowDescription>Haga clic en el botón de abajo para abrir la ventana de configuración mejorada y redimensionable con todas las opciones del mod.</Settings_EnhancedWindowDescription>
+    <Settings_OpenEnhancedButton>Abrir Configuración Mejorada</Settings_OpenEnhancedButton>
+
+    <!-- Job Requirements Table -->
+    <JobTable_JobTypes>Tipos de Trabajo</JobTable_JobTypes>
+    <JobTable_JobType>Tipo de Trabajo</JobTable_JobType>
+    <JobTable_Normal>Normal</JobTable_Normal>
+    <JobTable_Hardcore>Hardcore</JobTable_Hardcore>
+    <JobTable_NormalMode>Modo Normal</JobTable_NormalMode>
+    <JobTable_HardcoreMode>Modo Hardcore</JobTable_HardcoreMode>
+    <JobTable_ExtraHardcore>Hardcore Extremo</JobTable_ExtraHardcore>
+    <JobTable_Enhanced>Mejorado</JobTable_Enhanced>
+    <JobTable_Required>Requerido</JobTable_Required>
+    <JobTable_NoJobsFound>No se encontraron trabajos mejorados por herramientas.</JobTable_NoJobsFound>
+    <JobTable_SectionTitle>Requisitos de Herramientas por Modo</JobTable_SectionTitle>
+    <JobTable_SectionTooltip>Esta tabla muestra cómo se comportan diferentes tipos de trabajo en cada modo de dificultad. 'Mejorado' significa que las herramientas proporcionan bonificaciones pero no son requeridas. 'Requerido' significa que las herramientas son necesarias para realizar el trabajo. Use esto para entender qué herramientas necesitarán sus colonos basándose en su configuración actual.</JobTable_SectionTooltip>
+
+    <!-- Resizable Settings Window -->
+    <Settings_EnhancedWindowDescription>Haz clic en el botón de abajo para abrir la ventana de configuración mejorada y redimensionable con todas las opciones del mod.</Settings_EnhancedWindowDescription>
+    <Settings_OpenEnhancedButton>Abrir Configuración Mejorada</Settings_OpenEnhancedButton>
+
+    <!-- Mod Compatibility -->
+    <Compat_ResearchReinvented>Investigación Reinventada</Compat_ResearchReinvented>
+    <Compat_FieldResearch>Investigación de Campo</Compat_FieldResearch>
+    <Compat_ReinventedResearchAlert>Investigación Reinventada</Compat_ReinventedResearchAlert>
+
+    <!-- Pacifist Tool Settings -->
+    <Settings_AllowPacifistEquip>Permitir a pacifistas equipar herramientas de supervivencia</Settings_AllowPacifistEquip>
+    <Settings_AllowPacifistEquip_Tooltip>Permite a los colonos pacifistas equipar herramientas de supervivencia clasificadas como armas (como hachas, picos o cuchillos). Aunque estas herramientas tienen capacidades de combate, son esenciales para tareas laborales como tala de árboles, minería o preparación de alimentos. Cuando está habilitado, los pacifistas pueden usar estas herramientas para trabajo productivo mientras siguen rehusando participar en violencia.</Settings_AllowPacifistEquip_Tooltip>
 
 </LanguageData>

@@ -1118,4 +1118,78 @@
         </tools>
     </ThingDef>
 
+    <!-- =================================================== -->
+    <!-- CLEANING TOOLS                                      -->
+    <!-- Basic cleaning implements for colony maintenance    -->
+    <!-- =================================================== -->
+
+    <ThingDef ParentName="BaseSurvivalTool">
+        <defName>SurvivalTools_PileOfRags</defName>
+        <label>pile of rags</label>
+        <description>A collection of cloth pieces bundled together for cleaning purposes. These simple rags are effective for basic cleaning tasks, though they wear out more quickly than proper cleaning tools. Essential for maintaining colony hygiene and cleanliness.</description>
+        <techLevel>Neolithic</techLevel>
+        <costStuffCount>5</costStuffCount>
+        <stuffCategories>
+            <li>Fabric</li>
+        </stuffCategories>
+        <statBases>
+            <WorkToMake>600</WorkToMake>
+            <MaxHitPoints>50</MaxHitPoints>
+            <Mass>0.5</Mass>
+            <DeteriorationRate>4</DeteriorationRate>
+            <Beauty>-3</Beauty>
+        </statBases>
+        <graphicData>
+            <texPath>Things/Item/Equipment/Tool/PileOfRags</texPath>
+            <graphicClass>Graphic_Single</graphicClass>
+        </graphicData>
+        <recipeMaker>
+            <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+            <workSkill>Crafting</workSkill>
+            <effectWorking>Tailor</effectWorking>
+            <soundWorking>Recipe_Tailor</soundWorking>
+            <recipeUsers>
+                <li>CraftingSpot</li>
+                <li>HandTailoringBench</li>
+                <li>ElectricTailoringBench</li>
+            </recipeUsers>
+            <skillRequirements>
+                <Crafting>1</Crafting>
+            </skillRequirements>
+            <unfinishedThingDef>UnfinishedApparel</unfinishedThingDef>
+        </recipeMaker>
+        <thingCategories>
+            <li>SurvivalToolsNeolithic</li>
+        </thingCategories>
+        <modExtensions>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <CleaningSpeed>0.75</CleaningSpeed>
+                </baseWorkStatFactors>
+                <stuffPowerMultiplier>
+                    <CleaningSpeed>1.0</CleaningSpeed>
+                </stuffPowerMultiplier>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Cleaner</li>
+                </defaultSurvivalToolAssignmentTags>
+                <toolWearFactor>1.5</toolWearFactor>
+            </li>
+        </modExtensions>
+        <tools>
+            <li>
+                <label>bundle</label>
+                <capacities>
+                    <li>Blunt</li>
+                </capacities>
+                <power>0.25</power>
+                <cooldownTime>3.0</cooldownTime>
+            </li>
+        </tools>
+        <comps>
+            <li>
+                <compClass>CompQuality</compClass>
+            </li>
+        </comps>
+    </ThingDef>
+
 </Defs>

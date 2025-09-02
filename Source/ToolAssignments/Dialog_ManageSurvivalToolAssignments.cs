@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿//RimWorld 1.6 / C# 7.3
+//Dialog_ManageSurvivalToolAssignments.cs
+using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 using RimWorld;
@@ -49,7 +51,9 @@ namespace SurvivalTools
         {
             if (selSurvivalToolAssignmentInt != null && selSurvivalToolAssignmentInt.label.NullOrEmpty())
             {
-                selSurvivalToolAssignmentInt.label = "Unnamed";
+                // Make sure we assign a string (TaggedString.ToString() -> string) so the conditional operator
+                // elsewhere also has a string result and we don't mix TaggedString/string types.
+                selSurvivalToolAssignmentInt.label = "Unnamed".Translate().ToString();
             }
         }
 
@@ -63,46 +67,69 @@ namespace SurvivalTools
             x += TopButtonWidth + 10f;
             if (Widgets.ButtonText(rectSelect, "SelectSurvivalToolAssignment".Translate()))
             {
-                var db = Current.Game.GetComponent<SurvivalToolAssignmentDatabase>();
-                var opts = new List<FloatMenuOption>();
-                foreach (var entry in db.AllSurvivalToolAssignments)
+                var db = Current.Game?.GetComponent<SurvivalToolAssignmentDatabase>();
+                if (db == null)
                 {
-                    var local = entry;
-                    opts.Add(new FloatMenuOption(local.label, () => SelectedSurvivalToolAssignment = local));
+                    Messages.Message("NoSurvivalToolDatabase".Translate(), MessageTypeDefOf.RejectInput);
                 }
-                Find.WindowStack.Add(new FloatMenu(opts));
+                else
+                {
+                    var opts = new List<FloatMenuOption>();
+                    foreach (var entry in db.AllSurvivalToolAssignments)
+                    {
+                        var local = entry;
+                        opts.Add(new FloatMenuOption(local.label, () => SelectedSurvivalToolAssignment = local));
+                    }
+                    Find.WindowStack.Add(new FloatMenu(opts));
+                }
             }
 
             var rectNew = new Rect(x, 0f, TopButtonWidth, TopButtonHeight);
             x += TopButtonWidth + 10f;
             if (Widgets.ButtonText(rectNew, "NewSurvivalToolAssignment".Translate(), active: true, doMouseoverSound: false, drawBackground: true))
             {
-                var db = Current.Game.GetComponent<SurvivalToolAssignmentDatabase>();
-                SelectedSurvivalToolAssignment = db.MakeNewSurvivalToolAssignment();
+                var db = Current.Game?.GetComponent<SurvivalToolAssignmentDatabase>();
+                if (db == null)
+                {
+                    Messages.Message("NoSurvivalToolDatabase".Translate(), MessageTypeDefOf.RejectInput);
+                }
+                else
+                {
+                    var created = db.MakeNewSurvivalToolAssignment();
+                    if (created != null)
+                        SelectedSurvivalToolAssignment = created;
+                }
             }
 
             var rectDelete = new Rect(x, 0f, TopButtonWidth, TopButtonHeight);
             if (Widgets.ButtonText(rectDelete, "DeleteSurvivalToolAssignment".Translate(), active: true, doMouseoverSound: false, drawBackground: true))
             {
-                var db = Current.Game.GetComponent<SurvivalToolAssignmentDatabase>();
-                var opts = new List<FloatMenuOption>();
-                foreach (var entry in db.AllSurvivalToolAssignments)
+                var db = Current.Game?.GetComponent<SurvivalToolAssignmentDatabase>();
+                if (db == null)
                 {
-                    var local = entry;
-                    opts.Add(new FloatMenuOption(local.label, () =>
-                    {
-                        var rep = db.TryDelete(local);
-                        if (!rep.Accepted)
-                        {
-                            Messages.Message(rep.Reason, MessageTypeDefOf.RejectInput, historical: false);
-                        }
-                        else if (local == SelectedSurvivalToolAssignment)
-                        {
-                            SelectedSurvivalToolAssignment = null;
-                        }
-                    }));
+                    Messages.Message("NoSurvivalToolDatabase".Translate(), MessageTypeDefOf.RejectInput);
                 }
-                Find.WindowStack.Add(new FloatMenu(opts));
+                else
+                {
+                    var opts = new List<FloatMenuOption>();
+                    foreach (var entry in db.AllSurvivalToolAssignments)
+                    {
+                        var local = entry;
+                        opts.Add(new FloatMenuOption(local.label, () =>
+                        {
+                            var rep = db.TryDelete(local);
+                            if (!rep.Accepted)
+                            {
+                                Messages.Message(rep.Reason, MessageTypeDefOf.RejectInput, historical: false);
+                            }
+                            else if (local == SelectedSurvivalToolAssignment)
+                            {
+                                SelectedSurvivalToolAssignment = null;
+                            }
+                        }));
+                    }
+                    Find.WindowStack.Add(new FloatMenu(opts));
+                }
             }
 
             var mainRect = new Rect(0f, TopAreaHeight, inRect.width, inRect.height - TopAreaHeight - CloseButSize.y).ContractedBy(10f);
@@ -123,8 +150,17 @@ namespace SurvivalTools
             var nameRect = new Rect(0f, 0f, 300f, 30f);
             Widgets.Label(new Rect(nameRect.x, nameRect.y, 70f, nameRect.height), "Name".Translate() + ":");
             var nameEditRect = new Rect(nameRect.x + 75f, nameRect.y, nameRect.width - 75f, nameRect.height);
-            nameBuffer = Widgets.TextField(nameEditRect, nameBuffer ?? string.Empty, 64);
-            SelectedSurvivalToolAssignment.label = nameBuffer.NullOrEmpty() ? "Unnamed" : nameBuffer;
+
+            // Only update the label if the text actually changed to avoid constant writes.
+            var newName = Widgets.TextField(nameEditRect, nameBuffer ?? string.Empty, 64);
+            if (newName != nameBuffer)
+            {
+                nameBuffer = newName;
+                // Ensure both branches of the ?: are the same type (string) to avoid C# 7.3 conditional typing issues.
+                SelectedSurvivalToolAssignment.label = nameBuffer.NullOrEmpty()
+                    ? "Unnamed".Translate().ToString()
+                    : nameBuffer;
+            }
 
             // Filter config
             var filterRect = new Rect(0f, TopAreaHeight, 300f, mainRect.height - 45f - 10f);

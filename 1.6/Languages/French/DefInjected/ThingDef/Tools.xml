@@ -59,4 +59,7 @@
     <SurvivalTools_Multitool.label>multi-outil glittermonde</SurvivalTools_Multitool.label>
     <SurvivalTools_Multitool.description>Un outil universel haute technologie couramment utilisé par les mécanoides domestiques dans les sociétés glittermonde. Cet appareil avancé s'adapte sans effort à toute tâche - construction, minage, foresterie, maintenance, démolition - en faisant l'outil de survie tout-en-un ultime. Bien que conçu pour les mécanoides, il est parfaitement utilisable par les humanoïdes en raison de similitudes physiologiques.</SurvivalTools_Multitool.description>
 
+    <SurvivalTools_PileOfRags.label>tas de chiffons</SurvivalTools_PileOfRags.label>
+    <SurvivalTools_PileOfRags.description>Un simple outil de nettoyage fait de chiffons et de morceaux de tissu. Utile pour les tâches de nettoyage de base mais s'use rapidement.</SurvivalTools_PileOfRags.description>
+
 </LanguageData>

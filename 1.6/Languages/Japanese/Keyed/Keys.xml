@@ -6,6 +6,9 @@
     <!-- Settings -->
     <SurvivalToolsSettingsCategory>サバイバルツール</SurvivalToolsSettingsCategory>
 
+    <Settings_BasicSection>基本設定</Settings_BasicSection>
+    <Settings_DebugSection>デバッグ設定</Settings_DebugSection>
+
     <Settings_HardcoreMode>ハードコアモード</Settings_HardcoreMode>
     <Settings_HardcoreMode_Tooltip>ツールを生存に不可欠なものにして、難易度を大幅に向上させます。適切なツールがないと、入植者はほとんどの作業タスクを効果的に実行できなくなります。ツールの摩耗も50%速くなり、より頻繁な交換とより良いツール管理が必要になります。ゲームを真のツール依存のサバイバル体験に変えます。</Settings_HardcoreMode_Tooltip>
 
@@ -65,5 +68,40 @@
     <SurvivalToolAssignmentInUse>ツール割り当ては{0}によって使用されています</SurvivalToolAssignmentInUse>
     <NoSurvivalToolAssignmentSelected>ツール割り当てが選択されていません</NoSurvivalToolAssignmentSelected>
     <ForcedSurvivalTools>強制ツール</ForcedSurvivalTools>
+
+    <!-- Settings -->
+    <Settings_CompatLogging>互換性デバッグログを有効にする</Settings_CompatLogging>
+    <Settings_CompatLogging_Tooltip>Research Reinvented統合、統計検出、WorkGiver配線を含むMOD互換性システムの詳細ログを有効にします。互換性設定と統合プロセスのステップバイステップを表示します。一般的なデバッグログが有効な場合にのみ表示されます。MODの相互作用の問題の診断に役立ちます。</Settings_CompatLogging_Tooltip>
+
+    <!-- Resizable Settings Window -->
+    <Settings_EnhancedWindowDescription>下のボタンをクリックして、すべてのモッドオプションを含む拡張されたリサイズ可能な設定ウィンドウを開いてください。</Settings_EnhancedWindowDescription>
+    <Settings_OpenEnhancedButton>拡張設定を開く</Settings_OpenEnhancedButton>
+
+    <!-- Job Requirements Table -->
+    <JobTable_JobTypes>ジョブタイプ</JobTable_JobTypes>
+    <JobTable_JobType>ジョブタイプ</JobTable_JobType>
+    <JobTable_Normal>ノーマル</JobTable_Normal>
+    <JobTable_Hardcore>ハードコア</JobTable_Hardcore>
+    <JobTable_NormalMode>ノーマルモード</JobTable_NormalMode>
+    <JobTable_HardcoreMode>ハードコアモード</JobTable_HardcoreMode>
+    <JobTable_ExtraHardcore>エクストリームハードコア</JobTable_ExtraHardcore>
+    <JobTable_Enhanced>強化</JobTable_Enhanced>
+    <JobTable_Required>必須</JobTable_Required>
+    <JobTable_NoJobsFound>ツール強化されたジョブが見つかりませんでした。</JobTable_NoJobsFound>
+    <JobTable_SectionTitle>モード別ジョブツール要件</JobTable_SectionTitle>
+    <JobTable_SectionTooltip>このテーブルは、各難易度モードで異なるジョブタイプがどのように動作するかを示します。「強化」はツールがボーナスを提供するが必須ではないことを意味します。「必須」はジョブを実行するためにツールが必要であることを意味します。現在の設定に基づいて入植者にどのツールが必要かを理解するためにこれを使用してください。</JobTable_SectionTooltip>
+
+    <!-- Resizable Settings Window -->
+    <Settings_EnhancedWindowDescription>下のボタンをクリックして、すべてのMODオプションを含む拡張されたサイズ変更可能な設定ウィンドウを開きます。</Settings_EnhancedWindowDescription>
+    <Settings_OpenEnhancedButton>拡張設定を開く</Settings_OpenEnhancedButton>
+
+    <!-- Mod Compatibility -->
+    <Compat_ResearchReinvented>研究再発明</Compat_ResearchReinvented>
+    <Compat_FieldResearch>フィールド研究</Compat_FieldResearch>
+    <Compat_ReinventedResearchAlert>研究再発明</Compat_ReinventedResearchAlert>
+
+    <!-- Pacifist Tool Settings -->
+    <Settings_AllowPacifistEquip>平和主義者がサバイバルツールを装備することを許可</Settings_AllowPacifistEquip>
+    <Settings_AllowPacifistEquip_Tooltip>武器として分類されているサバイバルツール（斧、つるはし、ナイフなど）を平和主義の入植者が装備することを許可します。これらのツールは戦闘能力を持っていますが、木の伐採、採掘、食料準備などの作業タスクに不可欠です。有効にすると、平和主義者は暴力に関与することを拒否しながら、生産的な作業にこれらのツールを使用できます。</Settings_AllowPacifistEquip_Tooltip>
 
 </LanguageData>

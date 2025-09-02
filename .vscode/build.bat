@@ -50,7 +50,6 @@ if not defined MODS_PATH (
 
 echo RimWorld Mods path is: "%MODS_PATH%"
 
-
 REM ================================
 REM Read mod name from About/About.xml
 REM ================================
@@ -78,8 +77,8 @@ if exist "%OUTDIR%" (
     rmdir /s /q "%OUTDIR%"
 )
 if not exist "%OUTDIR%" (
-echo Creating output dir: "%OUTDIR%"
-mkdir "%OUTDIR%"
+    echo Creating output dir: "%OUTDIR%"
+    mkdir "%OUTDIR%"
 )
 if not exist "%BASE%" (
     echo Creating local mirror dir: "%BASE%"
@@ -128,7 +127,9 @@ if exist "%BASE%\0Harmony.dll" (
 REM Mirror build to BASE
 echo Mirroring build to BASE...
 xcopy /Y /E "%OUTDIR%\*" "%BASE%\" >nul
+
 setlocal EnableExtensions EnableDelayedExpansion
+
 REM ================================
 REM Copy assets into Mod folder
 REM ================================

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Patch>
+    <Operation Class="PatchOperationSequence">
+        <operations>
+            <!-- Add StuffProps to Cloth -->
+            <li Class="PatchOperationAdd">
+                <xpath>/Defs/ThingDef[defName="Cloth"]</xpath>
+                <value>
+                    <stuffProps>
+                        <statFactors>
+                            <StuffPower_Armor_Sharp>0.75</StuffPower_Armor_Sharp>
+                        </statFactors>
+                    </stuffProps>
+                </value>
+            </li>
+
+            <!-- Add StuffProps to Synthread -->
+            <li Class="PatchOperationAdd">
+                <xpath>/Defs/ThingDef[defName="Synthread"]</xpath>
+                <value>
+                    <stuffProps>
+                        <statFactors>
+                            <StuffPower_Armor_Sharp>1.0</StuffPower_Armor_Sharp>
+                        </statFactors>
+                    </stuffProps>
+                </value>
+            </li>
+
+            <!-- Add StuffProps to DevilstrandCloth -->
+            <li Class="PatchOperationAdd">
+                <xpath>/Defs/ThingDef[defName="DevilstrandCloth"]</xpath>
+                <value>
+                    <stuffProps>
+                        <statFactors>
+                            <StuffPower_Armor_Sharp>1.2</StuffPower_Armor_Sharp>
+                        </statFactors>
+                    </stuffProps>
+                </value>
+            </li>
+
+            <!-- Add StuffProps to Hyperweave -->
+            <li Class="PatchOperationAdd">
+                <xpath>/Defs/ThingDef[defName="Hyperweave"]</xpath>
+                <value>
+                    <stuffProps>
+                        <statFactors>
+                            <StuffPower_Armor_Sharp>1.5</StuffPower_Armor_Sharp>
+                        </statFactors>
+                    </stuffProps>
+                </value>
+            </li>
+
+            <!-- Add StuffProps to WoolSheep -->
+            <li Class="PatchOperationAdd">
+                <xpath>/Defs/ThingDef[defName="WoolSheep"]</xpath>
+                <value>
+                    <stuffProps>
+                        <statFactors>
+                            <StuffPower_Armor_Sharp>0.6</StuffPower_Armor_Sharp>
+                        </statFactors>
+                    </stuffProps>
+                </value>
+            </li>
+
+            <!-- Add StuffProps to WoolAlpaca -->
+            <li Class="PatchOperationAdd">
+                <xpath>/Defs/ThingDef[defName="WoolAlpaca"]</xpath>
+                <value>
+                    <stuffProps>
+                        <statFactors>
+                            <StuffPower_Armor_Sharp>0.65</StuffPower_Armor_Sharp>
+                        </statFactors>
+                    </stuffProps>
+                </value>
+            </li>
+
+            <!-- Add StuffProps to WoolMegasloth -->
+            <li Class="PatchOperationAdd">
+                <xpath>/Defs/ThingDef[defName="WoolMegasloth"]</xpath>
+                <value>
+                    <stuffProps>
+                        <statFactors>
+                            <StuffPower_Armor_Sharp>0.8</StuffPower_Armor_Sharp>
+                        </statFactors>
+                    </stuffProps>
+                </value>
+            </li>
+
+            <!-- Add StuffProps to WoolMuffalo -->
+            <li Class="PatchOperationAdd">
+                <xpath>/Defs/ThingDef[defName="WoolMuffalo"]</xpath>
+                <value>
+                    <stuffProps>
+                        <statFactors>
+                            <StuffPower_Armor_Sharp>0.7</StuffPower_Armor_Sharp>
+                        </statFactors>
+                    </stuffProps>
+                </value>
+            </li>
+
+            <!-- Add StuffProps to WoolBison -->
+            <li Class="PatchOperationAdd">
+                <xpath>/Defs/ThingDef[defName="WoolBison"]</xpath>
+                <value>
+                    <stuffProps>
+                        <statFactors>
+                            <StuffPower_Armor_Sharp>0.75</StuffPower_Armor_Sharp>
+                        </statFactors>
+                    </stuffProps>
+                </value>
+            </li>
+        </operations>
+    </Operation>
+</Patch>

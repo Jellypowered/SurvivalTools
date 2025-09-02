@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿//Rimworld 1.6 / C# 7.3
+//Patch_ThingDef_SpecialDisplayStats.cs
+using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using RimWorld;
@@ -12,37 +14,77 @@ namespace SurvivalTools.HarmonyStuff
     {
         public static void Postfix(ThingDef __instance, ref IEnumerable<StatDrawEntry> __result, StatRequest req)
         {
-            var list = (__result as List<StatDrawEntry>) ?? __result.ToList();
+            if (__instance == null)
+                return;
 
-            // Tool def (not a concrete thing)
-            if (req.Thing == null && __instance.IsSurvivalTool(out var tProps) && tProps?.baseWorkStatFactors != null)
+            // always work against a real list we control
+            var list = (__result as List<StatDrawEntry>) ?? (__result?.ToList() ?? new List<StatDrawEntry>(4));
+
+            // Build a quick de-dupe set (label + value) to avoid duplicate rows
+            // LabelCap is a TaggedString; ToString is fine for keys here.
+            var existing = new HashSet<string>();
+            for (int i = 0; i < list.Count; i++)
             {
-                AddStatDrawEntries(list, tProps.baseWorkStatFactors, ST_StatCategoryDefOf.SurvivalTool);
+                var e = list[i];
+                if (e != null)
+                    existing.Add((e.LabelCap?.ToString() ?? "") + "|" + (e.ValueString ?? ""));
             }
 
-            // Stuff defs that affect tools
-            var sPropsTool = __instance.IsStuff ? __instance.GetModExtension<StuffPropsTool>() : null;
-            if (sPropsTool?.toolStatFactors != null)
+            // Case 1: Survival tool defs themselves (def view only; not per-instance)
+            SurvivalToolProperties tProps;
+            if (req.Thing == null && __instance.IsSurvivalTool(out tProps))
             {
-                AddStatDrawEntries(list, sPropsTool.toolStatFactors, ST_StatCategoryDefOf.SurvivalToolMaterial);
+                var mods = tProps?.baseWorkStatFactors;
+                if (mods != null && mods.Count > 0)
+                    AddStatDrawEntries(list, existing, mods, ST_StatCategoryDefOf.SurvivalTool);
+            }
+
+            // Case 2: Stuff materials that carry survival-tool stat factors (tool-stuff)
+            if (__instance.IsStuff)
+            {
+                var ext = __instance.GetModExtension<SurvivalToolProperties>();
+                var mods = ext?.baseWorkStatFactors;
+                if (mods != null && mods.Count > 0)
+                    AddStatDrawEntries(list, existing, mods, ST_StatCategoryDefOf.SurvivalTool);
             }
 
             __result = list;
         }
 
-        private static void AddStatDrawEntries(List<StatDrawEntry> list, IEnumerable<StatModifier> modifiers, StatCategoryDef category)
+        private static void AddStatDrawEntries(
+            List<StatDrawEntry> list,
+            HashSet<string> existing,
+            IEnumerable<StatModifier> modifiers,
+            StatCategoryDef category)
         {
+            if (list == null || existing == null || modifiers == null || category == null)
+                return;
+
             foreach (var modifier in modifiers)
             {
-                if (modifier?.stat == null) continue;
+                if (modifier == null || modifier.stat == null)
+                    continue;
+
+                // Label & value
+                var label = $"Tool — {modifier.stat.LabelCap}";
+                var value = modifier.value.ToStringByStyle(ToStringStyle.PercentZero, ToStringNumberSense.Factor);
+
+                // De-dupe: skip if an identical row already exists
+                var key = label + "|" + value;
+                if (existing.Contains(key))
+                    continue;
+
+                // Brief, safe description (no assumptions about localization keys here)
+                var report = $"When survival tools (or tool-stuff) apply, {modifier.stat.label.ToLower()} is multiplied by {modifier.value.ToStringPercent()}.";
 
                 list.Add(new StatDrawEntry(
-                    category,
-                    modifier.stat.LabelCap,
-                    modifier.value.ToStringByStyle(ToStringStyle.PercentZero, ToStringNumberSense.Factor),
-                    modifier.stat.description,
-                    displayPriorityWithinCategory: 0
-                ));
+                    category: category,
+                    label: label,
+                    valueString: value,
+                    reportText: report,
+                    displayPriorityWithinCategory: 0));
+
+                existing.Add(key);
             }
         }
     }

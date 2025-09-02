@@ -69,4 +69,7 @@
   <SurvivalTools_Multitool.tools.0.label>手柄</SurvivalTools_Multitool.tools.0.label>
   <SurvivalTools_Multitool.tools.1.label>前端</SurvivalTools_Multitool.tools.1.label>
 
+  <SurvivalTools_PileOfRags.label>一堆破布</SurvivalTools_PileOfRags.label>
+  <SurvivalTools_PileOfRags.description>简单的清洁工具，由破布和织物碎片制成。对于基本的清洁工作很有用，但磨损很快。</SurvivalTools_PileOfRags.description>
+
 </LanguageData>

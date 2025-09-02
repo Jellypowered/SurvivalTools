@@ -59,4 +59,7 @@
     <SurvivalTools_Multitool.label>multiherramienta del glitterworld</SurvivalTools_Multitool.label>
     <SurvivalTools_Multitool.description>Una herramienta universal de alta tecnología comúnmente utilizada por mecánicos domésticos en sociedades del glitterworld. Este dispositivo avanzado se adapta sin esfuerzo a cualquier tarea - construcción, minería, silvicultura, mantenimiento, demolición - convirtiéndola en la herramienta de supervivencia todo-en-uno definitiva. Aunque diseñada para mecánicos, es perfectamente utilizable por humanoides debido a similitudes fisiológicas.</SurvivalTools_Multitool.description>
 
+    <SurvivalTools_PileOfRags.label>montón de trapos</SurvivalTools_PileOfRags.label>
+    <SurvivalTools_PileOfRags.description>Una herramienta de limpieza simple hecha de trapos y trozos de tela. Útil para tareas básicas de limpieza pero se desgasta rápidamente.</SurvivalTools_PileOfRags.description>
+
 </LanguageData>

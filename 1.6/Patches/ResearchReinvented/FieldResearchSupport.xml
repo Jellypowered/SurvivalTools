@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- 
+  Research Reinvented Compatibility Patch
+  
+  This patch adds FieldResearchSpeedMultiplier stat to our research tools
+  when Research Reinvented is loaded, enabling field research functionality.
+-->
+<Patch>
+    <!-- Add FieldResearchSpeedMultiplier to Abacus when RR is loaded -->
+    <Operation Class="PatchOperationFindMod">
+        <mods>
+            <li>PeteTimesSix.ResearchReinvented</li>
+        </mods>
+        <match Class="PatchOperationSequence">
+            <operations>
+                <!-- Add FieldResearchSpeedMultiplier to Abacus -->
+                <li Class="PatchOperationAdd">
+                    <xpath>Defs/ThingDef[defName="SurvivalTools_Abacus"]/modExtensions/li[@Class="SurvivalTools.SurvivalToolProperties"]/baseWorkStatFactors</xpath>
+                    <value>
+                        <FieldResearchSpeedMultiplier>0.7</FieldResearchSpeedMultiplier>
+                    </value>
+                </li>
+                <!-- Add FieldResearchSpeedMultiplier to Microscope -->
+                <li Class="PatchOperationAdd">
+                    <xpath>Defs/ThingDef[defName="SurvivalTools_Microscope"]/modExtensions/li[@Class="SurvivalTools.SurvivalToolProperties"]/baseWorkStatFactors</xpath>
+                    <value>
+                        <FieldResearchSpeedMultiplier>1.4</FieldResearchSpeedMultiplier>
+                    </value>
+                </li>
+            </operations>
+        </match>
+    </Operation>
+</Patch>

@@ -1,4 +1,13 @@
-﻿using System.Collections.Generic;
+﻿// RimWorld 1.6 / C# 7.3
+// Source/AI/JobGiver_OptimizeSurvivalTools.cs
+//
+// SurvivalTools — Optimizer
+// - Drops unneeded/duplicate tools
+// - Picks up better tools (incl. tool-stuff via VirtualSurvivalTool)
+// - Reduced frequency when AutoTool is enabled
+// - Safe map/area checks to avoid OOB errors
+
+using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using Verse;
@@ -8,51 +17,28 @@ namespace SurvivalTools
 {
     public class JobGiver_OptimizeSurvivalTools : ThinkNode_JobGiver
     {
-        // Tuning knobs - Base intervals for optimization
-        private const int OPTIMIZE_TICK_MIN = 3600;   // ~3.0 in-game hours
-        private const int OPTIMIZE_TICK_MAX = 14400;  // ~6.0 in-game hours
+        #region Tuning
 
-        // Reduced frequency when AutoTool is enabled (once per day)
-        private const int OPTIMIZE_TICK_MIN_AUTOTOOL = 60000;  // ~24 in-game hours
-        private const int OPTIMIZE_TICK_MAX_AUTOTOOL = 72000;  // ~30 in-game hours
+        // Base cadence
+        private const int OPTIMIZE_TICK_MIN = 3600;    // ~3h
+        private const int OPTIMIZE_TICK_MAX = 14400;   // ~6h
 
-        private void SetNextOptimizeTick(Pawn pawn, int min = -1, int max = -1)
-        {
-            // Use reduced frequency if AutoTool is enabled, otherwise use default
-            if (min == -1 || max == -1)
-            {
-                if (SurvivalTools.Settings?.autoTool == true)
-                {
-                    min = OPTIMIZE_TICK_MIN_AUTOTOOL;
-                    max = OPTIMIZE_TICK_MAX_AUTOTOOL;
-                    string logKey = $"OptFreq_AutoTool_{pawn.ThingID}";
-                    if (SurvivalToolUtility.IsDebugLoggingEnabled && SurvivalToolUtility.ShouldLogWithCooldown(logKey))
-                        Log.Message($"[SurvivalTools.Optimizer] Using reduced optimization frequency for {pawn.LabelShort} (AutoTool enabled): ~{min / 2500f:F1}-{max / 2500f:F1} in-game hours");
-                }
-                else
-                {
-                    min = OPTIMIZE_TICK_MIN;
-                    max = OPTIMIZE_TICK_MAX;
-                    string logKey = $"OptFreq_Standard_{pawn.ThingID}";
-                    if (SurvivalToolUtility.IsDebugLoggingEnabled && SurvivalToolUtility.ShouldLogWithCooldown(logKey))
-                        Log.Message($"[SurvivalTools.Optimizer] Using standard optimization frequency for {pawn.LabelShort}: ~{min / 2500f:F1}-{max / 2500f:F1} in-game hours");
-                }
-            }
+        // Reduced cadence when AutoTool is doing the heavy lifting
+        private const int OPTIMIZE_TICK_MIN_AUTOTOOL = 60000;  // ~24h
+        private const int OPTIMIZE_TICK_MAX_AUTOTOOL = 72000;  // ~30h
 
-            var comp = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
-            comp?.Optimized(min, max);
-        }
+        #endregion
+
+        #region Core
 
         protected override Job TryGiveJob(Pawn pawn)
         {
-            if (SurvivalTools.Settings == null || !SurvivalTools.Settings.toolOptimization)
-                return null;
+            if (SurvivalTools.Settings == null || !SurvivalTools.Settings.toolOptimization) return null;
 
             var assignmentTracker = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
-            if (!pawn.CanUseSurvivalTools() || assignmentTracker == null)
-                return null;
+            if (!pawn.CanUseSurvivalTools() || assignmentTracker == null) return null;
 
-            // Skip optimization if pawn is downed, unconscious, or on bed rest
+            // Skip if downed/asleep/in bed
             if (pawn.Downed || !pawn.Awake() || pawn.InBed())
             {
                 SetNextOptimizeTick(pawn);
@@ -69,33 +55,65 @@ namespace SurvivalTools
             var curAssignment = assignmentTracker.CurrentSurvivalToolAssignment;
             var heldTools = pawn.GetHeldSurvivalTools().ToList();
 
-            // 1. Drop any tools that are no longer needed or allowed.
+            // 1) Drop tools that are disallowed by assignment or no longer needed
             foreach (var tool in heldTools)
             {
-                if (tool is SurvivalTool st &&
-                    (!curAssignment.filter.Allows(st) || !pawn.NeedsSurvivalTool(st)) &&
-                    assignmentTracker.forcedHandler.AllowedToAutomaticallyDrop(tool))
+                Thing backingForTool = tool is SurvivalTool st ? SurvivalToolUtility.BackingThing(st, pawn) ?? st : tool;
+
+                bool disallowedByFilter = curAssignment?.filter != null && !curAssignment.filter.Allows(backingForTool);
+                bool notNeeded = tool is SurvivalTool surv && !pawn.NeedsSurvivalTool(surv);
+
+                if ((disallowedByFilter || notNeeded) &&
+                    AllowedToAutomaticallyDropSafe(assignmentTracker, backingForTool))
                 {
                     if (SurvivalToolUtility.IsDebugLoggingEnabled)
                         Log.Message($"[SurvivalTools.Optimizer] {pawn.LabelShort} is dropping unneeded tool: {tool.LabelShort}");
 
-                    SetNextOptimizeTick(pawn, 300, 600); // Short cooldown after dropping
+                    SetNextOptimizeTick(pawn, 300, 600); // quick cool-down after drop
                     return pawn.DequipAndTryStoreSurvivalTool(tool);
                 }
             }
 
-            // 2. Drop duplicate tools (keeping only the best of each type).
-            var duplicateToolToDrop = FindDuplicateToolToDrop(pawn, heldTools);
-            if (duplicateToolToDrop != null)
+            // 2. Drop duplicate tools (includes tool-stuff via virtual wrappers)
+            var duplicateThingToDrop = FindDuplicateToolToDropIncludingVirtuals(pawn, heldTools);
+            if (duplicateThingToDrop != null)
             {
-                if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                    Log.Message($"[SurvivalTools.Optimizer] {pawn.LabelShort} is dropping duplicate tool: {duplicateToolToDrop.LabelShort}");
+                if (duplicateThingToDrop is SurvivalTool stDup)
+                {
+                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                        Log.Message($"[SurvivalTools.Optimizer] {pawn.LabelShort} is dropping duplicate tool: {stDup.LabelShort}");
+                    SetNextOptimizeTick(pawn, 300, 600);
+                    return pawn.DequipAndTryStoreSurvivalTool(stDup);
+                }
+                else
+                {
+                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                        Log.Message($"[SurvivalTools.Optimizer] {pawn.LabelShort} is dropping duplicate tool-stuff: {duplicateThingToDrop.LabelShort}");
+                    var inv = pawn.inventory;
+                    if (inv?.innerContainer != null && inv.innerContainer.Contains(duplicateThingToDrop))
+                    {
+                        Thing outThing;
 
-                SetNextOptimizeTick(pawn, 300, 600); // Short cooldown after dropping
-                return pawn.DequipAndTryStoreSurvivalTool(duplicateToolToDrop);
+                        // (optional — see #2) drop exactly one from stacks
+                        var toDrop = duplicateThingToDrop;
+                        if (toDrop.stackCount > 1)
+                            toDrop = toDrop.SplitOff(1);
+
+                        inv.innerContainer.TryDrop(
+                            toDrop,
+                            pawn.Position,
+                            pawn.Map,
+                            ThingPlaceMode.Near,
+                            out outThing
+                        );
+                    }
+
+                    SetNextOptimizeTick(pawn, 300, 600);
+                    return null; // drop completed immediately, no job needed
+                }
             }
 
-            // 3. Determine which stats are relevant for the pawn's work.
+            // 3) Build relevant stat set
             var workRelevantStats = pawn.AssignedToolRelevantWorkGiversStatDefs().Distinct().ToList();
             if (workRelevantStats.NullOrEmpty())
             {
@@ -103,7 +121,7 @@ namespace SurvivalTools
                 return null;
             }
 
-            // 3. Check cooldown, but bypass if the pawn has no tool for a relevant job.
+            // 3b) Respect cool-down unless pawn lacks any relevant tool
             bool hasAnyRelevantTool = heldTools.Any(t => t is SurvivalTool st && st.WorkStatFactors.Any(m => workRelevantStats.Contains(m.stat)));
             if (hasAnyRelevantTool && !assignmentTracker.NeedsOptimization)
                 return null;
@@ -111,9 +129,8 @@ namespace SurvivalTools
             if (SurvivalToolUtility.IsDebugLoggingEnabled)
                 Log.Message($"[SurvivalTools.Optimizer] Running tool optimization for {pawn.LabelShort}. Relevant stats: {string.Join(", ", workRelevantStats.Select(s => s.defName))}");
 
-            // 4. Find the best possible tool to acquire.
-            SurvivalTool bestNewTool = FindBestToolToAcquire(pawn, workRelevantStats, curAssignment, heldTools);
-
+            // 4) Find a better tool to acquire
+            var bestNewTool = FindBestToolToAcquire(pawn, workRelevantStats, curAssignment, heldTools);
             if (bestNewTool == null)
             {
                 if (SurvivalToolUtility.IsDebugLoggingEnabled)
@@ -122,14 +139,16 @@ namespace SurvivalTools
                 return null;
             }
 
-            // 5. Formulate job to swap tools.
+            // 5) Make space if needed, then queue pickup
             Thing toolToDrop = GetToolToDrop(pawn, bestNewTool, workRelevantStats, heldTools);
             int heldToolOffset = 0;
 
-            if (toolToDrop != null && assignmentTracker.forcedHandler.AllowedToAutomaticallyDrop(toolToDrop))
+            var dropBacking = toolToDrop is SurvivalTool stDrop ? SurvivalToolUtility.BackingThing(stDrop, pawn) ?? toolToDrop : toolToDrop;
+            if (toolToDrop != null && AllowedToAutomaticallyDropSafe(assignmentTracker, dropBacking))
             {
                 if (SurvivalToolUtility.IsDebugLoggingEnabled)
                     Log.Message($"[SurvivalTools.Optimizer] {pawn.LabelShort} will drop {toolToDrop.LabelShort} to make space for {bestNewTool.LabelShort}.");
+
                 pawn.jobs.jobQueue.EnqueueFirst(pawn.DequipAndTryStoreSurvivalTool(toolToDrop, enqueueCurrent: false));
                 heldToolOffset = -1;
             }
@@ -139,9 +158,11 @@ namespace SurvivalTools
                 if (SurvivalToolUtility.IsDebugLoggingEnabled)
                     Log.Message($"[SurvivalTools.Optimizer] {pawn.LabelShort} is creating job to pick up {bestNewTool.LabelShort}.");
 
-                var pickupJob = JobMaker.MakeJob(JobDefOf.TakeInventory, bestNewTool);
+                var pickupTarget = SurvivalToolUtility.BackingThing(bestNewTool, pawn) ?? (Thing)bestNewTool;
+                var pickupJob = JobMaker.MakeJob(JobDefOf.TakeInventory, pickupTarget);
                 pickupJob.count = 1;
-                SetNextOptimizeTick(pawn, 600, 900); // Short cooldown during pickup
+
+                SetNextOptimizeTick(pawn, 600, 900);
                 return pickupJob;
             }
 
@@ -152,65 +173,128 @@ namespace SurvivalTools
             return null;
         }
 
+        #endregion
+
+        #region Scheduling
+
+        private void SetNextOptimizeTick(Pawn pawn, int min = -1, int max = -1)
+        {
+            if (min == -1 || max == -1)
+            {
+                if (SurvivalTools.Settings?.autoTool == true)
+                {
+                    min = OPTIMIZE_TICK_MIN_AUTOTOOL;
+                    max = OPTIMIZE_TICK_MAX_AUTOTOOL;
+
+                    string logKey = $"OptFreq_AutoTool_{pawn.ThingID}";
+                    if (SurvivalToolUtility.IsDebugLoggingEnabled && SurvivalToolUtility.ShouldLogWithCooldown(logKey))
+                        Log.Message($"[SurvivalTools.Optimizer] Using reduced optimization frequency for {pawn.LabelShort} (AutoTool enabled): ~{min / 2500f:F1}-{max / 2500f:F1} in-game hours");
+                }
+                else
+                {
+                    min = OPTIMIZE_TICK_MIN;
+                    max = OPTIMIZE_TICK_MAX;
+
+                    string logKey = $"OptFreq_Standard_{pawn.ThingID}";
+                    if (SurvivalToolUtility.IsDebugLoggingEnabled && SurvivalToolUtility.ShouldLogWithCooldown(logKey))
+                        Log.Message($"[SurvivalTools.Optimizer] Using standard optimization frequency for {pawn.LabelShort}: ~{min / 2500f:F1}-{max / 2500f:F1} in-game hours");
+                }
+            }
+
+            pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>()?.Optimized(min, max);
+        }
+
+        #endregion
+
+        #region Discovery & selection
+
         private SurvivalTool FindBestToolToAcquire(Pawn pawn, List<StatDef> workRelevantStats, SurvivalToolAssignment curAssignment, List<Thing> heldTools)
         {
             SurvivalTool bestNewTool = null;
             float bestScore = 0f;
 
-            // Initialize best score with the best currently held tool
+            // Baseline: best held tool
             foreach (var tool in heldTools)
             {
-                float score = SurvivalToolScore(tool, workRelevantStats);
-                if (score > bestScore)
-                {
-                    bestScore = score;
-                }
+                float score = SurvivalToolScore(tool, pawn, workRelevantStats);
+                if (score > bestScore) bestScore = score;
             }
             if (SurvivalToolUtility.IsDebugLoggingEnabled)
                 Log.Message($"[SurvivalTools.Optimizer] {pawn.LabelShort}'s best current tool score: {bestScore:F2}");
 
-            var potentialTools = pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableEver);
-            for (int i = 0; i < potentialTools.Count; i++)
+            var candidates = pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableEver);
+            for (int i = 0; i < candidates.Count; i++)
             {
-                if (potentialTools[i] is SurvivalTool potentialTool &&
-                    potentialTool.Spawned &&
-                    !potentialTool.IsForbidden(pawn) &&
-                    !potentialTool.IsBurning() &&
-                    curAssignment.filter.Allows(potentialTool) &&
-                    ToolIsAcquirableByPolicy(pawn, potentialTool) &&
-                    pawn.CanReserveAndReach(potentialTool, PathEndMode.OnCell, pawn.NormalMaxDanger()))
+                var candidate = candidates[i];
+
+                // A) Real SurvivalTool
+                if (candidate is SurvivalTool sTool)
                 {
-                    float potentialScore = SurvivalToolScore(potentialTool, workRelevantStats);
+                    if (!sTool.Spawned || sTool.IsForbidden(pawn) || sTool.IsBurning()) continue;
+                    if (curAssignment?.filter != null && !curAssignment.filter.Allows(sTool)) continue;
+                    if (!ToolIsAcquirableByPolicySafe(pawn, sTool)) continue;
+                    if (!pawn.CanReserveAndReach(sTool, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
 
-                    // Don't pick up tools that have no relevant stats (score would be 0)
-                    if (potentialScore <= 0f)
-                        continue;
+                    float sScore = SurvivalToolScore(sTool, pawn, workRelevantStats);
+                    if (sScore <= 0f) continue; // irrelevant tool
 
-                    // Check if pawn already has a tool of the same type
-                    var sameTypeHeldTool = FindSameTypeHeldTool(pawn, potentialTool, heldTools);
-                    if (sameTypeHeldTool != null)
+                    var sameTypeHeld = FindSameTypeHeldTool(pawn, sTool, heldTools);
+                    if (sameTypeHeld != null)
                     {
-                        float sameTypeScore = SurvivalToolScore(sameTypeHeldTool, workRelevantStats);
-
-                        // Only consider this tool if it's better than the same-type tool we already have
-                        if (potentialScore <= sameTypeScore)
+                        float sameTypeScore = SurvivalToolScore(sameTypeHeld, pawn, workRelevantStats);
+                        if (sScore <= sameTypeScore)
                         {
                             if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                                Log.Message($"[SurvivalTools.Optimizer] {pawn.LabelShort} skipping {potentialTool.LabelShort} (score: {potentialScore:F2}) - already has better same-type tool {sameTypeHeldTool.LabelShort} (score: {sameTypeScore:F2})");
+                                Log.Message($"[SurvivalTools.Optimizer] {pawn.LabelShort} skipping {sTool.LabelShort} (score {sScore:F2}) - has better {sameTypeHeld.LabelShort} (score {sameTypeScore:F2})");
                             continue;
                         }
 
                         if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                            Log.Message($"[SurvivalTools.Optimizer] {pawn.LabelShort} considering {potentialTool.LabelShort} (score: {potentialScore:F2}) to replace same-type tool {sameTypeHeldTool.LabelShort} (score: {sameTypeScore:F2})");
+                            Log.Message($"[SurvivalTools.Optimizer] {pawn.LabelShort} considering {sTool.LabelShort} (score {sScore:F2}) to replace {sameTypeHeld.LabelShort} (score {sameTypeScore:F2})");
                     }
 
                     if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                        Log.Message($"[SurvivalTools.Optimizer] {pawn.LabelShort} evaluating {potentialTool.LabelShort}: score {potentialScore:F2} vs best {bestScore:F2}");
+                        Log.Message($"[SurvivalTools.Optimizer] {pawn.LabelShort} evaluating {sTool.LabelShort}: score {sScore:F2} vs best {bestScore:F2}");
 
-                    if (potentialScore > bestScore)
+                    if (sScore > bestScore)
                     {
-                        bestScore = potentialScore;
-                        bestNewTool = potentialTool;
+                        bestScore = sScore;
+                        bestNewTool = sTool;
+                    }
+
+                    continue;
+                }
+
+                // B) Tool-stuff (cloth/wool/hyperweave) -> VirtualSurvivalTool
+                if (candidate.def.IsToolStuff())
+                {
+                    var item = candidate;
+                    if (!item.Spawned || item.IsForbidden(pawn) || item.IsBurning()) continue;
+                    if (curAssignment?.filter != null && !curAssignment.filter.Allows(item)) continue;
+                    if (!pawn.CanReserveAndReach(item, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
+
+                    var vtool = VirtualSurvivalTool.FromThing(item);
+                    if (vtool == null) continue;
+
+                    if (!ToolIsAcquirableByPolicySafe(pawn, vtool)) continue;
+
+                    bool hasRelevant = vtool.WorkStatFactors.Any(m => workRelevantStats.Contains(m.stat));
+                    if (!hasRelevant) continue;
+
+                    float vScore = vtool.WorkStatFactors
+                        .Where(m => workRelevantStats.Contains(m.stat))
+                        .Sum(m => m.value);
+
+                    // Distance tie-breaker
+                    vScore -= 0.01f * item.Position.DistanceTo(pawn.Position);
+
+                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                        Log.Message($"[SurvivalTools.Optimizer] Considering virtual tool-stuff {item.def.defName} with score {vScore:F2}");
+
+                    if (vScore > bestScore)
+                    {
+                        bestScore = vScore;
+                        bestNewTool = vtool;
                     }
                 }
             }
@@ -218,172 +302,127 @@ namespace SurvivalTools
             return bestNewTool;
         }
 
+
         private Thing GetToolToDrop(Pawn pawn, SurvivalTool newTool, List<StatDef> workRelevantStats, List<Thing> heldTools)
         {
-            // First priority: if we're picking up a tool of the same type, drop the worse same-type tool
-            var sameTypeHeldTool = FindSameTypeHeldTool(pawn, newTool, heldTools);
-            if (sameTypeHeldTool != null)
+            // Prefer replacing same-type with worse score
+            var sameTypeHeld = FindSameTypeHeldTool(pawn, newTool, heldTools);
+            if (sameTypeHeld != null)
             {
-                var assignmentTracker = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
-                if (assignmentTracker?.forcedHandler.AllowedToAutomaticallyDrop(sameTypeHeldTool) ?? true)
+                var tracker = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
+                var backing = sameTypeHeld is SurvivalTool st ? SurvivalToolUtility.BackingThing(st, pawn) ?? (Thing)sameTypeHeld : (Thing)sameTypeHeld;
+
+                if (AllowedToAutomaticallyDropSafe(tracker, backing))
                 {
                     if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                        Log.Message($"[SurvivalTools.Optimizer] {pawn.LabelShort} will drop same-type tool {sameTypeHeldTool.LabelShort} for better {newTool.LabelShort}.");
-                    return sameTypeHeldTool;
+                        Log.Message($"[SurvivalTools.Optimizer] {pawn.LabelShort} will drop same-type tool {sameTypeHeld.LabelShort} for better {newTool.LabelShort}.");
+                    return sameTypeHeld;
                 }
             }
 
-            // If we're already at the carry limit, we must drop a tool.
+            // If at capacity, drop the worst allowed tool
             if (!pawn.CanCarryAnyMoreSurvivalTools())
             {
-                // Find the worst tool we are currently holding.
-                Thing worstTool = null;
+                Thing worst = null;
                 float worstScore = float.MaxValue;
 
                 foreach (var tool in heldTools)
                 {
-                    var assignmentTracker = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
-                    if (!(assignmentTracker?.forcedHandler.AllowedToAutomaticallyDrop(tool) ?? true))
-                        continue;
+                    var tracker = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
+                    var backing = tool is SurvivalTool st ? SurvivalToolUtility.BackingThing(st, pawn) ?? tool : tool;
+                    if (!AllowedToAutomaticallyDropSafe(tracker, backing)) continue;
 
-                    float score = SurvivalToolScore(tool, workRelevantStats);
+                    float score = SurvivalToolScore(tool, pawn, workRelevantStats);
                     if (score < worstScore)
                     {
                         worstScore = score;
-                        worstTool = tool;
+                        worst = tool;
                     }
                 }
-                return worstTool;
+                return worst;
             }
+
             return null;
         }
 
-        private static bool ToolIsAcquirableByPolicy(Pawn pawn, SurvivalTool tool)
+        private SurvivalTool FindSameTypeHeldTool(Pawn pawn, SurvivalTool targetTool, List<Thing> heldTools)
         {
-            if (tool.IsInAnyStorage())
-                return true;
-
-            if (SurvivalTools.Settings?.pickupFromStorageOnly == true)
-                return false;
-
-            return pawn.Map.areaManager.Home[tool.Position];
+            return heldTools.OfType<SurvivalTool>()
+                .FirstOrDefault(held => AreSameToolType(held, targetTool));
         }
 
-        private static float SurvivalToolScore(Thing toolThing, List<StatDef> workRelevantStats)
+        private static bool AreSameToolType(SurvivalTool a, SurvivalTool b)
         {
-            if (!(toolThing is SurvivalTool tool))
-                return 0f;
+            var aStats = a.WorkStatFactors.Select(f => f.stat).ToHashSet();
+            var bStats = b.WorkStatFactors.Select(f => f.stat).ToHashSet();
+            if (aStats.Count == 0 || bStats.Count == 0) return false;
+            return aStats.SetEquals(bStats);
+        }
+
+        #endregion
+
+        #region Scoring
+
+        private static float SurvivalToolScore(Thing toolThing, Pawn pawn, List<StatDef> workRelevantStats)
+        {
+            if (toolThing == null || workRelevantStats == null) return 0f;
+            if (!(toolThing is SurvivalTool tool)) return 0f;
 
             float optimality = 0f;
-            var workStatFactors = tool.WorkStatFactors.ToList();
+            var factors = tool.WorkStatFactors.ToList();
 
             foreach (var stat in workRelevantStats)
             {
-                // Only count stats that the tool actually has modifiers for
-                var modifier = workStatFactors.FirstOrDefault(m => m.stat == stat);
-                if (modifier != null)
-                {
-                    optimality += modifier.value;
-                }
+                var mod = factors.FirstOrDefault(m => m.stat == stat);
+                if (mod != null) optimality += mod.value;
             }
 
+            // Condition / lifespan weighting (pawn-aware backing)
             if (tool.def.useHitPoints)
             {
-                float hpFrac = tool.MaxHitPoints > 0 ? (float)tool.HitPoints / tool.MaxHitPoints : 0f;
-                float lifespanRemaining = tool.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) * hpFrac;
-                optimality *= LifespanDaysToOptimalityMultiplierCurve.Evaluate(lifespanRemaining);
+                var backing = SurvivalToolUtility.BackingThing(tool, pawn) ?? (tool as Thing);
+                if (backing is ThingWithComps twc)
+                {
+                    float hpFrac = twc.MaxHitPoints > 0 ? (float)twc.HitPoints / twc.MaxHitPoints : 0f;
+                    float lifespanRemaining = twc.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) * hpFrac;
+                    optimality *= LifespanDaysToOptimalityMultiplierCurve.Evaluate(lifespanRemaining);
+                }
+                else if (tool is ThingWithComps twcTool)
+                {
+                    float hpFrac = twcTool.MaxHitPoints > 0 ? (float)twcTool.HitPoints / twcTool.MaxHitPoints : 0f;
+                    float lifespanRemaining = twcTool.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) * hpFrac;
+                    optimality *= LifespanDaysToOptimalityMultiplierCurve.Evaluate(lifespanRemaining);
+                }
             }
 
             return optimality;
         }
 
-        private SurvivalTool FindDuplicateToolToDrop(Pawn pawn, List<Thing> heldTools)
+        private float CalculateToolScore(SurvivalTool tool, Pawn pawn)
         {
-            var assignmentTracker = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
-            var survivalTools = heldTools.OfType<SurvivalTool>().ToList();
+            float score = 0f;
 
-            // Group tools by their functional type (same stat modifiers)
-            var toolGroups = new Dictionary<string, List<SurvivalTool>>();
+            foreach (var m in tool.WorkStatFactors)
+                score += m.value;
 
-            foreach (var tool in survivalTools)
+            if (tool.def.useHitPoints)
             {
-                // Create a key based on the stats the tool modifies
-                var statsKey = string.Join(",", tool.WorkStatFactors.Select(f => f.stat.defName).OrderBy(s => s));
-
-                if (string.IsNullOrEmpty(statsKey))
-                    continue; // Skip tools with no stat modifiers
-
-                if (!toolGroups.ContainsKey(statsKey))
-                    toolGroups[statsKey] = new List<SurvivalTool>();
-
-                toolGroups[statsKey].Add(tool);
-            }
-
-            // Find groups with multiple tools (duplicates)
-            foreach (var group in toolGroups.Values)
-            {
-                if (group.Count > 1)
+                var backing = SurvivalToolUtility.BackingThing(tool, pawn) ?? (tool as Thing);
+                if (backing is ThingWithComps twc)
                 {
-                    // Find the best tool in this group
-                    var bestTool = group.OrderByDescending(t => CalculateToolScore(t)).First();
-
-                    // Find a worse tool to drop (that we're allowed to drop)
-                    var toolToDrop = group
-                        .Where(t => t != bestTool && (assignmentTracker?.forcedHandler.AllowedToAutomaticallyDrop(t) ?? true))
-                        .OrderBy(t => CalculateToolScore(t))
-                        .FirstOrDefault();
-
-                    if (toolToDrop != null)
-                    {
-                        if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                            Log.Message($"[SurvivalTools.Optimizer] {pawn.LabelShort} found duplicate tools - keeping {bestTool.LabelShort}, dropping {toolToDrop.LabelShort}");
-                        return toolToDrop;
-                    }
+                    float hpFrac = twc.MaxHitPoints > 0 ? (float)twc.HitPoints / twc.MaxHitPoints : 0f;
+                    float lifespanRemaining = twc.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) * hpFrac;
+                    score *= LifespanDaysToOptimalityMultiplierCurve.Evaluate(lifespanRemaining);
+                }
+                else if (tool is ThingWithComps twcTool)
+                {
+                    float hpFrac = twcTool.MaxHitPoints > 0 ? (float)twcTool.HitPoints / twcTool.MaxHitPoints : 0f;
+                    float lifespanRemaining = twcTool.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) * hpFrac;
+                    score *= LifespanDaysToOptimalityMultiplierCurve.Evaluate(lifespanRemaining);
                 }
             }
 
-            return null;
-        }
-
-        private float CalculateToolScore(SurvivalTool tool)
-        {
-            // Calculate a general score for the tool based on all its modifiers and condition
-            float score = 0f;
-
-            foreach (var modifier in tool.WorkStatFactors)
-            {
-                score += modifier.value;
-            }
-
-            // Factor in tool condition
-            if (tool.def.useHitPoints)
-            {
-                float hpFrac = tool.MaxHitPoints > 0 ? (float)tool.HitPoints / tool.MaxHitPoints : 0f;
-                float lifespanRemaining = tool.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) * hpFrac;
-                score *= LifespanDaysToOptimalityMultiplierCurve.Evaluate(lifespanRemaining);
-            }
-
             return score;
-        }
-
-        private static SurvivalTool FindSameTypeHeldTool(Pawn pawn, SurvivalTool targetTool, List<Thing> heldTools)
-        {
-            return heldTools.OfType<SurvivalTool>()
-                .FirstOrDefault(heldTool => AreSameToolType(heldTool, targetTool));
-        }
-
-        private static bool AreSameToolType(SurvivalTool tool1, SurvivalTool tool2)
-        {
-            // Tools are the same type if they modify the same set of stats
-            var tool1Stats = tool1.WorkStatFactors.Select(f => f.stat).ToHashSet();
-            var tool2Stats = tool2.WorkStatFactors.Select(f => f.stat).ToHashSet();
-
-            // If both tools have no stat modifiers, they're not useful tools
-            if (tool1Stats.Count == 0 || tool2Stats.Count == 0)
-                return false;
-
-            // Tools are same type if they have the same set of stat modifiers
-            return tool1Stats.SetEquals(tool2Stats);
         }
 
         private static readonly SimpleCurve LifespanDaysToOptimalityMultiplierCurve = new SimpleCurve
@@ -393,7 +432,126 @@ namespace SurvivalTools
             new CurvePoint(1f,   0.50f),
             new CurvePoint(2f,   1.00f),
             new CurvePoint(4f,   1.00f),
-            new CurvePoint(999f, 10.0f)
+            new CurvePoint(999f, 10.00f) // kept as-is from your original
         };
+
+        #endregion
+
+        #region Safety / policy helpers
+
+        /// <summary>
+        /// Safe wrapper for forcedHandler.AllowedToAutomaticallyDrop that handles nulls.
+        /// </summary>
+        private static bool AllowedToAutomaticallyDropSafe(Pawn_SurvivalToolAssignmentTracker tracker, Thing thing)
+        {
+            if (tracker == null) return true;
+            var handler = tracker.forcedHandler;
+            if (handler == null) return true;
+            return handler.AllowedToAutomaticallyDrop(thing);
+        }
+
+        // Groups both real SurvivalTools and held tool-stuff (wrapped as VirtualSurvivalTool) by their functional stat set.
+        // Returns the physical Thing to drop: either a SurvivalTool to dequip/store, or a tool-stuff Thing to drop from inventory.
+        private Thing FindDuplicateToolToDropIncludingVirtuals(Pawn pawn, List<Thing> heldThings)
+        {
+            var assignmentTracker = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
+
+            // Build a list of (physicalThing, toolLike) where toolLike exposes WorkStatFactors
+            var toolLikes = new List<(Thing thing, SurvivalTool toolLike)>();
+            foreach (var ht in heldThings)
+            {
+                if (ht is SurvivalTool st)
+                {
+                    toolLikes.Add((ht, st));
+                    continue;
+                }
+
+                // Wrap held tool-stuff into a virtual tool for grouping/scoring
+                if (ht?.def != null && ht.def.HasModExtension<SurvivalToolProperties>())
+                {
+                    var v = VirtualSurvivalTool.FromThing(ht);
+                    if (v != null && v.WorkStatFactors.Any())
+                        toolLikes.Add((ht, v));
+                }
+            }
+
+            if (toolLikes.Count <= 1) return null;
+
+            // Group by the set of stat defNames
+            string KeyFor(SurvivalTool t) =>
+                string.Join(",",
+                    t.WorkStatFactors
+                     .Select(f => f.stat?.defName)
+                     .Where(n => !string.IsNullOrEmpty(n))
+                     .OrderBy(n => n));
+
+            float Score(SurvivalTool t)
+            {
+                float s = 0f;
+                foreach (var m in t.WorkStatFactors) s += m.value;
+                return s;
+            }
+
+            var groups = toolLikes
+                .GroupBy(x => KeyFor(x.toolLike))
+                .Where(g => !string.IsNullOrEmpty(g.Key));
+
+            foreach (var grp in groups)
+            {
+                var members = grp.ToList();
+                if (members.Count <= 1) continue;
+
+                // best to keep
+                var best = members.OrderByDescending(x => Score(x.toolLike)).First();
+
+                // choose a droppable non-best member
+                foreach (var m in members.OrderBy(x => Score(x.toolLike)))
+                {
+                    if (ReferenceEquals(m.thing, best.thing)) continue;
+
+                    var backing = (m.thing is SurvivalTool st)
+                        ? SurvivalToolUtility.BackingThing(st, pawn) ?? m.thing
+                        : m.thing;
+
+                    if (!AllowedToAutomaticallyDropSafe(assignmentTracker, backing))
+                        continue;
+
+                    return m.thing; // could be SurvivalTool OR tool-stuff Thing
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Storage/home-area policy with bounds & map checks to avoid Area.get_Item OOB.
+        /// </summary>
+        private static bool ToolIsAcquirableByPolicySafe(Pawn pawn, SurvivalTool tool)
+        {
+            if (pawn == null || pawn.Map == null || tool == null) return false;
+
+            var backing = SurvivalToolUtility.BackingThing(tool, pawn) ?? (tool as Thing);
+            if (backing == null) return false;
+
+            // Storage always OK
+            if (backing.IsInAnyStorage()) return true;
+
+            // Respect "storage only"
+            if (SurvivalTools.Settings?.pickupFromStorageOnly == true) return false;
+
+            // Must be spawned on the pawn's map and in bounds
+            if (!backing.Spawned || backing.Map != pawn.Map) return false;
+
+            var map = pawn.Map;
+            var pos = backing.Position;
+            if (!pos.IsValid || !pos.InBounds(map)) return false;
+
+            var home = map.areaManager?.Home;
+            if (home == null) return false;
+
+            return home[pos];
+        }
+
+        #endregion
     }
 }

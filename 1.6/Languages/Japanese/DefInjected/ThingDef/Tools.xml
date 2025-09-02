@@ -59,4 +59,7 @@
     <SurvivalTools_Multitool.label>グリッターワールドマルチツール</SurvivalTools_Multitool.label>
     <SurvivalTools_Multitool.description>グリッターワールド社会で家庭用メカノイドによって一般的に使用される高技術汎用工具。この先進的な装置は、建設、採掘、林業、保守、解体など、あらゆる作業にシームレスに適応でき、究極のオールインワン生存工具となります。メカノイド用に設計されていますが、生理学的類似性により人間型にも完全に使用可能です。</SurvivalTools_Multitool.description>
 
+    <SurvivalTools_PileOfRags.label>ぼろ布の山</SurvivalTools_PileOfRags.label>
+    <SurvivalTools_PileOfRags.description>ぼろ布と布切れで作られたシンプルな清掃道具。基本的な清掃作業には有用ですが、すぐに摩耗します。</SurvivalTools_PileOfRags.description>
+
 </LanguageData>

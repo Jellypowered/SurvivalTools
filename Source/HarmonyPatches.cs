@@ -1,3 +1,5 @@
+// RimWorld 1.6 / C# 7.3
+// Source/HarmonyPatches.cs
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,12 +41,12 @@ namespace SurvivalTools.HarmonyStuff
             AccessTools.Method(typeof(SurvivalToolUtility), nameof(SurvivalToolUtility.TryDegradeTool),
                 new[] { typeof(Pawn), typeof(StatDef) });
 
-        // At top of HarmonyPatches
         private static readonly FieldInfo PawnField = AccessTools.Field(typeof(JobDriver), nameof(JobDriver.pawn));
         private static readonly FieldInfo MiningSpeedField = AccessTools.Field(typeof(StatDefOf), nameof(StatDefOf.MiningSpeed));
         private static readonly FieldInfo DiggingSpeedField = AccessTools.Field(typeof(ST_StatDefOf), nameof(ST_StatDefOf.DiggingSpeed));
-        // --- small helper to keep logs clean ---
-        #region Helpers;
+
+        #region Helpers
+
         private static void TryPatch(string label, MethodBase original,
             HarmonyMethod prefix = null, HarmonyMethod postfix = null,
             HarmonyMethod transpiler = null, HarmonyMethod finalizer = null)
@@ -52,15 +54,12 @@ namespace SurvivalTools.HarmonyStuff
             if (original == null)
             {
                 if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                {
                     Log.Warning($"[SurvivalTools] Skipping patch '{label}' — method not found.");
-                }
                 return;
             }
             try
             {
                 H.Patch(original, prefix, postfix, transpiler, finalizer);
-                // Log.Message($"[SurvivalTools] Patched: {label}");
             }
             catch (Exception e)
             {
@@ -79,26 +78,44 @@ namespace SurvivalTools.HarmonyStuff
                                   && m.Name.Contains("MakeNewToils"));
         }
 
-        // 1) Wrapper the transpiler can call (Toil -> pawn)
+        // (kept around for potential future use)
         public static void TryDegradeTool_FromToil(Toil toil, StatDef stat)
         {
             var p = toil != null ? toil.actor : null;
             if (p != null) SurvivalToolUtility.TryDegradeTool(p, stat);
         }
 
-        #endregion;
+        // helpers (C# 7.3-friendly)
+        private static bool IsStloc(OpCode op)
+        {
+            return op == OpCodes.Stloc || op == OpCodes.Stloc_S
+                || op == OpCodes.Stloc_0 || op == OpCodes.Stloc_1
+                || op == OpCodes.Stloc_2 || op == OpCodes.Stloc_3;
+        }
+
+        private static CodeInstruction LdForSt(CodeInstruction st)
+        {
+            var op = st.opcode;
+            if (op == OpCodes.Stloc_0) return new CodeInstruction(OpCodes.Ldloc_0);
+            if (op == OpCodes.Stloc_1) return new CodeInstruction(OpCodes.Ldloc_1);
+            if (op == OpCodes.Stloc_2) return new CodeInstruction(OpCodes.Ldloc_2);
+            if (op == OpCodes.Stloc_3) return new CodeInstruction(OpCodes.Ldloc_3);
+            // stloc.s or stloc (short/long) – reuse the same operand
+            return new CodeInstruction(op == OpCodes.Stloc_S ? OpCodes.Ldloc_S : OpCodes.Ldloc, st.operand);
+        }
+
+        #endregion
+
         static HarmonyPatches()
         {
             // Attribute patches (if any)
             H.PatchAll(Assembly.GetExecutingAssembly());
 
             // -------- Vanilla --------
-            #region TryPatches;
-            // Wire-up (put near your other TryPatch calls)
+            // Mining: reset pick hit uses DiggingSpeed instead of MiningSpeed + degrade on entry
             TryPatch("JobDriver_Mine.ResetTicksToPickHit*",
                 AccessTools.DeclaredMethod(typeof(JobDriver_Mine), "ResetTicksToPickHit"),
                 transpiler: new HarmonyMethod(patchType, nameof(Transpile_JobDriver_Mine_ResetTicksToPickHit)));
-
 
             // Plants that obstruct construction zones
             var postfixHandleBlocking = new HarmonyMethod(patchType, nameof(Postfix_HandleBlockingThingJob));
@@ -108,11 +125,6 @@ namespace SurvivalTools.HarmonyStuff
             TryPatch("RoofUtility.HandleBlockingThingJob",
                 AccessTools.Method(typeof(RoofUtility), nameof(RoofUtility.HandleBlockingThingJob)),
                 postfix: postfixHandleBlocking);
-
-            // Mining: reset pick hit uses DiggingSpeed instead of MiningSpeed
-            TryPatch("JobDriver_Mine.ResetTicksToPickHit",
-                AccessTools.Method(typeof(JobDriver_Mine), "ResetTicksToPickHit"),
-                transpiler: new HarmonyMethod(patchType, nameof(Transpile_JobDriver_Mine_ResetTicksToPickHit)));
 
             // PlantWork MakeNewToils
             TryPatch("JobDriver_PlantWork.MakeNewToils",
@@ -129,6 +141,7 @@ namespace SurvivalTools.HarmonyStuff
                 AccessTools.DeclaredMethod(typeof(JobDriver_Repair), "MakeNewToils"),
                 transpiler: new HarmonyMethod(patchType, nameof(Transpile_JobDriver_Repair_MakeNewToils)));
 
+            // Deconstruct (tick)
             TryPatch("JobDriver_Deconstruct.TickActionInterval",
                 AccessTools.Method(typeof(JobDriver_Deconstruct), "TickActionInterval"),
                 prefix: new HarmonyMethod(patchType, nameof(Prefix_JobDriver_Deconstruct_TickActionInterval)));
@@ -147,6 +160,7 @@ namespace SurvivalTools.HarmonyStuff
                     transpiler: new HarmonyMethod(patchType, nameof(Transpile_JobDriver_Research_MakeNewToils)));
             }
 
+            // AffectRoof tick (nested iterator method)
             MethodInfo FindAffectRoofTickMethod()
             {
                 foreach (var t in typeof(JobDriver_AffectRoof).GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic))
@@ -166,8 +180,6 @@ namespace SurvivalTools.HarmonyStuff
                 transpiler: new HarmonyMethod(patchType, nameof(Transpile_AffectRoof_Tick))
             );
 
-            #endregion;
-            #region Modded TryPatches
             // -------- Fluffy Breakdowns --------
             if (ModCompatibilityCheck.FluffyBreakdowns)
             {
@@ -253,37 +265,17 @@ namespace SurvivalTools.HarmonyStuff
 
             // NOTE: In 1.6 there is no FloatMenuMakerMap.AddHumanlikeOrders — we intentionally do NOT patch it.
         }
-        #endregion
 
         // ---------------- Vanilla postfixes/transpilers ----------------
-        #region Vanilla Postfixes/Transpilers;
-
-
-
-        // helpers (C# 7.3-friendly)
-        private static bool IsStloc(OpCode op)
-        {
-            return op == OpCodes.Stloc || op == OpCodes.Stloc_S
-                || op == OpCodes.Stloc_0 || op == OpCodes.Stloc_1
-                || op == OpCodes.Stloc_2 || op == OpCodes.Stloc_3;
-        }
-
-        private static CodeInstruction LdForSt(CodeInstruction st)
-        {
-            var op = st.opcode;
-            if (op == OpCodes.Stloc_0) return new CodeInstruction(OpCodes.Ldloc_0);
-            if (op == OpCodes.Stloc_1) return new CodeInstruction(OpCodes.Ldloc_1);
-            if (op == OpCodes.Stloc_2) return new CodeInstruction(OpCodes.Ldloc_2);
-            if (op == OpCodes.Stloc_3) return new CodeInstruction(OpCodes.Ldloc_3);
-            // stloc.s or stloc (short/long) – reuse the same operand
-            return new CodeInstruction(op == OpCodes.Stloc_S ? OpCodes.Ldloc_S : OpCodes.Ldloc, st.operand);
-        }
 
         public static void Postfix_HandleBlockingThingJob(ref Job __result, Pawn worker)
         {
-            if (__result?.def == JobDefOf.CutPlant && __result.targetA.Thing?.def?.plant?.IsTree == true)
+            if (__result == null || worker == null) return;
+
+            // Redirect tree clearing to our FellTree job if the plant is a tree and pawn is allowed
+            if (__result.def == JobDefOf.CutPlant && __result.targetA.Thing?.def?.plant?.IsTree == true)
             {
-                if (worker?.CanFellTrees() == true)
+                if (worker.CanFellTrees())
                     __result = new Job(ST_JobDefOf.FellTree, __result.targetA);
                 else
                     __result = null;
@@ -302,23 +294,22 @@ namespace SurvivalTools.HarmonyStuff
 
                 if (ins.opcode == OpCodes.Stloc_0)
                 {
-                    yield return ins;
-                    yield return new CodeInstruction(OpCodes.Ldloc_0);              // actor
+                    yield return ins;                                           // keep store
+                    yield return new CodeInstruction(OpCodes.Ldloc_0);           // actor
                     yield return new CodeInstruction(OpCodes.Ldsfld, plantHarvestingSpeed);
-                    ins = new CodeInstruction(OpCodes.Call, TryDegradeTool);       // TryDegradeTool(actor, PlantHarvestingSpeed)
+                    ins = new CodeInstruction(OpCodes.Call, TryDegradeTool);    // TryDegradeTool(actor, PlantHarvestingSpeed)
                 }
 
                 if (ins.opcode == OpCodes.Ldsfld && Equals(ins.operand, vanillaPlantWorkSpeed))
                 {
-                    ins.operand = plantHarvestingSpeed;
+                    ins.operand = plantHarvestingSpeed;                          // replace PlantWorkSpeed -> PlantHarvestingSpeed
                 }
 
                 yield return ins;
             }
         }
 
-        public static IEnumerable<CodeInstruction> Transpile_JobDriver_Mine_ResetTicksToPickHit(
-    IEnumerable<CodeInstruction> instructions)
+        public static IEnumerable<CodeInstruction> Transpile_JobDriver_Mine_ResetTicksToPickHit(IEnumerable<CodeInstruction> instructions)
         {
             var codes = new List<CodeInstruction>(instructions);
             bool injectedAtStart = false;
@@ -382,11 +373,12 @@ namespace SurvivalTools.HarmonyStuff
 
         public static void Prefix_JobDriver_Deconstruct_TickActionInterval(JobDriver_Deconstruct __instance)
         {
-            SurvivalToolUtility.TryDegradeTool(__instance.pawn, ST_StatDefOf.DeconstructionSpeed);
+            if (__instance?.pawn != null)
+                SurvivalToolUtility.TryDegradeTool(__instance.pawn, ST_StatDefOf.DeconstructionSpeed);
         }
 
         public static IEnumerable<CodeInstruction> Transpile_AffectRoof_Tick(
-    IEnumerable<CodeInstruction> instructions, MethodBase original)
+            IEnumerable<CodeInstruction> instructions, MethodBase original)
         {
             var code = instructions.ToList();
 
@@ -398,10 +390,8 @@ namespace SurvivalTools.HarmonyStuff
             if (displayToilField == null)
             {
                 if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                {
                     Log.Warning("[SurvivalTools] AffectRoof tick transpiler: could not find captured Toil field; passing through.");
-                }
-                foreach (var ins in code) yield return ins;   // <-- yield, not return
+                for (int i = 0; i < code.Count; i++) yield return code[i];
                 yield break;
             }
 
@@ -426,9 +416,8 @@ namespace SurvivalTools.HarmonyStuff
             }
         }
 
-        #endregion;
         // ---------- Modded JobDrivers ----------
-        #region Modded JobDrivers;
+
         public static IEnumerable<CodeInstruction> Transpile_JobDriver_Maintenance_MakeNewToils(IEnumerable<CodeInstruction> instructions)
         {
             var list = instructions.ToList();
@@ -497,25 +486,33 @@ namespace SurvivalTools.HarmonyStuff
 
         public static void Postfix_JobDriver_MineQuarry_Mine(JobDriver __instance, Toil __result)
         {
+            if (__instance == null || __result == null) return;
+
             var tickAction = __result.tickAction;
             var pawn = __instance.pawn;
 
             __result.tickAction = () =>
             {
-                SurvivalToolUtility.TryDegradeTool(pawn, ST_StatDefOf.DiggingSpeed);
+                if (pawn != null)
+                    SurvivalToolUtility.TryDegradeTool(pawn, ST_StatDefOf.DiggingSpeed);
                 tickAction?.Invoke();
             };
 
-            __result.defaultDuration = (int)Mathf.Clamp(3000f / pawn.GetStatValue(ST_StatDefOf.DiggingSpeed), 500f, 10000f);
+            if (pawn != null)
+                __result.defaultDuration = (int)Mathf.Clamp(3000f / pawn.GetStatValue(ST_StatDefOf.DiggingSpeed), 500f, 10000f);
         }
 
         public static void Postfix_JobDriver_UpgradeTurret_Upgrade(JobDriver __instance, Toil __result)
         {
+            if (__instance == null || __result == null) return;
+
             var tickAction = __result.tickAction;
             var pawn = __instance.pawn;
+
             __result.tickAction = () =>
             {
-                SurvivalToolUtility.TryDegradeTool(pawn, StatDefOf.ConstructionSpeed);
+                if (pawn != null)
+                    SurvivalToolUtility.TryDegradeTool(pawn, StatDefOf.ConstructionSpeed);
                 tickAction?.Invoke();
             };
         }
@@ -530,7 +527,7 @@ namespace SurvivalTools.HarmonyStuff
 
         public static void Postfix_CombatExtended_CompInventory_CanFitInInventoryThing(ThingComp __instance, ref bool __result, Thing thing, ref int count)
         {
-            if (__result && thing is SurvivalTool && __instance.parent is Pawn pawn && !pawn.CanCarryAnyMoreSurvivalTools())
+            if (__result && thing is SurvivalTool && __instance?.parent is Pawn pawn && !pawn.CanCarryAnyMoreSurvivalTools())
             {
                 count = 0;
                 __result = false;
@@ -539,12 +536,11 @@ namespace SurvivalTools.HarmonyStuff
 
         public static void Postfix_CombatExtended_CompInventory_CanFitInInventoryThingDef(ThingComp __instance, ref bool __result, ThingDef thingDef, ref int count)
         {
-            if (__result && typeof(SurvivalTool).IsAssignableFrom(thingDef.thingClass) && __instance.parent is Pawn pawn && !pawn.CanCarryAnyMoreSurvivalTools())
+            if (__result && thingDef != null && typeof(SurvivalTool).IsAssignableFrom(thingDef.thingClass) && __instance?.parent is Pawn pawn && !pawn.CanCarryAnyMoreSurvivalTools())
             {
                 count = 0;
                 __result = false;
             }
         }
-        #endregion;
     }
 }

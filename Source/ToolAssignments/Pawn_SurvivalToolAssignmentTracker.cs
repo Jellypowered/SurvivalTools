@@ -1,97 +1,123 @@
-﻿using Verse;
+﻿// Rimworld 1.6 / C# 7.3
+// Pawn_SurvivalToolAssignmentTracker.cs
+using Verse;
 using RimWorld;
 
 namespace SurvivalTools
 {
+    /// <summary>
+    /// Per-pawn component that stores the current survival tool assignment,
+    /// forced tool state, and optimization cooldown bookkeeping.
+    /// </summary>
     public class Pawn_SurvivalToolAssignmentTracker : ThingComp
     {
         private SurvivalToolAssignment _currentAssignment;
         public SurvivalToolForcedHandler forcedHandler;
-        private int _lastOptimizedTick = -99999;
-        private int _customOptimizeInterval = -1;
 
+        private int _lastOptimizedTick = -99999;   // last time we "optimized"
+        private int _customOptimizeInterval = -1;  // next-interval override (randomized window), -1 = use default
+
+        /// <summary>
+        /// Current survival tool assignment for this pawn.
+        /// Lazily falls back to the database default if unset or invalid.
+        /// </summary>
         public SurvivalToolAssignment CurrentSurvivalToolAssignment
         {
             get
             {
                 if (_currentAssignment == null)
                 {
-                    // Lazy-initialize to the default global assignment
                     _currentAssignment = Current.Game?.GetComponent<SurvivalToolAssignmentDatabase>()?.DefaultSurvivalToolAssignment();
                 }
                 return _currentAssignment;
             }
-            set => _currentAssignment = value;
+            set
+            {
+                _currentAssignment = value;
+            }
         }
 
+        /// <summary>
+        /// Whether the optimizer should run again now.
+        /// Uses a longer interval when AutoTool is enabled (we opportunistically pick up tools anyway),
+        /// and a shorter interval when AutoTool is disabled (we rely on periodic optimization more).
+        /// </summary>
         public bool NeedsOptimization
         {
             get
             {
                 int optimizeInterval;
 
-                // Use custom interval if set, otherwise use setting-based default
                 if (_customOptimizeInterval > 0)
                 {
                     optimizeInterval = _customOptimizeInterval;
                 }
                 else
                 {
-                    // Use different optimization intervals based on AutoTool setting
+                    // ~24 in-game hours with AutoTool, ~1 hour otherwise
                     optimizeInterval = (SurvivalTools.Settings?.autoTool == true)
-                        ? 60000  // ~24 hours when AutoTool is enabled
-                        : GenDate.TicksPerHour; // ~1 hour when AutoTool is disabled
+                        ? 60000
+                        : GenDate.TicksPerHour;
                 }
 
-                return Find.TickManager.TicksGame > _lastOptimizedTick + optimizeInterval;
+                // Use subtraction to avoid wrap-related edge cases
+                return Find.TickManager.TicksGame - _lastOptimizedTick > optimizeInterval;
             }
         }
 
+        /// <summary>
+        /// Marks optimization as completed and (optionally) schedules the next window.
+        /// </summary>
         public void Optimized(int minTicks = -1, int maxTicks = -1)
         {
             _lastOptimizedTick = Find.TickManager.TicksGame;
 
-            // If specific timing is provided, use it for the next optimization check
             if (minTicks > 0 && maxTicks > 0)
             {
                 _customOptimizeInterval = Rand.Range(minTicks, maxTicks);
             }
             else
             {
-                _customOptimizeInterval = -1; // Reset to use default behavior
+                _customOptimizeInterval = -1; // revert to default cadence
             }
         }
 
         public override void Initialize(CompProperties props)
         {
             base.Initialize(props);
-            forcedHandler = new SurvivalToolForcedHandler();
+            // Ensure forced handler always exists
+            if (forcedHandler == null)
+                forcedHandler = new SurvivalToolForcedHandler();
         }
 
         public override void PostExposeData()
         {
             base.PostExposeData();
+
             Scribe_References.Look(ref _currentAssignment, "currentAssignment");
             Scribe_Deep.Look(ref forcedHandler, "forcedHandler");
             Scribe_Values.Look(ref _lastOptimizedTick, "lastOptimizedTick", -99999);
             Scribe_Values.Look(ref _customOptimizeInterval, "customOptimizeInterval", -1);
 
-            // Post-load initialization for older saves
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
-                if (forcedHandler == null) forcedHandler = new SurvivalToolForcedHandler();
+                // Defensive: never leave this null after load
+                if (forcedHandler == null)
+                    forcedHandler = new SurvivalToolForcedHandler();
 
-                // Validate that the assignment still exists
+                // Validate the saved assignment still exists in the db; if not, fall back to default on next access
                 if (_currentAssignment != null)
                 {
                     var db = Current.Game?.GetComponent<SurvivalToolAssignmentDatabase>();
-                    if (db?.AllSurvivalToolAssignments?.Contains(_currentAssignment) != true)
+                    if (db == null || db.AllSurvivalToolAssignments == null || !db.AllSurvivalToolAssignments.Contains(_currentAssignment))
                     {
                         if (SurvivalToolUtility.IsDebugLoggingEnabled)
                         {
-                            Log.Warning($"[SurvivalTools] Pawn {parent} had invalid tool assignment, resetting to default");
+                            var pawn = parent as Pawn;
+                            var who = pawn?.LabelShort ?? parent?.ToString() ?? "unknown pawn";
+                            Log.Warning($"[SurvivalTools] {who} had an invalid survival tool assignment; resetting to default.");
                         }
-                        _currentAssignment = null; // Will be lazy-loaded to default
+                        _currentAssignment = null; // lazy default on next get
                     }
                 }
             }

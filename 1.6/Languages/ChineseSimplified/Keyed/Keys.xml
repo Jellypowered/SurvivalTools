@@ -4,6 +4,8 @@
   <ToolInUse>（使用中）</ToolInUse>
   <!-- Settings -->
   <SurvivalToolsSettingsCategory>基础工具</SurvivalToolsSettingsCategory>
+  <Settings_BasicSection>基本设置</Settings_BasicSection>
+  <Settings_DebugSection>调试设置</Settings_DebugSection>
   <Settings_HardcoreMode>极限模式</Settings_HardcoreMode>
   <Settings_HardcoreMode_Tooltip>大幅提升游戏难度，使工具成为生存必需品。没有合适的工具，殖民者将无法有效执行大多数工作任务。工具磨损速度也会增加50%，需要更频繁的更换和更好的工具管理。将游戏转变为真正依赖工具的生存体验。</Settings_HardcoreMode_Tooltip>
   <Settings_ExtraHardcoreMode>超极限模式</Settings_ExtraHardcoreMode>
@@ -25,6 +27,8 @@
   <Settings_ToolOptimization_Tooltip>启用智能工具管理，殖民者会自动选择并携带最有效的工具来完成分配的工作。他们会根据需要升级到更好的工具并丢弃劣质的工具。如果您更喜欢手动工具控制或遇到模组材料的性能问题，请禁用此功能。</Settings_ToolOptimization_Tooltip>
   <Settings_PickupFromStorageOnly>限制从储存区域获取工具</Settings_PickupFromStorageOnly>
   <Settings_PickupFromStorageOnly_Tooltip>启用时，殖民者只能从指定的储存区域获取工具，保持更好的组织性并防止他们从工作区域抓取工具。禁用时，他们可以拾取家园区域中任何可访问的工具（排除被禁止或燃烧的物品），提供更多灵活性但控制性较少。</Settings_PickupFromStorageOnly_Tooltip>
+  <Settings_AllowPacifistEquip>允许和平主义者装备生存工具</Settings_AllowPacifistEquip>
+  <Settings_AllowPacifistEquip_Tooltip>允许和平主义殖民者装备被归类为武器的生存工具（如斧头、镐或刀具）。虽然这些工具具有战斗能力，但它们对于诸如砍伐树木、采矿或食物准备等工作任务至关重要。启用时，和平主义者可以使用这些工具进行生产性工作，同时仍然拒绝参与暴力。</Settings_AllowPacifistEquip_Tooltip>
   <Settings_DebugLogging>启用详细调试日志</Settings_DebugLogging>
   <Settings_DebugLogging_Tooltip>激活工具选择决策、自动拾取行为和工作-工具匹配逻辑的全面日志记录。对于故障排除工具问题或了解殖民者为什么选择特定工具至关重要。仅建议用于模组开发或遇到工具相关问题时使用。大量日志输出可能影响性能。</Settings_DebugLogging_Tooltip>
   <Settings_AutoTool>智能工作前工具拾取</Settings_AutoTool>
@@ -51,4 +55,46 @@
   <SurvivalToolAssignmentInUse>{0}正在使用工具配置</SurvivalToolAssignmentInUse>
   <NoSurvivalToolAssignmentSelected>没有选择工具配置</NoSurvivalToolAssignmentSelected>
   <ForcedSurvivalTools>强制工具</ForcedSurvivalTools>
+
+  <!-- Settings -->
+  <Settings_CompatLogging>启用兼容性调试日志</Settings_CompatLogging>
+  <Settings_CompatLogging_Tooltip>激活模组兼容性系统的详细日志记录，包括Research Reinvented集成、统计检测和WorkGiver连线。显示兼容性设置和集成过程的逐步信息。仅在启用常规调试日志记录时显示。对诊断模组交互问题很有用。</Settings_CompatLogging_Tooltip>
+
+  <!-- Resizable Settings Window -->
+  <Settings_EnhancedWindowDescription>点击下方按钮打开增强的可调整大小设置窗口，包含所有模组选项。</Settings_EnhancedWindowDescription>
+  <Settings_OpenEnhancedButton>打开增强设置</Settings_OpenEnhancedButton>
+
+  <!-- Job Requirements Table -->
+  <JobTable_JobTypes>工作类型</JobTable_JobTypes>
+  <JobTable_JobType>工作类型</JobTable_JobType>
+  <JobTable_NormalMode>普通模式</JobTable_NormalMode>
+  <JobTable_HardcoreMode>极限模式</JobTable_HardcoreMode>
+  <JobTable_ExtraHardcore>超极限</JobTable_ExtraHardcore>
+  <JobTable_Enhanced>增强</JobTable_Enhanced>
+  <JobTable_Required>必需</JobTable_Required>
+  <JobTable_NoJobsFound>未找到工具增强的工作。</JobTable_NoJobsFound>
+  <JobTable_SectionTitle>各模式下的工作工具需求</JobTable_SectionTitle>
+  <JobTable_SectionTooltip>此表显示不同工作类型在各种难度模式下的行为。'增强'意味着工具提供奖励但不是必需的。'必需'意味着工具是执行工作所必需的。使用此表了解根据当前设置您的殖民者需要哪些工具。</JobTable_SectionTooltip>
+
+  <!-- Job Table Headers -->
+  <JobTable_Normal>普通</JobTable_Normal>
+  <JobTable_Hardcore>硬核</JobTable_Hardcore>
+  <JobTable_ExtraHardcore>极限硬核</JobTable_ExtraHardcore>
+
+  <!-- Resizable Settings Window -->
+  <Settings_EnhancedWindowDescription>点击下面的按钮打开带有所有模组选项的增强可调整大小设置窗口。</Settings_EnhancedWindowDescription>
+  <Settings_OpenEnhancedButton>打开增强设置</Settings_OpenEnhancedButton>
+
+  <!-- Mod Compatibility -->
+  <Compat_ResearchReinvented>重新发明的研究</Compat_ResearchReinvented>
+  <Compat_FieldResearch>实地研究</Compat_FieldResearch>
+  <Compat_ReinventedResearchAlert>重新发明的研究</Compat_ReinventedResearchAlert>
+
+</LanguageData>
+
+<!-- Mod Compatibility -->
+<Compat_ResearchReinvented>重新发明的研究</Compat_ResearchReinvented>
+<Compat_FieldResearch>野外研究</Compat_FieldResearch>
+<Compat_ReinventedResearchAlert>重新发明的研究</Compat_ReinventedResearchAlert>
+
 </LanguageData>

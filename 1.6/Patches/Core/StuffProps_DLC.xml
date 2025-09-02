@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Patch>
+    <!-- DLC materials require conditional patches -->
+    <Operation Class="PatchOperationSequence">
+        <operations>
+            <!-- WoolMastodon from Odyssey DLC -->
+            <li Class="PatchOperationConditional">
+                <xpath>/Defs/ThingDef[defName="WoolMastodon"]</xpath>
+                <match Class="PatchOperationAdd">
+                    <xpath>/Defs/ThingDef[defName="WoolMastodon"]</xpath>
+                    <value>
+                        <stuffProps>
+                            <statFactors>
+                                <StuffPower_Armor_Sharp>0.85</StuffPower_Armor_Sharp>
+                            </statFactors>
+                        </stuffProps>
+                    </value>
+                </match>
+            </li>
+
+            <!-- WoolMuskox from Odyssey DLC -->
+            <li Class="PatchOperationConditional">
+                <xpath>/Defs/ThingDef[defName="WoolMuskox"]</xpath>
+                <match Class="PatchOperationAdd">
+                    <xpath>/Defs/ThingDef[defName="WoolMuskox"]</xpath>
+                    <value>
+                        <stuffProps>
+                            <statFactors>
+                                <StuffPower_Armor_Sharp>0.9</StuffPower_Armor_Sharp>
+                            </statFactors>
+                        </stuffProps>
+                    </value>
+                </match>
+            </li>
+
+            <!-- BlocksVacstone from Odyssey DLC -->
+            <li Class="PatchOperationConditional">
+                <xpath>/Defs/ThingDef[defName="BlocksVacstone"]</xpath>
+                <match Class="PatchOperationAdd">
+                    <xpath>/Defs/ThingDef[defName="BlocksVacstone"]</xpath>
+                    <value>
+                        <stuffProps>
+                            <statFactors>
+                                <StuffPower_Armor_Sharp>1.3</StuffPower_Armor_Sharp>
+                            </statFactors>
+                        </stuffProps>
+                    </value>
+                </match>
+            </li>
+        </operations>
+    </Operation>
+</Patch>

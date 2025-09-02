@@ -6,6 +6,9 @@
     <!-- Settings -->
     <SurvivalToolsSettingsCategory>Überlebenswerkzeuge</SurvivalToolsSettingsCategory>
 
+    <Settings_BasicSection>Grundeinstellungen</Settings_BasicSection>
+    <Settings_DebugSection>Debug-Einstellungen</Settings_DebugSection>
+
     <Settings_HardcoreMode>Hardcore-Modus</Settings_HardcoreMode>
     <Settings_HardcoreMode_Tooltip>Erhöht die Schwierigkeit erheblich, indem Werkzeuge für das Überleben unverzichtbar werden. Ohne geeignete Werkzeuge können Kolonisten die meisten Arbeitsaufgaben nicht effektiv ausführen. Werkzeuge verschleißen auch 50% schneller und erfordern häufigeren Austausch und besseres Werkzeugmanagement. Verwandelt das Spiel in eine echte werkzeugabhängige Überlebenserfahrung.</Settings_HardcoreMode_Tooltip>
 
@@ -65,5 +68,50 @@
     <SurvivalToolAssignmentInUse>Werkzeugzuweisung wird von {0} verwendet</SurvivalToolAssignmentInUse>
     <NoSurvivalToolAssignmentSelected>Keine Werkzeugzuweisung ausgewählt</NoSurvivalToolAssignmentSelected>
     <ForcedSurvivalTools>Erzwungene Werkzeuge</ForcedSurvivalTools>
+
+    <!-- Settings -->
+    <Settings_CompatLogging>Kompatibilitäts-Debug-Protokollierung aktivieren</Settings_CompatLogging>
+    <Settings_CompatLogging_Tooltip>Aktiviert detaillierte Protokollierung für Mod-Kompatibilitätssysteme einschließlich Research Reinvented Integration, Statistikerkennung und WorkGiver-Verkabelung. Zeigt schrittweise Kompatibilitäts-Setup und Integrationsprozesse. Wird nur angezeigt, wenn die allgemeine Debug-Protokollierung aktiviert ist. Nützlich zur Diagnose von Problemen mit Mod-Interaktionen.</Settings_CompatLogging_Tooltip>
+
+    <!-- Resizable Settings Window -->
+    <Settings_EnhancedWindowDescription>Klicken Sie auf die Schaltfläche unten, um das erweiterte, größenveränderbare Einstellungsfenster mit allen Mod-Optionen zu öffnen.</Settings_EnhancedWindowDescription>
+    <Settings_OpenEnhancedButton>Erweiterte Einstellungen Öffnen</Settings_OpenEnhancedButton>
+
+    <!-- Job Requirements Table -->
+    <JobTable_JobTypes>Arbeitstypen</JobTable_JobTypes>
+    <JobTable_JobType>Arbeitstyp</JobTable_JobType>
+    <JobTable_NormalMode>Normaler Modus</JobTable_NormalMode>
+    <JobTable_HardcoreMode>Hardcore-Modus</JobTable_HardcoreMode>
+    <JobTable_ExtraHardcore>Extrem-Hardcore</JobTable_ExtraHardcore>
+    <JobTable_Enhanced>Verbessert</JobTable_Enhanced>
+    <JobTable_Required>Erforderlich</JobTable_Required>
+    <JobTable_NoJobsFound>Keine werkzeugverbesserten Arbeiten gefunden.</JobTable_NoJobsFound>
+    <JobTable_SectionTitle>Werkzeuganforderungen nach Modus</JobTable_SectionTitle>
+    <JobTable_SectionTooltip>Diese Tabelle zeigt, wie sich verschiedene Arbeitstypen in jedem Schwierigkeitsmodus verhalten. 'Verbessert' bedeutet, dass Werkzeuge Boni bieten, aber nicht erforderlich sind. 'Erforderlich' bedeutet, dass Werkzeuge zur Ausführung der Arbeit notwendig sind. Verwenden Sie dies, um zu verstehen, welche Werkzeuge Ihre Kolonisten basierend auf Ihren aktuellen Einstellungen benötigen.</JobTable_SectionTooltip>
+
+    <!-- Job Table Headers -->
+    <JobTable_Normal>Normal</JobTable_Normal>
+    <JobTable_Hardcore>Hardcore</JobTable_Hardcore>
+    <JobTable_ExtraHardcore>Extra Hardcore</JobTable_ExtraHardcore>
+
+    <!-- Pacifist Tool Settings -->
+    <Settings_AllowPacifistEquip>Pazifisten das Ausrüsten von Überlebenswerkzeugen erlauben</Settings_AllowPacifistEquip>
+    <Settings_AllowPacifistEquip_Tooltip>Erlaubt pazifistischen Kolonisten, Überlebenswerkzeuge auszurüsten, die als Waffen klassifiziert sind (wie Äxte, Spitzhacken oder Messer). Obwohl diese Werkzeuge Kampffähigkeiten haben, sind sie für Arbeitsaufgaben wie Baumfällung, Bergbau oder Nahrungszubereitung unverzichtbar. Wenn aktiviert, können Pazifisten diese Werkzeuge für produktive Arbeit verwenden, während sie sich weiterhin weigern, sich an Gewalt zu beteiligen.</Settings_AllowPacifistEquip_Tooltip>
+
+    <!-- Resizable Settings Window -->
+    <Settings_EnhancedWindowDescription>Klicken Sie auf die Schaltfläche unten, um das erweiterte, in der Größe veränderbare Einstellungsfenster mit allen Mod-Optionen zu öffnen.</Settings_EnhancedWindowDescription>
+    <Settings_OpenEnhancedButton>Erweiterte Einstellungen Öffnen</Settings_OpenEnhancedButton>
+
+    <!-- Mod Compatibility -->
+    <Compat_ResearchReinvented>Neu Erfundene Forschung</Compat_ResearchReinvented>
+    <Compat_FieldResearch>Feldforschung</Compat_FieldResearch>
+    <Compat_ReinventedResearchAlert>Neu Erfundene Forschung</Compat_ReinventedResearchAlert>
+
+</LanguageData>
+
+<!-- Mod Compatibility -->
+<Compat_ResearchReinvented>Forschung Neu Erfunden</Compat_ResearchReinvented>
+<Compat_FieldResearch>Feldforschung</Compat_FieldResearch>
+<Compat_ReinventedResearchAlert>Forschung Neu Erfunden</Compat_ReinventedResearchAlert>
 
 </LanguageData>

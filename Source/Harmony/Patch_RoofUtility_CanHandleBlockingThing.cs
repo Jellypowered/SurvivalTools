@@ -1,4 +1,6 @@
-﻿using HarmonyLib;
+﻿// Rimworld 1.6 / C# 7.3
+// Patch_RoofUtility_CanHandleBlockingThing.cs
+using HarmonyLib;
 using RimWorld;
 using Verse;
 
@@ -10,16 +12,25 @@ namespace SurvivalTools.HarmonyStuff
     {
         public static void Postfix(ref bool __result, Thing blocker, Pawn worker)
         {
-            if (!__result) return;                      // already false; nothing to do
-            if (worker == null) return;                 // no worker info
-            if (blocker?.def?.plant?.IsTree != true) return;
+            // Early outs
+            if (!__result) return;                         // vanilla already rejected
+            if (worker == null) return;                    // no worker
+            if (blocker?.def?.plant?.IsTree != true) return; // non-tree blockers are vanilla
 
-            // Use centralized tree felling check
+            // If pawn can't meet our tree-felling requirements, deny handling tree blockers.
             if (!worker.CanFellTrees())
             {
                 if (SurvivalToolUtility.IsDebugLoggingEnabled)
                 {
-                    Log.Message($"[SurvivalTools] {worker.LabelShort} cannot handle tree blocker {blocker.LabelShort} - missing tree felling tools");
+                    // Cooldown to avoid spam when many roof cells hit the same blocker.
+                    var key = $"RoofTreeBlock_{worker.ThingID}_{blocker.ThingID}";
+                    if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                    {
+                        // Use safe labels (LabelShort is fine on both Pawn/Thing but guard anyway)
+                        var w = worker.LabelShort ?? worker.LabelCap ?? "pawn";
+                        var b = blocker.LabelShort ?? blocker.def?.label ?? "tree";
+                        Log.Message($"[SurvivalTools] {w} cannot handle tree blocker {b} (missing tree-felling tools).");
+                    }
                 }
                 __result = false;
             }

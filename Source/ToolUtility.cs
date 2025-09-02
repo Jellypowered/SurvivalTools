@@ -1,3 +1,5 @@
+// RimWorld 1.6 / C# 7.3
+// Source/ToolUtility.cs
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
@@ -19,180 +21,295 @@ namespace SurvivalTools
         Hoe,
         Saw,
         Sickle,
-        Wrench
+        Wrench,
+        Cleaning,
+        Research,
+        Medical
     }
 
     /// <summary>
-    /// Provides utility methods for working with survival tools.
-    /// This class centralizes logic for tool identification, selection, and job-to-tool mapping.
+    /// Utility methods for survival tool identification, selection, and job-to-tool mapping.
     /// </summary>
     public static class ToolUtility
     {
-        #region Tool Identification
+        #region Kind <-> Stat mapping
+
+        private static readonly StatDef[] Stats_Pick = { ST_StatDefOf.DiggingSpeed };
+        private static readonly StatDef[] Stats_Axe = { ST_StatDefOf.TreeFellingSpeed };
+        private static readonly StatDef[] Stats_Hammer = { StatDefOf.ConstructionSpeed };
+        private static readonly StatDef[] Stats_Wrench = { ST_StatDefOf.MaintenanceSpeed, ST_StatDefOf.DeconstructionSpeed };
+        private static readonly StatDef[] Stats_Hoe = { ST_StatDefOf.SowingSpeed };
+        private static readonly StatDef[] Stats_Sickle = { ST_StatDefOf.PlantHarvestingSpeed };
+        private static readonly StatDef[] Stats_Cleaning = { ST_StatDefOf.CleaningSpeed };
+        private static readonly StatDef[] Stats_Research = { ST_StatDefOf.ResearchSpeed };
+        private static readonly StatDef[] Stats_Medical = { ST_StatDefOf.MedicalOperationSpeed, ST_StatDefOf.MedicalSurgerySuccessChance };
+        private static readonly StatDef[] Stats_Knife = { ST_StatDefOf.ButcheryFleshSpeed, ST_StatDefOf.ButcheryFleshEfficiency };
+        private static readonly StatDef[] Stats_Saw = { ST_StatDefOf.DeconstructionSpeed }; // optional alias for deconstruction
+
+        private static IEnumerable<StatDef> StatsForKind(STToolKind kind)
+        {
+            switch (kind)
+            {
+                case STToolKind.Pick: return Stats_Pick;
+                case STToolKind.Axe: return Stats_Axe;
+                case STToolKind.Hammer: return Stats_Hammer;
+                case STToolKind.Wrench: return Stats_Wrench;
+                case STToolKind.Hoe: return Stats_Hoe;
+                case STToolKind.Sickle: return Stats_Sickle;
+                case STToolKind.Cleaning: return Stats_Cleaning;
+                case STToolKind.Research: return Stats_Research;
+                case STToolKind.Medical: return Stats_Medical;
+                case STToolKind.Knife: return Stats_Knife;
+                case STToolKind.Saw: return Stats_Saw;
+                default: return Enumerable.Empty<StatDef>();
+            }
+        }
+
+        private static STToolKind KindForStats(IEnumerable<StatDef> stats)
+        {
+            if (stats == null) return STToolKind.None;
+            var set = new HashSet<StatDef>(stats.Where(s => s != null));
+
+            if (set.Overlaps(Stats_Pick)) return STToolKind.Pick;
+            if (set.Overlaps(Stats_Axe)) return STToolKind.Axe;
+            if (set.Overlaps(Stats_Sickle)) return STToolKind.Sickle;
+            if (set.Overlaps(Stats_Hoe)) return STToolKind.Hoe;
+            if (set.Overlaps(Stats_Hammer)) return STToolKind.Hammer;
+            if (set.Overlaps(Stats_Wrench)) return STToolKind.Wrench;
+            if (set.Overlaps(Stats_Cleaning)) return STToolKind.Cleaning;
+            if (set.Overlaps(Stats_Medical)) return STToolKind.Medical;
+            if (set.Overlaps(Stats_Research)) return STToolKind.Research;
+            if (set.Overlaps(Stats_Knife)) return STToolKind.Knife;
+            if (set.Overlaps(Stats_Saw)) return STToolKind.Saw;
+
+            return STToolKind.None;
+        }
+
+        private static bool Overlaps(this HashSet<StatDef> a, IEnumerable<StatDef> b) =>
+            b != null && b.Any(a.Contains);
+
+        #endregion
+
+        #region Tool identification
 
         /// <summary>
-        /// Determines the <see cref="STToolKind"/> of a given thing based on its defName.
+        /// Determine tool kind by defName/label and, for tool-stuff, by its SurvivalToolProperties stats.
         /// </summary>
-        /// <param name="t">The thing to check.</param>
-        /// <returns>The corresponding <see cref="STToolKind"/>, or <see cref="STToolKind.None"/> if it's not a recognized tool.</returns>
         public static STToolKind ToolKindOf(Thing t)
         {
             if (t == null || t.def == null) return STToolKind.None;
-            string dn = t.def.defName?.ToLowerInvariant() ?? string.Empty;
 
-            // Check specific names before generic ones to avoid incorrect matches (e.g., "pickaxe" as "axe").
-            if (dn.Contains("pickaxe") || dn.Contains("pick")) return STToolKind.Pick;
-            if (dn.Contains("sickle")) return STToolKind.Sickle;
-            if (dn.Contains("hammer") || dn.Contains("mallet")) return STToolKind.Hammer;
-            if (dn.Contains("wrench") || dn.Contains("prybar") || dn.Contains("primitivelever")) return STToolKind.Wrench;
-            if (dn.Contains("hatchet")) return STToolKind.Axe;
-            if (dn.Contains("axe")) return STToolKind.Axe;
-            if (dn.Contains("hoe")) return STToolKind.Hoe;
-            if (dn.Contains("saw")) return STToolKind.Saw;
-            if (dn.Contains("knife")) return STToolKind.Knife;
+            // Tool-stuff: infer kind from provided stats
+            if (t.def.IsToolStuff())
+            {
+                var props = t.def.GetModExtension<SurvivalToolProperties>();
+                if (props?.baseWorkStatFactors != null)
+                {
+                    var stats = props.baseWorkStatFactors.Where(m => m?.stat != null).Select(m => m.stat).ToList();
+                    var kindFromStats = KindForStats(stats);
+                    if (kindFromStats != STToolKind.None) return kindFromStats;
+                }
+            }
+
+            string dn = t.def.defName?.ToLowerInvariant() ?? string.Empty;
+            string label = t.def.label?.ToLowerInvariant() ?? string.Empty;
+            string s = (dn + " " + label);
+
+            // Specifics before generics (avoid "pickaxe" -> axe)
+            if (s.Contains("pickaxe") || s.Contains("pick")) return STToolKind.Pick;
+            if (s.Contains("sickle")) return STToolKind.Sickle;
+            if (s.Contains("hammer") || s.Contains("mallet")) return STToolKind.Hammer;
+            if (s.Contains("wrench") || s.Contains("prybar") || s.Contains("primitivelever")) return STToolKind.Wrench;
+            if (s.Contains("hatchet")) return STToolKind.Axe;
+            if (s.Contains("axe")) return STToolKind.Axe;
+            if (s.Contains("hoe")) return STToolKind.Hoe;
+            if (s.Contains("saw")) return STToolKind.Saw;
+            if (s.Contains("knife")) return STToolKind.Knife;
+
+            // Research
+            if (s.Contains("microscope") || s.Contains("telescope") || s.Contains("sextant") ||
+                s.Contains("calculator") || s.Contains("computer") || s.Contains("analyzer") ||
+                s.Contains("scanner") || s.Contains("spectrometer") || s.Contains("datapad") ||
+                s.Contains("tablet") || s.Contains("laptop")) return STToolKind.Research;
+
+            // Medical
+            if (s.Contains("scalpel") || s.Contains("forceps") || s.Contains("stethoscope") ||
+                s.Contains("syringe") || s.Contains("surgical") || s.Contains("medkit")) return STToolKind.Medical;
+
+            // Cleaning via properties on any ThingWithComps
+            var props2 = t.def.GetModExtension<SurvivalToolProperties>();
+            if (props2?.baseWorkStatFactors != null)
+            {
+                bool hasClean = props2.baseWorkStatFactors.Any(m => m?.stat == ST_StatDefOf.CleaningSpeed);
+                bool hasMed = props2.baseWorkStatFactors.Any(m => m?.stat == ST_StatDefOf.MedicalOperationSpeed || m?.stat == ST_StatDefOf.MedicalSurgerySuccessChance);
+                if (hasMed) return STToolKind.Medical;  // fix: medical should not fall through to cleaning
+                if (hasClean) return STToolKind.Cleaning;
+            }
+
+            // Traditional cleaning names
+            if (s.Contains("broom") || s.Contains("mop") || s.Contains("rags") ||
+                s.Contains("sponge") || s.Contains("towel")) return STToolKind.Cleaning;
+
+            // Known fabrics we patch as tool-stuff for cleaning/research/medical
+            if (dn == "cloth" || dn == "synthread" || dn == "devilstrandcloth" || dn == "hyperweave" ||
+                dn == "woolsheep" || dn == "woolalpaca" || dn == "woolmegasloth" || dn == "woolmuffalo" || dn == "woolbison")
+                return STToolKind.Cleaning;
 
             return STToolKind.None;
         }
 
         /// <summary>
-        /// Checks if a thing is a survival tool.
-        /// It first checks for the presence of a CompSurvivalTool component, then falls back to defName heuristics.
+        /// True if this Thing is a survival tool (real tool, tool-stuff, or recognized by name).
         /// </summary>
-        /// <param name="t">The thing to check.</param>
-        /// <returns>True if the thing is a survival tool, otherwise false.</returns>
         public static bool IsSurvivalTool(Thing t)
         {
             if (t == null || t.def == null) return false;
 
-            // Prefer comp detection for accuracy.
+            // Prefer comp detection (keeps compatibility without hard deps on the actual comp type)
             if (t is ThingWithComps twc && twc.AllComps.Any(c => c.GetType().Name.Contains("CompSurvivalTool")))
-            {
                 return true;
-            }
 
-            // Fallback for things without comps, using defName heuristics.
+            if (t.def.IsToolStuff())
+                return true;
+
             return ToolKindOf(t) != STToolKind.None;
         }
 
         #endregion
 
-        #region Job-to-Tool Mapping
+        #region Job -> ToolKind
 
         /// <summary>
-        /// Determines the expected tool kind for a given job.
-        /// This logic is central to deciding which tool a pawn should use for their current task.
+        /// Expected tool kind for a job. Prefers stat-based mapping, falls back to name heuristics.
         /// </summary>
-        /// <param name="pawn">The pawn performing the job.</param>
-        /// <param name="job">The job being performed.</param>
-        /// <returns>The expected <see cref="STToolKind"/> for the job.</returns>
         public static STToolKind ExpectedToolFor(Pawn pawn, Job job)
         {
             if (job?.def == null) return STToolKind.None;
 
-            string jobDefName = job.def.defName ?? string.Empty;
-            string driverClassName = job.def.driverClass?.Name ?? string.Empty;
-            string currentDriverName = pawn?.jobs?.curDriver?.GetType().Name ?? string.Empty;
+            // 1) Stat-based mapping (more reliable & mod-friendly)
+            var stats = SurvivalToolUtility.StatsForJob(job.def, pawn);
+            var kind = KindForStats(stats);
+            if (kind != STToolKind.None) return kind;
 
-            string searchString = (jobDefName + "|" + driverClassName + "|" + currentDriverName).ToLowerInvariant();
+            // 2) Heuristic fallback (names/driver)
+            string jn = job.def.defName ?? string.Empty;
+            string driver = job.def.driverClass?.Name ?? string.Empty;
+            string curDrv = pawn?.jobs?.curDriver?.GetType().Name ?? string.Empty;
+            string s = (jn + "|" + driver + "|" + curDrv).ToLowerInvariant();
 
-            // Mining & Drilling
-            if (searchString.Contains("mine") || searchString.Contains("drill"))
-                return STToolKind.Pick;
+            if (s.Contains("mine") || s.Contains("drill")) return STToolKind.Pick;
 
-            // Construction Family
-            if (searchString.Contains("construct") || searchString.Contains("frame") || searchString.Contains("smooth") ||
-                searchString.Contains("buildroof") || searchString.Contains("removeroof") || searchString.Contains("build") ||
-                searchString.Contains("deliver") || searchString.Contains("install"))
-                return STToolKind.Hammer;
+            if (s.Contains("construct") || s.Contains("frame") || s.Contains("smooth") ||
+                s.Contains("buildroof") || s.Contains("removeroof") || s.Contains("build") ||
+                s.Contains("deliver") || s.Contains("install")) return STToolKind.Hammer;
 
-            // Maintenance & Repair
-            if (searchString.Contains("repair") || searchString.Contains("maintain") || searchString.Contains("maintenance") ||
-                searchString.Contains("fixbroken") || searchString.Contains("tendmachine") || searchString.Contains("fix"))
-                return STToolKind.Wrench;
+            if (s.Contains("repair") || s.Contains("maintain") || s.Contains("maintenance") ||
+                s.Contains("fixbroken") || s.Contains("tendmachine") || s.Contains("fix")) return STToolKind.Wrench;
 
-            // Deconstruction
-            if (searchString.Contains("uninstall") || searchString.Contains("deconstruct") || searchString.Contains("teardown"))
-                return STToolKind.Wrench;
+            if (s.Contains("uninstall") || s.Contains("deconstruct") || s.Contains("teardown")) return STToolKind.Wrench;
 
-            // Plant Work
-            if (searchString.Contains("plantcut") || searchString.Contains("cutplant") || searchString.Contains("chop") || searchString.Contains("prune"))
-                return STToolKind.Sickle; // Plant cutting (changed from Axe to Sickle)
+            if (s.Contains("plantcut") || s.Contains("cutplant") || s.Contains("chop") || s.Contains("prune")) return STToolKind.Sickle;
+            if (s.Contains("sow") || s.Contains("plantsow") || s.Contains("plantgrow")) return STToolKind.Hoe;
+            if (s.Contains("harvest")) return STToolKind.Sickle;
 
-            if (searchString.Contains("sow") || searchString.Contains("plantsow") || searchString.Contains("plantgrow"))
-                return STToolKind.Hoe; // Sowing
+            if (s.Contains("clean") || s.Contains("sweep") || s.Contains("mop")) return STToolKind.Cleaning;
 
-            if (searchString.Contains("harvest"))
-                return STToolKind.Sickle; // Harvesting
+            if (s.Contains("medical") || s.Contains("surgery") || s.Contains("operate") ||
+                s.Contains("tend") || s.Contains("doctor")) return STToolKind.Medical;
+
+            if (s.Contains("research") || s.Contains("study") || s.Contains("analyze")) return STToolKind.Research;
 
             return STToolKind.None;
         }
 
         #endregion
 
-        #region Active Tool Selection
+        #region Active tool selection
 
         /// <summary>
-        /// Tries to find the most appropriate tool in a pawn's inventory for their current job.
+        /// Select the most appropriate inventory item for the pawn's current job.
+        /// Prefers items (tools or tool-stuff) that actually provide the expected stat(s).
         /// </summary>
-        /// <param name="pawn">The pawn to check.</param>
-        /// <returns>The best-suited tool, or null if no suitable tool is found.</returns>
         public static Thing TryGetActiveTool(Pawn pawn)
         {
-            if (pawn?.inventory?.innerContainer == null || pawn.jobs?.curJob == null)
-                return null;
+            var inv = pawn?.inventory?.innerContainer;
+            var job = pawn?.jobs?.curJob;
+            if (inv == null || job == null) return null;
 
-            STToolKind expectedKind = ExpectedToolFor(pawn, pawn.jobs.curJob);
+            var expectedKind = ExpectedToolFor(pawn, job);
             if (expectedKind == STToolKind.None) return null;
 
-            var inventory = pawn.inventory.innerContainer;
+            var wantedStats = StatsForKind(expectedKind).ToList();
 
-            // First pass: Exact match for the expected tool kind.
-            foreach (var tool in inventory)
+            // Pass A: tool-stuff (materials) with matching stats
+            foreach (var item in inv)
             {
-                if (IsSurvivalTool(tool) && ToolKindOf(tool) == expectedKind)
-                {
-                    return tool;
-                }
+                if (!item.def.IsToolStuff()) continue;
+                var props = item.def.GetModExtension<SurvivalToolProperties>();
+                if (props?.baseWorkStatFactors == null) continue;
+
+                if (props.baseWorkStatFactors.Any(m => m?.stat != null && wantedStats.Contains(m.stat)))
+                    return item;
             }
 
-            // Second pass: Targeted fallbacks for related tools.
-            if (expectedKind == STToolKind.Pick)
+            // Pass B: real tools that have the required stats
+            foreach (var item in inv)
             {
-                foreach (var tool in inventory)
-                {
-                    if (ToolKindOf(tool) == STToolKind.Pick) return tool;
-                }
+                if (!(item is SurvivalTool st)) continue;
+                if (st.WorkStatFactors.Any(m => m?.stat != null && wantedStats.Contains(m.stat)))
+                    return item;
             }
 
+            // Pass C: exact kind name heuristic
+            foreach (var item in inv)
+            {
+                if (IsSurvivalTool(item) && ToolKindOf(item) == expectedKind)
+                    return item;
+            }
+
+            // Pass D: soft fallbacks between related kinds (respect hardcore limits)
             if (expectedKind == STToolKind.Hoe)
             {
-                foreach (var tool in inventory)
-                {
-                    // Allow sickles for sowing if no hoe is available.
-                    if (IsSurvivalTool(tool) && ToolKindOf(tool) == STToolKind.Sickle) return tool;
-                }
+                foreach (var item in inv)
+                    if (IsSurvivalTool(item) && ToolKindOf(item) == STToolKind.Sickle) return item;
             }
 
-            if (expectedKind == STToolKind.Sickle)
+            if (expectedKind == STToolKind.Sickle && !SurvivalToolUtility.IsHardcoreModeEnabled)
             {
-                foreach (var tool in inventory)
-                {
-                    // In non-hardcore mode, allow hoes for plant cutting if no sickle is available.
-                    // In hardcore mode, only sickles can cut plants.
-                    if (!SurvivalToolUtility.IsHardcoreModeEnabled && IsSurvivalTool(tool) && ToolKindOf(tool) == STToolKind.Hoe)
-                        return tool;
-                }
+                foreach (var item in inv)
+                    if (IsSurvivalTool(item) && ToolKindOf(item) == STToolKind.Hoe) return item;
+            }
+
+            if (expectedKind == STToolKind.Pick)
+            {
+                foreach (var item in inv)
+                    if (ToolKindOf(item) == STToolKind.Pick) return item;
             }
 
             if (expectedKind == STToolKind.Hammer)
             {
-                foreach (var tool in inventory)
-                {
-                    if (ToolKindOf(tool) == STToolKind.Hammer) return tool;
-                }
+                foreach (var item in inv)
+                    if (ToolKindOf(item) == STToolKind.Hammer) return item;
             }
 
-            // If no suitable tool is found, return null.
+            if (expectedKind == STToolKind.Cleaning)
+            {
+                foreach (var item in inv)
+                    if (IsSurvivalTool(item) && ToolKindOf(item) == STToolKind.Cleaning) return item;
+            }
+
+            if (expectedKind == STToolKind.Medical)
+            {
+                foreach (var item in inv)
+                    if (IsSurvivalTool(item) && ToolKindOf(item) == STToolKind.Medical) return item;
+            }
+
+            if (expectedKind == STToolKind.Research)
+            {
+                foreach (var item in inv)
+                    if (IsSurvivalTool(item) && ToolKindOf(item) == STToolKind.Research) return item;
+            }
+
             return null;
         }
 

@@ -59,4 +59,7 @@
     <SurvivalTools_Multitool.label>Glitterwelt-Multitool</SurvivalTools_Multitool.label>
     <SurvivalTools_Multitool.description>Ein hochtechnologisches Universalwerkzeug, das häufig von Hausmechanoiden in Glitterwelt-Gesellschaften verwendet wird. Dieses fortgeschrittene Gerät passt sich nahtlos an jede Aufgabe an - Bau, Bergbau, Forstwirtschaft, Wartung, Abriss - und macht es zum ultimativen All-in-One-Überlebenswerkzeug. Obwohl für Mechanoiden entwickelt, ist es aufgrund physiologischer Ähnlichkeiten vollständig von Humanoiden verwendbar.</SurvivalTools_Multitool.description>
 
+    <SurvivalTools_PileOfRags.label>Lumpenhaufen</SurvivalTools_PileOfRags.label>
+    <SurvivalTools_PileOfRags.description>Ein einfaches Reinigungswerkzeug aus Lumpen und Stoffresten. Nützlich für grundlegende Reinigungsarbeiten, aber nutzt sich schnell ab.</SurvivalTools_PileOfRags.description>
+
 </LanguageData>

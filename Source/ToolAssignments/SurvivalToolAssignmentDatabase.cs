@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿//Rimworld 1.6 / C# 7.3
+//SurvivalToolsAssignmentDatabase.cs
+using System.Linq;
 using Verse;
 using RimWorld;
 using System.Collections.Generic;
@@ -49,6 +51,8 @@ namespace SurvivalTools
 
         public AcceptanceReport TryDelete(SurvivalToolAssignment toolAssignment)
         {
+            if (toolAssignment == null) return AcceptanceReport.WasRejected;
+
             // Block deletion if ANY alive pawn (on maps, caravans, temp maps, transport pods) is using it
             foreach (Pawn pawn in PawnsFinder.AllMapsWorldAndTemporary_Alive)
             {
@@ -80,43 +84,50 @@ namespace SurvivalTools
 
         private void GenerateStartingSurvivalToolAssignments()
         {
-            // Create a comprehensive "General Worker" assignment as the default
+            // --- Default "General Worker" (first entry) ---
             var staGeneral = MakeNewSurvivalToolAssignment();
-            staGeneral.label = "General Worker"; // This will be the default assignment
+            staGeneral.label = "General Worker";
             staGeneral.filter.SetDisallowAll();
 
-            // Add ALL tool types to the default assignment - let colonists use any appropriate tool
+            // Include EVERYTHING that has SurvivalToolProperties (real tools + tool-stuffs)
             foreach (ThingDef tDef in DefDatabase<ThingDef>.AllDefs)
             {
-                var toolProps = tDef.GetModExtension<SurvivalToolProperties>();
-                var tags = toolProps?.defaultSurvivalToolAssignmentTags;
-                if (tags == null) continue;
-
-                // Include ALL tools in the default assignment - this allows maximum flexibility
-                // Colonists will automatically pick up and use any tool that helps their assigned work
-                staGeneral.filter.SetAllow(tDef, true);
+                var props = tDef.GetModExtension<SurvivalToolProperties>();
+                if (props?.baseWorkStatFactors?.Any() == true)
+                    staGeneral.filter.SetAllow(tDef, true);
             }
 
+            // --- “Anything” ---
             var staAnything = MakeNewSurvivalToolAssignment();
             staAnything.label = "OutfitAnything".Translate();
-
-            // Create assignments for each category, but only if tools exist for that category
-            var assignmentsToCreate = new List<(string tag, string labelKey)>
+            staAnything.filter.SetDisallowAll();
+            // Allow all survival-tool defs + tool-stuffs (anything with SurvivalToolProperties)
+            foreach (ThingDef tDef in DefDatabase<ThingDef>.AllDefs)
             {
-                ("Constructor", "SurvivalToolAssignmentConstructor"),
-                ("Miner", "SurvivalToolAssignmentMiner"),
-                ("PlantWorker", "SurvivalToolAssignmentPlantWorker"),
-                ("Researcher", "SurvivalToolAssignmentResearcher"),
-                ("Cleaner", "SurvivalToolAssignmentCleaner"),
-                ("Medical", "SurvivalToolAssignmentMedical"),
-                ("Butcher", "SurvivalToolAssignmentButcher")
-            };
+                var props = tDef.GetModExtension<SurvivalToolProperties>();
+                if (props?.baseWorkStatFactors?.Any() == true)
+                    staAnything.filter.SetAllow(tDef, true);
+            }
+
+            // --- Category assignments (only if tools exist for that tag) ---
+            var assignmentsToCreate = new List<(string tag, string labelKey)>
+    {
+        ("Constructor", "SurvivalToolAssignmentConstructor"),
+        ("Miner", "SurvivalToolAssignmentMiner"),
+        ("PlantWorker", "SurvivalToolAssignmentPlantWorker"),
+        ("Researcher", "SurvivalToolAssignmentResearcher"),
+        ("Cleaner", "SurvivalToolAssignmentCleaner"),
+        ("Medical", "SurvivalToolAssignmentMedical"),
+        ("Butcher", "SurvivalToolAssignmentButcher")
+    };
 
             var createdAssignments = new Dictionary<string, SurvivalToolAssignment>();
 
-            foreach (var (tag, labelKey) in assignmentsToCreate)
+            foreach (var pair in assignmentsToCreate)
             {
-                // Check if any tools exist with this tag
+                var tag = pair.tag;
+                var labelKey = pair.labelKey;
+
                 bool hasToolsForTag = DefDatabase<ThingDef>.AllDefs.Any(tDef =>
                 {
                     var toolProps = tDef.GetModExtension<SurvivalToolProperties>();
@@ -132,7 +143,7 @@ namespace SurvivalTools
                 }
             }
 
-            // Now assign tools to the created assignments
+            // Assign tools to created tag sets
             foreach (ThingDef tDef in DefDatabase<ThingDef>.AllDefs)
             {
                 var toolProps = tDef.GetModExtension<SurvivalToolProperties>();
@@ -140,12 +151,8 @@ namespace SurvivalTools
                 if (tags == null) continue;
 
                 foreach (var tag in tags)
-                {
                     if (createdAssignments.TryGetValue(tag, out var assignment))
-                    {
                         assignment.filter.SetAllow(tDef, true);
-                    }
-                }
             }
 
             var staNothing = MakeNewSurvivalToolAssignment();

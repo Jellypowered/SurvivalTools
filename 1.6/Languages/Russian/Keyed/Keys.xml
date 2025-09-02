@@ -6,6 +6,9 @@
     <!-- Settings -->
     <SurvivalToolsSettingsCategory>Инструменты Выживания</SurvivalToolsSettingsCategory>
 
+    <Settings_BasicSection>Основные настройки</Settings_BasicSection>
+    <Settings_DebugSection>Настройки отладки</Settings_DebugSection>
+
     <Settings_HardcoreMode>Хардкор режим</Settings_HardcoreMode>
     <Settings_HardcoreMode_Tooltip>Значительно повышает сложность, делая инструменты жизненно важными для выживания. Без подходящих инструментов колонисты становятся неспособными эффективно выполнять большинство рабочих задач. Инструменты также изнашиваются на 50% быстрее, требуя более частой замены и лучшего управления инструментами. Превращает игру в настоящий зависимый от инструментов опыт выживания.</Settings_HardcoreMode_Tooltip>
 
@@ -65,5 +68,43 @@
     <SurvivalToolAssignmentInUse>Назначение инструмента используется {0}</SurvivalToolAssignmentInUse>
     <NoSurvivalToolAssignmentSelected>Назначение инструмента не выбрано</NoSurvivalToolAssignmentSelected>
     <ForcedSurvivalTools>Принудительные инструменты</ForcedSurvivalTools>
+
+    <!-- Settings -->
+    <Settings_CompatLogging>Включить отладочное логирование совместимости</Settings_CompatLogging>
+    <Settings_CompatLogging_Tooltip>Активирует подробное логирование для систем совместимости модов, включая интеграцию Research Reinvented, обнаружение статистики и проводку WorkGiver. Показывает пошаговые процессы настройки и интеграции совместимости. Отображается только при включенном общем отладочном логировании. Полезно для диагностики проблем с взаимодействием модов.</Settings_CompatLogging_Tooltip>
+
+    <!-- Resizable Settings Window -->
+    <Settings_EnhancedWindowDescription>Нажмите кнопку ниже, чтобы открыть улучшенное изменяемое окно настроек со всеми опциями мода.</Settings_EnhancedWindowDescription>
+    <Settings_OpenEnhancedButton>Открыть Улучшенные Настройки</Settings_OpenEnhancedButton>
+
+    <!-- Job Requirements Table -->
+    <JobTable_JobTypes>Типы работ</JobTable_JobTypes>
+    <JobTable_JobType>Тип работы</JobTable_JobType>
+    <JobTable_NormalMode>Обычный режим</JobTable_NormalMode>
+    <JobTable_HardcoreMode>Хардкор режим</JobTable_HardcoreMode>
+    <JobTable_ExtraHardcore>Экстремальный хардкор</JobTable_ExtraHardcore>
+    <JobTable_Enhanced>Улучшенный</JobTable_Enhanced>
+    <JobTable_Required>Требуется</JobTable_Required>
+    <JobTable_NoJobsFound>Не найдено работ, улучшенных инструментами.</JobTable_NoJobsFound>
+    <JobTable_SectionTitle>Требования к инструментам по режимам</JobTable_SectionTitle>
+    <JobTable_SectionTooltip>Эта таблица показывает, как различные типы работ ведут себя в каждом режиме сложности. 'Улучшенный' означает, что инструменты дают бонусы, но не требуются. 'Требуется' означает, что инструменты необходимы для выполнения работы. Используйте это, чтобы понять, какие инструменты понадобятся вашим колонистам в зависимости от текущих настроек.</JobTable_SectionTooltip>
+
+    <!-- Job Table Headers -->
+    <JobTable_Normal>Обычный</JobTable_Normal>
+    <JobTable_Hardcore>Хардкор</JobTable_Hardcore>
+    <JobTable_ExtraHardcore>Экстра Хардкор</JobTable_ExtraHardcore>
+
+    <!-- Resizable Settings Window -->
+    <Settings_EnhancedWindowDescription>Нажмите кнопку ниже, чтобы открыть расширенное окно настроек с изменяемым размером и всеми опциями мода.</Settings_EnhancedWindowDescription>
+    <Settings_OpenEnhancedButton>Открыть Расширенные Настройки</Settings_OpenEnhancedButton>
+
+    <!-- Mod Compatibility -->
+    <Compat_ResearchReinvented>Исследования Переосмысленные</Compat_ResearchReinvented>
+    <Compat_FieldResearch>Полевые Исследования</Compat_FieldResearch>
+    <Compat_ReinventedResearchAlert>Исследования Переосмысленные</Compat_ReinventedResearchAlert>
+
+    <!-- Pacifist Tool Settings -->
+    <Settings_AllowPacifistEquip>Разрешить пацифистам экипировать инструменты выживания</Settings_AllowPacifistEquip>
+    <Settings_AllowPacifistEquip_Tooltip>Позволяет пацифистским колонистам экипировать инструменты выживания, классифицированные как оружие (такие как топоры, кирки или ножи). Хотя эти инструменты обладают боевыми возможностями, они необходимы для рабочих задач, таких как рубка деревьев, добыча полезных ископаемых или приготовление пищи. При включении пацифисты могут использовать эти инструменты для продуктивной работы, продолжая отказываться от участия в насилии.</Settings_AllowPacifistEquip_Tooltip>
 
 </LanguageData>

@@ -38,47 +38,53 @@ COMMISSIONED ARTWORK SHOPPING LIST:
    - Used for research and intellectual work
    - Style: Primitive/neolithic appearance
 
+7. PileOfRags.png - Bundle of cleaning rags texture
+   - Should be ~64x64 pixels
+   - Collection of cloth pieces/rags bundled together
+   - Used for cleaning and basic maintenance work
+   - Style: Simple, practical appearance with fabric texture
+
 === INDUSTRIAL TIER TOOLS ===
 
-7. SteelKnife.png - Professional steel knife texture
+8. SteelKnife.png - Professional steel knife texture
    - Should be ~64x64 pixels
    - High-quality steel blade with ergonomic handle
    - Enhanced version of basic knife for precision work
    - Style: Clean, professional, industrial appearance
 
-8. CrosscutSaw.png - Industrial crosscut saw texture
+9. CrosscutSaw.png - Industrial crosscut saw texture
    - Should be ~64x64 pixels
    - Large toothed blade designed for lumber processing
    - Used for advanced construction and woodworking
    - Style: Heavy-duty, industrial tool appearance
 
-9. Wrench.png - Modern adjustable wrench tool texture
-   - Should be ~64x64 pixels
-   - Steel/metal appearance with adjustable jaw
-   - Used for mechanical repairs and construction
-   - Style: Similar to existing tools but more refined
+10. Wrench.png - Modern adjustable wrench tool texture
+    - Should be ~64x64 pixels
+    - Steel/metal appearance with adjustable jaw
+    - Used for mechanical repairs and construction
+    - Style: Similar to existing tools but more refined
 
 === PRECISION TIER TOOLS ===
 
-10. CarbidePick.png - Advanced carbide-tipped pickaxe texture
+11. CarbidePick.png - Advanced carbide-tipped pickaxe texture
     - Should be ~64x64 pixels
     - Pickaxe head with carbide-tipped edges (metallic shine)
     - Enhanced mining tool with superior durability
     - Style: High-tech, precision-engineered appearance
 
-11. PrecisionScalpel.png - Surgical scalpel texture
+12. PrecisionScalpel.png - Surgical scalpel texture
     - Should be ~64x64 pixels
     - Ultra-sharp surgical blade with precision handle
     - Used for advanced medical procedures
     - Style: Medical-grade, sterile, precise appearance
 
-12. PowerDrill.png - Motorized power drill texture
+13. PowerDrill.png - Motorized power drill texture
     - Should be ~64x64 pixels
     - Electric drill with motor housing and drill bit
     - Mechanized construction tool
     - Style: Modern power tool, industrial appearance
 
-13. Microscope.png - Scientific microscope texture
+14. Microscope.png - Scientific microscope texture
     - Should be ~64x64 pixels
     - Metal/glass optical instrument with precision optics
     - Used for research and scientific work
@@ -86,7 +92,7 @@ COMMISSIONED ARTWORK SHOPPING LIST:
 
 === SPACER TIER TOOLS ===
 
-14. GlitterworldMultitool.png - Advanced multitool texture
+15. GlitterworldMultitool.png - Advanced multitool texture
     - Should be ~64x64 pixels
     - Futuristic, high-tech universal tool
     - Ultimate all-in-one efficiency tool
@@ -107,5 +113,5 @@ COMMISSIONED ARTWORK SHOPPING LIST:
 - Maintain clear silhouettes for easy recognition at small sizes
 - Progressive visual complexity: Primitive → Industrial → Precision → Spacer
 
-TOTAL NEW TEXTURES NEEDED: 14
+TOTAL NEW TEXTURES NEEDED: 15
 PRIORITY: High (needed for mod completion)

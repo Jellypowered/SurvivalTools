@@ -6,6 +6,9 @@
     <!-- Settings -->
     <SurvivalToolsSettingsCategory>Outils de Survie</SurvivalToolsSettingsCategory>
 
+    <Settings_BasicSection>Paramètres de base</Settings_BasicSection>
+    <Settings_DebugSection>Paramètres de débogage</Settings_DebugSection>
+
     <Settings_HardcoreMode>Mode hardcore</Settings_HardcoreMode>
     <Settings_HardcoreMode_Tooltip>Augmente considérablement la difficulté en rendant les outils essentiels à la survie. Sans outils appropriés, les colons deviennent incapables d'exécuter efficacement la plupart des tâches de travail. Les outils s'usent aussi 50% plus rapidement, nécessitant un remplacement plus fréquent et une meilleure gestion des outils. Transforme le jeu en une véritable expérience de survie dépendante des outils.</Settings_HardcoreMode_Tooltip>
 
@@ -34,6 +37,9 @@
 
     <Settings_PickupFromStorageOnly>Restreindre la collecte d'outils aux zones de stockage</Settings_PickupFromStorageOnly>
     <Settings_PickupFromStorageOnly_Tooltip>Lorsqu'activé, les colons n'acquerront des outils que depuis les zones de stockage désignées, maintenant une meilleure organisation et les empêchant de saisir des outils depuis les zones de travail. Lorsque désactivé, ils peuvent ramasser n'importe quel outil accessible dans la zone Maison (excluant les objets interdits ou en feu), offrant plus de flexibilité mais moins de contrôle.</Settings_PickupFromStorageOnly_Tooltip>
+
+    <Settings_AllowPacifistEquip>Permettre aux pacifistes d'équiper des outils de survie</Settings_AllowPacifistEquip>
+    <Settings_AllowPacifistEquip_Tooltip>Permet aux colons pacifistes d'équiper des outils de survie classifiés comme armes (comme les haches, pics ou couteaux). Bien que ces outils aient des capacités de combat, ils sont essentiels pour les tâches de travail comme l'abattage d'arbres, l'extraction minière ou la préparation alimentaire. Lorsqu'activé, les pacifistes peuvent utiliser ces outils pour un travail productif tout en refusant de s'engager dans la violence.</Settings_AllowPacifistEquip_Tooltip>
 
     <Settings_DebugLogging>Activer la journalisation de débogage détaillée</Settings_DebugLogging>
     <Settings_DebugLogging_Tooltip>Active la journalisation complète des décisions de sélection d'outils, du comportement de collecte automatique et de la logique de correspondance travail-outil. Essentiel pour dépanner les problèmes d'outils ou comprendre pourquoi les colons choisissent des outils spécifiques. Recommandé seulement pour le développement de mods ou lors de problèmes liés aux outils. Peut affecter les performances avec une sortie de journalisation extensive.</Settings_DebugLogging_Tooltip>
@@ -65,5 +71,46 @@
     <SurvivalToolAssignmentInUse>L'assignation d'outil est utilisée par {0}</SurvivalToolAssignmentInUse>
     <NoSurvivalToolAssignmentSelected>Aucune assignation d'outil sélectionnée</NoSurvivalToolAssignmentSelected>
     <ForcedSurvivalTools>Outils forcés</ForcedSurvivalTools>
+
+    <!-- Settings -->
+    <Settings_CompatLogging>Activer la journalisation de débogage de compatibilité</Settings_CompatLogging>
+    <Settings_CompatLogging_Tooltip>Active la journalisation détaillée pour les systèmes de compatibilité de mods incluant l'intégration Research Reinvented, la détection de statistiques et le câblage WorkGiver. Affiche les processus étape par étape de configuration et d'intégration de compatibilité. Seulement affiché quand la journalisation de débogage générale est activée. Utile pour diagnostiquer les problèmes avec les interactions de mods.</Settings_CompatLogging_Tooltip>
+
+    <!-- Resizable Settings Window -->
+    <Settings_EnhancedWindowDescription>Cliquez sur le bouton ci-dessous pour ouvrir la fenêtre de paramètres améliorée et redimensionnable avec toutes les options du mod.</Settings_EnhancedWindowDescription>
+    <Settings_OpenEnhancedButton>Ouvrir les Paramètres Améliorés</Settings_OpenEnhancedButton>
+
+    <!-- Job Requirements Table -->
+    <JobTable_JobTypes>Types de Travaux</JobTable_JobTypes>
+    <JobTable_JobType>Type de Travail</JobTable_JobType>
+    <JobTable_NormalMode>Mode Normal</JobTable_NormalMode>
+    <JobTable_HardcoreMode>Mode Hardcore</JobTable_HardcoreMode>
+    <JobTable_ExtraHardcore>Hardcore Extrême</JobTable_ExtraHardcore>
+    <JobTable_Enhanced>Amélioré</JobTable_Enhanced>
+    <JobTable_Required>Requis</JobTable_Required>
+    <JobTable_NoJobsFound>Aucun travail amélioré par des outils trouvé.</JobTable_NoJobsFound>
+    <JobTable_SectionTitle>Exigences d'Outils par Mode</JobTable_SectionTitle>
+    <JobTable_SectionTooltip>Ce tableau montre comment les différents types de travaux se comportent dans chaque mode de difficulté. 'Amélioré' signifie que les outils apportent des bonus mais ne sont pas obligatoires. 'Obligatoire' signifie que les outils sont nécessaires pour effectuer le travail. Utilisez ceci pour comprendre quels outils vos colons auront besoin selon vos paramètres actuels.</JobTable_SectionTooltip>
+
+    <!-- Job Table Headers -->
+    <JobTable_Normal>Normal</JobTable_Normal>
+    <JobTable_Hardcore>Hardcore</JobTable_Hardcore>
+    <JobTable_ExtraHardcore>Super Hardcore</JobTable_ExtraHardcore>
+
+    <!-- Resizable Settings Window -->
+    <Settings_EnhancedWindowDescription>Cliquez sur le bouton ci-dessous pour ouvrir la fenêtre de paramètres améliorée et redimensionnable avec toutes les options du mod.</Settings_EnhancedWindowDescription>
+    <Settings_OpenEnhancedButton>Ouvrir les Paramètres Améliorés</Settings_OpenEnhancedButton>
+
+    <!-- Mod Compatibility -->
+    <Compat_ResearchReinvented>Recherche Réinventée</Compat_ResearchReinvented>
+    <Compat_FieldResearch>Recherche de Terrain</Compat_FieldResearch>
+    <Compat_ReinventedResearchAlert>Recherche Réinventée</Compat_ReinventedResearchAlert>
+
+</LanguageData>
+
+<!-- Mod Compatibility -->
+<Compat_ResearchReinvented>Recherche Réinventée</Compat_ResearchReinvented>
+<Compat_FieldResearch>Recherche de Terrain</Compat_FieldResearch>
+<Compat_ReinventedResearchAlert>Recherche Réinventée</Compat_ReinventedResearchAlert>
 
 </LanguageData>

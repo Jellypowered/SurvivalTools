@@ -6,6 +6,9 @@
     <!-- Settings -->
     <SurvivalToolsSettingsCategory>Survival Tools Reborn</SurvivalToolsSettingsCategory>
 
+    <Settings_BasicSection>Basic Settings</Settings_BasicSection>
+    <Settings_DebugSection>Debug Settings</Settings_DebugSection>
+
     <Settings_HardcoreMode>Hardcore mode</Settings_HardcoreMode>
     <Settings_HardcoreMode_Tooltip>Significantly increases difficulty by making tools essential for survival. Without proper tools, colonists become unable to perform most work tasks effectively. Tools also wear out 50% faster, requiring more frequent replacement and better tool management. Transforms the game into a true tool-dependent survival experience.</Settings_HardcoreMode_Tooltip>
 
@@ -33,8 +36,12 @@
     <Settings_ToolOptimization_Tooltip>Enables intelligent tool management where colonists automatically select and carry the most effective tools for their assigned work. They'll upgrade to better tools and drop inferior ones as needed. Disable this if you prefer manual tool control or experience performance issues with modded materials.</Settings_ToolOptimization_Tooltip>
     <Settings_PickupFromStorageOnly>Restrict tool pickup to storage areas</Settings_PickupFromStorageOnly>
     <Settings_PickupFromStorageOnly_Tooltip>When enabled, colonists will only acquire tools from designated storage zones, maintaining better organization and preventing them from grabbing tools from work areas. When disabled, they can pick up any accessible tool in the Home area (excluding forbidden or burning items), providing more flexibility but less control.</Settings_PickupFromStorageOnly_Tooltip>
+    <Settings_AllowPacifistEquip>Allow pacifists to equip survival tools</Settings_AllowPacifistEquip>
+    <Settings_AllowPacifistEquip_Tooltip>Permits pacifist colonists to equip survival tools that are classified as weapons (like axes, picks, or knives). While these tools have combat capabilities, they're essential for work tasks like tree felling, mining, or food preparation. When enabled, pacifists can use these tools for productive work while still refusing to engage in violence.</Settings_AllowPacifistEquip_Tooltip>
     <Settings_DebugLogging>Enable detailed debug logging</Settings_DebugLogging>
     <Settings_DebugLogging_Tooltip>Activates comprehensive logging of tool selection decisions, automatic pickup behavior, and job-tool matching logic. Essential for troubleshooting tool issues or understanding why colonists choose specific tools. Recommended only for mod development or when experiencing tool-related problems. May impact performance with extensive logging output.</Settings_DebugLogging_Tooltip>
+    <Settings_CompatLogging>Enable compatibility debug logging</Settings_CompatLogging>
+    <Settings_CompatLogging_Tooltip>Activates detailed logging for mod compatibility systems including Research Reinvented integration, stat detection, and WorkGiver wiring. Shows step-by-step compatibility setup and integration processes. Only shown when general debug logging is enabled. Useful for diagnosing issues with mod interactions.</Settings_CompatLogging_Tooltip>
     <Settings_AutoTool>Smart pre-work tool pickup</Settings_AutoTool>
     <Settings_AutoTool_Tooltip>Revolutionizes workflow efficiency by having colonists automatically acquire the optimal tool before starting any job. They'll intelligently swap tools, upgrade to better variants, and ensure they have the right equipment for maximum productivity. The cornerstone feature for seamless tool-based gameplay.</Settings_AutoTool_Tooltip>
 
@@ -62,5 +69,30 @@
     <SurvivalToolAssignmentInUse>Tool assignment is in use by {0}</SurvivalToolAssignmentInUse>
     <NoSurvivalToolAssignmentSelected>No tool assignment selected</NoSurvivalToolAssignmentSelected>
     <ForcedSurvivalTools>Forced tools</ForcedSurvivalTools>
+
+    <!-- Job Requirements Table -->
+    <JobTable_JobTypes>Job Types</JobTable_JobTypes>
+    <JobTable_JobType>Job Type</JobTable_JobType>
+    <JobTable_NormalMode>Normal Mode</JobTable_NormalMode>
+    <JobTable_HardcoreMode>Hardcore Mode</JobTable_HardcoreMode>
+    <JobTable_Enhanced>Enhanced</JobTable_Enhanced>
+    <JobTable_Required>Required</JobTable_Required>
+    <JobTable_NoJobsFound>No tool-enhanced jobs found.</JobTable_NoJobsFound>
+    <JobTable_SectionTitle>Job Tool Requirements by Mode</JobTable_SectionTitle>
+    <JobTable_SectionTooltip>This table shows how different job types behave in each difficulty mode. 'Enhanced' means tools provide bonuses but aren't required. 'Required' means tools are necessary to perform the job. Use this to understand which tools your colonists will need based on your current settings.</JobTable_SectionTooltip>
+
+    <!-- Job Table Headers -->
+    <JobTable_Normal>Normal</JobTable_Normal>
+    <JobTable_Hardcore>Hardcore</JobTable_Hardcore>
+    <JobTable_ExtraHardcore>Extra Hardcore</JobTable_ExtraHardcore>
+
+    <!-- Resizable Settings Window -->
+    <Settings_EnhancedWindowDescription>Click the button below to open the enhanced, resizable settings window with all mod options.</Settings_EnhancedWindowDescription>
+    <Settings_OpenEnhancedButton>Open Enhanced Settings</Settings_OpenEnhancedButton>
+
+    <!-- Mod Compatibility -->
+    <Compat_ResearchReinvented>Reinvented Research</Compat_ResearchReinvented>
+    <Compat_FieldResearch>Field Research</Compat_FieldResearch>
+    <Compat_ReinventedResearchAlert>Reinvented Research</Compat_ReinventedResearchAlert>
 
 </LanguageData>

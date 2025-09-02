@@ -55,6 +55,10 @@
     <SurvivalTools_PowerDrill.label>power drill</SurvivalTools_PowerDrill.label>
     <SurvivalTools_PowerDrill.description>A mechanized drilling tool powered by an internal motor, capable of boring through tough materials with precision and speed. The variable-speed motor and interchangeable bits make it invaluable for construction and mechanical work. Requires periodic maintenance to keep the motor running smoothly.</SurvivalTools_PowerDrill.description>
 
+    <!-- Cleaning Tools -->
+    <SurvivalTools_PileOfRags.label>pile of rags</SurvivalTools_PileOfRags.label>
+    <SurvivalTools_PileOfRags.description>A collection of cloth pieces bundled together for cleaning purposes. These simple rags are effective for basic cleaning tasks, though they wear out more quickly than proper cleaning tools. Essential for maintaining colony hygiene and cleanliness.</SurvivalTools_PileOfRags.description>
+
     <!-- Spacer Tools -->
     <SurvivalTools_Multitool.label>glitterworld multitool</SurvivalTools_Multitool.label>
     <SurvivalTools_Multitool.description>A high-tech universal tool commonly used by domestic mechanoids in glitterworld societies. This advanced device can seamlessly adapt to any task - construction, mining, forestry, maintenance, and deconstruction - making it the ultimate all-in-one survival tool. Though designed for mechanoids, it's perfectly usable by humanoids due to physiological similarities.</SurvivalTools_Multitool.description>

@@ -1,0 +1,279 @@
+// RimWorld 1.6 / C# 7.3
+// Source/HarmonyStuff/ResearchReinventedPatchLogger.cs
+//
+// Logs ThingDefs with SurvivalToolProperties and dumps Harmony patches that look
+// like they're from Research Reinvented. Intended for debug/compat troubleshooting.
+//
+// Usage: Enable SurvivalTools debug logging and compat logging to see output.
+// (SurvivalTools.Settings.debugLogging && SurvivalTools.Settings.compatLogging)
+//
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using HarmonyLib;
+using RimWorld;
+using Verse;
+
+namespace SurvivalTools.RRDE
+{
+    [StaticConstructorOnStartup]
+    public static class ResearchReinventedPatchLogger
+    {
+        static ResearchReinventedPatchLogger()
+        {
+            // Only run when debug/compat logging is enabled to avoid spamming logs.
+            bool debugEnabled = false;
+            try
+            {
+                // Try both general debug and compat-specific toggles if available
+                debugEnabled = (SurvivalToolUtility.IsDebugLoggingEnabled) ||
+                               (Compat.CompatAPI.IsCompatLoggingEnabled);
+            }
+            catch
+            {
+                // If anything throws while checking settings, default to false.
+                debugEnabled = false;
+            }
+
+            if (!debugEnabled)
+                return;
+
+            try
+            {
+                Log.Message("[SurvivalTools] ResearchReinventedPatchLogger: starting debug dump...");
+
+                // 1) Try to find the known RR methods and dump their patches
+                var rrTypeName = "PeteTimesSix.ResearchReinvented.Utilities.PawnExtensions, ResearchReinvented";
+                var rrType = Type.GetType(rrTypeName);
+
+                if (rrType != null)
+                {
+                    Log.Message($"[SurvivalTools] ResearchReinventedPatchLogger: Found type {rrType.FullName}.");
+
+                    TryDumpMethodPatches(rrType, "CanEverDoResearch");
+                    TryDumpMethodPatches(rrType, "CanNowDoResearch");
+                    DumpPatchesByHeuristics();
+                }
+                else
+                {
+                    Log.Message("[SurvivalTools] ResearchReinventedPatchLogger: ResearchReinvented PawnExtensions type not found - falling back to scanning all Harmony patches.");
+                    DumpAllLikelyRRPatches();
+                }
+
+                Log.Message("[SurvivalTools] ResearchReinventedPatchLogger: debug dump complete.");
+            }
+            catch (Exception e)
+            {
+                Log.Error($"[SurvivalTools] ResearchReinventedPatchLogger: failed during debug dump: {e}");
+            }
+        }
+
+        public static void DumpPatchesByHeuristics()
+        {
+            try
+            {
+                var methods = HarmonyLib.Harmony.GetAllPatchedMethods()?.ToList();
+                if (methods == null || methods.Count == 0)
+                {
+                    Log.Message("[SurvivalTools] DumpRRHeur: no patched methods found.");
+                    return;
+                }
+
+                var substrings = new[] { "research", "reinvent", "pete", "timesix" }; // case-insensitive
+                int foundTargets = 0;
+
+                foreach (var tgt in methods)
+                {
+                    var info = HarmonyLib.Harmony.GetPatchInfo(tgt);
+                    if (info == null) continue;
+
+                    var matches = new List<(HarmonyLib.Patch p, string kind)>();
+                    foreach (var p in info.Prefixes)
+                        if (PatchLooksLikeRR(p, substrings)) matches.Add((p, "PREFIX"));
+                    foreach (var p in info.Postfixes)
+                        if (PatchLooksLikeRR(p, substrings)) matches.Add((p, "POSTFIX"));
+                    foreach (var p in info.Transpilers)
+                        if (PatchLooksLikeRR(p, substrings)) matches.Add((p, "TRANSPILER"));
+
+                    if (matches.Count == 0) continue;
+
+                    foundTargets++;
+                    Log.Message($"[SurvivalTools] DumpRRHeur: target -> {tgt.FullDescriptionSafe()}");
+
+                    foreach (var (p, kind) in matches)
+                    {
+                        string pmDesc = p?.PatchMethod != null ? p.PatchMethod.FullDescriptionSafe() : "(unknown)";
+                        Log.Message($"   {kind}: {pmDesc} (owner={p.owner}, priority={p.priority}, index={p.index})");
+                    }
+                }
+
+                Log.Message($"[SurvivalTools] DumpRRHeur: found {foundTargets} target(s) with RR-like patches.");
+            }
+            catch (Exception e)
+            {
+                Log.Error($"[SurvivalTools] DumpRRHeur failed: {e}");
+            }
+
+            // helper
+            bool PatchLooksLikeRR(HarmonyLib.Patch p, string[] subs)
+            {
+                if (p == null) return false;
+                var owner = p.owner ?? string.Empty;
+                if (subs.Any(s => owner.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0)) return true;
+                var decl = p.PatchMethod?.DeclaringType;
+                var asm = decl?.Assembly?.GetName()?.Name ?? string.Empty;
+                var typeFull = decl?.FullName ?? string.Empty;
+                if (subs.Any(s => asm.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0)) return true;
+                if (subs.Any(s => typeFull.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0)) return true;
+                return false;
+            }
+        }
+        // Try to get a specific method by name from the given type and dump its patch info
+        private static void TryDumpMethodPatches(Type type, string methodName)
+        {
+            if (type == null || string.IsNullOrEmpty(methodName)) return;
+
+            try
+            {
+                var method = type.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
+                if (method == null)
+                {
+                    Log.Message($"[SurvivalTools] ResearchReinventedPatchLogger: method {type.FullName}.{methodName} not found.");
+                    return;
+                }
+
+                var patches = Harmony.GetPatchInfo(method);
+                if (patches == null)
+                {
+                    Log.Message($"[SurvivalTools] ResearchReinventedPatchLogger: No patches found on {type.FullName}.{methodName}");
+                    return;
+                }
+
+                Log.Message($"[SurvivalTools] Patches on {type.FullName}.{methodName}:");
+
+                foreach (var patch in patches.Postfixes)
+                    Log.Message($"  POSTFIX: {patch.PatchMethod.FullDescriptionSafe()} (Owner={patch.owner}, Priority={patch.priority}, Index={patch.index})");
+
+                foreach (var patch in patches.Prefixes)
+                    Log.Message($"  PREFIX: {patch.PatchMethod.FullDescriptionSafe()} (Owner={patch.owner}, Priority={patch.priority}, Index={patch.index})");
+
+                foreach (var patch in patches.Transpilers)
+                    Log.Message($"  TRANSPILER: {patch.PatchMethod.FullDescriptionSafe()} (Owner={patch.owner}, Priority={patch.priority}, Index={patch.index})");
+            }
+            catch (Exception e)
+            {
+                Log.Warning($"[SurvivalTools] ResearchReinventedPatchLogger: failed to dump patches for {type.FullName}.{methodName}: {e.Message}");
+            }
+        }
+
+        // Fallback: enumerate all patched methods and print patches that look like they come from RR
+        private static void DumpAllLikelyRRPatches()
+        {
+            try
+            {
+                var patchedMethods = Harmony.GetAllPatchedMethods()?.ToList();
+                if (patchedMethods == null || patchedMethods.Count == 0)
+                {
+                    Log.Message("[SurvivalTools] ResearchReinventedPatchLogger: no patched methods found at all.");
+                    return;
+                }
+
+                int found = 0;
+
+                foreach (var method in patchedMethods)
+                {
+                    var info = Harmony.GetPatchInfo(method);
+                    if (info == null) continue;
+
+                    var rrPatches = new List<(Patch patch, string kind)>();
+
+                    foreach (var p in info.Prefixes)
+                        if (IsLikelyRRPatch(p)) rrPatches.Add((p, "PREFIX"));
+                    foreach (var p in info.Postfixes)
+                        if (IsLikelyRRPatch(p)) rrPatches.Add((p, "POSTFIX"));
+                    foreach (var p in info.Transpilers)
+                        if (IsLikelyRRPatch(p)) rrPatches.Add((p, "TRANSPILER"));
+
+                    if (rrPatches.Count == 0) continue;
+
+                    found++;
+                    Log.Message($"[SurvivalTools] ResearchReinventedPatchLogger: RR-style patches on target -> {method.FullDescriptionSafe()}");
+
+                    foreach (var (patch, kind) in rrPatches)
+                    {
+                        Log.Message($"  {kind}: {patch.PatchMethod?.FullDescriptionSafe() ?? "(unknown)"} (Owner={patch.owner}, Priority={patch.priority}, Index={patch.index})");
+                    }
+                }
+
+                if (found == 0)
+                    Log.Message("[SurvivalTools] ResearchReinventedPatchLogger: No Research Reinvented-style patches found (owner/name filters).");
+                else
+                    Log.Message($"[SurvivalTools] ResearchReinventedPatchLogger: Found RR-style patches on {found} target(s).");
+            }
+            catch (Exception e)
+            {
+                Log.Error($"[SurvivalTools] ResearchReinventedPatchLogger: failed scanning all patches: {e}");
+            }
+        }
+
+        // Heuristic checks to see whether a Harmony.Patch likely originates from Research Reinvented
+        private static bool IsLikelyRRPatch(Patch p)
+        {
+            if (p == null) return false;
+
+            try
+            {
+                // 1) owner string often holds harmonyId passed when the author created the Harmony instance
+                if (!string.IsNullOrEmpty(p.owner) &&
+                    (p.owner.IndexOf("researchreinvented", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                     p.owner.IndexOf("petetimesix", StringComparison.OrdinalIgnoreCase) >= 0))
+                    return true;
+
+                // 2) fallback: inspect declaring assembly / type name of the patch method
+                var declType = p.PatchMethod?.DeclaringType;
+                var asmName = declType?.Assembly?.GetName()?.Name ?? string.Empty;
+                var typeFullName = declType?.FullName ?? string.Empty;
+
+                if (!string.IsNullOrEmpty(asmName) &&
+                    asmName.IndexOf("researchreinvented", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+
+                if (!string.IsNullOrEmpty(typeFullName) &&
+                    typeFullName.IndexOf("ResearchReinvented", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            }
+            catch
+            {
+                // ignore reflection failures and treat as non-match
+            }
+
+            return false;
+        }
+
+
+
+        // -------------------------
+        // Reflection helper methods
+        // -------------------------
+        private static string FullDescriptionSafe(this MethodBase mb)
+        {
+            if (mb == null) return "(null MethodBase)";
+            try
+            {
+                var decl = mb.DeclaringType != null ? mb.DeclaringType.FullName : "(no type)";
+                if (mb is MethodInfo mi)
+                {
+                    var paramDesc = string.Join(", ", mi.GetParameters().Select(p => p.ParameterType.Name + " " + p.Name));
+                    return $"{decl}.{mi.ReturnType.Name} {mi.Name}({paramDesc})";
+                }
+                var parms = string.Join(", ", mb.GetParameters().Select(p => p.ParameterType.Name));
+                return $"{decl}.{mb.Name}({parms})";
+            }
+            catch
+            {
+                return mb.ToString();
+            }
+        }
+    }
+}

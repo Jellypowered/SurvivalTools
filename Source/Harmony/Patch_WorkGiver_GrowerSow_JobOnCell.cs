@@ -1,3 +1,5 @@
+// RimWorld 1.6 / C# 7.3
+// Patch_WorkGiver_GrowerSow_JobOnCell.cs
 using HarmonyLib;
 using RimWorld;
 using Verse;
@@ -13,27 +15,27 @@ namespace SurvivalTools.HarmonyStuff
         {
             var job = __result;
             if (job == null) return;
+            if (job.def != JobDefOf.CutPlant) return;
 
-            // Must be a cut-plant job on a tree
             var thing = job.targetA.Thing;
-            if (job.def != JobDefOf.CutPlant || thing == null) return;
+            var plant = thing?.def?.plant;
+            if (plant == null || !plant.IsTree) return;
 
-            var plantDef = thing.def?.plant;
-            if (plantDef == null || !plantDef.IsTree) return;
-
-            // Use centralized tree felling check
+            // Use centralized tree-felling gate
             if (pawn != null && pawn.CanFellTrees())
             {
                 __result = new Job(ST_JobDefOf.FellTree, job.targetA);
+                return;
             }
-            else
+
+            // Block vanilla cut if requirements aren't met
+            __result = null;
+
+            if (SurvivalToolUtility.IsDebugLoggingEnabled && pawn != null)
             {
-                // Block the vanilla cut job if requirements aren't met
-                if (SurvivalToolUtility.IsDebugLoggingEnabled && pawn != null)
-                {
-                    Log.Message($"[SurvivalTools] {pawn.LabelShort} cannot cut tree {thing.LabelShort} - missing tree felling tools");
-                }
-                __result = null;
+                var key = $"ST_BlockSowCutTree_{pawn.ThingID}";
+                if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                    Log.Message($"[SurvivalTools] Blocked CutPlant on tree '{thing?.LabelShort ?? "unknown"}' for {pawn.LabelShort}: missing tree-felling tools.");
             }
         }
     }

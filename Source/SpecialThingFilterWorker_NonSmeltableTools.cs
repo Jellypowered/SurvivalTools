@@ -1,10 +1,17 @@
-﻿using Verse;
+﻿// RimWorld 1.6 / C# 7.3
+// Source/SpecialThingFilterWorker_NonSmeltableTools.cs
 using RimWorld;
+using Verse;
 
 namespace SurvivalTools
 {
+    /// <summary>
+    /// Stockpile filter that matches SurvivalTools which cannot be smelted.
+    /// </summary>
     public class SpecialThingFilterWorker_NonSmeltableTools : SpecialThingFilterWorker
     {
+        #region SpecialThingFilterWorker overrides
+
         public override bool Matches(Thing t)
         {
             if (t?.def == null) return false;
@@ -13,7 +20,8 @@ namespace SurvivalTools
 
         public override bool CanEverMatch(ThingDef def)
         {
-            if (def?.IsSurvivalTool() != true) return false;
+            if (def == null) return false;
+            if (!def.IsSurvivalTool()) return false;
 
             return IsInSurvivalToolCategory(def);
         }
@@ -24,20 +32,28 @@ namespace SurvivalTools
             return !def.smeltable && !def.MadeFromStuff;
         }
 
+        #endregion
+
+        #region Helpers
+
         private static bool IsInSurvivalToolCategory(ThingDef def)
         {
-            if (def.thingCategories.NullOrEmpty()) return false;
+            if (def?.thingCategories.NullOrEmpty() != false) return false;
 
             foreach (var thingCat in def.thingCategories)
             {
                 // Walk up the category hierarchy to check if it's under SurvivalTools
-                for (ThingCategoryDef cat = thingCat; cat != null; cat = cat.parent)
+                ThingCategoryDef cat = thingCat;
+                while (cat != null)
                 {
                     if (cat == ST_ThingCategoryDefOf.SurvivalTools)
                         return true;
+                    cat = cat.parent;
                 }
             }
             return false;
         }
+
+        #endregion
     }
 }

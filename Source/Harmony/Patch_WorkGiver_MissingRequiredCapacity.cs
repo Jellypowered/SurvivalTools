@@ -1,4 +1,6 @@
-﻿using HarmonyLib;
+﻿// RimWorld 1.6 / C# 7.3
+// Patch_WorkGiver_MissingRequiredCapacity.cs
+using HarmonyLib;
 using RimWorld;
 using Verse;
 
@@ -10,13 +12,28 @@ namespace SurvivalTools.HarmonyStuff
     {
         public static void Postfix(WorkGiver __instance, ref PawnCapacityDef __result, Pawn pawn)
         {
-            // Early exit if vanilla already set a blocker or pawn is null
+            // If vanilla already blocked, or no pawn/def, leave it alone.
             if (__result != null || pawn == null) return;
 
-            var required = __instance?.def?.GetModExtension<WorkGiverExtension>()?.requiredStats;
-            if (required?.Count > 0 && !pawn.MeetsWorkGiverStatRequirements(required))
+            var wgDef = __instance?.def;
+            var ext = wgDef?.GetModExtension<WorkGiverExtension>();
+            var required = ext?.requiredStats;
+
+            // Nothing to gate on.
+            if (required == null || required.Count == 0) return;
+
+            // Use the overload with WorkGiverDef context (helps consistency + any logging).
+            if (!pawn.MeetsWorkGiverStatRequirements(required, wgDef))
             {
                 __result = PawnCapacityDefOf.Manipulation;
+
+                // Cooldowned, low-noise debug (optional).
+                if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                {
+                    var key = $"ST_MissingCap_{pawn.ThingID}_{wgDef.defName}";
+                    if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                        Log.Message($"[SurvivalTools] Blocking {wgDef.defName} for {pawn.LabelShort}: missing required tool/stat → Manipulation capacity gate.");
+                }
             }
         }
     }

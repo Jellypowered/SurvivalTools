@@ -1,4 +1,8 @@
-﻿using System.Linq;
+﻿// RimWorld 1.6 / C# 7.3
+// Patch_SymbolResolver_AncientRuins_Resolve.cs
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using HarmonyLib;
 using RimWorld;
 using RimWorld.BaseGen;
@@ -11,11 +15,17 @@ namespace SurvivalTools.HarmonyStuff
     [HarmonyPatch(nameof(SymbolResolver_AncientRuins.Resolve))]
     public static class Patch_SymbolResolver_AncientRuins_Resolve
     {
+        // Favor cheaper stuff somewhat, but never zero weight.
         private static readonly SimpleCurve StuffMarketValueRemainderToCommonalityCurve = new SimpleCurve
         {
-            new CurvePoint(0f, SurvivalToolUtility.MapGenToolMaxStuffMarketValue * 0.1f),
-            new CurvePoint(SurvivalToolUtility.MapGenToolMaxStuffMarketValue, SurvivalToolUtility.MapGenToolMaxStuffMarketValue)
+            new CurvePoint(0f,   SurvivalToolUtility.MapGenToolMaxStuffMarketValue * 0.1f),
+            new CurvePoint(SurvivalToolUtility.MapGenToolMaxStuffMarketValue,
+                           SurvivalToolUtility.MapGenToolMaxStuffMarketValue)
         };
+
+        // Cache reflection once; fallback if unavailable.
+        private static readonly System.Reflection.MethodInfo MI_GenerateFromGaussian =
+            AccessTools.Method(typeof(QualityUtility), "GenerateFromGaussian");
 
         public static void Prefix(ResolveParams rp)
         {
@@ -26,47 +36,94 @@ namespace SurvivalTools.HarmonyStuff
             if (setMaker == null)
                 return;
 
-            var things = setMaker.Generate();
-            foreach (var thing in things)
+            List<Thing> things;
+            try
             {
-                // Custom quality generator (keep reflection to match older/internal signatures)
-                if (thing.TryGetComp<CompQuality>() is CompQuality qualityComp)
+                things = setMaker.Generate();
+            }
+            catch (Exception e)
+            {
+                Log.Warning($"[SurvivalTools] AncientRuins tool set generation failed: {e}");
+                return;
+            }
+
+            if (things == null || things.Count == 0)
+                return;
+
+            for (int i = 0; i < things.Count; i++)
+            {
+                var thing = things[i];
+                if (thing == null) continue;
+
+                try
                 {
-                    var mi = AccessTools.Method(typeof(QualityUtility), "GenerateFromGaussian");
-                    if (mi != null)
+                    // --- Quality ---
+                    var qComp = thing.TryGetComp<CompQuality>();
+                    if (qComp != null)
                     {
-                        // Arguments chosen to bias around Normal, allowing Poor/Awful occasionally.
-                        var qc = (QualityCategory)mi.Invoke(null, new object[] { 1f, QualityCategory.Normal, QualityCategory.Poor, QualityCategory.Awful });
-                        qualityComp.SetQuality(qc, ArtGenerationContext.Outsider);
+                        QualityCategory qc;
+                        if (MI_GenerateFromGaussian != null)
+                        {
+                            object res = MI_GenerateFromGaussian.Invoke(
+                                null, new object[] { 1f, QualityCategory.Normal, QualityCategory.Poor, QualityCategory.Awful });
+                            qc = res is QualityCategory q ? q : QualityUtility.GenerateQualityRandomEqualChance();
+                        }
+                        else
+                        {
+                            qc = QualityUtility.GenerateQualityRandomEqualChance();
+                        }
+                        qComp.SetQuality(qc, ArtGenerationContext.Outsider);
                     }
-                }
 
-                // Set stuff (only for stuff-made defs)
-                if (thing.def.MadeFromStuff)
-                {
-                    // All allowed stuffs with market value <= cap and not small-volume
-                    var allowed = GenStuff.AllowedStuffsFor(thing.def);
-                    var validStuff = DefDatabase<ThingDef>.AllDefsListForReading.Where(
-                        t => !t.smallVolume && t.IsStuff && allowed.Contains(t) && t.BaseMarketValue <= SurvivalToolUtility.MapGenToolMaxStuffMarketValue
-                    ).ToList();
-
-                    if (validStuff.Count > 0)
+                    // --- Stuff (if applicable and not already assigned) ---
+                    if (thing.def != null && thing.def.MadeFromStuff && thing.Stuff == null)
                     {
-                        var chosen = validStuff.RandomElementByWeight(t =>
-                            StuffMarketValueRemainderToCommonalityCurve.Evaluate(SurvivalToolUtility.MapGenToolMaxStuffMarketValue - t.BaseMarketValue) *
-                            (t.stuffProps?.commonality ?? 1f));
-                        thing.SetStuffDirect(chosen);
+                        var allowedEnum = GenStuff.AllowedStuffsFor(thing.def);
+                        var allowed = allowedEnum != null ? allowedEnum.ToList() : null;
+
+                        if (allowed != null && allowed.Count > 0)
+                        {
+                            var maxMV = SurvivalToolUtility.MapGenToolMaxStuffMarketValue;
+                            var valid = allowed.Where(t =>
+                                t != null &&
+                                t.IsStuff &&
+                                !t.smallVolume &&
+                                t.BaseMarketValue <= maxMV
+                            ).ToList();
+
+                            if (valid.Count > 0)
+                            {
+                                var chosen = valid.RandomElementByWeight(tdef =>
+                                {
+                                    float remainder = Mathf.Max(0f, maxMV - tdef.BaseMarketValue);
+                                    float baseW = StuffMarketValueRemainderToCommonalityCurve.Evaluate(remainder);
+                                    float common = Mathf.Max(0.0001f, tdef.stuffProps?.commonality ?? 1f);
+                                    return Mathf.Max(0.0001f, baseW * common);
+                                });
+
+                                if (chosen != null)
+                                    thing.SetStuffDirect(chosen);
+                            }
+                        }
                     }
-                }
 
-                // Set hit points
-                if (thing.def.useHitPoints)
+                    // --- HitPoints ---
+                    if (thing.def != null && thing.def.useHitPoints)
+                    {
+                        int hp = Mathf.RoundToInt(thing.MaxHitPoints *
+                                                  SurvivalToolUtility.MapGenToolHitPointsRange.RandomInRange);
+                        thing.HitPoints = Mathf.Clamp(hp, 1, thing.MaxHitPoints);
+                    }
+
+                    // --- Enqueue spawn ---
+                    var rpForThing = rp; // struct copy
+                    rpForThing.singleThingToSpawn = thing;
+                    BaseGen.symbolStack.Push("thing", rpForThing);
+                }
+                catch (Exception e)
                 {
-                    thing.HitPoints = Mathf.RoundToInt(thing.MaxHitPoints * SurvivalToolUtility.MapGenToolHitPointsRange.RandomInRange);
+                    Log.Warning($"[SurvivalTools] Skipped ancient-ruins tool '{thing?.def?.defName ?? "null"}' due to error: {e}");
                 }
-
-                rp.singleThingToSpawn = thing;
-                BaseGen.symbolStack.Push("thing", rp);
             }
         }
     }

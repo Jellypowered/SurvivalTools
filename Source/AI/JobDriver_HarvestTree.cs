@@ -1,6 +1,9 @@
-﻿using RimWorld;
+﻿//Rimworld 1.6 / C# 7.3
+// JobDriver_HarvestTree.cs
+using RimWorld;
 using Verse;
 using Verse.AI;
+using System;
 
 namespace SurvivalTools
 {
@@ -18,11 +21,37 @@ namespace SurvivalTools
             var t = new Toil();
             t.initAction = () =>
             {
-                var plant = ((Plant)job.targetA.Thing);
-                if (plant != null && !plant.Destroyed)
+                try
                 {
-                    // If your enum has 'Cut', use that; otherwise pick the appropriate one from your build.
-                    plant.PlantCollected(pawn, PlantDestructionMode.Cut);
+                    var plant = Plant; // use base property which is null-safe
+                    var actor = pawn;
+
+                    if (plant == null || plant.Destroyed || actor == null || actor.Destroyed)
+                    {
+                        return;
+                    }
+
+                    // Call PlantCollected in a guarded way — signature mismatches on some RW variants caused crashes previously.
+                    // We catch exceptions and only log when debug logging is enabled to avoid noisy spam.
+                    try
+                    {
+                        plant.PlantCollected(actor, PlantDestructionMode.Cut);
+                    }
+                    catch (Exception innerEx)
+                    {
+                        if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                        {
+                            Log.ErrorOnce($"[SurvivalTools] PlantCollected threw in JobDriver_HarvestTree for {plant} : {innerEx}", 9832174);
+                        }
+                        // Fallback: don't crash; we can't reliably emulate PlantCollected across versions here.
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                    {
+                        Log.ErrorOnce($"[SurvivalTools] Unexpected exception in HarvestTree PlantWorkDoneToil.initAction: {ex}", 9832175);
+                    }
                 }
             };
             t.defaultCompleteMode = ToilCompleteMode.Instant;

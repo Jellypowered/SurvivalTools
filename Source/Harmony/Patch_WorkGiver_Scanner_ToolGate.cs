@@ -1,3 +1,5 @@
+//Rimworld 1.6 / C# 7.3
+//Patch_WorkGiver_Scanner_ToolGate.cs
 using HarmonyLib;
 using RimWorld;
 using Verse;
@@ -32,22 +34,53 @@ namespace SurvivalTools.HarmonyStuff
             if (requiredStats.NullOrEmpty())
                 return true;
 
-            // EXCEPTION: Cleaning and butchery jobs are always allowed (just less effective without tools)
-            bool isCleaningJob = requiredStats.Contains(ST_StatDefOf.CleaningSpeed);
-            bool isButcheryJob = requiredStats.Contains(ST_StatDefOf.ButcheryFleshSpeed) ||
-                               requiredStats.Contains(ST_StatDefOf.ButcheryFleshEfficiency);
-            if (isCleaningJob || isButcheryJob)
-                return true;
-
-            if (pawn.MeetsWorkGiverStatRequirements(requiredStats, instance.def))
-                return true;
-
-            result = false;
-            if (SurvivalToolUtility.IsDebugLoggingEnabled)
+            // Check if any of the required stats would block this job
+            var settings = SurvivalTools.Settings;
+            foreach (var stat in requiredStats)
             {
-                Log.Message($"[SurvivalTools.ToolGate] {pawn.LabelShort} blocked from job {instance.def.defName} due to missing tool.");
+                // For optional stats, check extra hardcore mode settings
+                bool isOptionalStat = IsOptionalStat(stat);
+                bool shouldBlock = false;
+
+                if (isOptionalStat)
+                {
+                    // Optional stats only block in extra hardcore mode when specifically enabled
+                    if (settings.extraHardcoreMode && settings.IsStatRequiredInExtraHardcore(stat))
+                    {
+                        shouldBlock = true;
+                    }
+                }
+                else
+                {
+                    // Required stats always block in hardcore mode
+                    shouldBlock = true;
+                }
+
+                if (shouldBlock && !pawn.MeetsWorkGiverStatRequirements(new List<StatDef> { stat }, instance.def))
+                {
+                    result = false;
+                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                    {
+                        Log.Message($"[SurvivalTools.ToolGate] {pawn.LabelShort} blocked from job {instance.def.defName} due to missing tool for stat {stat.defName}.");
+                    }
+                    return false;
+                }
             }
-            return false;
+
+            return true;
+        }
+
+        /// <summary>
+        /// Checks if a stat is considered "optional" (cleaning, butchery, medical)
+        /// vs required (mining, construction, etc.)
+        /// </summary>
+        private static bool IsOptionalStat(StatDef stat)
+        {
+            return stat == ST_StatDefOf.CleaningSpeed ||
+                   stat == ST_StatDefOf.ButcheryFleshSpeed ||
+                   stat == ST_StatDefOf.ButcheryFleshEfficiency ||
+                   stat == ST_StatDefOf.MedicalOperationSpeed ||
+                   stat == ST_StatDefOf.MedicalSurgerySuccessChance;
         }
 
         private static List<StatDef> GetRequiredToolStats(WorkGiverDef wgDef)

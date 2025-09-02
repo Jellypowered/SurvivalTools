@@ -3,19 +3,24 @@ using System.Linq;
 using System.Text;
 using RimWorld;
 using Verse;
+using SurvivalTools.Compat;
 
 namespace SurvivalTools
 {
     public class Alert_ColonistNeedsSurvivalTool : Alert
     {
         private List<Pawn> _culprits;
+        private int _lastCulpritCalcTick = -9999;
+        private const int CulpritRecalcIntervalTicks = 60; // how often the list is refreshed (ticks)
 
         private List<Pawn> Culprits
         {
             get
             {
-                if (_culprits == null || Find.TickManager.TicksGame % 60 == 0)
+                int now = Find.TickManager.TicksGame;
+                if (_culprits == null || now - _lastCulpritCalcTick >= CulpritRecalcIntervalTicks)
                 {
+                    _lastCulpritCalcTick = now;
                     _culprits = PawnsFinder.AllMaps_FreeColonistsSpawned
                         .Where(p => p.Spawned && p.CanUseSurvivalTools() && IsWorkingToolless(p))
                         .ToList();
@@ -26,9 +31,12 @@ namespace SurvivalTools
 
         private static bool IsWorkingToolless(Pawn pawn)
         {
+            var settings = SurvivalTools.Settings;
+            if (settings == null) return false;
+
             // In hardcore mode, show alerts for all missing tools including optional ones (cleaning, butchery)
-            // In normal mode, only show alerts for tools that would actually block work
-            var stats = SurvivalTools.Settings?.hardcoreMode == true
+            // In normal mode, only show alerts for stats that would actually block work (skip purely optional cleaning/butchery)
+            var stats = settings.hardcoreMode
                 ? pawn.AssignedToolRelevantWorkGiversStatDefsForAlerts()
                 : pawn.AssignedToolRelevantWorkGiversStatDefs();
 
@@ -36,6 +44,21 @@ namespace SurvivalTools
 
             foreach (var stat in stats)
             {
+                // For normal (non-hardcore) mode: skip purely optional stats like cleaning/butchery.
+                if (!settings.hardcoreMode)
+                {
+                    if (stat == ST_StatDefOf.CleaningSpeed ||
+                        stat == ST_StatDefOf.ButcheryFleshSpeed ||
+                        stat == ST_StatDefOf.ButcheryFleshEfficiency)
+                    {
+                        continue;
+                    }
+                }
+
+                // If there are no tools in the game that provide this stat, skip it (avoid impossible alerts)
+                if (!SurvivalToolUtility.ToolsExistForStat(stat))
+                    continue;
+
                 if (!pawn.HasSurvivalToolFor(stat))
                     return true;
             }
@@ -58,7 +81,7 @@ namespace SurvivalTools
                     // Only include stats that have tools available and the pawn lacks them
                     if (SurvivalToolUtility.ToolsExistForStat(stat) && !pawn.HasSurvivalToolFor(stat))
                     {
-                        // Use custom labels based on stat categories rather than work type
+                        // Use a descriptive label based on stat category (more user-friendly)
                         var label = GetWorkTypeDisplayLabel(giver.def, ext.requiredStats);
                         types.Add(label);
                         break;
@@ -71,12 +94,17 @@ namespace SurvivalTools
 
         private static string GetWorkTypeDisplayLabel(WorkGiverDef workGiverDef, List<StatDef> requiredStats)
         {
-            // Check what kind of stats are required and return appropriate labels
+            if (requiredStats == null) return workGiverDef?.label ?? "work";
+
+            // Category checks
             var hasButcheryStats = requiredStats.Any(s => s == ST_StatDefOf.ButcheryFleshSpeed || s == ST_StatDefOf.ButcheryFleshEfficiency);
             var hasMedicalStats = requiredStats.Any(s => s == ST_StatDefOf.MedicalOperationSpeed || s == ST_StatDefOf.MedicalSurgerySuccessChance);
             var hasCleaningStats = requiredStats.Any(s => s == ST_StatDefOf.CleaningSpeed);
 
-            // Use descriptive labels based on the tool category rather than work type
+            // Research Reinvented compatibility stats
+            var hasResearchStats = requiredStats.Any(s => s?.defName == "ResearchSpeed");
+            var hasFieldResearchStats = requiredStats.Any(s => s?.defName == "FieldResearchSpeedMultiplier");
+
             if (hasButcheryStats)
                 return "butchering";
             if (hasMedicalStats)
@@ -84,7 +112,15 @@ namespace SurvivalTools
             if (hasCleaningStats)
                 return "cleaning";
 
-            // For other stats, use a generic description or fall back to work type
+            // Research Reinvented compatibility
+            if (hasFieldResearchStats && hasResearchStats)
+                return "field research";
+            if (hasFieldResearchStats)
+                return "field research";
+            if (hasResearchStats)
+                return "research";
+
+            // Specific stat fallbacks
             var stat = requiredStats.FirstOrDefault();
             if (stat == ST_StatDefOf.TreeFellingSpeed)
                 return "tree felling";
@@ -101,7 +137,10 @@ namespace SurvivalTools
             if (stat == ST_StatDefOf.MaintenanceSpeed)
                 return "maintenance";
 
-            // Fallback to work type label
+            // Safe fallback for possible null workGiverDef
+            if (workGiverDef == null)
+                return "work";
+
             return workGiverDef.workType?.gerundLabel ?? workGiverDef.label;
         }
 
@@ -123,7 +162,34 @@ namespace SurvivalTools
 
         public override string GetLabel()
         {
-            int count = Culprits.Count;
+            var culprits = Culprits;
+            int count = culprits.Count;
+
+            // Check if any culprits need Research Reinvented tools specifically
+            bool hasRRNeeds = false;
+            if (CompatAPI.IsResearchReinventedActive)
+            {
+                hasRRNeeds = culprits.Any(p =>
+                {
+                    var givers = p.AssignedToolRelevantWorkGivers();
+                    if (givers == null) return false;
+
+                    return givers.Any(g =>
+                    {
+                        var ext = g.def.GetModExtension<WorkGiverExtension>();
+                        return ext?.requiredStats?.Any(s =>
+                            s?.defName == "ResearchSpeed" ||
+                            s?.defName == "FieldResearchSpeedMultiplier") == true;
+                    });
+                });
+            }
+
+            // Use special title for Research Reinvented needs
+            if (hasRRNeeds)
+            {
+                return (count <= 1 ? "ColonistNeedsSurvivalTool" : "ColonistsNeedSurvivalTool").Translate(count) + " (" + "Compat_ReinventedResearchAlert".Translate() + ")";
+            }
+
             return (count <= 1 ? "ColonistNeedsSurvivalTool" : "ColonistsNeedSurvivalTool").Translate(count);
         }
 

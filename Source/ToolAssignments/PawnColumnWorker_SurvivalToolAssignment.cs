@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿// Rimworld 1.6 / C# 7.3
+// PawnColumnWorker_SurvivalToolAssignment.cs
+using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 using RimWorld;
@@ -34,14 +36,12 @@ namespace SurvivalTools
 
             float curX = rect.x;
 
-            // Dropdown: choose assignment
+            // Selection dropdown
             var ddRect = new Rect(curX, rect.y + 2f, leftWidth, rect.height - 4f);
             if (somethingIsForced) ddRect.width -= 4f + rightWidth;
 
-            var buttonLabel = tracker.CurrentSurvivalToolAssignment?.label ?? "Unnamed";
-            buttonLabel = buttonLabel.Truncate(ddRect.width);
+            var buttonLabel = (tracker.CurrentSurvivalToolAssignment?.label ?? "Unnamed").Truncate(ddRect.width);
 
-            // NOTE: use positional args (like vanilla) to match your overload
             Widgets.Dropdown(
                 ddRect,
                 pawn,
@@ -57,7 +57,7 @@ namespace SurvivalTools
 
             curX += ddRect.width + 4f;
 
-            // Clear forced tools (if any)
+            // Clear forced tools button (if any)
             if (somethingIsForced)
             {
                 var clearRect = new Rect(curX, rect.y + 2f, rightWidth, rect.height - 4f);
@@ -69,11 +69,13 @@ namespace SurvivalTools
                 TooltipHandler.TipRegion(clearRect, new TipSignal(() =>
                 {
                     var text = "ForcedSurvivalTools".Translate() + ":\n";
-                    if (tracker.forcedHandler != null)
+                    var forced = tracker.forcedHandler?.ForcedTools;
+                    if (forced != null)
                     {
-                        foreach (var tool in tracker.forcedHandler.ForcedTools)
+                        for (int i = 0; i < forced.Count; i++)
                         {
-                            text += "\n   " + tool.LabelCap;
+                            var tool = forced[i];
+                            if (tool != null) text += "\n   " + tool.LabelCap;
                         }
                     }
                     return text;
@@ -93,19 +95,18 @@ namespace SurvivalTools
         private IEnumerable<Widgets.DropdownMenuElement<SurvivalToolAssignment>> Button_GenerateMenu(Pawn pawn)
         {
             var db = Current.Game?.GetComponent<SurvivalToolAssignmentDatabase>();
-            if (db == null)
-                yield break;
+            if (db == null) yield break;
 
-            foreach (var survivalToolAssignment in db.AllSurvivalToolAssignments)
+            var all = db.AllSurvivalToolAssignments;
+            for (int i = 0; i < all.Count; i++)
             {
-                var local = survivalToolAssignment;
+                var local = all[i];
                 yield return new Widgets.DropdownMenuElement<SurvivalToolAssignment>
                 {
                     option = new FloatMenuOption(local.label, () =>
                     {
                         var tracker = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
-                        if (tracker != null)
-                            tracker.CurrentSurvivalToolAssignment = local;
+                        if (tracker != null) tracker.CurrentSurvivalToolAssignment = local;
                     }),
                     payload = local
                 };
@@ -127,7 +128,7 @@ namespace SurvivalTools
         private int GetValueToCompare(Pawn pawn)
         {
             var tracker = pawn?.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
-            return (tracker?.CurrentSurvivalToolAssignment != null)
+            return tracker?.CurrentSurvivalToolAssignment != null
                 ? tracker.CurrentSurvivalToolAssignment.uniqueId
                 : int.MinValue;
         }

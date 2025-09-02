@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Patch>
+
+    <!-- Cloth (Basic) - 40% effectiveness -->
+    <Operation Class="PatchOperationAddModExtension">
+        <xpath>/Defs/ThingDef[defName="Cloth"]</xpath>
+        <value>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <CleaningSpeed>0.4</CleaningSpeed>
+                    <MedicalOperationSpeed>0.4</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>0.4</MedicalSurgerySuccessChance>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Cleaner</li>
+                    <li>Doctor</li>
+                </defaultSurvivalToolAssignmentTags>
+                <toolWearFactor>3.0</toolWearFactor>
+            </li>
+        </value>
+    </Operation>
+
+    <!-- Synthread (Synthetic) - 55% effectiveness -->
+    <Operation Class="PatchOperationAddModExtension">
+        <xpath>/Defs/ThingDef[defName="Synthread"]</xpath>
+        <value>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <CleaningSpeed>0.55</CleaningSpeed>
+                    <MedicalOperationSpeed>0.55</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>0.55</MedicalSurgerySuccessChance>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Cleaner</li>
+                    <li>Doctor</li>
+                </defaultSurvivalToolAssignmentTags>
+                <toolWearFactor>2.5</toolWearFactor>
+            </li>
+        </value>
+    </Operation>
+
+    <!-- Devilstrand Cloth (Premium Natural) - 70% effectiveness -->
+    <Operation Class="PatchOperationAddModExtension">
+        <xpath>/Defs/ThingDef[defName="DevilstrandCloth"]</xpath>
+        <value>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <CleaningSpeed>0.7</CleaningSpeed>
+                    <MedicalOperationSpeed>0.7</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>0.7</MedicalSurgerySuccessChance>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Cleaner</li>
+                    <li>Doctor</li>
+                </defaultSurvivalToolAssignmentTags>
+                <toolWearFactor>2.0</toolWearFactor>
+            </li>
+        </value>
+    </Operation>
+
+    <!-- Hyperweave (Ultra-tech) - 85% effectiveness -->
+    <Operation Class="PatchOperationAddModExtension">
+        <xpath>/Defs/ThingDef[defName="Hyperweave"]</xpath>
+        <value>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <CleaningSpeed>0.85</CleaningSpeed>
+                    <MedicalOperationSpeed>0.85</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>0.85</MedicalSurgerySuccessChance>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Cleaner</li>
+                    <li>Doctor</li>
+                </defaultSurvivalToolAssignmentTags>
+                <toolWearFactor>1.5</toolWearFactor>
+            </li>
+        </value>
+    </Operation>
+
+    <!-- Sheep Wool - 35% -->
+    <Operation Class="PatchOperationAddModExtension">
+        <xpath>/Defs/ThingDef[defName="WoolSheep"]</xpath>
+        <value>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <CleaningSpeed>0.35</CleaningSpeed>
+                    <MedicalOperationSpeed>0.35</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>0.35</MedicalSurgerySuccessChance>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Cleaner</li>
+                    <li>Doctor</li>
+                </defaultSurvivalToolAssignmentTags>
+                <toolWearFactor>3.5</toolWearFactor>
+            </li>
+        </value>
+    </Operation>
+
+    <!-- Alpaca Wool - 40% -->
+    <Operation Class="PatchOperationAddModExtension">
+        <xpath>/Defs/ThingDef[defName="WoolAlpaca"]</xpath>
+        <value>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <CleaningSpeed>0.4</CleaningSpeed>
+                    <MedicalOperationSpeed>0.4</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>0.4</MedicalSurgerySuccessChance>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Cleaner</li>
+                    <li>Doctor</li>
+                </defaultSurvivalToolAssignmentTags>
+                <toolWearFactor>3.0</toolWearFactor>
+            </li>
+        </value>
+    </Operation>
+
+    <!-- Megasloth Wool - 60% -->
+    <Operation Class="PatchOperationAddModExtension">
+        <xpath>/Defs/ThingDef[defName="WoolMegasloth"]</xpath>
+        <value>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <CleaningSpeed>0.6</CleaningSpeed>
+                    <MedicalOperationSpeed>0.6</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>0.6</MedicalSurgerySuccessChance>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Cleaner</li>
+                    <li>Doctor</li>
+                </defaultSurvivalToolAssignmentTags>
+                <toolWearFactor>2.2</toolWearFactor>
+            </li>
+        </value>
+    </Operation>
+
+    <!-- Muffalo Wool - 45% -->
+    <Operation Class="PatchOperationAddModExtension">
+        <xpath>/Defs/ThingDef[defName="WoolMuffalo"]</xpath>
+        <value>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <CleaningSpeed>0.45</CleaningSpeed>
+                    <MedicalOperationSpeed>0.45</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>0.45</MedicalSurgerySuccessChance>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Cleaner</li>
+                    <li>Doctor</li>
+                </defaultSurvivalToolAssignmentTags>
+                <toolWearFactor>2.8</toolWearFactor>
+            </li>
+        </value>
+    </Operation>
+
+    <!-- Bison Wool - 50% -->
+    <Operation Class="PatchOperationAddModExtension">
+        <xpath>/Defs/ThingDef[defName="WoolBison"]</xpath>
+        <value>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <CleaningSpeed>0.5</CleaningSpeed>
+                    <MedicalOperationSpeed>0.5</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>0.5</MedicalSurgerySuccessChance>
+                </baseWorkStatFactors>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Cleaner</li>
+                    <li>Doctor</li>
+                </defaultSurvivalToolAssignmentTags>
+                <toolWearFactor>2.5</toolWearFactor>
+            </li>
+        </value>
+    </Operation>
+
+</Patch>
