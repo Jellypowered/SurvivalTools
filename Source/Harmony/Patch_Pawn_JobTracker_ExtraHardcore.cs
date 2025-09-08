@@ -5,6 +5,8 @@ using HarmonyLib;
 using RimWorld;
 using Verse;
 using Verse.AI;
+using static SurvivalTools.ST_Logging;
+using SurvivalTools.Helpers;
 
 namespace SurvivalTools.HarmonyStuff
 {
@@ -24,15 +26,35 @@ namespace SurvivalTools.HarmonyStuff
             return CheckJobAssignment(__instance, job, setOrderedResult: ref __result);
         }
 
-        [HarmonyPrefix]
+        [HarmonyPostfix]
         [HarmonyPatch(nameof(Pawn_JobTracker.StartJob))]
-        [HarmonyPriority(Priority.Last)] // run after other mods
-        public static bool Prefix_StartJob(Pawn_JobTracker __instance, Job newJob)
+        [HarmonyPriority(Priority.Last)]
+        public static void Postfix_StartJob(Pawn_JobTracker __instance, Job newJob)
         {
-            bool ignore = false; // StartJob doesn't use __result; we just decide whether to skip original
-            return CheckJobAssignment(__instance, newJob, setOrderedResult: ref ignore);
-        }
+            var pawnField = AccessTools.Field(typeof(Pawn_JobTracker), "pawn");
+            var pawn = (Pawn)pawnField.GetValue(__instance);
+            if (pawn == null || newJob == null) return;
 
+            var settings = SurvivalTools.Settings;
+            if (settings?.hardcoreMode != true || !pawn.CanUseSurvivalTools()) return;
+
+            var requiredStats = SurvivalToolUtility.RelevantStatsFor(null, newJob.def);
+            if (requiredStats.NullOrEmpty()) return;
+
+            foreach (var stat in requiredStats)
+            {
+                if (ShouldBlockJobForMissingStat(stat, settings) && !pawn.HasSurvivalToolFor(stat))
+                {
+                    if (IsDebugLoggingEnabled)
+                        Log.Message($"[SurvivalTools.JobBlock] Aborting just-started job {newJob.def.defName} on {pawn.LabelShort} (missing {stat.defName}).");
+
+                    if (__instance.curJob == newJob)
+                        __instance.EndCurrentJob(JobCondition.Incompletable, startNewJob: true, canReturnToPool: true);
+
+                    break;
+                }
+            }
+        }
         private static bool CheckJobAssignment(Pawn_JobTracker jobTracker, Job job, ref bool setOrderedResult)
         {
             // Resolve pawn safely (cached FieldInfo)
@@ -57,10 +79,10 @@ namespace SurvivalTools.HarmonyStuff
                 if (ShouldBlockJobForMissingStat(stat, settings) && !pawn.HasSurvivalToolFor(stat))
                 {
                     // Cooldown the log to avoid spam
-                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                    if (IsDebugLoggingEnabled)
                     {
                         var key = $"JobBlock_{pawn.ThingID}_{job.def.defName}_{stat.defName}";
-                        if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                        if (ShouldLogWithCooldown(key))
                             Log.Message($"[SurvivalTools.JobBlock] Blocking direct job: {pawn.LabelShort} -> {job.def.defName} (missing tool for {stat.defName})");
                     }
 
@@ -74,17 +96,31 @@ namespace SurvivalTools.HarmonyStuff
         }
 
         /// <summary>
-        /// Required stats always block in hardcore. Optional stats block only if Extra Hardcore requires them.
+        /// Check if a stat should block jobs based on user settings.
         /// </summary>
         private static bool ShouldBlockJobForMissingStat(StatDef stat, SurvivalToolsSettings settings)
         {
             if (stat == null) return false;
 
-            // Required stats: always block under hardcore
-            if (!IsOptionalStat(stat)) return true;
+            // Core work stats that always block jobs
+            if (StatFilters.ShouldBlockJobForMissingStat(stat))
+                return true;
 
-            // Optional stats: only block if Extra Hardcore says they’re required
-            return settings.extraHardcoreMode && settings.IsStatRequiredInExtraHardcore(stat);
+            // Optional stats that have specific user configuration
+            if (stat == ST_StatDefOf.CleaningSpeed)
+                return settings.requireCleaningTools;
+            if (stat == ST_StatDefOf.ButcheryFleshSpeed || stat == ST_StatDefOf.ButcheryFleshEfficiency)
+                return settings.requireButcheryTools;
+            if (stat == ST_StatDefOf.MedicalOperationSpeed || stat == ST_StatDefOf.MedicalSurgerySuccessChance)
+                return settings.requireMedicalTools;
+            if (stat == ST_StatDefOf.ResearchSpeed)
+                return false; // Research is currently always optional in normal hardcore mode
+
+            // In extra hardcore mode, check additional requirements
+            if (settings.extraHardcoreMode && settings.IsStatRequiredInExtraHardcore(stat))
+                return true;
+
+            return false;
         }
 
         /// <summary>
@@ -92,15 +128,7 @@ namespace SurvivalTools.HarmonyStuff
         /// </summary>
         private static bool IsOptionalStat(StatDef stat)
         {
-            if (stat == null) return false;
-
-            return stat == ST_StatDefOf.CleaningSpeed
-                || stat == ST_StatDefOf.ButcheryFleshSpeed
-                || stat == ST_StatDefOf.ButcheryFleshEfficiency
-                || stat == ST_StatDefOf.MedicalOperationSpeed
-                || stat == ST_StatDefOf.MedicalSurgerySuccessChance
-                || stat == ST_StatDefOf.ResearchSpeed
-                || stat.defName == "FieldResearchSpeedMultiplier"; // compatibility hook
+            return StatFilters.IsOptionalStat(stat);
         }
     }
 }

@@ -3,6 +3,7 @@
 using HarmonyLib;
 using RimWorld;
 using Verse;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.HarmonyStuff
 {
@@ -19,6 +20,9 @@ namespace SurvivalTools.HarmonyStuff
             var ext = wgDef?.GetModExtension<WorkGiverExtension>();
             var required = ext?.requiredStats;
 
+            // Only gate jobs that are eligible by default
+            if (!SurvivalToolUtility.ShouldGateByDefault(wgDef)) return;
+
             // Nothing to gate on.
             if (required == null || required.Count == 0) return;
 
@@ -28,10 +32,10 @@ namespace SurvivalTools.HarmonyStuff
                 __result = PawnCapacityDefOf.Manipulation;
 
                 // Cooldowned, low-noise debug (optional).
-                if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                if (IsDebugLoggingEnabled)
                 {
-                    var key = $"ST_MissingCap_{pawn.ThingID}_{wgDef.defName}";
-                    if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                    var key = $"MissingToolCapacity_{pawn.ThingID}_{wgDef.defName}";
+                    if (ShouldLogWithCooldown(key))
                         Log.Message($"[SurvivalTools] Blocking {wgDef.defName} for {pawn.LabelShort}: missing required tool/stat → Manipulation capacity gate.");
                 }
             }

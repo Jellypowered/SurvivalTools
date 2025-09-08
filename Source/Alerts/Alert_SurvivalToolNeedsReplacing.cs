@@ -1,8 +1,15 @@
-﻿using System.Collections.Generic;
+﻿// RimWorld 1.6 / C# 7.3
+// Alert_SurvivalToolNeedsReplacing.cs
+//
+// QoL: shows damaged tool % remaining and suggests researched replacements.
+
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RimWorld;
 using Verse;
+using SurvivalTools.Helpers;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools
 {
@@ -15,71 +22,87 @@ namespace SurvivalTools
             defaultPriority = AlertPriority.Medium;
         }
 
-        private IEnumerable<Pawn> WorkersDamagedTools
-        {
-            get
-            {
-                foreach (var pawn in PawnsFinder.AllMaps_FreeColonistsSpawned)
-                {
-                    if (pawn != null && pawn.Spawned && pawn.CanUseSurvivalTools() && HasDamagedTools(pawn))
-                        yield return pawn;
-                }
-            }
-        }
+        private IEnumerable<Pawn> WorkersDamagedTools =>
+            PawnsFinder.AllMaps_FreeColonistsSpawned
+                .Where(p => p.Spawned && PawnToolValidator.CanUseSurvivalTools(p) && HasDamagedTools(p));
 
         private static bool HasDamagedTools(Pawn pawn)
         {
-            var toolsEnum = pawn.GetAllUsableSurvivalTools();
-            if (toolsEnum == null) return false;
+            return pawn.GetAllUsableSurvivalTools()
+                .OfType<SurvivalTool>()
+                .Any(IsToolBelowThreshold);
+        }
 
-            foreach (var thing in toolsEnum)
+        private static bool IsToolBelowThreshold(SurvivalTool tool)
+        {
+            var twc = ResolveThingWithComps(tool);
+            if (twc == null || !twc.def.useHitPoints) return false;
+
+            float hpFrac = twc.MaxHitPoints > 0 ? (float)twc.HitPoints / twc.MaxHitPoints : 0f;
+            float lifespanRemaining = twc.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) * hpFrac;
+
+            if (IsDebugLoggingEnabled)
             {
-                // We only care about SurvivalTool wrappers (real or virtual)
-                var tool = thing as SurvivalTool;
-                if (tool == null) continue;
-
-                // Only consider tools that are currently in use by the pawn
-                if (!tool.InUse) continue;
-
-                // Resolve the physical backing Thing when possible.
-                // This handles virtual wrappers (e.g. cloth) and real SurvivalTool Things.
-                Thing backingThing = SurvivalToolUtility.BackingThing(tool);
-
-                // If no backing found, but the tool itself is a physical ThingWithComps, use that.
-                ThingWithComps twc = null;
-                if (backingThing is ThingWithComps btc)
-                    twc = btc;
-                else if (tool is ThingWithComps toolTwc)
-                    twc = toolTwc;
-
-                // If we don't have a ThingWithComps with HP, there's nothing to measure for replacement.
-                if (twc == null) continue;
-
-                // Only evaluate items that actually use hit points for degradation.
-                if (!twc.def.useHitPoints) continue;
-
-                float hpFrac = twc.MaxHitPoints > 0 ? (float)twc.HitPoints / twc.MaxHitPoints : 0f;
-                float lifespanRemaining = twc.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) * hpFrac;
-
-                if (lifespanRemaining <= DamagedToolRemainingLifespanThreshold)
-                    return true;
+                LogDebug($"[SurvivalTools.AlertReplace] tool={tool.LabelShort} hpFrac={hpFrac:F2} lifespanRemaining={lifespanRemaining:F2}",
+                    $"AlertReplace_{tool.def.defName}_{tool.thingIDNumber}");
             }
-            return false;
+
+            return lifespanRemaining <= DamagedToolRemainingLifespanThreshold;
+        }
+
+        private static ThingWithComps ResolveThingWithComps(SurvivalTool tool)
+        {
+            var backingThing = SurvivalToolUtility.BackingThing(tool);
+            if (backingThing is ThingWithComps btc) return btc;
+            if (tool is ThingWithComps twc) return twc;
+            return null;
+        }
+
+        private static string FormatToolLifespan(SurvivalTool tool)
+        {
+            var twc = ResolveThingWithComps(tool);
+            if (twc == null || !twc.def.useHitPoints) return tool.LabelShort;
+
+            float hpFrac = twc.MaxHitPoints > 0 ? (float)twc.HitPoints / twc.MaxHitPoints : 0f;
+            float lifespanRemaining = twc.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) * hpFrac;
+
+            int percent = (int)(lifespanRemaining * 100f);
+            return $"{tool.LabelShort} ({percent}%)";
         }
 
         public override TaggedString GetExplanation()
         {
             var culprits = WorkersDamagedTools.ToList();
-            if (culprits.Count == 0)
-                return TaggedString.Empty;
+            if (culprits.Count == 0) return TaggedString.Empty;
 
             var sb = new StringBuilder();
-            sb.Append("SurvivalToolNeedsReplacingDesc".Translate()).Append(":\n");
-            for (int i = 0; i < culprits.Count; i++)
+            sb.AppendLine("SurvivalToolNeedsReplacingDesc".Translate());
+
+            foreach (var p in culprits)
             {
-                var p = culprits[i];
-                sb.Append("\n    ").Append(p.LabelShort);
+                var failing = p.GetAllUsableSurvivalTools()
+                    .OfType<SurvivalTool>()
+                    .Where(IsToolBelowThreshold)
+                    .ToList();
+
+                if (failing.Count == 0) continue;
+
+                sb.AppendLine($"\n{p.LabelShort}:");
+
+                foreach (var tool in failing)
+                {
+                    var replacement = SurvivalToolDiscovery.GetBestReplacement(p, tool);
+                    if (replacement != null)
+                    {
+                        sb.AppendLine($"  {FormatToolLifespan(tool)} → Replacement: {replacement.label}");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"  {FormatToolLifespan(tool)}");
+                    }
+                }
             }
+
             return sb.ToString();
         }
 

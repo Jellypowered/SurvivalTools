@@ -2,6 +2,7 @@
 // Pawn_SurvivalToolAssignmentTracker.cs
 using Verse;
 using RimWorld;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools
 {
@@ -111,12 +112,10 @@ namespace SurvivalTools
                     var db = Current.Game?.GetComponent<SurvivalToolAssignmentDatabase>();
                     if (db == null || db.AllSurvivalToolAssignments == null || !db.AllSurvivalToolAssignments.Contains(_currentAssignment))
                     {
-                        if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                        {
-                            var pawn = parent as Pawn;
-                            var who = pawn?.LabelShort ?? parent?.ToString() ?? "unknown pawn";
+                        var pawn = parent as Pawn;
+                        var who = pawn?.LabelShort ?? parent?.ToString() ?? "unknown pawn";
+                        if (ShouldLogWithCooldown($"InvalidAssignment_{who}"))
                             Log.Warning($"[SurvivalTools] {who} had an invalid survival tool assignment; resetting to default.");
-                        }
                         _currentAssignment = null; // lazy default on next get
                     }
                 }

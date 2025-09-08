@@ -4,6 +4,7 @@ using System.Linq;
 using Verse;
 using RimWorld;
 using System.Collections.Generic;
+using SurvivalTools.Helpers;
 
 namespace SurvivalTools
 {
@@ -47,7 +48,7 @@ namespace SurvivalTools
         public List<SurvivalToolAssignment> AllSurvivalToolAssignments => survivalToolAssignments;
 
         public SurvivalToolAssignment DefaultSurvivalToolAssignment() =>
-            survivalToolAssignments.Count == 0 ? MakeNewSurvivalToolAssignment() : survivalToolAssignments[0];
+            survivalToolAssignments.SafeCount() == 0 ? MakeNewSurvivalToolAssignment() : survivalToolAssignments.SafeElementAt(0) ?? MakeNewSurvivalToolAssignment();
 
         public AcceptanceReport TryDelete(SurvivalToolAssignment toolAssignment)
         {
@@ -56,6 +57,8 @@ namespace SurvivalTools
             // Block deletion if ANY alive pawn (on maps, caravans, temp maps, transport pods) is using it
             foreach (Pawn pawn in PawnsFinder.AllMapsWorldAndTemporary_Alive)
             {
+                if (!SafetyUtils.IsValidPawn(pawn)) continue;
+
                 var tracker = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
                 if (tracker?.CurrentSurvivalToolAssignment == toolAssignment)
                     return new AcceptanceReport("SurvivalToolAssignmentInUse".Translate(pawn));

@@ -4,6 +4,7 @@ using HarmonyLib;
 using RimWorld;
 using Verse;
 using Verse.AI;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.HarmonyStuff
 {
@@ -26,11 +27,11 @@ namespace SurvivalTools.HarmonyStuff
             __result = null;
 
             // Cooldowned debug log to avoid spam.
-            if (SurvivalToolUtility.IsDebugLoggingEnabled)
+            if (IsDebugLoggingEnabled)
             {
                 // Keyed by pawn + thing def to keep noise down while still being informative.
                 var key = $"PlantsCut_BlockTree_{pawn?.ThingID ?? "nullPawn"}_{t.def.defName}";
-                if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                if (ShouldLogWithCooldown(key))
                 {
                     Log.Message($"[SurvivalTools] PlantsCut blocked on tree '{t.def.defName}' (pawn: {pawn?.LabelShort ?? "null"}) — use felling job instead.");
                 }

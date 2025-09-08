@@ -2,6 +2,6 @@
 <LanguageData>
     <FellTree.reportString>felling TargetA.</FellTree.reportString>
     <FellTreeDesignated.reportString>felling TargetA.</FellTreeDesignated.reportString>
-    <HarvestTree.reportString>harvesting TargetA.</HarvestTree.reportString>
-    <HarvestTreeDesignated.reportString>harvesting TargetA.</HarvestTreeDesignated.reportString>
+    <HarvestTree.reportString>felling TargetA.</HarvestTree.reportString>
+    <HarvestTreeDesignated.reportString>felling TargetA.</HarvestTreeDesignated.reportString>
 </LanguageData>

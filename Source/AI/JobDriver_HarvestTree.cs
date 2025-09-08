@@ -4,6 +4,7 @@ using RimWorld;
 using Verse;
 using Verse.AI;
 using System;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools
 {
@@ -39,19 +40,13 @@ namespace SurvivalTools
                     }
                     catch (Exception innerEx)
                     {
-                        if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                        {
-                            Log.ErrorOnce($"[SurvivalTools] PlantCollected threw in JobDriver_HarvestTree for {plant} : {innerEx}", 9832174);
-                        }
+                        Log.ErrorOnce($"[SurvivalTools] PlantCollected threw in JobDriver_HarvestTree for {plant} : {innerEx}", 9832174); // leave error unchanged
                         // Fallback: don't crash; we can't reliably emulate PlantCollected across versions here.
                     }
                 }
                 catch (Exception ex)
                 {
-                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                    {
-                        Log.ErrorOnce($"[SurvivalTools] Unexpected exception in HarvestTree PlantWorkDoneToil.initAction: {ex}", 9832175);
-                    }
+                    Log.ErrorOnce($"[SurvivalTools] Unexpected exception in HarvestTree PlantWorkDoneToil.initAction: {ex}", 9832175); // leave error unchanged
                 }
             };
             t.defaultCompleteMode = ToilCompleteMode.Instant;

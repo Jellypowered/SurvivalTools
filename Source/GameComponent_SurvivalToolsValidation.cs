@@ -1,0 +1,118 @@
+// RimWorld 1.6 / C# 7.3
+// Source/GameComponent_SurvivalToolsValidation.cs
+using System.Collections.Generic;
+using System.Linq;
+using RimWorld;
+using Verse;
+using SurvivalTools.Helpers;
+
+namespace SurvivalTools
+{
+    /// <summary>
+    /// Game component that triggers job validation when a save is loaded
+    /// </summary>
+    public class GameComponent_SurvivalToolsValidation : GameComponent
+    {
+        private bool hasValidatedThisSession = false;
+        private int scheduledValidationTick = -1;
+
+        public GameComponent_SurvivalToolsValidation(Game game) : base()
+        {
+        }
+
+        public override void FinalizeInit()
+        {
+            // Trigger validation after game initialization with proper timing
+            if (!hasValidatedThisSession)
+            {
+                // Immediate stat refresh - don't queue it, do it now before anything else
+                RefreshAllToolStats();
+
+                // Then queue delayed validation to ensure jobs are checked after everything is settled
+                LongEventHandler.QueueLongEvent(() =>
+                {
+                    // Schedule validation for 3 seconds after load to ensure everything is settled
+                    var ticksToWait = 180; // 3 seconds at 60 TPS
+                    scheduledValidationTick = Find.TickManager.TicksGame + ticksToWait;
+
+                    Log.Message("[SurvivalTools.JobValidation] Tool stats refreshed immediately. Job validation scheduled for 3 seconds after load.");
+
+                }, "SurvivalTools: Scheduling delayed job validation...", false, null);
+            }
+        }
+
+        public override void GameComponentTick()
+        {
+            // Execute delayed validation when the time comes
+            if (scheduledValidationTick > 0 && !hasValidatedThisSession && Find.TickManager.TicksGame >= scheduledValidationTick)
+            {
+                hasValidatedThisSession = true;
+                scheduledValidationTick = -1;
+
+                Log.Message("[SurvivalTools.JobValidation] Executing delayed job validation after tool stats have been properly initialized.");
+                SurvivalToolValidation.ValidateExistingJobs("delayed validation after game load");
+            }
+        }
+
+        public override void ExposeData()
+        {
+            // Don't save hasValidatedThisSession - we want it to reset each time we load
+            base.ExposeData();
+        }
+
+        /// <summary>
+        /// Refresh stat factors for all existing survival tools on the map.
+        /// This fixes tools that were created with old stat calculation logic.
+        /// </summary>
+        private void RefreshAllToolStats()
+        {
+            if (Find.Maps == null) return;
+
+            int refreshedCount = 0;
+            var refreshedPawns = new HashSet<Pawn>();
+
+            foreach (var map in Find.Maps)
+            {
+                if (map?.listerThings?.ThingsInGroup(ThingRequestGroup.HaulableEver) == null) continue;
+
+                foreach (var thing in map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableEver))
+                {
+                    if (thing is SurvivalTool tool)
+                    {
+                        // Force immediate stat factor initialization by accessing WorkStatFactors
+                        // This triggers the lazy initialization we just added
+                        var _ = tool.WorkStatFactors.ToList(); // Force evaluation
+                        refreshedCount++;
+
+                        // If this tool is held by a pawn, mark them for stat cache refresh
+                        if (tool.ParentHolder is Pawn_InventoryTracker inventory && inventory.pawn != null)
+                        {
+                            refreshedPawns.Add(inventory.pawn);
+                        }
+                        else if (tool.ParentHolder is Pawn_EquipmentTracker equipment && equipment.pawn != null)
+                        {
+                            refreshedPawns.Add(equipment.pawn);
+                        }
+                    }
+                }
+            }
+
+            // Force stat cache refresh for all pawns with refreshed tools
+            foreach (var pawn in refreshedPawns)
+            {
+                pawn.health?.capacities?.Notify_CapacityLevelsDirty();
+                if (pawn.workSettings != null)
+                {
+                    pawn.workSettings.Notify_UseWorkPrioritiesChanged();
+                }
+                // Force full stat recalculation
+                pawn.Notify_DisabledWorkTypesChanged();
+            }
+
+            if (refreshedCount > 0)
+            {
+                Log.Message($"[SurvivalTools] Refreshed stat factors for {refreshedCount} existing tools and invalidated stat caches for {refreshedPawns.Count} pawns");
+            }
+        }
+    }
+}

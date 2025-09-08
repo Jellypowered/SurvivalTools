@@ -13,6 +13,7 @@ using System.Linq;           // Contains / Any / ToList
 using System.Text;
 using RimWorld;
 using Verse;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools
 {
@@ -26,8 +27,16 @@ namespace SurvivalTools
         /// <summary>Cached work stat factors sourced from def/stuff; rebuilt on spawn/load when needed.</summary>
         private List<StatModifier> _workStatFactors;
 
-        /// <summary>Exposes cached factors (empty when cache is not built).</summary>
-        public IEnumerable<StatModifier> WorkStatFactors => _workStatFactors ?? Enumerable.Empty<StatModifier>();
+        /// <summary>Exposes cached factors (with lazy initialization when cache is not built).</summary>
+        public IEnumerable<StatModifier> WorkStatFactors
+        {
+            get
+            {
+                if (_workStatFactors == null)
+                    InitializeWorkStatFactors();
+                return _workStatFactors ?? Enumerable.Empty<StatModifier>();
+            }
+        }
 
         #endregion
 
@@ -38,7 +47,7 @@ namespace SurvivalTools
             base.PostMake();
             InitializeWorkStatFactors();
 
-            if (SurvivalToolUtility.IsDebugLoggingEnabled)
+            if (IsDebugLoggingEnabled)
             {
                 try
                 {
@@ -74,6 +83,16 @@ namespace SurvivalTools
 
         #region Factor Build
 
+        /// <summary>
+        /// Force recalculation of work stat factors. Useful when mod settings change
+        /// or when existing tools need to be updated after mod updates.
+        /// </summary>
+        public void RefreshWorkStatFactors()
+        {
+            _workStatFactors = null;
+            // Next access to WorkStatFactors will trigger InitializeWorkStatFactors
+        }
+
         private void InitializeWorkStatFactors()
         {
             var factors = new List<StatModifier>();
@@ -104,6 +123,19 @@ namespace SurvivalTools
                         factors.AddRange(stuffExt.baseWorkStatFactors
                             .Where(m => m?.stat != null && m.value != 0f));
                     }
+
+                    // Also check for StuffPropsTool (for DLC materials like Bioferrite/Obsidian)
+                    var stuffPropsExt = Stuff.GetModExtension<StuffPropsTool>();
+                    if (stuffPropsExt?.toolStatFactors != null)
+                    {
+                        LogDebug($"SurvivalTool.InitializeWorkStatFactors: Found StuffPropsTool on {Stuff?.defName} with {stuffPropsExt.toolStatFactors.Count} factors (applied as multipliers)");
+                        // Note: StuffPropsTool factors are applied as multipliers in CalculateWorkStatFactors,
+                        // not added as base stats here. This prevents tools from gaining unrelated stats.
+                    }
+                    else
+                    {
+                        LogDebug($"SurvivalTool.InitializeWorkStatFactors: No StuffPropsTool found on {Stuff?.defName}");
+                    }
                 }
 
                 // Dedupe by stat; keep highest value for stability/readability
@@ -111,6 +143,8 @@ namespace SurvivalTools
                     .GroupBy(m => m.stat)
                     .Select(g => new StatModifier { stat = g.Key, value = g.Max(x => x.value) })
                     .ToList();
+
+                LogDebug($"SurvivalTool.InitializeWorkStatFactors: Final factors for {def?.defName} made from {Stuff?.defName}: {string.Join(", ", _workStatFactors.Select(f => $"{f.stat?.defName}={f.value:F2}"))}");
             }
             catch
             {

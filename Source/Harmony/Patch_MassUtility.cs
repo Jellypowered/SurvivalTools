@@ -3,6 +3,7 @@
 using HarmonyLib;
 using RimWorld;
 using Verse;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.HarmonyStuff
 {
@@ -27,10 +28,10 @@ namespace SurvivalTools.HarmonyStuff
                 if (!pawn.CanCarryAnyMoreSurvivalTools(additionalToolUnits))
                 {
                     __result = 0;
-                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                    if (IsDebugLoggingEnabled)
                     {
                         const string key = "MassUtility_CountToPickUp_OverLimit";
-                        if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                        if (ShouldLogWithCooldown(key))
                             Log.Message($"[SurvivalTools] Preventing pickup: {pawn.LabelShort} cannot carry more survival tools (would pick up {thing.LabelCap}).");
                     }
                 }
@@ -53,10 +54,10 @@ namespace SurvivalTools.HarmonyStuff
                 if (!pawn.CanCarryAnyMoreSurvivalTools(additionalToolUnits))
                 {
                     __result = true;
-                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                    if (IsDebugLoggingEnabled)
                     {
                         const string key = "MassUtility_WillBeOver_OverLimit";
-                        if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                        if (ShouldLogWithCooldown(key))
                             Log.Message($"[SurvivalTools] WillBeOverEncumberedAfterPickingUp: {pawn.LabelShort} would exceed tool limit by picking up {thing.LabelCap} (count={count}).");
                     }
                 }

@@ -9,6 +9,7 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.HarmonyStuff
 {
@@ -70,10 +71,10 @@ namespace SurvivalTools.HarmonyStuff
             if (IsBiocodedForDifferentPawn(thing, pawn)) return;
 
             // Passed all checks — allow equip for pacifist
-            if (SurvivalToolUtility.IsDebugLoggingEnabled)
+            if (IsDebugLoggingEnabled)
             {
                 string key = $"AllowPacifistEquip_{pawn.ThingID}_{thing.ThingID}";
-                if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                if (ShouldLogWithCooldown(key))
                     Log.Message($"[SurvivalTools] Allowing pacifist {pawn.LabelShort} to equip survival tool: {thing.LabelShort}");
             }
 

@@ -5,7 +5,20 @@ REM ================================
 REM Config
 REM ================================
 set "CURRENTVER=1.6"
-set "CONFIG=Release"
+REM Determine build configuration from arg/env/MSBuild (default: Release)
+set "_CONFIG_ARG=%~1"
+if defined _CONFIG_ARG (
+    set "CONFIG=%_CONFIG_ARG%"
+) else if defined Configuration (
+    REM Provided by MSBuild/VS (e.g., Debug/Release)
+    set "CONFIG=%Configuration%"
+) else if defined ConfigurationName (
+    REM Alternate MSBuild var
+    set "CONFIG=%ConfigurationName%"
+) else if not defined CONFIG (
+    set "CONFIG=Release"
+)
+set "_CONFIG_ARG="
 
 REM Local mirror output (second output)
 set "BASE=.\%CURRENTVER%\Assemblies"
@@ -105,8 +118,8 @@ if exist "%BASE%\*.dll" (
 REM ================================
 REM Build
 REM ================================
-echo Building %MODNAME%...
-dotnet build .vscode -c Release -o "%OUTDIR%"
+echo Building %MODNAME% with configuration: %CONFIG% ...
+dotnet build .vscode -c %CONFIG% -o "%OUTDIR%"
 if errorlevel 1 (
     echo Build failed. Aborting.
     exit /b %errorlevel%
@@ -160,7 +173,9 @@ for %%D in ("Languages" "Textures" "Defs" "Patches") do if exist "%%~fD" (
 
 setlocal EnableExtensions EnableDelayedExpansion
 
-set "ZIPNAME=!MODNAME!_!CURRENTVER!.zip"
+REM Always include configuration in zip name (e.g., -Release or -Debug)
+set "ZIPSUFFIX=-!CONFIG!"
+set "ZIPNAME=!MODNAME!_!CURRENTVER!!ZIPSUFFIX!.zip"
 set "ZIPSOURCE=!MODROOT!"
 set "ZIPDEST=%CD%\!ZIPNAME!"
 

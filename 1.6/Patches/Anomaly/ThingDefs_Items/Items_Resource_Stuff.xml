@@ -1,0 +1,26 @@
+<Patch>
+    <!-- Apply StuffPropsTool directly to Bioferrite without mod detection -->
+    <Operation Class="PatchOperationAddModExtension">
+        <xpath>Defs/ThingDef[defName="Bioferrite"]</xpath>
+        <value>
+            <li Class="SurvivalTools.StuffPropsTool">
+                <toolStatFactors>
+                    <TreeFellingSpeed>1.1</TreeFellingSpeed>
+                    <PlantHarvestingSpeed>1.1</PlantHarvestingSpeed>
+                    <DiggingSpeed>1.2</DiggingSpeed>
+                    <MiningYieldDigging>1.15</MiningYieldDigging>
+                    <ConstructionSpeed>1.1</ConstructionSpeed>
+                    <MaintenanceSpeed>1.1</MaintenanceSpeed>
+                    <DeconstructionSpeed>1.1</DeconstructionSpeed>
+                    <ResearchSpeed>1.2</ResearchSpeed>
+                    <CleaningSpeed>1.0</CleaningSpeed>
+                    <MedicalOperationSpeed>1.1</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>1.05</MedicalSurgerySuccessChance>
+                    <ButcheryFleshSpeed>1.1</ButcheryFleshSpeed>
+                    <ButcheryFleshEfficiency>1.05</ButcheryFleshEfficiency>
+                    <SowingSpeed>1.1</SowingSpeed>
+                </toolStatFactors>
+            </li>
+        </value>
+    </Operation>
+</Patch>

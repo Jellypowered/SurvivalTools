@@ -1,4 +1,6 @@
-﻿using Verse;
+﻿// Rimworld 1.6 / C# 7.3
+// Source/DefOfs/ST_ThingCategoryDefOf.cs
+using Verse;
 using RimWorld;
 
 namespace SurvivalTools
@@ -6,10 +8,14 @@ namespace SurvivalTools
     [DefOf]
     public static class ST_ThingCategoryDefOf
     {
-        public static ThingCategoryDef SurvivalTools;
-        public static ThingCategoryDef SurvivalToolsNeolithic;
-        public static ThingCategoryDef SurvivalToolsIndustrial;
-        public static ThingCategoryDef SurvivalToolsSpacer;
+        // -------------------------------
+        // Custom SurvivalTools categories
+        // -------------------------------
+
+        public static ThingCategoryDef SurvivalTools;           // root category
+        public static ThingCategoryDef SurvivalToolsNeolithic;  // primitive / early tech
+        public static ThingCategoryDef SurvivalToolsIndustrial; // industrial tier
+        public static ThingCategoryDef SurvivalToolsSpacer;     // spacer / advanced tier
 
         static ST_ThingCategoryDefOf()
         {
@@ -17,3 +23,4 @@ namespace SurvivalTools
         }
     }
 }
+

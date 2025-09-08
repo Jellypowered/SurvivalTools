@@ -4,6 +4,8 @@ using System;
 using HarmonyLib;
 using Verse;
 using Verse.AI;
+using static SurvivalTools.ST_Logging;
+using SurvivalTools.Helpers;
 
 namespace SurvivalTools.HarmonyStuff
 {
@@ -30,7 +32,7 @@ namespace SurvivalTools.HarmonyStuff
 
                 var actor = __result.actor;
                 // Must be a valid pawn able to use tools
-                if (actor == null || !actor.CanUseSurvivalTools()) return;
+                if (actor == null || !PawnToolValidator.CanUseSurvivalTools(actor)) return;
 
                 var job = actor.CurJob;
                 // Only react to player-forced pickups
@@ -49,7 +51,7 @@ namespace SurvivalTools.HarmonyStuff
                 if (thing == null) return;
 
                 // Only SurvivalTool items or tool-stuffs count
-                bool isSurvivalTool = thing is SurvivalTool;
+                bool isSurvivalTool = ToolClassification.IsSurvivalTool(thing);
                 bool isToolStuff = thing.def != null && thing.def.IsToolStuff();
                 if (!isSurvivalTool && !isToolStuff) return;
 
@@ -67,10 +69,10 @@ namespace SurvivalTools.HarmonyStuff
 
                 fh.SetForced(thing, true);
 
-                if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                if (IsDebugLoggingEnabled)
                 {
                     var key = $"ST_ForcedPickup_{actor.ThingID}";
-                    if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                    if (ShouldLogWithCooldown(key))
                     {
                         var what = isSurvivalTool ? "survival tool" : "tool-stuff";
                         Log.Message($"[SurvivalTools] Marked {what} '{thing.Label}' as forced for {actor.LabelShort}.");

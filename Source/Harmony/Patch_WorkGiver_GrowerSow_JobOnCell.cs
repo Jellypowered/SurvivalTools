@@ -3,6 +3,7 @@
 using HarmonyLib;
 using RimWorld;
 using Verse;
+using static SurvivalTools.ST_Logging;
 using Verse.AI;
 
 namespace SurvivalTools.HarmonyStuff
@@ -31,10 +32,10 @@ namespace SurvivalTools.HarmonyStuff
             // Block vanilla cut if requirements aren't met
             __result = null;
 
-            if (SurvivalToolUtility.IsDebugLoggingEnabled && pawn != null)
+            if (IsDebugLoggingEnabled && pawn != null)
             {
                 var key = $"ST_BlockSowCutTree_{pawn.ThingID}";
-                if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                if (ShouldLogWithCooldown(key))
                     Log.Message($"[SurvivalTools] Blocked CutPlant on tree '{thing?.LabelShort ?? "unknown"}' for {pawn.LabelShort}: missing tree-felling tools.");
             }
         }

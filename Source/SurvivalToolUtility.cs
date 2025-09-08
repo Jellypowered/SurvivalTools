@@ -8,38 +8,24 @@ using RimWorld;
 using RimWorld.Planet;
 using Verse;
 using Verse.AI;
+using static SurvivalTools.ST_Logging;
+using SurvivalTools.Helpers;
 
 namespace SurvivalTools
 {
     public static class SurvivalToolUtility
     {
+        // Deduplication for debug logs in RelevantStatsFor
+        private static readonly HashSet<string> loggedJobStatKeys = new HashSet<string>();
+        private static readonly HashSet<string> loggedJobDefStatKeys = new HashSet<string>();
         #region Constants & fields
 
         public static readonly FloatRange MapGenToolHitPointsRange = new FloatRange(0.3f, 0.7f);
         public const float MapGenToolMaxStuffMarketValue = 3f;
 
-        private static bool? _debugLoggingCache;
-
-        // Per-pawn, per-job debug log gating
-        private static readonly Dictionary<Pawn, HashSet<JobDef>> _loggedJobsPerPawn = new Dictionary<Pawn, HashSet<JobDef>>();
-
-        // General cooldown keys (to suppress spam)
-        private static readonly Dictionary<string, int> _lastLoggedTick = new Dictionary<string, int>();
-        private const int LOG_COOLDOWN_TICKS = 2500; // ~1 in-game hour
-
         #endregion
 
         #region Settings toggles (fast access)
-
-        public static bool IsDebugLoggingEnabled
-        {
-            get
-            {
-                if (_debugLoggingCache == null)
-                    _debugLoggingCache = SurvivalTools.Settings?.debugLogging ?? false;
-                return _debugLoggingCache.Value;
-            }
-        }
 
         public static bool IsHardcoreModeEnabled => SurvivalTools.Settings?.hardcoreMode ?? false;
 
@@ -48,54 +34,81 @@ namespace SurvivalTools
 
         public static bool IsToolMapGenEnabled => SurvivalTools.Settings?.toolMapGen ?? false;
 
-        public static void InvalidateDebugLoggingCache() => _debugLoggingCache = null;
-
-        #endregion
-
-        #region Logging helpers
-
-        private static bool ShouldLog(string logKey, bool respectCooldown = true)
-        {
-            if (!IsDebugLoggingEnabled) return false;
-            if (!respectCooldown) return true;
-
-            int now = Find.TickManager.TicksGame;
-            if (_lastLoggedTick.TryGetValue(logKey, out var last) && now - last < LOG_COOLDOWN_TICKS)
-                return false;
-
-            _lastLoggedTick[logKey] = now;
-            return true;
-        }
-
-        public static bool ShouldLogWithCooldown(string logKey) => ShouldLog(logKey, true);
-
-        private static bool ShouldLogJobForPawn(Pawn pawn, JobDef jobDef)
-        {
-            if (pawn == null || jobDef == null) return false;
-
-            CleanupJobLoggingCache(pawn);
-
-            if (!_loggedJobsPerPawn.TryGetValue(pawn, out var set))
-            {
-                set = new HashSet<JobDef>();
-                _loggedJobsPerPawn[pawn] = set;
-            }
-
-            if (set.Contains(jobDef)) return false;
-            set.Add(jobDef);
-            return true;
-        }
-
-        private static void CleanupJobLoggingCache(Pawn pawn)
-        {
-            if (pawn?.CurJob?.def == null) return;
-            if (_loggedJobsPerPawn.TryGetValue(pawn, out var set) && !set.Contains(pawn.CurJob.def))
-                set.Clear();
-        }
-
         #endregion
 
         #region Backing resolution & virtual/tool-stuff support
+        /// <summary>
+        /// Returns true if the given WorkGiverDef is eligible for survival tool gating by default.
+        /// Uses keyword lists to filter jobs (never gate vs gate-eligible).
+        /// </summary>
+        public static bool ShouldGateByDefault(WorkGiverDef wgDef)
+        {
+            if (wgDef == null) return false;
+            var name = wgDef.defName.ToLower();
+            var label = !string.IsNullOrEmpty(wgDef.label) ? wgDef.label.ToLower() : "";
+
+            // Never gate keywords
+            var neverGateKeywords = new[]
+            {
+                    "repair", "buildroofs", "deconstruct", "deliver", "haul", "clean", "rescue", "tend", "handling", "feed", "cookfillhopper", "paint", "remove", "train", "childcarer"
+                };
+            if (neverGateKeywords.Any(keyword => name.Contains(keyword) || label.Contains(keyword)))
+                return false;
+
+            // Gate-eligible keywords
+            var gateKeywords = new[]
+            {
+                    "craft", "smith", "tailor", "art", "sculpt", "fabricate", "produce", "drug", "butcher", "cook", "medical", "surgery", "research", "analyse"
+                };
+            if (gateKeywords.Any(keyword => name.Contains(keyword) || label.Contains(keyword)))
+                return true;
+
+            // Default: not gate-eligible
+            return false;
+        }
+        // In SurvivalToolUtility.cs
+        public static Thing FindBestToolForStats(Pawn pawn, List<StatDef> stats)
+        {
+            if (pawn == null || stats.NullOrEmpty())
+                return null;
+
+            Thing bestTool = null;
+            float bestScore = 0f;
+
+            IEnumerable<Thing> candidates = pawn.GetAllUsableSurvivalTools();
+            foreach (var thing in candidates)
+            {
+                var st = thing as SurvivalTool;
+                if (st == null) continue;
+
+                float score = 0f;
+                int matches = 0;
+
+                foreach (var stat in stats)
+                {
+                    var factor = st.WorkStatFactors?.FirstOrDefault(m => m.stat == stat);
+                    if (factor != null)
+                    {
+                        score += factor.value;
+                        matches++;
+                    }
+                }
+
+                if (matches > 1)
+                    score *= 1.2f;
+
+                if (thing.HitPoints < thing.MaxHitPoints)
+                    score *= (float)thing.HitPoints / thing.MaxHitPoints;
+
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestTool = thing;
+                }
+            }
+
+            return bestTool;
+        }
 
         /// <summary>
         /// Return the physical backing <see cref="Thing"/> for a <see cref="SurvivalTool"/> (real or virtual).
@@ -174,33 +187,43 @@ namespace SurvivalTools
 
         public static List<StatDef> RelevantStatsFor(WorkGiverDef wg, Job job)
         {
-            // FellTree always -> TreeFellingSpeed
-            if (job?.def == ST_JobDefOf.FellTree || job?.def == ST_JobDefOf.FellTreeDesignated ||
-                (job?.def == JobDefOf.CutPlant && job.targetA.Thing?.def?.plant?.IsTree == true))
-            {
-                var list = new List<StatDef> { ST_StatDefOf.TreeFellingSpeed };
-                if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"FellTreeSpecialCase_{wg?.defName ?? "null"}"))
-                    Log.Message($"[SurvivalTools.Debug] Tree felling job from {wg?.defName ?? "null"} -> TreeFellingSpeed");
-                return list;
-            }
-
-            // CutPlant always -> PlantHarvestingSpeed (sickle)
-            if (job?.def == JobDefOf.CutPlant)
-            {
-                var list = new List<StatDef> { ST_StatDefOf.PlantHarvestingSpeed };
-                if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"CutPlantSpecialCase_{wg?.defName ?? "null"}"))
-                    Log.Message($"[SurvivalTools.Debug] CutPlant from {wg?.defName ?? "null"} -> PlantHarvestingSpeed");
-                return list;
-            }
-
+            // Always check mod extension first
             var fromWg = wg?.GetModExtension<WorkGiverExtension>()?.requiredStats;
             if (fromWg != null && fromWg.Any())
                 return fromWg.Where(s => s != null).Distinct().ToList();
 
-            var fallback = StatsForJob(job);
-            if (IsDebugLoggingEnabled && job?.def != null && fallback.Any() && ShouldLog($"Fallback_Job_{job.def.defName}_{wg?.defName ?? "null"}"))
-                Log.Message($"[SurvivalTools] Using job fallback stats for WGD='{wg?.defName ?? "null"}' Job='{job.def.defName}': {string.Join(", ", fallback.Select(s => s.defName))}");
-            return fallback;
+            // Pattern matching for job def name
+            var defName = job?.def?.defName?.ToLowerInvariant() ?? string.Empty;
+            var stats = new List<StatDef>();
+            if (defName.Contains("clean") || defName.Contains("sweep") || defName.Contains("mop"))
+                stats.Add(ST_StatDefOf.CleaningSpeed);
+            if (defName.Contains("butcher") || defName.Contains("slaughter"))
+                stats.Add(ST_StatDefOf.ButcheryFleshSpeed);
+            if (defName.Contains("medical") || defName.Contains("surgery") || defName.Contains("operate"))
+                stats.Add(ST_StatDefOf.MedicalOperationSpeed);
+            if (defName.Contains("harvest") && defName.Contains("plant"))
+                stats.Add(ST_StatDefOf.PlantHarvestingSpeed);
+            if (defName.Contains("fell") && defName.Contains("tree"))
+                stats.Add(ST_StatDefOf.TreeFellingSpeed);
+
+            // Additional context-based detection for injected jobs:
+            // If job target is filth, cleaning is required
+            if (job?.targetA.Thing is Filth || job?.targetB.Thing is Filth)
+                stats.Add(ST_StatDefOf.CleaningSpeed);
+            // If job target is a corpse or butcherable, butchery is required
+            if (job?.targetA.Thing is Corpse || job?.targetB.Thing is Corpse)
+                stats.Add(ST_StatDefOf.ButcheryFleshSpeed);
+            // If job target is a medical bed or pawn needing tending, medical is required
+            if ((job?.targetA.Thing is Building_Bed bed && bed.Medical) || (job?.targetA.Thing is Pawn p && p.Downed))
+                stats.Add(ST_StatDefOf.MedicalOperationSpeed);
+
+            // Only return distinct, non-null stats
+            stats = stats.Where(s => s != null).Distinct().ToList();
+            if (stats.Count > 0)
+                return stats;
+
+            // Fallback to StatsForJob for other cases
+            return StatsForJob(job);
         }
 
         public static List<StatDef> RelevantStatsFor(WorkGiverDef wg, JobDef jobDef)
@@ -213,8 +236,16 @@ namespace SurvivalTools
                 return fromWg.Where(s => s != null).Distinct().ToList();
 
             var fallback = StatsForJob(jobDef);
-            if (IsDebugLoggingEnabled && jobDef != null && fallback.Any() && ShouldLog($"Fallback_JobDef_{jobDef.defName}_{wg?.defName ?? "null"}"))
-                Log.Message($"[SurvivalTools] Using job fallback stats for WGD='{wg?.defName ?? "null"}' Job='{jobDef.defName}': {string.Join(", ", fallback.Select(s => s.defName))}");
+            // Use class-level loggedJobDefStatKeys
+            if (IsToolRelevantJob(jobDef) && IsDebugLoggingEnabled)
+            {
+                string key = $"JobDefFallback_{wg?.defName ?? "null"}_{jobDef?.defName ?? "null"}";
+                if (!loggedJobDefStatKeys.Contains(key))
+                {
+                    loggedJobDefStatKeys.Add(key);
+                    LogDebug($"[SurvivalTools] Using job fallback stats for WGD='{wg?.defName ?? "null"}' Job='{jobDef?.defName ?? "null"}': {string.Join(", ", fallback.Select(s => s.defName))}", key);
+                }
+            }
             return fallback;
         }
 
@@ -249,14 +280,15 @@ namespace SurvivalTools
             if (jobDef == null) return list;
 
             bool relevant = IsToolRelevantJob(jobDef);
+            // Quiet debug/info logs unless author attention is needed
             if (IsDebugLoggingEnabled && relevant && ShouldLogJobForPawn(pawn, jobDef))
-                Log.Message($"[SurvivalTools.Debug] StatsForJob called for: {jobDef.defName}");
+                LogDebug($"[SurvivalTools.Debug] StatsForJob called for: {jobDef.defName}", $"StatsForJob_{jobDef.defName}");
 
             if (jobDef == JobDefOf.Mine)
             {
                 list.Add(ST_StatDefOf.DiggingSpeed);
                 if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
-                    Log.Message($"[SurvivalTools.Debug] {jobDef.defName} -> DiggingSpeed");
+                    LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> DiggingSpeed", $"DiggingSpeed_{jobDef.defName}");
                 return list;
             }
 
@@ -265,19 +297,19 @@ namespace SurvivalTools
             {
                 list.Add(ST_StatDefOf.TreeFellingSpeed);
                 if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
-                    Log.Message($"[SurvivalTools.Debug] {jobDef.defName} -> TreeFellingSpeed");
+                    LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> TreeFellingSpeed", $"TreeFellingSpeed_{jobDef.defName}");
                 return list;
             }
 
             var s = jobDef.defName.ToLowerInvariant();
             if (IsDebugLoggingEnabled && relevant && ShouldLogJobForPawn(pawn, jobDef))
-                Log.Message($"[SurvivalTools.Debug] Checking job: '{jobDef.defName}' (lowercase: '{s}')");
+                LogDebug($"[SurvivalTools.Debug] Checking job: '{jobDef.defName}' (lowercase: '{s}')", $"CheckingJob_{jobDef.defName}_{s}");
 
             if (s == "cutplant")
             {
                 list.Add(ST_StatDefOf.PlantHarvestingSpeed);
                 if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
-                    Log.Message($"[SurvivalTools.Debug] {jobDef.defName} -> PlantHarvestingSpeed");
+                    LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> PlantHarvestingSpeed", $"PlantHarvestingSpeed_{jobDef.defName}");
                 return list;
             }
 
@@ -285,7 +317,7 @@ namespace SurvivalTools
             {
                 list.Add(ST_StatDefOf.TreeFellingSpeed);
                 if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
-                    Log.Message($"[SurvivalTools.Debug] {jobDef.defName} -> TreeFellingSpeed (contains felltree)");
+                    LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> TreeFellingSpeed (contains felltree)", $"TreeFellingSpeedFelltree_{jobDef.defName}");
                 return list;
             }
 
@@ -298,7 +330,7 @@ namespace SurvivalTools
             {
                 list.Add(StatDefOf.ConstructionSpeed);
                 if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
-                    Log.Message($"[SurvivalTools.Debug] {jobDef.defName} -> ConstructionSpeed");
+                    LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> ConstructionSpeed", $"ConstructionSpeed_{jobDef.defName}");
                 return list;
             }
 
@@ -307,7 +339,7 @@ namespace SurvivalTools
             {
                 list.Add(ST_StatDefOf.MaintenanceSpeed);
                 if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
-                    Log.Message($"[SurvivalTools.Debug] {jobDef.defName} -> MaintenanceSpeed");
+                    LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> MaintenanceSpeed", $"MaintenanceSpeed_{jobDef.defName}");
                 return list;
             }
 
@@ -315,7 +347,7 @@ namespace SurvivalTools
             {
                 list.Add(ST_StatDefOf.DeconstructionSpeed);
                 if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
-                    Log.Message($"[SurvivalTools.Debug] {jobDef.defName} -> DeconstructionSpeed");
+                    LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> DeconstructionSpeed", $"DeconstructionSpeed_{jobDef.defName}");
                 return list;
             }
 
@@ -323,7 +355,7 @@ namespace SurvivalTools
             {
                 list.Add(ST_StatDefOf.SowingSpeed);
                 if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
-                    Log.Message($"[SurvivalTools.Debug] {jobDef.defName} -> SowingSpeed");
+                    LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> SowingSpeed", $"SowingSpeed_{jobDef.defName}");
                 return list;
             }
 
@@ -331,7 +363,7 @@ namespace SurvivalTools
             {
                 list.Add(ST_StatDefOf.PlantHarvestingSpeed);
                 if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
-                    Log.Message($"[SurvivalTools.Debug] {jobDef.defName} -> PlantHarvestingSpeed");
+                    LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> PlantHarvestingSpeed", $"PlantHarvestingSpeed_{jobDef.defName}");
                 return list;
             }
 
@@ -339,7 +371,7 @@ namespace SurvivalTools
             {
                 list.Add(ST_StatDefOf.ResearchSpeed);
                 if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
-                    Log.Message($"[SurvivalTools.Debug] {jobDef.defName} -> ResearchSpeed");
+                    LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> ResearchSpeed", $"ResearchSpeed_{jobDef.defName}");
                 return list;
             }
 
@@ -347,7 +379,7 @@ namespace SurvivalTools
             {
                 list.Add(ST_StatDefOf.CleaningSpeed);
                 if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
-                    Log.Message($"[SurvivalTools.Debug] {jobDef.defName} -> CleaningSpeed");
+                    LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> CleaningSpeed", $"CleaningSpeed_{jobDef.defName}");
                 return list;
             }
 
@@ -371,7 +403,7 @@ namespace SurvivalTools
             }
 
             if (IsDebugLoggingEnabled && relevant && ShouldLogJobForPawn(pawn, jobDef))
-                Log.Message($"[SurvivalTools.Debug] {jobDef.defName} -> No stats (no patterns matched)");
+                LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> No stats (no patterns matched)", $"NoStats_{jobDef.defName}");
             return list;
         }
 
@@ -381,7 +413,7 @@ namespace SurvivalTools
 
         public static bool RequiresSurvivalTool(this StatDef stat)
         {
-            if (stat?.parts == null) return false;
+            if (stat?.parts.SafeAny() != true) return false;
             for (int i = 0; i < stat.parts.Count; i++)
                 if (stat.parts[i] is StatPart_SurvivalTool)
                     return true;
@@ -403,8 +435,8 @@ namespace SurvivalTools
                 return true;
 
             // Or "enhanced" item with our extension & factors
-            var ext = tDef.GetModExtension<SurvivalToolProperties>();
-            return ext != null && ext != SurvivalToolProperties.defaultValues && ext.baseWorkStatFactors?.Any() == true;
+            var ext = tDef.SafeGetModExtension<SurvivalToolProperties>();
+            return ext != null && ext != SurvivalToolProperties.defaultValues && ext.baseWorkStatFactors.SafeAny();
         }
 
         #endregion
@@ -465,7 +497,7 @@ namespace SurvivalTools
             var props = def?.GetModExtension<SurvivalToolProperties>();
             if (props?.baseWorkStatFactors == null)
             {
-                if (IsDebugLoggingEnabled)
+                if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"CanUseTool_NullProps_{def?.defName ?? "null"}"))
                     Log.Error($"Tried to check if {def} is a usable tool but has null tool properties or work stat factors.");
                 return false;
             }
@@ -579,13 +611,9 @@ namespace SurvivalTools
             SurvivalTool bestTool = null;
             float bestScore = 0f;
 
-            // Baseline (no tool factors)
-            float baseline = 0f;
-            foreach (var s in stats)
-            {
-                var part = s.GetStatPart<StatPart_SurvivalTool>();
-                if (part != null) baseline += part.NoToolStatFactor;
-            }
+            // Use hardcoded baseline to avoid triggering stat calculations during validation
+            float baselineFactor = SurvivalToolUtility.IsHardcoreModeEnabled ? 0f : 0.3f;
+            float baseline = stats.Count * baselineFactor;
 
             foreach (var thing in pawn.GetAllUsableSurvivalTools())
             {
@@ -611,12 +639,10 @@ namespace SurvivalTools
                 foreach (var s in stats)
                 {
                     var mod = factors.FirstOrDefault(m => m.stat == s);
-                    if (mod != null) current += mod.value;
+                    if (mod != null)
+                        current += mod.value;
                     else
-                    {
-                        var part = s.GetStatPart<StatPart_SurvivalTool>();
-                        if (part != null) current += part.NoToolStatFactor;
-                    }
+                        current += baselineFactor; // Use hardcoded baseline
                 }
 
                 if (current > baseline && current > bestScore)
@@ -652,6 +678,7 @@ namespace SurvivalTools
         {
             tool = pawn.GetBestSurvivalTool(new List<StatDef> { stat });
             statFactor = tool?.WorkStatFactors.ToList().GetStatFactorFromList(stat) ?? -1f;
+            LogDebug($"HasSurvivalToolFor: pawn={pawn?.LabelShort ?? "null"} stat={stat?.defName ?? "null"} tool={(tool != null ? tool.LabelCapNoCount : "null")} factor={statFactor}", $"HasTool_{pawn?.ThingID ?? "null"}_{stat?.defName ?? "null"}");
             return tool != null;
         }
 
@@ -663,7 +690,8 @@ namespace SurvivalTools
             if (part == null) return null;
 
             SurvivalTool best = null;
-            float bestFactor = part.NoToolStatFactor;
+            // Use hardcoded baseline to avoid triggering stat calculations during validation
+            float bestFactor = SurvivalToolUtility.IsHardcoreModeEnabled ? 0f : 0.3f;
 
             foreach (var thing in pawn.GetAllUsableSurvivalTools())
             {
@@ -698,6 +726,8 @@ namespace SurvivalTools
             if (best != null)
                 LessonAutoActivator.TeachOpportunity(ST_ConceptDefOf.UsingSurvivalTools, OpportunityType.Important);
 
+            // Log the selection outcome (low-noise keyed log)
+            LogDebug($"GetBestSurvivalTool: pawn={pawn?.LabelShort ?? "null"} stat={stat?.defName ?? "null"} bestTool={(best != null ? best.LabelCapNoCount : "null")} bestFactor={bestFactor}", $"GetBest_{pawn?.ThingID ?? "null"}_{stat?.defName ?? "null"}");
             return best;
         }
 
@@ -729,7 +759,12 @@ namespace SurvivalTools
 
         public static void TryDegradeTool(Pawn pawn, StatDef stat)
         {
+            if (pawn == null || stat == null) return;
+
+            // Determine selected tool (avoid reading pawn.GetStatValue here to prevent recursive stat evals)
             var tool = pawn.GetBestSurvivalTool(stat);
+            float toolFactor = tool != null ? tool.WorkStatFactors.ToList().GetStatFactorFromList(stat) : -1f;
+            LogDebug($"TryDegradeTool: pawn={pawn?.LabelShort ?? "null"} stat={stat.defName} bestTool={(tool != null ? tool.LabelCapNoCount : "null")} bestFactor={toolFactor}", $"TryDegrade_{pawn?.ThingID ?? "null"}_{stat.defName}");
             if (tool == null) return;
 
             var backing = BackingThing(tool, pawn);
@@ -757,7 +792,7 @@ namespace SurvivalTools
         #region Work & job logic (gating / alerts)
 
         public static bool MeetsWorkGiverStatRequirements(this Pawn pawn, List<StatDef> requiredStats) =>
-            pawn.MeetsWorkGiverStatRequirements(requiredStats, null, null);
+    pawn.MeetsWorkGiverStatRequirements(requiredStats, null, null);
 
         public static bool MeetsWorkGiverStatRequirements(this Pawn pawn, List<StatDef> requiredStats, WorkGiverDef workGiver = null, JobDef jobDef = null)
         {
@@ -771,22 +806,11 @@ namespace SurvivalTools
 
                 foreach (var stat in toolStats)
                 {
-                    if (!pawn.HasSurvivalToolFor(stat))
+                    // Unified gating check (uses StatGatingHelper)
+                    if (StatGatingHelper.ShouldBlockJobForStat(stat, s, pawn))
                     {
-                        if (s.autoTool)
-                        {
-                            string logKey = $"AutoTool_Missing_{pawn.ThingID}_{stat.defName}";
-                            if (ShouldLog(logKey))
-                            {
-                                string statCategory = GetStatCategoryDescription(stat);
-                                string ctx = GetJobContextDescription(workGiver, jobDef);
-                                Log.Message($"[SurvivalTools] {pawn.LabelShort} missing required tool for {statCategory} stat {stat.defName}{ctx}, but AutoTool will attempt acquisition.");
-                            }
-                            continue;
-                        }
-
-                        string logKey2 = $"Missing_Tool_{pawn.ThingID}_{stat.defName}";
-                        if (ShouldLog(logKey2))
+                        string logKey = $"Missing_Tool_{pawn.ThingID}_{stat.defName}";
+                        if (ShouldLog(logKey))
                         {
                             string statCategory = GetStatCategoryDescription(stat);
                             string ctx = GetJobContextDescription(workGiver, jobDef);
@@ -798,12 +822,26 @@ namespace SurvivalTools
                 return true;
             }
 
+            // Normal mode fallback — still reject if stat value is zero or less
             foreach (var stat in requiredStats)
-                if (stat != null && pawn.GetStatValue(stat) <= 0f)
-                    return false;
+            {
+                if (stat != null)
+                {
+                    float v = pawn.GetStatValue(stat);
+                    if (v <= 0f)
+                    {
+                        LogDebug(
+                            $"MeetsWorkGiverStatRequirements: pawn={pawn?.LabelShort ?? "null"} stat={stat.defName} value={v} -> FAIL (<=0)",
+                            $"MeetsWG_{pawn?.ThingID ?? "null"}_{stat.defName}"
+                        );
+                        return false;
+                    }
+                }
+            }
 
             return true;
         }
+
 
         public static bool CanFellTrees(this Pawn pawn)
         {
@@ -964,5 +1002,6 @@ namespace SurvivalTools
             stats?.Where(ToolsExistForStat).ToList() ?? new List<StatDef>();
 
         #endregion
+
     }
 }

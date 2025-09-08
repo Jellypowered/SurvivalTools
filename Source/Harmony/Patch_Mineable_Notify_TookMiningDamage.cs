@@ -7,6 +7,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using RimWorld;
 using Verse;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.HarmonyStuff
 {
@@ -24,10 +25,10 @@ namespace SurvivalTools.HarmonyStuff
             // No IL to work with — nothing to emit
             if (instructions == null)
             {
-                if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                if (IsDebugLoggingEnabled)
                 {
                     const string key = "Mineable_TookMiningDamage_NullIL";
-                    if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                    if (ShouldLogWithCooldown(key))
                         Log.Warning("[SurvivalTools] Skipping Mineable.Notify_TookMiningDamage transpiler: null IL stream.");
                 }
                 yield break;
@@ -36,10 +37,10 @@ namespace SurvivalTools.HarmonyStuff
             // If fields can’t be resolved, pass through original IL unchanged
             if (FI_MiningYield == null || FI_DiggingYield == null)
             {
-                if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                if (IsDebugLoggingEnabled)
                 {
                     const string key = "Mineable_TookMiningDamage_MissingFI";
-                    if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                    if (ShouldLogWithCooldown(key))
                         Log.Warning("[SurvivalTools] Skipping MiningYield→DiggingYield swap: FieldInfo not found.");
                 }
                 foreach (var ins in instructions) yield return ins;
@@ -66,10 +67,10 @@ namespace SurvivalTools.HarmonyStuff
                 }
             }
 
-            if (!patchedAny && SurvivalToolUtility.IsDebugLoggingEnabled)
+            if (!patchedAny && IsDebugLoggingEnabled)
             {
                 const string key = "Mineable_TookMiningDamage_NoSwap";
-                if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                if (ShouldLogWithCooldown(key))
                     Log.Warning("[SurvivalTools] Mineable.Notify_TookMiningDamage transpiler: no MiningYield field load found to replace.");
             }
         }

@@ -9,15 +9,21 @@
                 "isDefault": true
             },
             "command": ".vscode/build.bat",
-        },
+            "args": [
+                "${input:buildConfig}"
+            ]
+        }
+    ],
+    "inputs": [
         {
-            "label": "BuildLinuxDLL",
-            "type": "shell",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "command": ".vscode/build",
+            "id": "buildConfig",
+            "type": "pickString",
+            "description": "Select build configuration",
+            "options": [
+                "Debug",
+                "Release"
+            ],
+            "default": "Debug"
         }
     ]
 }

@@ -1,12 +1,10 @@
 // RimWorld 1.6 / C# 7.3
-// Source/HarmonyStuff/ResearchReinventedPatchLogger.cs
+// Source/DebugTools/ResearchReinventedPatchLogger.cs
 //
-// Logs ThingDefs with SurvivalToolProperties and dumps Harmony patches that look
-// like they're from Research Reinvented. Intended for debug/compat troubleshooting.
-//
-// Usage: Enable SurvivalTools debug logging and compat logging to see output.
-// (SurvivalTools.Settings.debugLogging && SurvivalTools.Settings.compatLogging)
-//
+// Debug utility for Research Reinvented compatibility diagnostics.
+// Now runs only when triggered manually via the Debug Actions menu,
+// and only shows if Research Reinvented is active.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,58 +12,50 @@ using System.Reflection;
 using HarmonyLib;
 using RimWorld;
 using Verse;
+using SurvivalTools.Compat.ResearchReinvented;
+using SurvivalTools.Helpers;
+using static SurvivalTools.ST_Logging;
+using LudeonTK;
 
-namespace SurvivalTools.RRDE
+namespace SurvivalTools.DebugTools
 {
-    [StaticConstructorOnStartup]
     public static class ResearchReinventedPatchLogger
     {
-        static ResearchReinventedPatchLogger()
+        [DebugAction("SurvivalTools", "Dump Research Reinvented diagnostics", allowedGameStates = AllowedGameStates.Playing)]
+        public static void DumpRR_DebugAction()
         {
-            // Only run when debug/compat logging is enabled to avoid spamming logs.
-            bool debugEnabled = false;
-            try
+            // Gate: only show when Research Reinvented is active
+            if (!RRReflectionAPI.IsResearchReinventedActive())
             {
-                // Try both general debug and compat-specific toggles if available
-                debugEnabled = (SurvivalToolUtility.IsDebugLoggingEnabled) ||
-                               (Compat.CompatAPI.IsCompatLoggingEnabled);
-            }
-            catch
-            {
-                // If anything throws while checking settings, default to false.
-                debugEnabled = false;
-            }
-
-            if (!debugEnabled)
+                Messages.Message("Research Reinvented not detected — debug action unavailable.", MessageTypeDefOf.RejectInput, false);
                 return;
+            }
 
             try
             {
-                Log.Message("[SurvivalTools] ResearchReinventedPatchLogger: starting debug dump...");
+                LogInfo("[SurvivalTools] ResearchReinventedPatchLogger: starting debug dump...");
 
-                // 1) Try to find the known RR methods and dump their patches
                 var rrTypeName = "PeteTimesSix.ResearchReinvented.Utilities.PawnExtensions, ResearchReinvented";
                 var rrType = Type.GetType(rrTypeName);
 
                 if (rrType != null)
                 {
-                    Log.Message($"[SurvivalTools] ResearchReinventedPatchLogger: Found type {rrType.FullName}.");
-
+                    LogInfo($"[SurvivalTools] ResearchReinventedPatchLogger: Found type {rrType.FullName}.");
                     TryDumpMethodPatches(rrType, "CanEverDoResearch");
                     TryDumpMethodPatches(rrType, "CanNowDoResearch");
                     DumpPatchesByHeuristics();
                 }
                 else
                 {
-                    Log.Message("[SurvivalTools] ResearchReinventedPatchLogger: ResearchReinvented PawnExtensions type not found - falling back to scanning all Harmony patches.");
+                    LogInfo("[SurvivalTools] ResearchReinventedPatchLogger: PawnExtensions type not found — scanning all patches instead.");
                     DumpAllLikelyRRPatches();
                 }
 
-                Log.Message("[SurvivalTools] ResearchReinventedPatchLogger: debug dump complete.");
+                LogInfo("[SurvivalTools] ResearchReinventedPatchLogger: debug dump complete.");
             }
             catch (Exception e)
             {
-                Log.Error($"[SurvivalTools] ResearchReinventedPatchLogger: failed during debug dump: {e}");
+                LogError($"[SurvivalTools] ResearchReinventedPatchLogger: failed during debug dump: {e}");
             }
         }
 
@@ -73,19 +63,19 @@ namespace SurvivalTools.RRDE
         {
             try
             {
-                var methods = HarmonyLib.Harmony.GetAllPatchedMethods()?.ToList();
-                if (methods == null || methods.Count == 0)
+                var methods = Harmony.GetAllPatchedMethods()?.ToList();
+                if (methods.NullOrEmpty())
                 {
-                    Log.Message("[SurvivalTools] DumpRRHeur: no patched methods found.");
+                    LogInfo("[SurvivalTools] DumpRRHeur: no patched methods found.");
                     return;
                 }
 
-                var substrings = new[] { "research", "reinvent", "pete", "timesix" }; // case-insensitive
+                var substrings = new[] { "research", "reinvent", "pete", "timesix" };
                 int foundTargets = 0;
 
                 foreach (var tgt in methods)
                 {
-                    var info = HarmonyLib.Harmony.GetPatchInfo(tgt);
+                    var info = Harmony.GetPatchInfo(tgt);
                     if (info == null) continue;
 
                     var matches = new List<(HarmonyLib.Patch p, string kind)>();
@@ -99,23 +89,22 @@ namespace SurvivalTools.RRDE
                     if (matches.Count == 0) continue;
 
                     foundTargets++;
-                    Log.Message($"[SurvivalTools] DumpRRHeur: target -> {tgt.FullDescriptionSafe()}");
+                    LogInfo($"[SurvivalTools] DumpRRHeur: target -> {tgt.FullDescriptionSafe()}");
 
                     foreach (var (p, kind) in matches)
                     {
                         string pmDesc = p?.PatchMethod != null ? p.PatchMethod.FullDescriptionSafe() : "(unknown)";
-                        Log.Message($"   {kind}: {pmDesc} (owner={p.owner}, priority={p.priority}, index={p.index})");
+                        LogInfo($"   {kind}: {pmDesc} (owner={p.owner}, priority={p.priority}, index={p.index})");
                     }
                 }
 
-                Log.Message($"[SurvivalTools] DumpRRHeur: found {foundTargets} target(s) with RR-like patches.");
+                LogInfo($"[SurvivalTools] DumpRRHeur: found {foundTargets} target(s) with RR-like patches.");
             }
             catch (Exception e)
             {
-                Log.Error($"[SurvivalTools] DumpRRHeur failed: {e}");
+                LogError($"[SurvivalTools] DumpRRHeur failed: {e}");
             }
 
-            // helper
             bool PatchLooksLikeRR(HarmonyLib.Patch p, string[] subs)
             {
                 if (p == null) return false;
@@ -129,7 +118,7 @@ namespace SurvivalTools.RRDE
                 return false;
             }
         }
-        // Try to get a specific method by name from the given type and dump its patch info
+
         private static void TryDumpMethodPatches(Type type, string methodName)
         {
             if (type == null || string.IsNullOrEmpty(methodName)) return;
@@ -139,35 +128,34 @@ namespace SurvivalTools.RRDE
                 var method = type.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
                 if (method == null)
                 {
-                    Log.Message($"[SurvivalTools] ResearchReinventedPatchLogger: method {type.FullName}.{methodName} not found.");
+                    LogInfo($"[SurvivalTools] ResearchReinventedPatchLogger: method {type.FullName}.{methodName} not found.");
                     return;
                 }
 
                 var patches = Harmony.GetPatchInfo(method);
                 if (patches == null)
                 {
-                    Log.Message($"[SurvivalTools] ResearchReinventedPatchLogger: No patches found on {type.FullName}.{methodName}");
+                    LogInfo($"[SurvivalTools] ResearchReinventedPatchLogger: No patches found on {type.FullName}.{methodName}");
                     return;
                 }
 
-                Log.Message($"[SurvivalTools] Patches on {type.FullName}.{methodName}:");
-
-                foreach (var patch in patches.Postfixes)
-                    Log.Message($"  POSTFIX: {patch.PatchMethod.FullDescriptionSafe()} (Owner={patch.owner}, Priority={patch.priority}, Index={patch.index})");
+                LogInfo($"[SurvivalTools] Patches on {type.FullName}.{methodName}:");
 
                 foreach (var patch in patches.Prefixes)
-                    Log.Message($"  PREFIX: {patch.PatchMethod.FullDescriptionSafe()} (Owner={patch.owner}, Priority={patch.priority}, Index={patch.index})");
+                    LogInfo($"  PREFIX: {patch.PatchMethod.FullDescriptionSafe()} (Owner={patch.owner}, Priority={patch.priority}, Index={patch.index})");
+
+                foreach (var patch in patches.Postfixes)
+                    LogInfo($"  POSTFIX: {patch.PatchMethod.FullDescriptionSafe()} (Owner={patch.owner}, Priority={patch.priority}, Index={patch.index})");
 
                 foreach (var patch in patches.Transpilers)
-                    Log.Message($"  TRANSPILER: {patch.PatchMethod.FullDescriptionSafe()} (Owner={patch.owner}, Priority={patch.priority}, Index={patch.index})");
+                    LogInfo($"  TRANSPILER: {patch.PatchMethod.FullDescriptionSafe()} (Owner={patch.owner}, Priority={patch.priority}, Index={patch.index})");
             }
             catch (Exception e)
             {
-                Log.Warning($"[SurvivalTools] ResearchReinventedPatchLogger: failed to dump patches for {type.FullName}.{methodName}: {e.Message}");
+                LogWarning($"[SurvivalTools] ResearchReinventedPatchLogger: failed to dump patches for {type.FullName}.{methodName}: {e.Message}");
             }
         }
 
-        // Fallback: enumerate all patched methods and print patches that look like they come from RR
         private static void DumpAllLikelyRRPatches()
         {
             try
@@ -175,7 +163,7 @@ namespace SurvivalTools.RRDE
                 var patchedMethods = Harmony.GetAllPatchedMethods()?.ToList();
                 if (patchedMethods == null || patchedMethods.Count == 0)
                 {
-                    Log.Message("[SurvivalTools] ResearchReinventedPatchLogger: no patched methods found at all.");
+                    LogInfo("[SurvivalTools] ResearchReinventedPatchLogger: no patched methods found at all.");
                     return;
                 }
 
@@ -198,39 +186,36 @@ namespace SurvivalTools.RRDE
                     if (rrPatches.Count == 0) continue;
 
                     found++;
-                    Log.Message($"[SurvivalTools] ResearchReinventedPatchLogger: RR-style patches on target -> {method.FullDescriptionSafe()}");
+                    LogInfo($"[SurvivalTools] ResearchReinventedPatchLogger: RR-style patches on target -> {method.FullDescriptionSafe()}");
 
                     foreach (var (patch, kind) in rrPatches)
                     {
-                        Log.Message($"  {kind}: {patch.PatchMethod?.FullDescriptionSafe() ?? "(unknown)"} (Owner={patch.owner}, Priority={patch.priority}, Index={patch.index})");
+                        LogInfo($"  {kind}: {patch.PatchMethod?.FullDescriptionSafe() ?? "(unknown)"} (Owner={patch.owner}, Priority={patch.priority}, Index={patch.index})");
                     }
                 }
 
                 if (found == 0)
-                    Log.Message("[SurvivalTools] ResearchReinventedPatchLogger: No Research Reinvented-style patches found (owner/name filters).");
+                    LogInfo("[SurvivalTools] ResearchReinventedPatchLogger: No RR-style patches found (owner/name filters).");
                 else
-                    Log.Message($"[SurvivalTools] ResearchReinventedPatchLogger: Found RR-style patches on {found} target(s).");
+                    LogInfo($"[SurvivalTools] ResearchReinventedPatchLogger: Found RR-style patches on {found} target(s).");
             }
             catch (Exception e)
             {
-                Log.Error($"[SurvivalTools] ResearchReinventedPatchLogger: failed scanning all patches: {e}");
+                LogError($"[SurvivalTools] ResearchReinventedPatchLogger: failed scanning all patches: {e}");
             }
         }
 
-        // Heuristic checks to see whether a Harmony.Patch likely originates from Research Reinvented
         private static bool IsLikelyRRPatch(Patch p)
         {
             if (p == null) return false;
 
             try
             {
-                // 1) owner string often holds harmonyId passed when the author created the Harmony instance
                 if (!string.IsNullOrEmpty(p.owner) &&
                     (p.owner.IndexOf("researchreinvented", StringComparison.OrdinalIgnoreCase) >= 0 ||
                      p.owner.IndexOf("petetimesix", StringComparison.OrdinalIgnoreCase) >= 0))
                     return true;
 
-                // 2) fallback: inspect declaring assembly / type name of the patch method
                 var declType = p.PatchMethod?.DeclaringType;
                 var asmName = declType?.Assembly?.GetName()?.Name ?? string.Empty;
                 var typeFullName = declType?.FullName ?? string.Empty;
@@ -245,17 +230,12 @@ namespace SurvivalTools.RRDE
             }
             catch
             {
-                // ignore reflection failures and treat as non-match
+                // ignore reflection failures
             }
 
             return false;
         }
 
-
-
-        // -------------------------
-        // Reflection helper methods
-        // -------------------------
         private static string FullDescriptionSafe(this MethodBase mb)
         {
             if (mb == null) return "(null MethodBase)";

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using Verse;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools
 {
@@ -147,9 +148,9 @@ namespace SurvivalTools
         /// </summary>
         public static void ResolveAllTools()
         {
-            if (SurvivalToolUtility.IsDebugLoggingEnabled)
+            if (IsDebugLoggingEnabled)
             {
-                Log.Message("[SurvivalTools] Starting automatic tool resolution...");
+                LogDebug("[SurvivalTools] Starting automatic tool resolution...", "ToolResolutionStart");
                 LogModStatsVerification();
             }
 
@@ -168,19 +169,23 @@ namespace SurvivalTools
             }
 
             // Summary logging
-            if (SurvivalToolUtility.IsDebugLoggingEnabled)
+            if (IsDebugLoggingEnabled)
             {
                 if (totalEnhanced > 0)
                 {
-                    Log.Message($"[SurvivalTools] Tool resolution complete: Enhanced {totalEnhanced} tools");
+                    LogDebug($"[SurvivalTools] Tool resolution complete: Enhanced {totalEnhanced} tools", "ToolResolutionComplete");
                     foreach (string entry in enhancementLog)
                     {
-                        Log.Message($"  - {entry}");
+                        LogDebug($"  - {entry}", $"ToolResolutionEntry_{entry.GetHashCode()}");
                     }
                 }
                 else
                 {
-                    Log.Message("[SurvivalTools] Tool resolution complete: No new tools found to enhance");
+                    // Only log if author attention is needed
+                    if (totalEnhanced == 0)
+                    {
+                        Log.Warning("[SurvivalTools] Tool resolution complete: No new tools found to enhance");
+                    }
                 }
             }
         }
@@ -213,7 +218,7 @@ namespace SurvivalTools
                 bool excluded = rule.ExcludePatterns.Any(pattern => label.Contains(pattern));
                 if (excluded)
                 {
-                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                    if (IsDebugLoggingEnabled)
                         logEntry = $"Excluded {rule.Description.ToLower()}: {thingDef.defName} ({thingDef.label}) from {modSource}";
                     return false;
                 }
@@ -223,7 +228,7 @@ namespace SurvivalTools
 
                 if (!needsEnhancement)
                 {
-                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                    if (IsDebugLoggingEnabled)
                         logEntry = $"Already enhanced {rule.Description.ToLower()}: {thingDef.defName} ({thingDef.label}) from {modSource}";
                     return false;
                 }
@@ -231,7 +236,7 @@ namespace SurvivalTools
                 // Skip if this is already a SurvivalTools item (don't modify our own tools)
                 if (IsSurvivalToolsItem(thingDef))
                 {
-                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                    if (IsDebugLoggingEnabled)
                         logEntry = $"Skipped SurvivalTools item: {thingDef.defName} ({thingDef.label}) from {modSource}";
                     return false;
                 }
@@ -418,14 +423,16 @@ namespace SurvivalTools
             // Check for stats that aren't used in any detection rule
             var unusedStats = allModStats.Where(stat => stat != null && !usedStats.Contains(stat)).ToList();
 
-            Log.Message($"[SurvivalTools] Stat coverage verification: {usedStats.Count}/{allModStats.Where(s => s != null).Count()} stats covered in detection rules");
-
-            if (unusedStats.Any())
+            if (IsDebugLoggingEnabled)
             {
-                Log.Warning($"[SurvivalTools] The following stats are not covered by any detection rule:");
-                foreach (var stat in unusedStats)
+                LogDebug($"[SurvivalTools] Stat coverage verification: {usedStats.Count}/{allModStats.Where(s => s != null).Count()} stats covered in detection rules", "StatCoverageVerification");
+                if (unusedStats.Any())
                 {
-                    Log.Warning($"  - {stat.defName} ({stat.label})");
+                    LogDebug($"[SurvivalTools] The following stats are not covered by any detection rule:", "StatsNotCoveredWarning");
+                    foreach (var stat in unusedStats)
+                    {
+                        LogDebug($"  - {stat.defName} ({stat.label})", $"StatNotCovered_{stat.defName}");
+                    }
                 }
             }
         }

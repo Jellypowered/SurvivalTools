@@ -8,6 +8,7 @@ using HarmonyLib;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.HarmonyStuff
 {
@@ -64,10 +65,10 @@ namespace SurvivalTools.HarmonyStuff
                 yield return ins;
             }
 
-            if (!didPatch && SurvivalToolUtility.IsDebugLoggingEnabled)
+            if (!didPatch && IsDebugLoggingEnabled)
             {
                 const string key = "Transpile_ITab_Pawn_Gear_DrawThingRow_MissingLabel";
-                if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                if (ShouldLogWithCooldown(key))
                     Log.Warning("[SurvivalTools] Failed to patch ITab_Pawn_Gear.DrawThingRow: Widgets.Label call not found.");
             }
         }
@@ -131,11 +132,11 @@ namespace SurvivalTools.HarmonyStuff
                 originalLabel += $", {"ToolInUse".Translate()}";
 
                 // Optional extra debug context (very throttled)
-                if (SurvivalToolUtility.IsDebugLoggingEnabled && pawn != null && pawn.jobs?.curJob != null)
+                if (IsDebugLoggingEnabled && pawn != null && pawn.jobs?.curJob != null)
                 {
                     var job = pawn.jobs.curJob;
                     string key = $"ITab_Gear_ToolLabelDebug_{pawn.ThingID}_{tool.ThingID}_{job.def?.defName}";
-                    if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                    if (ShouldLogWithCooldown(key))
                     {
                         List<StatDef> relevantStats = new List<StatDef>();
                         try

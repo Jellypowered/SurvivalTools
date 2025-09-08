@@ -1,5 +1,10 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Patch_SymbolResolver_AncientRuins_Resolve.cs
+//
+// Ensures Survival Tools can spawn inside ancient ruins.
+// Fix: moved from Prefix → Postfix so tools are placed AFTER
+// vanilla pushes the "emptyRoom" symbol, otherwise they get wiped.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,7 +32,8 @@ namespace SurvivalTools.HarmonyStuff
         private static readonly System.Reflection.MethodInfo MI_GenerateFromGaussian =
             AccessTools.Method(typeof(QualityUtility), "GenerateFromGaussian");
 
-        public static void Prefix(ResolveParams rp)
+        [HarmonyPostfix]
+        public static void Postfix(ResolveParams rp)
         {
             if (!SurvivalToolUtility.IsToolMapGenEnabled)
                 return;
@@ -50,9 +56,8 @@ namespace SurvivalTools.HarmonyStuff
             if (things == null || things.Count == 0)
                 return;
 
-            for (int i = 0; i < things.Count; i++)
+            foreach (var thing in things)
             {
-                var thing = things[i];
                 if (thing == null) continue;
 
                 try
@@ -115,7 +120,7 @@ namespace SurvivalTools.HarmonyStuff
                         thing.HitPoints = Mathf.Clamp(hp, 1, thing.MaxHitPoints);
                     }
 
-                    // --- Enqueue spawn ---
+                    // --- Enqueue spawn AFTER emptyRoom ---
                     var rpForThing = rp; // struct copy
                     rpForThing.singleThingToSpawn = thing;
                     BaseGen.symbolStack.Push("thing", rpForThing);

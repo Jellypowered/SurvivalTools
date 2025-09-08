@@ -6,6 +6,7 @@ using HarmonyLib;
 using RimWorld;
 using Verse;
 using Verse.AI;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.HarmonyStuff
 {
@@ -86,7 +87,7 @@ namespace SurvivalTools.HarmonyStuff
                 if (tick != null) yield return tick;
                 if (tickRare != null) yield return tickRare;
 
-                if (tick == null && tickRare == null && SurvivalToolUtility.IsDebugLoggingEnabled)
+                if (tick == null && tickRare == null && IsDebugLoggingEnabled)
                     Log.Warning("[SurvivalTools] No inventory tracker tick method found to patch.");
             }
 
@@ -132,19 +133,19 @@ namespace SurvivalTools.HarmonyStuff
 
                 if (toolToDrop == null)
                 {
-                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                    if (IsDebugLoggingEnabled)
                     {
                         var key = $"InvOverCap_NoDrop_{pawn.ThingID}";
-                        if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                        if (ShouldLogWithCooldown(key))
                             Log.Message($"[SurvivalTools.InventoryTick] {pawn.LabelShort} over tool limit, but all items are forced or in-use.");
                     }
                     return;
                 }
 
-                if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                if (IsDebugLoggingEnabled)
                 {
                     var key = $"InvOverCap_Drop_{pawn.ThingID}";
-                    if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                    if (ShouldLogWithCooldown(key))
                         Log.Message($"[SurvivalTools.InventoryTick] {pawn.LabelShort} idle & over limit. Dropping {toolToDrop.LabelShort}.");
                 }
 

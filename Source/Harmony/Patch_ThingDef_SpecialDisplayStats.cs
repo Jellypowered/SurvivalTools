@@ -1,5 +1,5 @@
-﻿//Rimworld 1.6 / C# 7.3
-//Patch_ThingDef_SpecialDisplayStats.cs
+﻿// Rimworld 1.6 / C# 7.3
+// Patch_ThingDef_SpecialDisplayStats.cs
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
@@ -21,7 +21,6 @@ namespace SurvivalTools.HarmonyStuff
             var list = (__result as List<StatDrawEntry>) ?? (__result?.ToList() ?? new List<StatDrawEntry>(4));
 
             // Build a quick de-dupe set (label + value) to avoid duplicate rows
-            // LabelCap is a TaggedString; ToString is fine for keys here.
             var existing = new HashSet<string>();
             for (int i = 0; i < list.Count; i++)
             {
@@ -30,22 +29,43 @@ namespace SurvivalTools.HarmonyStuff
                     existing.Add((e.LabelCap?.ToString() ?? "") + "|" + (e.ValueString ?? ""));
             }
 
-            // Case 1: Survival tool defs themselves (def view only; not per-instance)
+            // Case 1: Survival tool defs
             SurvivalToolProperties tProps;
-            if (req.Thing == null && __instance.IsSurvivalTool(out tProps))
+            if (__instance.IsSurvivalTool(out tProps))
             {
                 var mods = tProps?.baseWorkStatFactors;
                 if (mods != null && mods.Count > 0)
                     AddStatDrawEntries(list, existing, mods, ST_StatCategoryDefOf.SurvivalTool);
             }
 
+            // Case 1.5: Actual SurvivalTool instances (override with calculated WorkStatFactors)
+            if (req.Thing is SurvivalTool actualTool && actualTool.WorkStatFactors != null)
+            {
+                // Clear existing entries first to avoid duplicates
+                list.RemoveAll(entry => entry.category == ST_StatCategoryDefOf.SurvivalTool);
+                existing.RemoveWhere(key => key.Contains("Tool —"));
+
+                AddStatDrawEntries(list, existing, actualTool.WorkStatFactors, ST_StatCategoryDefOf.SurvivalTool);
+            }
+
             // Case 2: Stuff materials that carry survival-tool stat factors (tool-stuff)
             if (__instance.IsStuff)
             {
+                // Check for SurvivalToolProperties first (for materials like cloth that can be tools)
                 var ext = __instance.GetModExtension<SurvivalToolProperties>();
                 var mods = ext?.baseWorkStatFactors;
                 if (mods != null && mods.Count > 0)
+                {
                     AddStatDrawEntries(list, existing, mods, ST_StatCategoryDefOf.SurvivalTool);
+                }
+                else
+                {
+                    // Check for StuffPropsTool (for materials like obsidian, etc.)
+                    var stuffExt = __instance.GetModExtension<StuffPropsTool>();
+                    var stuffMods = stuffExt?.toolStatFactors;
+                    if (stuffMods != null && stuffMods.Count > 0)
+                        AddStatDrawEntries(list, existing, stuffMods, ST_StatCategoryDefOf.SurvivalTool);
+                }
             }
 
             __result = list;
@@ -65,16 +85,18 @@ namespace SurvivalTools.HarmonyStuff
                 if (modifier == null || modifier.stat == null)
                     continue;
 
-                // Label & value
+                // Only show stats that provide meaningful bonuses (> 100%).
+                // Penalties (< 100%) are intentionally hidden to reduce clutter in info cards.
+                if (modifier.value <= 1.0f)
+                    continue;
+
                 var label = $"Tool — {modifier.stat.LabelCap}";
                 var value = modifier.value.ToStringByStyle(ToStringStyle.PercentZero, ToStringNumberSense.Factor);
 
-                // De-dupe: skip if an identical row already exists
                 var key = label + "|" + value;
                 if (existing.Contains(key))
                     continue;
 
-                // Brief, safe description (no assumptions about localization keys here)
                 var report = $"When survival tools (or tool-stuff) apply, {modifier.stat.label.ToLower()} is multiplied by {modifier.value.ToStringPercent()}.";
 
                 list.Add(new StatDrawEntry(

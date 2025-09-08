@@ -1,5 +1,23 @@
 // RimWorld 1.6 / C# 7.3
 // Patch_PawnRenderer.cs
+//
+// Purpose:
+//   Ensures pawns visibly "use" survival tools while working by drawing the tool
+//   in the same pass that vanilla uses for equipment/apparel extras.
+//   This improves immersion, showing tools in-hand only when relevant.
+//
+// What this patch does:
+//   - Draws an in-use SurvivalTool (real or virtual) while a pawn is performing a work job.
+//   - Skips portrait / invisible renders and invalid pawn states.
+//   - Skips drafted pawns unless they're actually performing a work job (i.e., relevant stats exist).
+//   - Avoids double-drawing if the same physical item is already shown as Primary.
+//   - Uses a small JobDef → required-stats cache to reduce allocations.
+//
+// Future ideas (comments only, not implemented):
+//   - Animated tools (e.g., swinging pick/axe, wrench turning, microscope oscillation).
+//   - Per-job offsets/orientations so a hammer sits differently than a wrench.
+//   - Sync lightweight animations to pawn tick or job progress for smooth motion.
+
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
@@ -7,15 +25,27 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using SurvivalTools.Helpers;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.HarmonyStuff
 {
-    // Draw in the same pass vanilla uses for guns/apparel extras.
-    // Run last so our visual overlay remains visible over other mods' draws.
     [HarmonyPatch(typeof(PawnRenderUtility), nameof(PawnRenderUtility.DrawEquipmentAndApparelExtras))]
-    [HarmonyPriority(Priority.Last)]
+    [HarmonyPriority(Priority.Last)] // draw last so our overlay isn't hidden by other mods
+    [StaticConstructorOnStartup]     // ensure our type gets initialized at load
     public static class ShowWhileWorking_Draw_Postfix
     {
+        // Cache: JobDef -> required stats to avoid repeat lookups/allocations.
+        private static readonly Dictionary<JobDef, List<StatDef>> _jobStatCache =
+            new Dictionary<JobDef, List<StatDef>>();
+
+        // Optional: static ctor (no reload hook in 1.6 — we just start empty)
+        static ShowWhileWorking_Draw_Postfix()
+        {
+            _jobStatCache.Clear();
+            // If you later add a reload hook, clear the cache there as well.
+        }
+
         [HarmonyPostfix]
         public static void Postfix(Pawn pawn, Vector3 drawPos, Rot4 facing, PawnRenderFlags flags)
         {
@@ -23,17 +53,21 @@ namespace SurvivalTools.HarmonyStuff
             if ((flags & (PawnRenderFlags.Portrait | PawnRenderFlags.Invisible)) != 0) return;
             if (pawn == null || !pawn.Spawned || pawn.Dead || pawn.Downed) return;
 
-            // Only show while actually working (not drafted, has job + driver)
-            if (pawn.Drafted) return;
             var job = pawn.CurJob;
             if (job == null || pawn.jobs?.curDriver == null) return;
 
-            // Ask our logic which tool is in use
+            // Drafted behavior:
+            //  - We generally skip drafted pawns (vanilla shows weapons),
+            //  - but if they're actually doing a "work job" (i.e., stats are relevant),
+            //    we'll draw the tool. We enforce this indirectly because we only draw
+            //    when RelevantStatsFor() returns a non-empty set.
+            //    (So no special hard block here — the stat check below is the gate.)
+
+            // Decide which tool is in use (real or virtual) and what stats are required.
             var (toolThing, requiredStats) = GetActiveToolForJob(pawn, job);
             if (toolThing == null || toolThing.Destroyed) return;
 
-            // If another mod already causes this SAME physical item to be drawn as Primary, don't double-draw.
-            // For virtual wrappers compare by def so a physical cloth held as primary will also block us.
+            // Prevent double-draw if the same physical thing is already being rendered as Primary.
             var primary = pawn.equipment?.Primary;
             if (primary != null)
             {
@@ -41,22 +75,22 @@ namespace SurvivalTools.HarmonyStuff
                 if (toolThing is VirtualSurvivalTool vt && primary.def == vt.SourceDef) return;
             }
 
-            // Use vanilla equipment-distance factor (children hold things a bit closer)
+            // Vanilla equipment distance factor (children hold closer).
             float distFactor = pawn.ageTracker?.CurLifeStage?.equipmentDrawDistanceFactor ?? 1f;
 
-            // If pawn is "aiming" per vanilla rules, use the aiming helper; else use the carried helper
+            // If pawn is "aiming" per vanilla rules, draw with aiming helper; otherwise draw as carried.
             var stanceBusy = pawn.stances?.curStance as Stance_Busy;
             bool canAim = stanceBusy != null
                           && !stanceBusy.neverAimWeapon
                           && !flags.HasFlag(PawnRenderFlags.NeverAimWeapon)
                           && stanceBusy.focusTarg.IsValid;
 
-            // Precompute tint for virtual tools (stat-based)
+            // Tint virtual tools by work-type (green medical, red butchery, etc.)
             Color virtualTint = GetTintForVirtualTool(toolThing, requiredStats);
 
             if (canAim)
             {
-                // Compute aim angle (mirror vanilla shape)
+                // --- Aiming-style draw (reuses vanilla orientation logic) ---
                 Vector3 target = stanceBusy.focusTarg.HasThing
                     ? (stanceBusy.focusTarg.Thing?.DrawPos ?? pawn.DrawPos)
                     : stanceBusy.focusTarg.Cell.ToVector3Shifted();
@@ -70,70 +104,72 @@ namespace SurvivalTools.HarmonyStuff
                 if (verb != null && verb.AimAngleOverride.HasValue)
                     aimAngle = verb.AimAngleOverride.Value;
 
-                // Adjust base position
                 float eqOffset = toolThing.def?.equippedDistanceOffset ?? 0f;
                 drawPos += new Vector3(0f, 0f, 0.4f + eqOffset).RotatedBy(aimAngle) * distFactor;
 
                 if (toolThing is VirtualSurvivalTool)
                 {
-                    var mat = toolThing.Graphic?.MatSingle;
-                    if (mat == null) return;
+                    DrawVirtualTool(toolThing, drawPos, Quaternion.AngleAxis(aimAngle, Vector3.up), virtualTint);
 
-                    // Guard: mainTexture might be null or not Texture2D
-                    var tex = mat.mainTexture as Texture2D;
-                    var tinted = tex != null
-                        ? MaterialPool.MatFrom(tex, ShaderDatabase.Transparent, virtualTint)
-                        : mat; // fallback to original if no texture
-
-                    const float scale = 0.75f;
-                    Graphics.DrawMesh(
-                        MeshPool.plane10,
-                        Matrix4x4.TRS(drawPos, Quaternion.AngleAxis(aimAngle, Vector3.up), new Vector3(scale, 1f, scale)),
-                        tinted,
-                        0
-                    );
+                    // Animation hook (future):
+                    //  - For “swinging” tools, vary a small extra rotation (e.g., +/- 10°) with a sin wave
+                    //    tied to pawn tick: float wobble = Mathf.Sin(Time.time * 6f) * 10f;
+                    //  - Apply to 'aimAngle' before building the Quaternion.
                 }
                 else if (toolThing is ThingWithComps twc)
                 {
-                    // real SurvivalTool / ThingWithComps - use vanilla aiming helper
                     PawnRenderUtility.DrawEquipmentAiming(twc, drawPos, aimAngle);
                 }
             }
             else
             {
+                // --- Carried-style draw (when not aiming) ---
                 if (toolThing is VirtualSurvivalTool)
                 {
-                    var mat = toolThing.Graphic?.MatSingle;
-                    if (mat == null) return;
+                    DrawVirtualTool(toolThing, drawPos, Quaternion.identity, virtualTint);
 
-                    var tex = mat.mainTexture as Texture2D;
-                    var tinted = tex != null
-                        ? MaterialPool.MatFrom(tex, ShaderDatabase.Transparent, virtualTint)
-                        : mat;
-
-                    const float scale = 0.75f;
-                    Graphics.DrawMesh(
-                        MeshPool.plane10,
-                        Matrix4x4.TRS(drawPos, Quaternion.identity, new Vector3(scale, 1f, scale)),
-                        tinted,
-                        0
-                    );
+                    // Animation hook (future):
+                    //  - Subtle bobbing while working: offset drawPos.y or Z by a small sin wave.
+                    //  - Slight rotation oscillation to suggest use.
                 }
                 else if (toolThing is ThingWithComps twc)
                 {
-                    // real tool - let vanilla draw it as carried weapon
                     PawnRenderUtility.DrawCarriedWeapon(twc, drawPos, facing, distFactor);
+
+                    // Animation hook (future):
+                    //  - For hammers/saws, consider small periodic rotation around local Z.
+                    //  - Could keyframe based on job progress if available.
                 }
             }
         }
 
+        // Draw a virtual tool with a tint (stat-driven)
+        private static void DrawVirtualTool(Thing toolThing, Vector3 drawPos, Quaternion rot, Color tint)
+        {
+            var mat = toolThing.Graphic?.MatSingle;
+            if (mat == null) return;
+
+            var tex = mat.mainTexture as Texture2D;
+            var tinted = tex != null
+                ? MaterialPool.MatFrom(tex, ShaderDatabase.Transparent, tint)
+                : mat;
+
+            const float scale = 0.75f;
+            Graphics.DrawMesh(
+                MeshPool.plane10,
+                Matrix4x4.TRS(drawPos, rot, new Vector3(scale, 1f, scale)),
+                tinted,
+                0
+            );
+        }
+
+        // Pick a tint based on which stats the tool contributes to.
         private static Color GetTintForVirtualTool(Thing tool, List<StatDef> requiredStats)
         {
-            // Default: light gray, semi-transparent
             var defaultTint = new Color(1f, 1f, 1f, 0.6f);
             if (tool == null || requiredStats == null || requiredStats.Count == 0) return defaultTint;
 
-            // quick membership checks (no LINQ allocations in hot path)
+            // light-weight membership checks (no LINQ allocs in the hot path)
             for (int i = 0; i < requiredStats.Count; i++)
             {
                 var s = requiredStats[i];
@@ -150,23 +186,32 @@ namespace SurvivalTools.HarmonyStuff
         }
 
         /// <summary>
-        /// Gets the best survival tool for the current job using the actual SurvivalTools logic.
-        /// Returns both the tool and the required stats.
+        /// Gets the active survival tool (real or virtual) for the pawn's current job,
+        /// and the required stats for that job. Uses a small cache keyed by JobDef.
+        /// Drafted pawns still pass through here; if RelevantStatsFor() returns empty,
+        /// we naturally refrain from drawing anything (so drafted idle = no tool drawn).
         /// </summary>
         private static (Thing tool, List<StatDef> requiredStats) GetActiveToolForJob(Pawn pawn, Job job)
         {
-            if (pawn == null || job == null || !pawn.CanUseSurvivalTools())
+            if (pawn == null || job == null || !PawnToolValidator.CanUseSurvivalTools(pawn))
                 return (null, null);
 
-            var requiredStats = SurvivalToolUtility.RelevantStatsFor(job.workGiverDef, job);
-            if (requiredStats.NullOrEmpty())
+            // Cache lookup
+            if (!_jobStatCache.TryGetValue(job.def, out var requiredStats))
+            {
+                requiredStats = SurvivalToolUtility.RelevantStatsFor(job.workGiverDef, job) ?? new List<StatDef>();
+                _jobStatCache[job.def] = requiredStats;
+            }
+
+            // If no relevant stats, nothing to draw (also filters out most drafted non-work jobs).
+            if (requiredStats == null || requiredStats.Count == 0)
                 return (null, requiredStats);
 
-            // Debug (cooldowned) – extremely rare; safe to keep
-            if (SurvivalToolUtility.IsDebugLoggingEnabled)
+            // Debug logging (throttled)
+            if (IsDebugLoggingEnabled)
             {
                 var key = $"Drawing_Tool_{pawn.ThingID}_{job.def?.defName ?? "null"}";
-                if (SurvivalToolUtility.ShouldLogWithCooldown(key))
+                if (ShouldLogWithCooldown(key))
                 {
                     var bestForLog = pawn.GetBestSurvivalTool(requiredStats);
                     Log.Message($"[SurvivalTools.Drawing] {pawn.LabelShort} doing {job.def?.defName ?? "null"} " +
@@ -175,15 +220,14 @@ namespace SurvivalTools.HarmonyStuff
                 }
             }
 
-            // First try: normal system (real or virtual)
+            // 1) Normal path: best survival tool (real or virtual) selected by our core logic.
             var best = pawn.GetBestSurvivalTool(requiredStats);
             if (best != null) return (best, requiredStats);
 
-            // Second try: virtual wrapper for held tool-stuffs
+            // 2) Fallback: wrap any relevant tool-stuff stack into a VirtualSurvivalTool for display.
             var inner = pawn.inventory?.innerContainer;
             if (inner != null)
             {
-                // scan once; no LINQ alloc in hot path
                 for (int i = 0; i < inner.Count; i++)
                 {
                     var thing = inner[i];
@@ -192,7 +236,6 @@ namespace SurvivalTools.HarmonyStuff
                     var ext = thing.def.GetModExtension<SurvivalToolProperties>();
                     if (ext?.baseWorkStatFactors == null) continue;
 
-                    // Does this stuff help any of the required stats?
                     for (int m = 0; m < ext.baseWorkStatFactors.Count; m++)
                     {
                         var mod = ext.baseWorkStatFactors[m];

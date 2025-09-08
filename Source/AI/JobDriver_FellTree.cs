@@ -3,6 +3,7 @@
 using RimWorld;
 using Verse;
 using Verse.AI;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools
 {
@@ -52,16 +53,16 @@ namespace SurvivalTools
                     else
                     {
                         // If it's not a Plant but still exists, be conservative and avoid destroying unexpected things.
-                        if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                        {
-                            Log.Warning($"[SurvivalTools] FellTree toil expected a Plant but found {thing.GetType().Name}: {thing} — skipping destroy.");
-                        }
+                        LogDebug(
+                        $"[SurvivalTools] FellTree toil expected a Plant but found {thing.GetType().Name}: {thing} — skipping destroy.",
+                        $"FellTree_NotPlant_{thing?.GetType().Name}_{thing?.ThingID}"
+                        );
+
                     }
                 }
                 catch (System.Exception ex)
                 {
-                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                        Log.Error($"[SurvivalTools] Exception in FellTree.DestroyThing initAction: {ex}");
+                    Log.Error($"[SurvivalTools] Exception in FellTree.DestroyThing initAction: {ex}"); // leave error unchanged
                 }
             };
             toil.defaultCompleteMode = ToilCompleteMode.Instant;

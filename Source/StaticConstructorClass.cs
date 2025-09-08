@@ -6,6 +6,8 @@ using System.Linq;
 using System.Text;
 using Verse;
 using RimWorld;
+using SurvivalTools.Helpers;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools
 {
@@ -18,7 +20,7 @@ namespace SurvivalTools
         {
             try
             {
-                if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                if (IsDebugLoggingEnabled)
                     Log.Message("[SurvivalTools] Starting static constructor initialization...");
 
                 // 1) MapGen / content constraints
@@ -40,7 +42,13 @@ namespace SurvivalTools
                 // 5) Warm settings cache (optional/perf)
                 SurvivalTools.InitializeSettings();
 
-                if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                // 6) Apply conditional feature registration
+                ConditionalRegistration.ApplyTreeFellingConditionals();
+
+                // 7) Schedule delayed job validation (after game fully loads)
+                LongEventHandler.QueueLongEvent(ValidateExistingJobsOnModLoad, "SurvivalTools: Validating existing jobs...", false, null);
+
+                if (IsDebugLoggingEnabled)
                     Log.Message("[SurvivalTools] Static constructor initialization completed successfully");
             }
             catch (Exception ex)
@@ -64,7 +72,7 @@ namespace SurvivalTools
             p.validator = def => def?.IsWithinCategory(ST_ThingCategoryDefOf.SurvivalToolsNeolithic) == true;
             tsm.fixedParams = p;
 
-            if (SurvivalToolUtility.IsDebugLoggingEnabled)
+            if (IsDebugLoggingEnabled)
                 Log.Message("[SurvivalTools] Configured ancient ruins tools to neolithic category");
         }
 
@@ -89,7 +97,7 @@ namespace SurvivalTools
                 }
             }
 
-            if (SurvivalToolUtility.IsDebugLoggingEnabled)
+            if (IsDebugLoggingEnabled)
                 Log.Message($"[SurvivalTools] Added SurvivalToolAssignmentTracker to {addedCount} humanlike defs");
         }
 
@@ -121,7 +129,7 @@ namespace SurvivalTools
                 }
             }
 
-            if (SurvivalToolUtility.IsDebugLoggingEnabled)
+            if (IsDebugLoggingEnabled)
                 Log.Message($"[SurvivalTools] Processed {processed} Mend&Recycle recipes, cleared {cleared} without valid ingredients");
         }
 
@@ -150,7 +158,7 @@ namespace SurvivalTools
                 }
             }
 
-            if (SurvivalToolUtility.IsDebugLoggingEnabled)
+            if (IsDebugLoggingEnabled)
                 Log.Message($"[SurvivalTools] Processed {benchesProcessed} work benches: added {smeltAdded} smelt recipes, {destroyAdded} destroy recipes");
         }
 
@@ -160,7 +168,7 @@ namespace SurvivalTools
 
         private static void CheckStuffForStuffPropsTool()
         {
-            if (!SurvivalToolUtility.IsDebugLoggingEnabled) return;
+            if (!IsDebugLoggingEnabled) return;
 
             var sb = new StringBuilder();
             sb.AppendLine("[SurvivalTools] Checking all stuff for StuffPropsTool modExtension...");
@@ -179,7 +187,8 @@ namespace SurvivalTools
             sb.AppendLine();
             sb.Append(noProps);
 
-            Log.Message(sb.ToString());
+            if (IsDebugLoggingEnabled)
+                Log.Message(sb.ToString());
         }
 
         private static HashSet<StuffCategoryDef> GetSurvivalToolStuffCategories()
@@ -225,6 +234,18 @@ namespace SurvivalTools
             }
 
             return (withProps, withoutProps);
+        }
+
+        #endregion
+
+        #region Job validation on mod load
+
+        private static void ValidateExistingJobsOnModLoad()
+        {
+            // Only validate if we're in hardcore mode and the game is actually running
+            if (Current.ProgramState != ProgramState.Playing) return;
+
+            Helpers.SurvivalToolValidation.ValidateExistingJobs("mod loaded with existing save");
         }
 
         #endregion

@@ -9,6 +9,7 @@ using HarmonyLib;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using static SurvivalTools.ST_Logging;
 using Verse.AI;
 
 namespace SurvivalTools.HarmonyStuff
@@ -53,7 +54,7 @@ namespace SurvivalTools.HarmonyStuff
         {
             if (original == null)
             {
-                if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                if (IsDebugLoggingEnabled)
                     Log.Warning($"[SurvivalTools] Skipping patch '{label}' — method not found.");
                 return;
             }
@@ -389,7 +390,7 @@ namespace SurvivalTools.HarmonyStuff
 
             if (displayToilField == null)
             {
-                if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                if (IsDebugLoggingEnabled)
                     Log.Warning("[SurvivalTools] AffectRoof tick transpiler: could not find captured Toil field; passing through.");
                 for (int i = 0; i < code.Count; i++) yield return code[i];
                 yield break;

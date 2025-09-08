@@ -6,6 +6,7 @@ using System.Linq;
 using Verse;
 using Verse.AI;
 using RimWorld;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools
 {
@@ -20,30 +21,23 @@ namespace SurvivalTools
         protected override IEnumerable<Toil> MakeNewToils()
         {
             this.FailOnDestroyedOrNull(TargetIndex.A);
-            // Note: don't FailOn(() => !pawn.inventory.innerContainer.Contains(...))
-            // because virtual wrappers may target a wrapper while the inventory contains the backing thing.
 
             yield return Toils_General.Wait(DurationTicks, TargetIndex.None);
 
             yield return Toils_General.DoAtomic(() =>
             {
-                if (pawn == null)
+                if (pawn == null || pawn.Map == null)
                 {
                     EndJobWith(JobCondition.Incompletable);
                     return;
                 }
 
                 var toolAsSurvival = ToolToDrop as SurvivalTool;
-                Thing physicalBacking = SurvivalToolUtility.BackingThing(toolAsSurvival, pawn) ?? ToolToDrop;
+                var backing = SurvivalToolUtility.BackingThing(toolAsSurvival, pawn) ?? ToolToDrop;
 
                 if (pawn.inventory?.innerContainer == null)
                 {
-                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                    {
-                        var k = $"DropTool_NoInventory_{pawn.ThingID}";
-                        if (SurvivalToolUtility.ShouldLogWithCooldown(k))
-                            Log.Message($"[SurvivalTools.DropTool] {pawn.LabelShort} has no inventory; cannot drop tool.");
-                    }
+                    LogDebug($"[SurvivalTools.DropTool] {pawn.LabelShort} has no inventory; cannot drop tool.", $"DropTool_NoInventory_{pawn.ThingID}");
                     EndJobWith(JobCondition.Incompletable);
                     return;
                 }
@@ -52,23 +46,18 @@ namespace SurvivalTools
 
                 // Prefer exact reference match, fallback to def match
                 Thing inventoryInstance = null;
-                if (physicalBacking != null)
-                    inventoryInstance = inv.FirstOrDefault(t => t == physicalBacking);
+                if (backing != null)
+                    inventoryInstance = inv.FirstOrDefault(t => t == backing);
 
-                if (inventoryInstance == null && physicalBacking != null)
-                    inventoryInstance = inv.FirstOrDefault(t => t.def == physicalBacking.def && t.stackCount > 0);
+                if (inventoryInstance == null && backing != null)
+                    inventoryInstance = inv.FirstOrDefault(t => t.def == backing.def && t.stackCount > 0);
 
                 if (inventoryInstance == null && ToolToDrop != null)
                     inventoryInstance = inv.FirstOrDefault(t => t == ToolToDrop || t.def == ToolToDrop.def);
 
                 if (inventoryInstance == null)
                 {
-                    if (SurvivalToolUtility.IsDebugLoggingEnabled)
-                    {
-                        var k = $"DropTool_NotInInventory_{pawn.ThingID}";
-                        if (SurvivalToolUtility.ShouldLogWithCooldown(k))
-                            Log.Message($"[SurvivalTools.DropTool] {pawn.LabelShort} attempted to drop {physicalBacking?.LabelShort ?? "tool"} but no matching item found in inventory.");
-                    }
+                    LogDebug($"[SurvivalTools.DropTool] {pawn.LabelShort} attempted to drop {backing?.LabelShort ?? "tool"} but no matching item found in inventory.", $"DropTool_NotInInventory_{pawn.ThingID}");
                     EndJobWith(JobCondition.Incompletable);
                     return;
                 }
@@ -78,16 +67,16 @@ namespace SurvivalTools
                     ? inventoryInstance.SplitOff(1)
                     : inventoryInstance;
 
-                // Try dropping via the ThingOwner API (common RW overload)
+                // Try dropping via the ThingOwner API
                 Thing droppedTool = null;
                 bool dropOk = false;
                 try
                 {
-                    dropOk = inv.TryDrop(toDrop, pawn.Position, pawn.Map, ThingPlaceMode.Near, out droppedTool);
+                    if (pawn.Map != null)
+                        dropOk = inv.TryDrop(toDrop, pawn.Position, pawn.Map, ThingPlaceMode.Near, out droppedTool);
                 }
                 catch
                 {
-                    // If the TryDrop signature differs, fall back to GenPlace below
                     dropOk = false;
                     droppedTool = null;
                 }
@@ -98,7 +87,8 @@ namespace SurvivalTools
                     bool placed = false;
                     try
                     {
-                        placed = GenPlace.TryPlaceThing(toDrop, pawn.Position, pawn.Map, ThingPlaceMode.Near);
+                        if (pawn.Map != null)
+                            placed = GenPlace.TryPlaceThing(toDrop, pawn.Position, pawn.Map, ThingPlaceMode.Near);
                     }
                     catch
                     {
@@ -107,24 +97,21 @@ namespace SurvivalTools
 
                     if (!placed)
                     {
-                        // Couldn't place it. Log and try to restore the split-off item back into the inventory.
-                        if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                        if (IsDebugLoggingEnabled)
                         {
                             var k = $"DropTool_PlaceFailed_{pawn.ThingID}";
-                            if (SurvivalToolUtility.ShouldLogWithCooldown(k))
+                            if (ShouldLogWithCooldown(k))
                                 Log.Warning($"[SurvivalTools.DropTool] {pawn.LabelShort} failed to drop/place {toDrop.Label}.");
                         }
 
-                        // If we had split off a single item, try to merge it back into any compatible stack safely:
+                        // Attempt to restore split-off items safely
                         if (toDrop != inventoryInstance)
                         {
                             try
                             {
-                                // Try to merge into an existing stack with available space
                                 var sameStack = inv.FirstOrDefault(t => t.def == toDrop.def && t.stackCount < t.def.stackLimit);
                                 if (sameStack != null)
                                 {
-                                    // move as much as we can into the existing stack
                                     int freeSpace = sameStack.def.stackLimit - sameStack.stackCount;
                                     int moveAmount = Math.Min(freeSpace, toDrop.stackCount);
                                     if (moveAmount > 0)
@@ -133,42 +120,24 @@ namespace SurvivalTools
                                         toDrop.stackCount -= moveAmount;
                                     }
 
-                                    // if nothing left in toDrop, destroy it
                                     if (toDrop.stackCount <= 0)
                                     {
-                                        try { toDrop.Destroy(); } catch { /* swallow */ }
+                                        try { toDrop.Destroy(); } catch { }
                                     }
                                     else
                                     {
-                                        // try to add remainder back into inventory
-                                        try
-                                        {
-                                            inv.TryAdd(toDrop);
-                                        }
-                                        catch
-                                        {
-                                            // last resort: destroy remainder to avoid leak (very unlikely)
-                                            try { toDrop.Destroy(); } catch { }
-                                        }
+                                        try { inv.TryAdd(toDrop); }
+                                        catch { try { toDrop.Destroy(); } catch { } }
                                     }
                                 }
                                 else
                                 {
-                                    // no existing partial stack: try to add the split item back
-                                    try
-                                    {
-                                        inv.TryAdd(toDrop);
-                                    }
-                                    catch
-                                    {
-                                        // give up quietly; attempt to destroy to avoid orphaned things in memory
-                                        try { toDrop.Destroy(); } catch { }
-                                    }
+                                    try { inv.TryAdd(toDrop); }
+                                    catch { try { toDrop.Destroy(); } catch { } }
                                 }
                             }
                             catch
                             {
-                                // swallow restore exceptions to avoid crashing the save
                                 try { toDrop.Destroy(); } catch { }
                             }
                         }
@@ -177,11 +146,10 @@ namespace SurvivalTools
                         return;
                     }
 
-                    // If placed directly we treat the placed object as the droppedTool
                     droppedTool = toDrop;
                 }
 
-                // Clear forced-handler references on the inventory instance and dropped thing
+                // Clear forced-handler references
                 pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>()?.forcedHandler?.SetForced(inventoryInstance, false);
                 pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>()?.forcedHandler?.SetForced(droppedTool, false);
 
@@ -190,7 +158,8 @@ namespace SurvivalTools
                 {
                     var haulJob = JobMaker.MakeJob(JobDefOf.HaulToCell, droppedTool, storageCell);
                     haulJob.count = 1;
-                    pawn.jobs.jobQueue.EnqueueFirst(haulJob);
+                    if (pawn.jobs?.jobQueue != null)
+                        pawn.jobs.jobQueue.EnqueueFirst(haulJob);
                 }
             });
         }
@@ -203,15 +172,12 @@ namespace SurvivalTools
             var map = pawn.Map;
             var faction = pawn.Faction;
 
-            // 1) Try best storage for current priority
             if (StoreUtility.TryFindBestBetterStoreCellFor(tool, pawn, map, StoreUtility.CurrentStoragePriorityOf(tool), faction, out storageCell))
                 return true;
 
-            // 2) Try any storage cell (Unstored)
             if (StoreUtility.TryFindBestBetterStoreCellFor(tool, pawn, map, StoragePriority.Unstored, faction, out storageCell))
                 return true;
 
-            // 3) Try stockpiles that accept the tool
             var stockpiles = map.zoneManager.AllZones.OfType<Zone_Stockpile>();
             foreach (var stockpile in stockpiles)
             {
@@ -233,3 +199,4 @@ namespace SurvivalTools
         }
     }
 }
+

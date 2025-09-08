@@ -62,7 +62,7 @@
         <modExtensions>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <TreeFellingSpeed>1</TreeFellingSpeed>
+                    <TreeFellingSpeed>1.5</TreeFellingSpeed>
                 </baseWorkStatFactors>
                 <defaultSurvivalToolAssignmentTags>
                     <li>PlantWorker</li>
@@ -105,8 +105,8 @@
         <modExtensions>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <DiggingSpeed>1</DiggingSpeed>
-                    <MiningYieldDigging>1</MiningYieldDigging>
+                    <DiggingSpeed>1.5</DiggingSpeed>
+                    <MiningYieldDigging>1.2</MiningYieldDigging>
                 </baseWorkStatFactors>
                 <defaultSurvivalToolAssignmentTags>
                     <li>Miner</li>
@@ -148,7 +148,7 @@
         <modExtensions>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <ConstructionSpeed>1</ConstructionSpeed>
+                    <ConstructionSpeed>1.5</ConstructionSpeed>
                 </baseWorkStatFactors>
                 <defaultSurvivalToolAssignmentTags>
                     <li>Constructor</li>
@@ -190,7 +190,7 @@
         <modExtensions>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <PlantHarvestingSpeed>1</PlantHarvestingSpeed>
+                    <PlantHarvestingSpeed>1.5</PlantHarvestingSpeed>
                 </baseWorkStatFactors>
                 <defaultSurvivalToolAssignmentTags>
                     <li>PlantWorker</li>
@@ -326,7 +326,7 @@
             </defaultIngredientFilter>
             <unfinishedThingDef>UnfinishedWeapon</unfinishedThingDef>
         </recipeMaker>
-        <thingCategories>
+        <thingCategories Inherit="false">
             <li>SurvivalToolsIndustrial</li>
         </thingCategories>
     </ThingDef>
@@ -502,7 +502,7 @@
             </defaultIngredientFilter>
             <unfinishedThingDef>UnfinishedWeapon</unfinishedThingDef>
         </recipeMaker>
-        <thingCategories>
+        <thingCategories Inherit="false">
             <li>SurvivalToolsIndustrial</li>
         </thingCategories>
     </ThingDef>
@@ -585,7 +585,7 @@
             </defaultIngredientFilter>
             <unfinishedThingDef>UnfinishedWeapon</unfinishedThingDef>
         </recipeMaker>
-        <thingCategories>
+        <thingCategories Inherit="false">
             <li>SurvivalToolsIndustrial</li>
         </thingCategories>
     </ThingDef>
@@ -659,7 +659,7 @@
             </defaultIngredientFilter>
             <unfinishedThingDef>UnfinishedWeapon</unfinishedThingDef>
         </recipeMaker>
-        <thingCategories>
+        <thingCategories Inherit="false">
             <li>SurvivalToolsIndustrial</li>
         </thingCategories>
     </ThingDef>
@@ -739,7 +739,7 @@
             </defaultIngredientFilter>
             <unfinishedThingDef>UnfinishedWeapon</unfinishedThingDef>
         </recipeMaker>
-        <thingCategories>
+        <thingCategories Inherit="false">
             <li>SurvivalToolsIndustrial</li>
         </thingCategories>
     </ThingDef>
@@ -814,7 +814,7 @@
             </defaultIngredientFilter>
             <unfinishedThingDef>UnfinishedWeapon</unfinishedThingDef>
         </recipeMaker>
-        <thingCategories>
+        <thingCategories Inherit="false">
             <li>SurvivalToolsIndustrial</li>
         </thingCategories>
     </ThingDef>
@@ -891,7 +891,7 @@
             </defaultIngredientFilter>
             <unfinishedThingDef>UnfinishedComponent</unfinishedThingDef>
         </recipeMaker>
-        <thingCategories>
+        <thingCategories Inherit="false">
             <li>SurvivalToolsIndustrial</li>
         </thingCategories>
     </ThingDef>

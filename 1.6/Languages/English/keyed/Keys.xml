@@ -34,6 +34,8 @@
 
     <Settings_ToolOptimization>Automatic tool optimization</Settings_ToolOptimization>
     <Settings_ToolOptimization_Tooltip>Enables intelligent tool management where colonists automatically select and carry the most effective tools for their assigned work. They'll upgrade to better tools and drop inferior ones as needed. Disable this if you prefer manual tool control or experience performance issues with modded materials.</Settings_ToolOptimization_Tooltip>
+    <Settings_EnableTreeFelling>Enable Survival Tools tree felling system</Settings_EnableTreeFelling>
+    <Settings_EnableTreeFelling_Tooltip>Controls whether Survival Tools manages tree cutting jobs with its specialized Fell Trees and Harvest Trees system. When enabled (default), colonists use ST's enhanced tree felling that requires appropriate tools and provides better efficiency. When disabled, trees are handled by the standard Plant Cut job or other mods like Separate Tree Chopping (Continued). Disable this if you prefer to use other tree-cutting mods without overlap.</Settings_EnableTreeFelling_Tooltip>
     <Settings_PickupFromStorageOnly>Restrict tool pickup to storage areas</Settings_PickupFromStorageOnly>
     <Settings_PickupFromStorageOnly_Tooltip>When enabled, colonists will only acquire tools from designated storage zones, maintaining better organization and preventing them from grabbing tools from work areas. When disabled, they can pick up any accessible tool in the Home area (excluding forbidden or burning items), providing more flexibility but less control.</Settings_PickupFromStorageOnly_Tooltip>
     <Settings_AllowPacifistEquip>Allow pacifists to equip survival tools</Settings_AllowPacifistEquip>

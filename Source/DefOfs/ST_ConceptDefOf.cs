@@ -1,18 +1,25 @@
-﻿using Verse;
+﻿//Rimworld 1.6 / C# 7.3
+// Source/DefOfs/ST_ConceptDefOf.cs
+using Verse;
 using RimWorld;
 
-namespace SurvivalTools
+/// <summary>
+/// ConceptDefs used by SurvivalTools.
+/// Initialized automatically by RimWorld's DefOf system.
+/// </summary>
+[DefOf]
+public static class ST_ConceptDefOf
 {
-    [DefOf]
-    public static class ST_ConceptDefOf
-    {
-        public static ConceptDef UsingSurvivalTools;
-        public static ConceptDef SurvivalToolDegradation;
+    /// <summary>Concept tutorial shown when pawns first use survival tools.</summary>
+    public static ConceptDef UsingSurvivalTools;
 
-        static ST_ConceptDefOf()
-        {
-            DefOfHelper.EnsureInitializedInCtor(typeof(ST_ConceptDefOf));
-        }
+    /// <summary>Concept tutorial explaining tool degradation mechanics.</summary>
+    public static ConceptDef SurvivalToolDegradation;
+
+    static ST_ConceptDefOf()
+    {
+        DefOfHelper.EnsureInitializedInCtor(typeof(ST_ConceptDefOf));
     }
 }
+
 
