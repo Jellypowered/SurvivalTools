@@ -6,10 +6,27 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Rimworld Mod Project",
+            "name": "Rimworld Mod Project (Debug)",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "BuildWindowsDLL",
+            "preLaunchTask": "BuildWindowsDLL: Debug",
+            "buildConfiguration": "Debug",
+            "args": [],
+            "program": "F:/SteamLibrary/steamapps/common/RimWorld/RimWorldWin64.exe",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "internalConsoleOptions":"neverOpen",
+            "linux": {
+                "program": "../../RimWorldLinux",
+                "preLaunchTask": "BuildLinuxDLL",
+            }
+        },
+        {
+            "name": "Rimworld Mod Project (Release)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "BuildWindowsDLL: Release",
+            "buildConfiguration": "Release",
             "args": [],
             "program": "F:/SteamLibrary/steamapps/common/RimWorld/RimWorldWin64.exe",
             "cwd": "${workspaceFolder}",
