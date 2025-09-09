@@ -16,6 +16,7 @@ using SurvivalTools.Compat;
 using SurvivalTools.Helpers;
 using static SurvivalTools.ST_Logging;
 using LudeonTK;
+using SurvivalTools.Compat.ResearchReinvented;
 
 namespace SurvivalTools.DebugTools
 {
@@ -25,7 +26,7 @@ namespace SurvivalTools.DebugTools
         public static void DumpRR_DebugAction()
         {
             // Gate: only show when Research Reinvented is active
-            if (!RRReflectionAPI.IsRRActive)
+            if (!RRHelpers.IsRRActive)
             {
                 Messages.Message("Research Reinvented not detected — debug action unavailable.", MessageTypeDefOf.RejectInput, false);
                 return;

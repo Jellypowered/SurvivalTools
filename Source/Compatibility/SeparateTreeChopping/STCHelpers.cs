@@ -1,9 +1,4 @@
-// RimWorld 1.6 / C# 7.3
-// Source/Compatibility/SeparateTreeChoppingCompat.cs
-//
-// Separate Tree Chopping compatibility module for SurvivalTools
-// Provides integration and conflict resolution with the Separate Tree Chopping (Continued) mod
-
+// Canonicalized helpers file for SeparateTreeChopping compatibility (moved from SeparateTreeChoppingCompat.cs)
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +11,7 @@ namespace SurvivalTools.Compat.SeparateTreeChopping
     /// Compatibility module for Separate Tree Chopping (Continued) mod.
     /// Handles conflict detection, resolution strategies, and feature coordination.
     /// </summary>
-    public static class SeparateTreeChoppingCompat
+    public static class SeparateTreeChoppingHelpers
     {
         private static bool? _isSeparateTreeChoppingActive;
         private static readonly object _lockObject = new object();
@@ -140,7 +135,7 @@ namespace SurvivalTools.Compat.SeparateTreeChopping
             try
             {
                 if (HasTreeFellingConflict())
-                    conflicts.Add("Both SurvivalTools and Separate Tree Chopping handle tree felling — may cause duplicate jobs");
+                    conflicts.Add("Both SurvivalTools and Separate Tree Chopping handle tree felling  may cause duplicate jobs");
 
                 var fellTreesWorkGiver = DefDatabase<WorkGiverDef>.GetNamedSilentFail("ST_FellTrees");
                 if (fellTreesWorkGiver != null && HasTreeFellingConflict())

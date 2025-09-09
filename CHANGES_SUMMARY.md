@@ -156,14 +156,15 @@ Created comprehensive helper library in `Source/Helpers/` to centralize scattere
 
 ### Research Reinvented Integration
 
-- **`RRRuntimeIntegration.cs`** - runtime WorkGiver extension attachment
-- **`RRReflectionAPI.cs`** - safe reflection-based RR integration
-- **`RRSettings.cs`** - RR-specific settings integration
-- **`ResearchReinventedCompat.cs`** - main compatibility module
+- `RRHelpers.cs` - consolidated detection, reflection targets, runtime adapters, and settings bridge
+- `RRPatches.cs` - Harmony gating & prefix/postfix patches
+- `RRDebug.cs` - debug/pat ch logger utilities
+- `RRHelpers.cs` - ResearchReinvented compatibility helpers (consolidated)
 
 ### Separate Tree Chopping Integration
 
-- **`SeparateTreeChoppingCompat.cs`** - conflict detection and resolution
+- **`SeparateTreeChoppingHelpers.cs`** - conflict detection and resolution (canonicalized; +Patches/Debug placeholders)
+- **`SeparateTreeChoppingHelpers.cs`** - conflict detection and resolution (canonicalized; +Patches/Debug placeholders)
 - **Automatic conflict resolution** - disables ST tree felling when STC is active
 - **User guidance system** with recommendations
 

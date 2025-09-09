@@ -15,6 +15,7 @@ using RimWorld;
 using Verse;
 using SurvivalTools.Compat.PrimitiveTools;
 using SurvivalTools.Compat.SeparateTreeChopping;
+using SurvivalTools.Compat.ResearchReinvented;
 
 using static SurvivalTools.ST_Logging;
 
@@ -34,13 +35,13 @@ namespace SurvivalTools.Compat
     internal sealed class PrimitiveToolsCompatibilityModule : ICompatibilityModule
     {
         public string ModName => "Primitive Tools";
-        public bool IsModActive => PrimitiveToolsCompat.IsPrimitiveToolsActive();
+        public bool IsModActive => PrimitiveToolsHelpers.IsPrimitiveToolsActive();
 
         public void Initialize()
         {
 #if DEBUG
             if (IsModActive && IsCompatLogging() && IsDebugLoggingEnabled)
-                Log.Message($"[SurvivalTools Compat] Primitive Tools detected ({PrimitiveToolsCompat.GetPrimitiveToolDefs().Count} defs).");
+                Log.Message($"[SurvivalTools Compat] Primitive Tools detected ({PrimitiveToolsHelpers.GetPrimitiveToolDefs().Count} defs).");
 #endif
         }
 
@@ -51,13 +52,13 @@ namespace SurvivalTools.Compat
             var info = new Dictionary<string, string>
             {
                 ["Active"] = IsModActive.ToString(),
-                ["Tool Count"] = PrimitiveToolsCompat.GetPrimitiveToolDefs().Count.ToString(),
-                ["Optimize?"] = PrimitiveToolsCompat.ShouldOptimizeForPrimitiveTools().ToString()
+                ["Tool Count"] = PrimitiveToolsHelpers.GetPrimitiveToolDefs().Count.ToString(),
+                ["Optimize?"] = PrimitiveToolsHelpers.ShouldOptimizeForPrimitiveTools().ToString()
             };
 
             if (IsModActive)
             {
-                var conflicts = PrimitiveToolsCompat.CheckForConflicts();
+                var conflicts = PrimitiveToolsHelpers.CheckForConflicts();
                 info["Conflicts"] = conflicts.Count > 0 ? string.Join("; ", conflicts) : "None";
             }
             return info;
@@ -68,20 +69,20 @@ namespace SurvivalTools.Compat
     internal sealed class SeparateTreeChoppingCompatibilityModule : ICompatibilityModule
     {
         public string ModName => "Separate Tree Chopping";
-        public bool IsModActive => SeparateTreeChoppingCompat.IsSeparateTreeChoppingActive();
+        public bool IsModActive => SeparateTreeChoppingHelpers.IsSeparateTreeChoppingActive();
 
         public void Initialize()
         {
             if (!IsModActive) return;
 
             // If both are handling tree felling, auto-prefer STC (safer UX).
-            if (SeparateTreeChoppingCompat.ShouldAutoDisableSTTreeFelling())
+            if (SeparateTreeChoppingHelpers.ShouldAutoDisableSTTreeFelling())
             {
 #if DEBUG
                 if (IsCompatLogging() && IsDebugLoggingEnabled)
                     Log.Message("[SurvivalTools Compat] Auto-resolving tree felling overlap for Separate Tree Chopping...");
 #endif
-                if (!SeparateTreeChoppingCompat.ApplyRecommendedResolution())
+                if (!SeparateTreeChoppingHelpers.ApplyRecommendedResolution())
                     Log.Warning("[SurvivalTools Compat] Failed to auto-resolve tree felling conflict.");
             }
         }
@@ -93,10 +94,10 @@ namespace SurvivalTools.Compat
             var map = new Dictionary<string, string> { ["Active"] = IsModActive.ToString() };
             if (!IsModActive) return map;
 
-            map["Has Tree Conflict"] = SeparateTreeChoppingCompat.HasTreeFellingConflict().ToString();
-            map["Recommended Resolution"] = SeparateTreeChoppingCompat.GetRecommendedResolution().ToString();
+            map["Has Tree Conflict"] = SeparateTreeChoppingHelpers.HasTreeFellingConflict().ToString();
+            map["Recommended Resolution"] = SeparateTreeChoppingHelpers.GetRecommendedResolution().ToString();
 
-            var conflicts = SeparateTreeChoppingCompat.CheckForConflicts();
+            var conflicts = SeparateTreeChoppingHelpers.CheckForConflicts();
             map["Conflicts"] = conflicts.Count > 0 ? string.Join("; ", conflicts) : "None";
             return map;
         }
@@ -106,13 +107,13 @@ namespace SurvivalTools.Compat
     internal sealed class ResearchReinventedCompatibilityModule : ICompatibilityModule
     {
         public string ModName => "Research Reinvented";
-        public bool IsModActive => RRReflectionAPI.IsRRActive;
+        public bool IsModActive => RRHelpers.IsRRActive;
 
-        public void Initialize() => RRReflectionAPI.Initialize();
+        public void Initialize() => RRHelpers.Initialize();
 
         public List<StatDef> GetCompatibilityStats() => CompatAPI.GetAllResearchStats();
 
-        public Dictionary<string, string> GetDebugInfo() => RRReflectionAPI.GetReflectionStatus();
+        public Dictionary<string, string> GetDebugInfo() => RRHelpers.GetReflectionStatus();
     }
 
     // ---------- Registry ----------
@@ -223,7 +224,26 @@ namespace SurvivalTools.Compat
     public static class CompatAPI
     {
         // — Research Reinvented (kept for backward compatibility with your call sites) —
-        public static bool IsResearchReinventedActive => RRReflectionAPI.IsRRActive;
+        public static bool IsResearchReinventedActive => RRHelpers.IsRRActive;
+
+        // Cached stat defs to avoid recursion/expensive lookups
+        private static StatDef _cachedResearchSpeed;
+        private static StatDef _cachedFieldResearchSpeed;
+
+        public static StatDef GetResearchSpeedStat()
+        {
+            return _cachedResearchSpeed
+                   ?? (_cachedResearchSpeed = ST_StatDefOf.ResearchSpeed
+                       ?? DefDatabase<StatDef>.GetNamedSilentFail("ResearchSpeed"));
+        }
+
+        public static StatDef GetFieldResearchSpeedStat()
+        {
+            return _cachedFieldResearchSpeed
+                   ?? (_cachedFieldResearchSpeed = DefDatabase<StatDef>.GetNamedSilentFail("FieldResearchSpeedMultiplier")
+                       ?? DefDatabase<StatDef>.GetNamedSilentFail("RR_FieldResearchSpeed")
+                       ?? DefDatabase<StatDef>.GetNamedSilentFail("FieldResearchSpeed"));
+        }
 
         /// <summary>
         /// True if pawn has a survival tool (real or virtual) that provides research speed.
@@ -231,42 +251,46 @@ namespace SurvivalTools.Compat
         /// </summary>
         public static bool PawnHasResearchTools(Pawn pawn)
         {
-            if (pawn == null || !pawn.RaceProps?.Humanlike == true) return false;
+            if (pawn == null || pawn.Dead || pawn.Destroyed || pawn.RaceProps == null || !pawn.RaceProps.Humanlike)
+                return false;
 
-            // Vanilla research
-            var researchStat = GetResearchSpeedStat() ?? ST_StatDefOf.ResearchSpeed;
+            var researchStat = GetResearchSpeedStat();
             if (researchStat != null && pawn.HasSurvivalToolFor(researchStat))
                 return true;
 
-            // RR field research
-            var fieldStat = GetFieldResearchSpeedStat()
-                            ?? DefDatabase<StatDef>.GetNamedSilentFail("FieldResearchSpeedMultiplier");
+            var fieldStat = GetFieldResearchSpeedStat();
             if (fieldStat != null && pawn.HasSurvivalToolFor(fieldStat))
                 return true;
 
             return false;
         }
 
-        public static StatDef GetResearchSpeedStat() => CompatAPI.GetResearchSpeedStat();
-        public static StatDef GetFieldResearchSpeedStat() => CompatAPI.GetFieldResearchSpeedStat();
-        public static bool IsRRWorkGiver(WorkGiverDef wg) => RRReflectionAPI.RRReflectionAPI_Extensions.IsRRWorkGiver(wg);
-        public static bool IsFieldResearchWorkGiver(WorkGiverDef wg) => CompatAPI.IsFieldResearchWorkGiver(wg);
+        public static bool IsRRWorkGiver(WorkGiverDef wg) => RRHelpers.IsRRWorkGiver(wg);
+        public static bool IsFieldResearchWorkGiver(WorkGiverDef wg) => RRHelpers.IsFieldResearchWorkGiver(wg);
 
         // — Primitive Tools —
-        public static bool IsPrimitiveToolsActive => PrimitiveToolsCompat.IsPrimitiveToolsActive();
-        public static bool PawnHasPrimitiveTools(Pawn pawn) => PrimitiveToolsCompat.PawnHasPrimitiveTools(pawn);
-        public static List<Thing> GetPawnPrimitiveTools(Pawn pawn) => PrimitiveToolsCompat.GetPawnPrimitiveTools(pawn);
-        public static bool ShouldOptimizeForPrimitiveTools() => PrimitiveToolsCompat.ShouldOptimizeForPrimitiveTools();
+        public static bool IsPrimitiveToolsActive => PrimitiveToolsHelpers.IsPrimitiveToolsActive();
+        public static bool PawnHasPrimitiveTools(Pawn pawn) => PrimitiveToolsHelpers.PawnHasPrimitiveTools(pawn);
+        public static List<Thing> GetPawnPrimitiveTools(Pawn pawn) => PrimitiveToolsHelpers.GetPawnPrimitiveTools(pawn);
+        public static bool ShouldOptimizeForPrimitiveTools() => PrimitiveToolsHelpers.ShouldOptimizeForPrimitiveTools();
 
         // — Separate Tree Chopping —
-        public static bool IsSeparateTreeChoppingActive => SeparateTreeChoppingCompat.IsSeparateTreeChoppingActive();
-        public static bool HasTreeFellingConflict() => SeparateTreeChoppingCompat.HasTreeFellingConflict();
-        public static bool ApplyTreeFellingConflictResolution() => SeparateTreeChoppingCompat.ApplyRecommendedResolution();
-        public static List<string> GetSeparateTreeChoppingRecommendations() => SeparateTreeChoppingCompat.GetUserRecommendations();
+        public static bool IsSeparateTreeChoppingActive => SeparateTreeChoppingHelpers.IsSeparateTreeChoppingActive();
+        public static bool HasTreeFellingConflict() => SeparateTreeChoppingHelpers.HasTreeFellingConflict();
+        public static bool ApplyTreeFellingConflictResolution() => SeparateTreeChoppingHelpers.ApplyRecommendedResolution();
+        public static List<string> GetSeparateTreeChoppingRecommendations() => SeparateTreeChoppingHelpers.GetUserRecommendations();
 
         // — Generic —
         public static List<StatDef> GetAllCompatibilityStats() => CompatibilityRegistry.GetAllCompatibilityStats();
-        public static List<StatDef> GetAllResearchStats() => CompatAPI.GetAllResearchStats();
+        public static List<StatDef> GetAllResearchStats()
+        {
+            var list = new List<StatDef>();
+            var r = GetResearchSpeedStat();
+            var f = GetFieldResearchSpeedStat();
+            if (r != null) list.Add(r);
+            if (f != null && !list.Contains(f)) list.Add(f);
+            return list;
+        }
 
         [DebugAction("SurvivalTools", "Dump compatibility status")]
         public static void DumpCompatibilityStatus() => CompatibilityRegistry.DumpCompatibilityStatus();

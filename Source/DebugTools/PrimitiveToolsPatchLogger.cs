@@ -25,7 +25,7 @@ namespace SurvivalTools.DebugTools
         public static void DumpPrimitiveTools_DebugAction()
         {
             // Gate: only show when Primitive Tools is active
-            if (!PrimitiveToolsCompat.IsPrimitiveToolsActive())
+            if (!PrimitiveToolsHelpers.IsPrimitiveToolsActive())
             {
                 Messages.Message("Primitive Tools not detected — debug action unavailable.", MessageTypeDefOf.RejectInput, false);
                 return;

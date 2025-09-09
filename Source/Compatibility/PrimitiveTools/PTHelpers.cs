@@ -1,10 +1,12 @@
 // RimWorld 1.6 / C# 7.3
-// Source/Compatibility/PrimitiveToolsCompat.cs
-//
-// Primitive Tools compatibility module for SurvivalTools
-// Robust integration with VBY's Primitive Tools
-// TODO: Expand Primitive Tools compatibility once PT is fully updated for RimWorld 1.6.
-// For now: detection + minimal integration only (safe no-op otherwise).
+// Source/Compatibility/PrimitiveTools/PrimitiveToolsHelpers.cs
+// Canonical helpers file for Primitive Tools compatibility (renamed from PrimitiveToolsCompat.cs)
+// The public class name has been canonicalized to `PrimitiveToolsHelpers`.
+
+// RimWorld 1.6 / C# 7.3
+// Source/Compatibility/PrimitiveTools/PrimitiveToolsHelpers.cs
+// Canonical helpers file for Primitive Tools compatibility (renamed from PrimitiveToolsCompat.cs)
+// The canonical public class name is `PrimitiveToolsHelpers`.
 
 using System;
 using System.Collections.Generic;
@@ -14,7 +16,7 @@ using Verse;
 
 namespace SurvivalTools.Compat.PrimitiveTools
 {
-    public static class PrimitiveToolsCompat
+    public static class PrimitiveToolsHelpers
     {
         private static bool? _isActive;
         private static HashSet<ThingDef> _primitiveToolDefs;

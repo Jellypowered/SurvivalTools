@@ -4,6 +4,9 @@ using System.Linq;
 using RimWorld;
 using Verse;
 using Verse.AI;
+using HarmonyLib;
+using System.Reflection;
+using System;
 using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.Helpers
@@ -81,7 +84,42 @@ namespace SurvivalTools.Helpers
                 if (job.def == JobDefOf.Ingest &&
                     StatGatingHelper.ShouldBlockJobForStat(ST_StatDefOf.CleaningSpeed, s, pawn))
                 {
+                    // End the job and also set the JobTracker's per-pawn abort guard so we don't thrash
                     pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+
+                    // Try to set the lastAbortTickByPawn guard used in Patch_Pawn_JobTracker_ExtraHardcore
+                    try
+                    {
+                        var tick = Find.TickManager.TicksGame;
+
+                        // Try to find the patch type by full name or short name
+                        var patchType = Type.GetType("SurvivalTools.Harmony.Patch_Pawn_JobTracker_ExtraHardcore")
+                                        ?? Type.GetType("Patch_Pawn_JobTracker_ExtraHardcore")
+                                        ?? AccessTools.TypeByName("SurvivalTools.Harmony.Patch_Pawn_JobTracker_ExtraHardcore")
+                                        ?? AccessTools.TypeByName("Patch_Pawn_JobTracker_ExtraHardcore");
+
+                        if (patchType != null)
+                        {
+                            var dictField = patchType.GetField("lastAbortTickByPawn", BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Public);
+                            if (dictField != null)
+                            {
+                                var dictObj = dictField.GetValue(null);
+                                if (dictObj != null)
+                                {
+                                    var dictType = dictObj.GetType();
+                                    // Use indexer property to set value by key
+                                    var indexer = dictType.GetProperty("Item");
+                                    if (indexer != null)
+                                    {
+                                        // key used in Patch_Pawn_JobTracker_ExtraHardcore is pawn.thingIDNumber
+                                        var key = pawn != null ? pawn.thingIDNumber : -1;
+                                        indexer.SetValue(dictObj, tick, new object[] { key });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch { /* best-effort, swallow errors */ }
                     if (ST_Logging.IsDebugLoggingEnabled)
                         Log.Message($"[SurvivalTools.JobValidation] Cancelled bad Ingest job for {pawn.LabelShort} (cleaning requirement, no tool).");
                     continue;

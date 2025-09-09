@@ -14,7 +14,7 @@ The Research Reinvented compatibility has been refactored into a generic `Compat
    - Clean public interface for external consumption
    - General utility methods for compatibility discovery
 
-2. **`Source/Compat/ResearchReinventedCompat.cs`** - RR implementation
+2. **`Source/Compatibility/ResearchReinvented/RRHelpers.cs`** - RR implementation (helpers)
 
    - Internal implementation class (not public API)
    - Comprehensive FieldResearchSpeedMultiplier support

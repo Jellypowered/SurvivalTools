@@ -61,8 +61,8 @@ namespace SurvivalTools
         {
             var setting = SurvivalTools.Settings?.enableSurvivalToolTreeFelling ?? true;
 
-            if (SeparateTreeChoppingCompat.IsSeparateTreeChoppingActive() &&
-                SeparateTreeChoppingCompat.HasTreeFellingConflict())
+            if (SeparateTreeChoppingHelpers.IsSeparateTreeChoppingActive() &&
+                SeparateTreeChoppingHelpers.HasTreeFellingConflict())
             {
                 return false;
             }

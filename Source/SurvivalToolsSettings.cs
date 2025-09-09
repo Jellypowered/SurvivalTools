@@ -113,7 +113,7 @@ namespace SurvivalTools
             if (stat == ST_StatDefOf.MedicalOperationSpeed || stat == ST_StatDefOf.MedicalSurgerySuccessChance)
                 return requireMedicalTools && HasMedicalTools;
 
-            if (RRSettings.IsRRCompatibilityEnabled && RRSettings.IsRRStatRequiredInExtraHardcore(stat))
+            if (RRHelpers.Settings.IsRRCompatibilityEnabled && RRHelpers.Settings.IsRRStatRequiredInExtraHardcore(stat))
                 return true;
 
             return false;
@@ -1148,7 +1148,7 @@ namespace SurvivalTools
                     }
 
                     // ResearchReinvented compatibility settings (only show if RR is detected)
-                    if (RRRuntimeIntegration.IsRRActive)
+                    if (RRHelpers.IsRRActive)
                     {
                         listing.Gap(6f);
                         listing.Label("Research Reinvented Compatibility");

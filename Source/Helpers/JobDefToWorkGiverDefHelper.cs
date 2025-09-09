@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using Verse;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.Helpers
 {
@@ -69,7 +70,15 @@ namespace SurvivalTools.Helpers
 
             // Step 1: explicit mapping
             if (ExplicitJobToWorkGiverMap.TryGetValue(jobDef.defName, out string wgDefName))
+            {
+                // Emit one cooldown-protected log when roofing mapping is used so we can verify resolution
+                if ((jobDef.defName == "BuildRoof" || jobDef.defName == "RoofJob") && ShouldLogWithCooldown("JobDefToWorkGiver_BuildRoof"))
+                {
+                    LogCompat($"JobDefToWorkGiver: mapped {jobDef.defName} -> {wgDefName}");
+                }
+
                 return DefDatabase<WorkGiverDef>.GetNamedSilentFail(wgDefName);
+            }
 
             // Step 2: special-case fallbacks
             var defName = jobDef.defName.ToLower();

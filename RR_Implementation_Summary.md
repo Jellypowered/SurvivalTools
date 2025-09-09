@@ -8,16 +8,16 @@ We have successfully implemented a comprehensive ResearchReinvented (RR) compati
 
 ```
 Source/Compatibility/ResearchReinvented/
-├── RRReflectionAPI.cs          # Enhanced multi-heuristic detection & reflection
-├── RRRuntimeIntegration.cs     # Runtime WorkGiver extension attachment
-├── RRSettings.cs               # RR-specific settings integration
+├── RRHelpers.cs                # Consolidated detection, reflection targets, runtime adapters, and settings bridge
+├── RRPatches.cs                # Harmony patches for RR workgiver gating and prefixes/postfixes
+├── RRDebug.cs                  # Debug utilities and patch logger for Research Reinveted integration
 ├── RRAutoToolIntegration.cs    # Auto-pickup system integration
-└── ResearchReinventedCompat.cs # Legacy compatibility (existing)
+└── RRHelpers.cs                 # Consolidated detection, reflection targets, runtime adapters, and settings bridge
 ```
 
 ## 🔍 Multi-Heuristic Detection System ✅
 
-**`RRReflectionAPI.IsResearchReinventedActive()`** now uses **multiple independent checks**:
+**`RRHelpers.IsRRActive`** now uses **multiple independent checks**:
 
 1. **Package ID**: `ModLister.GetActiveModWithIdentifier("sarg.researchreinvented")`
 2. **Mod Name**: `ModLister.AllInstalledMods.Any(m => m.Active && m.Name.Contains("Research Reinvented"))`
@@ -31,7 +31,7 @@ Source/Compatibility/ResearchReinvented/
 
 ## 🔗 Runtime Data Attachment (Not Patching) ✅
 
-**`RRRuntimeIntegration.AttachWorkGiverExtensions()`**:
+**`RRHelpers.Initialize()`**:
 
 - **No Harmony patches** on RR types
 - **Runtime attachment** of `WorkGiverExtension` to RR WorkGiverDefs
@@ -68,7 +68,7 @@ public bool rrFieldResearchRequiredInExtraHardcore = false; // Field research as
 **`IsStatRequiredInExtraHardcore()` enhanced** to include RR stats via:
 
 ```csharp
-if (RRSettings.IsRRCompatibilityEnabled && RRSettings.IsRRStatRequiredInExtraHardcore(stat))
+if (RRHelpers.Settings.IsRRCompatibilityEnabled && RRHelpers.Settings.IsRRStatRequiredInExtraHardcore(stat))
     return true;
 ```
 

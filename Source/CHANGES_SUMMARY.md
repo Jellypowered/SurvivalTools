@@ -93,11 +93,12 @@ This document summarizes all significant changes made to the SurvivalTools mod s
 - `Source/GameComponent_SurvivalToolsValidation.cs`: Game-start validation of defs and settings
 - `Source/WorldComponent_DelayedValidation.cs`: Safe, delayed validation hooks in long-running games
 
-### Compatibility (New Structure)
+-### Compatibility (New Structure)
 
 - `Source/Compatibility/CompatAPI.cs`, `CompatibilityRegistry.cs`: Centralized compatibility entrypoints
-- `Source/Compatibility/ResearchReinvented/`: `RRRuntimeIntegration.cs`, `RRReflectionAPI.cs`, `RRSettings.cs`, `RRAutoToolIntegration.cs`, `RRGatedPatches.cs`, `ResearchReinventedCompat.cs`
-- `Source/Compatibility/SeparateTreeChopping/`: `SeparateTreeChoppingCompat.cs`
+- `Source/Compatibility/ResearchReinvented/`: `RRHelpers.cs`, `RRPatches.cs`, `RRDebug.cs` (consolidated; replaces older RRReflectionAPI/RRRuntimeIntegration/RRSettings)
+- `Source/Compatibility/SeparateTreeChopping/`: `SeparateTreeChoppingHelpers.cs` (canonicalized; +Patches/Debug placeholders)
+- `Source/Compatibility/SeparateTreeChopping/`: `SeparateTreeChoppingHelpers.cs` (canonicalized; +Patches/Debug placeholders)
 - Removed old Compat folder files: `Source/Compat/CompatAPI.cs`, `RR_*` (superseded by new structure)
 
 ### XML/Defs
