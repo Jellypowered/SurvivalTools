@@ -47,11 +47,18 @@ namespace SurvivalTools.HarmonyStuff
             if (settings?.hardcoreMode != true || !pawn.CanUseSurvivalTools())
                 return true;
 
-            // Only gate jobs that are eligible and enabled in settings
-            if (!SurvivalToolUtility.ShouldGateByDefault(instance.def))
+            // Get required stats via centralized helper FIRST
+            var requiredStats = StatGatingHelper.GetStatsForWorkGiver(instance.def);
+            if (requiredStats.NullOrEmpty())
                 return true;
 
-            // Respect settings toggle for WorkSpeedGlobal jobs
+            // Only gate jobs that are eligible by default...
+            // ...but if ShouldGateByDefault misses a WG, still gate when we positively identified CORE blocking stats
+            bool coreStatsPresent = requiredStats.Any(StatFilters.ShouldBlockJobForMissingStat);
+            if (!SurvivalToolUtility.ShouldGateByDefault(instance.def) && !coreStatsPresent)
+                return true;
+
+            // Respect per-WG toggle for WorkSpeedGlobal jobs (if present)
             if (settings.workSpeedGlobalJobGating != null &&
                 settings.workSpeedGlobalJobGating.TryGetValue(instance.def.defName, out bool gated) &&
                 !gated)
@@ -59,40 +66,20 @@ namespace SurvivalTools.HarmonyStuff
                 return true;
             }
 
-            // Get required stats via centralized helper
-            List<StatDef> requiredStats = StatGatingHelper.GetStatsForWorkGiver(instance.def);
-            if (requiredStats.NullOrEmpty())
-                return true;
-
             foreach (var stat in requiredStats)
             {
-                if (StatGatingHelper.ShouldBlockJobForStat(stat, settings))
+                if (StatGatingHelper.ShouldBlockJobForStat(stat, settings, pawn))
                 {
-                    // Avoid per-iteration allocations by reusing a buffer
-                    _tmpStatBuffer.Clear();
-                    _tmpStatBuffer.Add(stat);
-
-                    if (!pawn.MeetsWorkGiverStatRequirements(_tmpStatBuffer, instance.def))
+                    result = false;
+                    if (IsDebugLoggingEnabled)
                     {
-                        result = false;
-
-                        if (IsDebugLoggingEnabled)
-                        {
-                            var key = $"ToolGate_{pawn.ThingID}_{instance.def.defName}_{stat.defName}";
-                            if (ShouldLogWithCooldown(key))
-                            {
-                                Log.Message(
-                                    $"[SurvivalTools.ToolGate] {pawn.LabelShort} blocked from job {instance.def.defName} due to missing tool for stat {stat.defName}."
-                                );
-                            }
-                        }
-
-                        return false; // block job
+                        Log.Message($"[SurvivalTools.ToolGate] {pawn.LabelShort} blocked from job {instance.def.defName} due to missing tool for stat {stat.defName}.");
                     }
+                    return false;
                 }
             }
 
-            return true; // allow job
+            return true;
         }
     }
 }

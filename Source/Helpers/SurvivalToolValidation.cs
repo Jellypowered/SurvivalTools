@@ -21,6 +21,76 @@ namespace SurvivalTools.Helpers
             LogDebug("[SurvivalTools.JobValidation] Manual test validation triggered", "JobValidation_ManualTest");
             ValidateExistingJobs("manual test trigger");
         }
+        /*
+    FUTURE ME NOTE:
+
+    Pawns sometimes start loading with an `Ingest` job that still tries to use CleaningSpeed 
+    (e.g., eating while also flagged for cleaning). Job validation normally ignores Ingest 
+    since it has no WorkGiverDef, so these slip through.
+
+    This helper can be called in JobValidation.ValidateExistingJobs() after the normal loop.
+
+    It cancels Ingest jobs that wrongly require CleaningSpeed but the pawn has no tool 
+    (or when hardcore gating is enabled).
+*/
+
+        /*private static void CancelBadIngestJobs(Map map)
+        {
+            if (map == null) return;
+
+            foreach (var pawn in map.mapPawns.FreeColonistsSpawned)
+            {
+                var job = pawn.CurJob;
+                if (job != null && job.def == JobDefOf.Ingest)
+                {
+                    // Check if gating is active AND pawn lacks cleaning tools
+                    var s = SurvivalTools.Settings;
+                    bool enforce = SurvivalToolUtility.IsHardcoreModeEnabled || (s != null && s.extraHardcoreMode);
+
+                    if (enforce && StatGatingHelper.ShouldBlockJobForStat(ST_StatDefOf.CleaningSpeed, s, pawn))
+                    {
+                        pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+                        if (ST_Logging.IsDebugLoggingEnabled)
+                            Log.Message($"[SurvivalTools.JobValidation] Cancelled bad Ingest job for {pawn.LabelShort} (required CleaningSpeed, no tool).");
+                    }
+                }
+            }
+        }*/
+        /// <summary>
+        /// Last-ditch safety net: cancels obviously invalid jobs that sometimes slip through
+        /// normal validation (e.g., Ingest with CleaningSpeed requirement).
+        /// Called once after game load, or manually if needed.
+        /// </summary>
+        private static void CancelBadJobs(Map map)
+        {
+            if (map == null) return;
+
+            // Snapshot pawns to avoid "collection modified" exceptions when ending jobs
+            var pawns = map.mapPawns.FreeColonistsSpawned.ToList();
+
+            foreach (var pawn in pawns)
+            {
+                var job = pawn.CurJob;
+                if (job == null) continue;
+
+                var s = SurvivalTools.Settings;
+                bool enforce = SurvivalToolUtility.IsHardcoreModeEnabled || (s != null && s.extraHardcoreMode);
+                if (!enforce) continue;
+
+                // Special case: Ingest job that wrongly uses CleaningSpeed
+                if (job.def == JobDefOf.Ingest &&
+                    StatGatingHelper.ShouldBlockJobForStat(ST_StatDefOf.CleaningSpeed, s, pawn))
+                {
+                    pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+                    if (ST_Logging.IsDebugLoggingEnabled)
+                        Log.Message($"[SurvivalTools.JobValidation] Cancelled bad Ingest job for {pawn.LabelShort} (cleaning requirement, no tool).");
+                    continue;
+                }
+
+                // 📝 Future me: add other edge-case checks here if new jobs show up.
+            }
+        }
+
 
         /// <summary>
         /// Validates all existing jobs across all pawns when settings change.
@@ -119,6 +189,13 @@ namespace SurvivalTools.Helpers
                     historical: false
                 );
             }
+
+            foreach (var map in Find.Maps)
+            {
+                //CancelBadIngestJobs(map);
+                CancelBadJobs(map); // Catch all bad jobs blocker on load *FUTURE ME* 
+            }
+
         }
     }
 }

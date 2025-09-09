@@ -23,7 +23,7 @@ namespace SurvivalTools.Compat.ResearchReinvented
         {
             get
             {
-                if (!RRReflectionAPI.IsResearchReinventedActive()) return false;
+                if (!RRReflectionAPI.IsRRActive) return false;
                 return SurvivalTools.Settings?.enableRRCompatibility ?? true;
             }
         }
@@ -52,11 +52,11 @@ namespace SurvivalTools.Compat.ResearchReinvented
             if (settings?.extraHardcoreMode != true) return false;
 
             // ResearchSpeed
-            if (stat == RRReflectionAPI.GetResearchSpeedStat())
+            if (stat == CompatAPI.GetResearchSpeedStat())
                 return TreatResearchAsRequiredInExtraHardcore;
 
             // FieldResearchSpeedMultiplier
-            if (stat == RRReflectionAPI.GetFieldResearchSpeedStat())
+            if (stat == CompatAPI.GetFieldResearchSpeedStat())
                 return TreatFieldResearchAsRequiredInExtraHardcore;
 
             return false;
@@ -69,8 +69,8 @@ namespace SurvivalTools.Compat.ResearchReinvented
         {
             if (!IsRRCompatibilityEnabled || stat == null) return false;
 
-            return stat == RRReflectionAPI.GetResearchSpeedStat()
-                || stat == RRReflectionAPI.GetFieldResearchSpeedStat();
+            return stat == CompatAPI.GetResearchSpeedStat()
+                || stat == CompatAPI.GetFieldResearchSpeedStat();
         }
 
         /// <summary>

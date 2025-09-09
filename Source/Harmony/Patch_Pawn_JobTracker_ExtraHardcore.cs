@@ -1,5 +1,6 @@
 // RimWorld 1.6 / C# 7.3
 // Patch_Pawn_JobTracker_ExtraHardcore.cs
+using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using RimWorld;
@@ -10,6 +11,7 @@ using SurvivalTools.Helpers;
 
 namespace SurvivalTools.HarmonyStuff
 {
+
     /// <summary>
     /// Blocks jobs that bypass WorkGiver gating when tools are missing in Hardcore / Extra Hardcore.
     /// </summary>
@@ -17,6 +19,13 @@ namespace SurvivalTools.HarmonyStuff
     public static class Patch_Pawn_JobTracker_ExtraHardcore
     {
         private static readonly FieldInfo PawnField = AccessTools.Field(typeof(Pawn_JobTracker), "pawn");
+
+        // NEW: per-pawn guard so we don't end/restart >1 time per tick and cause thrash
+        // key = pawn.thingIDNumber, value = last game tick we aborted a job
+        private static readonly Dictionary<int, int> lastAbortTickByPawn = new Dictionary<int, int>();
+        // Track suppressed logs so we can print counts later
+        private static readonly Dictionary<string, int> suppressedLogCounts = new Dictionary<string, int>();
+
 
         [HarmonyPrefix]
         [HarmonyPatch(nameof(Pawn_JobTracker.TryTakeOrderedJob))]
@@ -31,13 +40,59 @@ namespace SurvivalTools.HarmonyStuff
         [HarmonyPriority(Priority.Last)]
         public static void Postfix_StartJob(Pawn_JobTracker __instance, Job newJob)
         {
-            var pawnField = AccessTools.Field(typeof(Pawn_JobTracker), "pawn");
-            var pawn = (Pawn)pawnField.GetValue(__instance);
-            if (pawn == null || newJob == null) return;
-
+            // Defensive: resolve pawn and settings
+            var pawn = __instance != null ? (Pawn)PawnField.GetValue(__instance) : null;
             var settings = SurvivalTools.Settings;
+
+            if (pawn == null || newJob == null) return;
             if (settings?.hardcoreMode != true || !pawn.CanUseSurvivalTools()) return;
 
+            // Avoid thrash: do not repeatedly abort within the same tick for this pawn
+            int tick = Find.TickManager.TicksGame;
+            int id = pawn.thingIDNumber;
+            if (lastAbortTickByPawn.TryGetValue(id, out int lastTick) && lastTick == tick)
+                return; // already handled this pawn this tick
+
+            // Optional: don't auto-cancel explicit player-forced jobs in the postfix
+            if (newJob.playerForced) return;
+
+            // 🔧 Special-case: Ingest jobs sometimes sneak in CleaningSpeed as a requirement.
+            // They normally don't map to a WorkGiver, so catch them here instead.
+            if (newJob.def == JobDefOf.Ingest &&
+    StatGatingHelper.ShouldBlockJobForStat(ST_StatDefOf.CleaningSpeed, settings, pawn))
+            {
+                if (IsDebugLoggingEnabled)
+                {
+                    var key = $"JobBlock_Ingest_{pawn.ThingID}";
+                    if (ShouldLogWithCooldown(key))
+                    {
+                        // Print normal + suppressed count if any
+                        if (suppressedLogCounts.TryGetValue(key, out int count) && count > 0)
+                        {
+                            Log.Message($"[SurvivalTools.JobBlock] Aborting Ingest job on {pawn.LabelShort} (cleaning requirement, no tool). " +
+                                        $"[{count} suppressed]");
+                            suppressedLogCounts[key] = 0;
+                        }
+                        else
+                        {
+                            Log.Message($"[SurvivalTools.JobBlock] Aborting Ingest job on {pawn.LabelShort} (cleaning requirement, no tool).");
+                        }
+                    }
+                    else
+                    {
+                        suppressedLogCounts[key] = suppressedLogCounts.TryGetValue(key, out int count) ? count + 1 : 1;
+                    }
+                }
+
+                lastAbortTickByPawn[id] = tick;
+
+                if (__instance.curJob == newJob)
+                    __instance.EndCurrentJob(JobCondition.Incompletable, startNewJob: false, canReturnToPool: true);
+
+                return;
+            }
+
+            // Normal gating: check stats from WorkGiver/job defs
             var requiredStats = SurvivalToolUtility.RelevantStatsFor(null, newJob.def);
             if (requiredStats.NullOrEmpty()) return;
 
@@ -48,13 +103,20 @@ namespace SurvivalTools.HarmonyStuff
                     if (IsDebugLoggingEnabled)
                         Log.Message($"[SurvivalTools.JobBlock] Aborting just-started job {newJob.def.defName} on {pawn.LabelShort} (missing {stat.defName}).");
 
+                    // Record guard BEFORE ending job to prevent immediate same-tick loops
+                    lastAbortTickByPawn[id] = tick;
+
+                    // CRITICAL CHANGE: do NOT request immediate requeue here.
+                    // Let vanilla re-evaluate on the next normal opportunity.
                     if (__instance.curJob == newJob)
-                        __instance.EndCurrentJob(JobCondition.Incompletable, startNewJob: true, canReturnToPool: true);
+                        __instance.EndCurrentJob(JobCondition.Incompletable, startNewJob: false, canReturnToPool: true);
 
                     break;
                 }
             }
         }
+
+
         private static bool CheckJobAssignment(Pawn_JobTracker jobTracker, Job job, ref bool setOrderedResult)
         {
             // Resolve pawn safely (cached FieldInfo)
@@ -86,7 +148,7 @@ namespace SurvivalTools.HarmonyStuff
                             Log.Message($"[SurvivalTools.JobBlock] Blocking direct job: {pawn.LabelShort} -> {job.def.defName} (missing tool for {stat.defName})");
                     }
 
-                    // Tell TryTakeOrderedJob we handled it (fail) and skip original; for StartJob, just skip original.
+                    // Tell TryTakeOrderedJob we handled it (fail) and skip original
                     setOrderedResult = false;
                     return false;
                 }

@@ -12,7 +12,7 @@ using System.Reflection;
 using HarmonyLib;
 using RimWorld;
 using Verse;
-using SurvivalTools.Compat.ResearchReinvented;
+using SurvivalTools.Compat;
 using SurvivalTools.Helpers;
 using static SurvivalTools.ST_Logging;
 using LudeonTK;
@@ -25,7 +25,7 @@ namespace SurvivalTools.DebugTools
         public static void DumpRR_DebugAction()
         {
             // Gate: only show when Research Reinvented is active
-            if (!RRReflectionAPI.IsResearchReinventedActive())
+            if (!RRReflectionAPI.IsRRActive)
             {
                 Messages.Message("Research Reinvented not detected — debug action unavailable.", MessageTypeDefOf.RejectInput, false);
                 return;

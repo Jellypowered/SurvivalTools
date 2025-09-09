@@ -3,6 +3,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
+using SurvivalTools.Compat;
 using Verse;
 
 namespace SurvivalTools.Helpers
@@ -14,52 +15,42 @@ namespace SurvivalTools.Helpers
     public static class StatGatingHelper
     {
         /// <summary>
-        /// Unified check if a stat should block jobs based on settings and optionally pawn.
-        /// If pawn is null, only determines if the stat is considered mandatory in principle.
-        /// If pawn is supplied, also checks whether the pawn has an appropriate tool.
+        /// Determines whether a stat should block a job for the given pawn under current settings.
+        /// Integrates with Research Reinvented (RR) so research jobs behave like before.
         /// </summary>
+        // Unified gating rules (vanilla + RR intent)
         public static bool ShouldBlockJobForStat(StatDef stat, SurvivalToolsSettings settings, Pawn pawn = null)
         {
             if (stat == null || settings == null) return false;
 
-            // Core work stats (construction, mining, farming, etc.)
+            // Core work stats (mining, construction, etc.) always gate in hardcore.
             if (StatFilters.ShouldBlockJobForMissingStat(stat))
                 return pawn == null || !pawn.HasSurvivalToolFor(stat);
 
-            // Cleaning
+            // Optional families — only hard-gate if explicitly enabled or in extra-hardcore.
+            bool xhc = settings.extraHardcoreMode;
+
             if (stat == ST_StatDefOf.CleaningSpeed)
-            {
-                if (settings.extraHardcoreMode && settings.requireCleaningTools)
-                    return pawn == null || !pawn.HasSurvivalToolFor(stat);
-                return false;
-            }
+                return (xhc || settings.requireCleaningTools) && (pawn == null || !pawn.HasSurvivalToolFor(stat));
 
-            // Butchery
             if (stat == ST_StatDefOf.ButcheryFleshSpeed || stat == ST_StatDefOf.ButcheryFleshEfficiency)
-            {
-                if (settings.extraHardcoreMode && settings.requireButcheryTools)
-                    return pawn == null || !pawn.HasSurvivalToolFor(stat);
-                return false;
-            }
+                return (xhc || settings.requireButcheryTools) && (pawn == null || !pawn.HasSurvivalToolFor(stat));
 
-            // Medical
             if (stat == ST_StatDefOf.MedicalOperationSpeed || stat == ST_StatDefOf.MedicalSurgerySuccessChance)
-            {
-                if (settings.extraHardcoreMode && settings.requireMedicalTools)
-                    return pawn == null || !pawn.HasSurvivalToolFor(stat);
-                return false;
-            }
+                return (xhc || settings.requireMedicalTools) && (pawn == null || !pawn.HasSurvivalToolFor(stat));
 
-            // Research is optional by default
+            // Research is **not** hard-blocked in normal hardcore — job may run but progress=~0 via StatPart.
             if (stat == ST_StatDefOf.ResearchSpeed)
-                return false;
+                return xhc && (pawn == null || !pawn.HasSurvivalToolFor(stat));
 
-            // RR or other extra-hardcore integrations
-            if (settings.extraHardcoreMode && settings.IsStatRequiredInExtraHardcore(stat))
+            // Extra-hardcore custom rules (RR or future packs)
+            if (xhc && settings.IsStatRequiredInExtraHardcore(stat))
                 return pawn == null || !pawn.HasSurvivalToolFor(stat);
 
             return false;
         }
+
+
 
         /// <summary>
         /// Detect required stats for a WorkGiver by extension or defName patterns.
@@ -69,54 +60,90 @@ namespace SurvivalTools.Helpers
         {
             if (wgDef == null) return new List<StatDef>();
 
-            // Explicit WorkGiverExtension
+            // 1) Explicit extension wins
             var fromExtension = wgDef.GetModExtension<WorkGiverExtension>()?.requiredStats;
             if (fromExtension != null && fromExtension.Any())
                 return fromExtension.Where(s => s != null && s.RequiresSurvivalTool()).ToList();
 
-            var defName = wgDef.defName.ToLower();
+            // 2) Heuristics by defName
+            string name = wgDef.defName?.ToLowerInvariant() ?? string.Empty;
             var stats = new List<StatDef>();
 
-            if (defName.Contains("clean"))
+            // Research
+            if (name.Contains("research"))
+                stats.Add(ST_StatDefOf.ResearchSpeed);
+
+            // Cleaning
+            if (name.Contains("clean"))
                 stats.Add(ST_StatDefOf.CleaningSpeed);
 
-            if (defName.Contains("doctor") || defName.Contains("tend") || defName.Contains("surgery"))
-            {
-                stats.Add(ST_StatDefOf.MedicalOperationSpeed);
-                stats.Add(ST_StatDefOf.MedicalSurgerySuccessChance);
-            }
+            // Roofing is construction
+            // (RimWorld vanilla def is "BuildRoofs"; other mods may include "roof" in name)
+            if (name == "buildroofs" || name.Contains("roof"))
+                stats.Add(StatDefOf.ConstructionSpeed);
 
-            if (defName.Contains("butcher") || defName.Contains("slaughter"))
-            {
-                stats.Add(ST_StatDefOf.ButcheryFleshSpeed);
-                stats.Add(ST_StatDefOf.ButcheryFleshEfficiency);
-            }
+            // Construction vs maintenance vs deconstruction
+            // Build / construct / frames / blueprints => ConstructionSpeed
+            if (name.Contains("construct") || name.Contains("build") || name.Contains("frame") || name.Contains("blueprint"))
+                stats.Add(StatDefOf.ConstructionSpeed);
 
-            if (defName.Contains("felltree") || defName.Contains("chopwood"))
-                stats.Add(ST_StatDefOf.TreeFellingSpeed);
-
-            if (defName.Contains("harvest") || defName.Contains("plantscut"))
-                stats.Add(ST_StatDefOf.PlantHarvestingSpeed);
-
-            if (defName.Contains("construct") || defName.Contains("build") || defName.Contains("repair") || defName.Contains("maintain"))
+            // Repair / maintain => MaintenanceSpeed
+            if (name.Contains("repair") || name.Contains("maintain") || name.Contains("maintenance"))
                 stats.Add(ST_StatDefOf.MaintenanceSpeed);
 
-            if (defName.Contains("deconstruct") || defName.Contains("demolish"))
+            // Deconstruct / remove / uninstall => DeconstructionSpeed
+            if (name.Contains("deconstruct") || name.Contains("remove") || name.Contains("uninstall"))
                 stats.Add(ST_StatDefOf.DeconstructionSpeed);
 
-            if (defName.Contains("mine") || defName.Contains("drill"))
+            // Trees & plants
+            if (name.Contains("felltree") || name.Contains("chopwood") || name.Contains("cutwood"))
+                stats.Add(ST_StatDefOf.TreeFellingSpeed);
+
+            if (name.Contains("harvest") || name.Contains("plantscut"))
+                stats.Add(ST_StatDefOf.PlantHarvestingSpeed);
+
+            if (name.Contains("grow") || name.Contains("sow") || name.Contains("plant"))
+                stats.Add(ST_StatDefOf.SowingSpeed);
+
+            // Mining
+            if (name.Contains("mine") || name.Contains("drill"))
             {
                 stats.Add(ST_StatDefOf.DiggingSpeed);
                 stats.Add(ST_StatDefOf.MiningYieldDigging);
             }
 
-            if (defName.Contains("research"))
-                stats.Add(ST_StatDefOf.ResearchSpeed);
+            // Butchery
+            if (name.Contains("butcher") || name.Contains("slaughter"))
+            {
+                stats.Add(ST_StatDefOf.ButcheryFleshSpeed);
+                stats.Add(ST_StatDefOf.ButcheryFleshEfficiency);
+            }
 
-            if (defName.Contains("grow") || defName.Contains("sow") || defName.Contains("plant"))
-                stats.Add(ST_StatDefOf.SowingSpeed);
-
-            return stats.Distinct().ToList();
+            // Keep only real survival-tool stats, unique
+            return stats.Where(s => s != null && s.RequiresSurvivalTool()).Distinct().ToList();
         }
     }
 }
+/*
+    📌 NOTE FOR FUTURE ME:
+
+    Mining yield (ST_StatDefOf.MiningYieldDigging) should generally be treated as *optional*.
+    Pawns without tools should still be able to mine, they’ll just be less efficient.
+
+    If you want to enforce this cleanly, update StatFilters.cs like so:
+
+        public static bool IsOptionalStat(StatDef stat)
+        {
+            if (stat == null) return true;
+
+            // Research, cleaning, medical, and mining yield are optional
+            return stat == ST_StatDefOf.ResearchSpeed ||
+                   stat == ST_StatDefOf.CleaningSpeed ||
+                   stat == ST_StatDefOf.MedicalOperationSpeed ||
+                   stat == ST_StatDefOf.MedicalSurgerySuccessChance ||
+                   stat == ST_StatDefOf.ButcheryFleshEfficiency ||
+                   stat == ST_StatDefOf.MiningYieldDigging; // 👈 new optional stat
+        }
+
+    That way mining *speed* stays mandatory (hardcore tool gating), but *yield* just becomes a bonus.
+*/

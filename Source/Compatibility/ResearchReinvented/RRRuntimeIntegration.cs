@@ -17,7 +17,7 @@ namespace SurvivalTools.Compat.ResearchReinvented
         /// <summary>
         /// Quick flag so we don’t call into RR unless active.
         /// </summary>
-        public static bool IsRRActive => RRReflectionAPI.IsResearchReinventedActive();
+        public static bool IsRRActive => RRReflectionAPI.IsRRActive;
 
         /// <summary>
         /// Returns true if this job is associated with a RR WorkGiver.
@@ -26,9 +26,9 @@ namespace SurvivalTools.Compat.ResearchReinvented
         {
             if (!IsRRActive || jobDef == null) return false;
 
-            var wgDef = RRReflectionAPI.ResolveWorkGiverForJob(jobDef);
+            var wgDef = RRReflectionAPI.RRReflectionAPI_Extensions.ResolveWorkGiverForJob(jobDef);
             return wgDef != null &&
-                   (RRReflectionAPI.IsRRWorkGiver(wgDef) || RRReflectionAPI.IsFieldResearchWorkGiver(wgDef));
+                   (RRReflectionAPI.RRReflectionAPI_Extensions.IsRRWorkGiver(wgDef) || RRReflectionAPI.RRReflectionAPI_Extensions.IsFieldResearchWorkGiver(wgDef));
         }
 
         /// <summary>
@@ -38,10 +38,10 @@ namespace SurvivalTools.Compat.ResearchReinvented
         {
             if (!IsRRActive || jobDef == null) return new List<StatDef>();
 
-            var wgDef = RRReflectionAPI.ResolveWorkGiverForJob(jobDef);
+            var wgDef = RRReflectionAPI.RRReflectionAPI_Extensions.ResolveWorkGiverForJob(jobDef);
             if (wgDef == null) return new List<StatDef>();
 
-            return RRReflectionAPI.GetRequiredStatsForWorkGiver(wgDef);
+            return RRReflectionAPI.RRReflectionAPI_Extensions.GetRequiredStatsForWorkGiver(wgDef);
         }
 
         /// <summary>

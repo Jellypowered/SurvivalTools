@@ -17,15 +17,15 @@ namespace SurvivalTools.Compat.ResearchReinvented
     {
         public static bool ShouldAttemptAutoToolForRRJob(Pawn pawn, Job job)
         {
-            if (!RRReflectionAPI.IsResearchReinventedActive() || !RRSettings.IsRRCompatibilityEnabled)
+            if (!RRReflectionAPI.IsRRActive || !RRSettings.IsRRCompatibilityEnabled)
                 return false;
 
             if (pawn == null || job?.def == null) return false;
 
-            var wgDef = RRReflectionAPI.ResolveWorkGiverForJob(job.def);
+            var wgDef = RRReflectionAPI.RRReflectionAPI_Extensions.ResolveWorkGiverForJob(job.def);
             if (wgDef == null) return false;
 
-            var requiredStats = RRReflectionAPI.GetRequiredStatsForWorkGiver(wgDef);
+            var requiredStats = RRReflectionAPI.RRReflectionAPI_Extensions.GetRequiredStatsForWorkGiver(wgDef);
             if (requiredStats.NullOrEmpty()) return false;
 
             if (IsDebugLoggingEnabled && IsCompatLogging())
@@ -36,18 +36,18 @@ namespace SurvivalTools.Compat.ResearchReinvented
 
         public static List<StatDef> GetRequiredStatsForRRJob(Job job)
         {
-            if (!RRReflectionAPI.IsResearchReinventedActive() || !RRSettings.IsRRCompatibilityEnabled || job?.def == null)
+            if (!RRReflectionAPI.IsRRActive || !RRSettings.IsRRCompatibilityEnabled || job?.def == null)
                 return new List<StatDef>();
 
-            var wgDef = RRReflectionAPI.ResolveWorkGiverForJob(job.def);
+            var wgDef = RRReflectionAPI.RRReflectionAPI_Extensions.ResolveWorkGiverForJob(job.def);
             return wgDef != null
-                ? RRReflectionAPI.GetRequiredStatsForWorkGiver(wgDef)
+                ? RRReflectionAPI.RRReflectionAPI_Extensions.GetRequiredStatsForWorkGiver(wgDef)
                 : new List<StatDef>();
         }
 
         public static bool ShouldBlockRRJobForMissingTools(Pawn pawn, Job job)
         {
-            if (!RRReflectionAPI.IsResearchReinventedActive() || !RRSettings.IsRRCompatibilityEnabled)
+            if (!RRReflectionAPI.IsRRActive || !RRSettings.IsRRCompatibilityEnabled)
                 return false;
 
             if (pawn == null || job?.def == null) return false;

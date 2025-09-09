@@ -13,9 +13,9 @@ using System.Linq;
 using LudeonTK;
 using RimWorld;
 using Verse;
-using SurvivalTools.Compat.ResearchReinvented;
 using SurvivalTools.Compat.PrimitiveTools;
 using SurvivalTools.Compat.SeparateTreeChopping;
+
 using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.Compat
@@ -106,11 +106,11 @@ namespace SurvivalTools.Compat
     internal sealed class ResearchReinventedCompatibilityModule : ICompatibilityModule
     {
         public string ModName => "Research Reinvented";
-        public bool IsModActive => RRReflectionAPI.IsResearchReinventedActive();
+        public bool IsModActive => RRReflectionAPI.IsRRActive;
 
         public void Initialize() => RRReflectionAPI.Initialize();
 
-        public List<StatDef> GetCompatibilityStats() => RRReflectionAPI.GetAllResearchStats();
+        public List<StatDef> GetCompatibilityStats() => CompatAPI.GetAllResearchStats();
 
         public Dictionary<string, string> GetDebugInfo() => RRReflectionAPI.GetReflectionStatus();
     }
@@ -223,7 +223,7 @@ namespace SurvivalTools.Compat
     public static class CompatAPI
     {
         // — Research Reinvented (kept for backward compatibility with your call sites) —
-        public static bool IsResearchReinventedActive => RRReflectionAPI.IsResearchReinventedActive();
+        public static bool IsResearchReinventedActive => RRReflectionAPI.IsRRActive;
 
         /// <summary>
         /// True if pawn has a survival tool (real or virtual) that provides research speed.
@@ -247,10 +247,10 @@ namespace SurvivalTools.Compat
             return false;
         }
 
-        public static StatDef GetResearchSpeedStat() => RRReflectionAPI.GetResearchSpeedStat();
-        public static StatDef GetFieldResearchSpeedStat() => RRReflectionAPI.GetFieldResearchSpeedStat();
-        public static bool IsRRWorkGiver(WorkGiverDef wg) => RRReflectionAPI.IsRRWorkGiver(wg);
-        public static bool IsFieldResearchWorkGiver(WorkGiverDef wg) => RRReflectionAPI.IsFieldResearchWorkGiver(wg);
+        public static StatDef GetResearchSpeedStat() => CompatAPI.GetResearchSpeedStat();
+        public static StatDef GetFieldResearchSpeedStat() => CompatAPI.GetFieldResearchSpeedStat();
+        public static bool IsRRWorkGiver(WorkGiverDef wg) => RRReflectionAPI.RRReflectionAPI_Extensions.IsRRWorkGiver(wg);
+        public static bool IsFieldResearchWorkGiver(WorkGiverDef wg) => CompatAPI.IsFieldResearchWorkGiver(wg);
 
         // — Primitive Tools —
         public static bool IsPrimitiveToolsActive => PrimitiveToolsCompat.IsPrimitiveToolsActive();
@@ -266,7 +266,7 @@ namespace SurvivalTools.Compat
 
         // — Generic —
         public static List<StatDef> GetAllCompatibilityStats() => CompatibilityRegistry.GetAllCompatibilityStats();
-        public static List<StatDef> GetAllResearchStats() => RRReflectionAPI.GetAllResearchStats();
+        public static List<StatDef> GetAllResearchStats() => CompatAPI.GetAllResearchStats();
 
         [DebugAction("SurvivalTools", "Dump compatibility status")]
         public static void DumpCompatibilityStatus() => CompatibilityRegistry.DumpCompatibilityStatus();
