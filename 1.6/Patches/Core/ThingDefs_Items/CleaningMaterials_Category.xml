@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Patch>
+    <!-- Simple adds with success=Always so missing defs (DLC not loaded) don't spam errors -->
+    <Operation Class="PatchOperationAdd">
+        <success>Always</success>
+        <xpath>/Defs/ThingDef[defName='Cloth']/thingCategories</xpath>
+        <value>
+            <li>SurvivalToolsCleaningMaterials</li>
+        </value>
+    </Operation>
+    <Operation Class="PatchOperationAdd">
+        <success>Always</success>
+        <xpath>/Defs/ThingDef[defName='DevilstrandCloth']/thingCategories</xpath>
+        <value>
+            <li>SurvivalToolsCleaningMaterials</li>
+        </value>
+    </Operation>
+    <Operation Class="PatchOperationAdd">
+        <success>Always</success>
+        <xpath>/Defs/ThingDef[defName='Hyperweave']/thingCategories</xpath>
+        <value>
+            <li>SurvivalToolsCleaningMaterials</li>
+        </value>
+    </Operation>
+    <Operation Class="PatchOperationAdd">
+        <success>Always</success>
+        <xpath>/Defs/ThingDef[defName='Synthread']/thingCategories</xpath>
+        <value>
+            <li>SurvivalToolsCleaningMaterials</li>
+        </value>
+    </Operation>
+    <!-- Wools (some gated by DLC) -->
+    <Operation Class="PatchOperationAdd">
+        <success>Always</success>
+        <xpath>/Defs/ThingDef[defName='WoolSheep']/thingCategories</xpath>
+        <value>
+            <li>SurvivalToolsCleaningMaterials</li>
+        </value>
+    </Operation>
+    <Operation Class="PatchOperationAdd">
+        <success>Always</success>
+        <xpath>/Defs/ThingDef[defName='WoolAlpaca']/thingCategories</xpath>
+        <value>
+            <li>SurvivalToolsCleaningMaterials</li>
+        </value>
+    </Operation>
+    <Operation Class="PatchOperationAdd">
+        <success>Always</success>
+        <xpath>/Defs/ThingDef[defName='WoolMegasloth']/thingCategories</xpath>
+        <value>
+            <li>SurvivalToolsCleaningMaterials</li>
+        </value>
+    </Operation>
+    <Operation Class="PatchOperationAdd">
+        <success>Always</success>
+        <xpath>/Defs/ThingDef[defName='WoolMuffalo']/thingCategories</xpath>
+        <value>
+            <li>SurvivalToolsCleaningMaterials</li>
+        </value>
+    </Operation>
+    <Operation Class="PatchOperationAdd">
+        <success>Always</success>
+        <xpath>/Defs/ThingDef[defName='WoolBison']/thingCategories</xpath>
+        <value>
+            <li>SurvivalToolsCleaningMaterials</li>
+        </value>
+    </Operation>
+</Patch>

@@ -519,6 +519,9 @@
         <label>steel knife</label>
         <description>A precision-forged steel knife with superior edge retention and durability. The high-carbon steel blade maintains its sharpness through extensive use, making it ideal for demanding butchery and medical work. The ergonomic handle provides excellent control for delicate operations.</description>
         <costStuffCount>30</costStuffCount>
+        <stuffCategories>
+            <li>Metallic</li>
+        </stuffCategories>
         <statBases>
             <Mass>0.4</Mass>
         </statBases>
@@ -595,6 +598,12 @@
         <label>crosscut saw</label>
         <description>A precision industrial saw designed for efficient lumber processing and construction work. The specially designed teeth and reinforced steel construction allow for clean, accurate cuts through various materials. Essential for large-scale construction projects and advanced woodworking operations.</description>
         <costStuffCount>45</costStuffCount>
+        <stuffCategories>
+            <li>Metallic</li>
+        </stuffCategories>
+        <costList>
+            <ComponentIndustrial>1</ComponentIndustrial>
+        </costList>
         <statBases>
             <Mass>1.5</Mass>
         </statBases>
@@ -676,6 +685,9 @@
         <label>carbide pickaxe</label>
         <description>An advanced mining implement featuring carbide-tipped edges that maintain their sharpness through the most demanding excavation work. The precision-engineered head cuts through rock more efficiently than standard tools, while the reinforced construction ensures exceptional durability in harsh mining conditions.</description>
         <costStuffCount>50</costStuffCount>
+        <stuffCategories>
+            <li>Metallic</li>
+        </stuffCategories>
         <statBases>
             <Mass>3.0</Mass>
         </statBases>
@@ -749,6 +761,9 @@
         <label>precision scalpel</label>
         <description>An ultra-sharp surgical instrument crafted from the finest steel alloys. The carefully balanced blade maintains its edge through repeated sterilization and use, while the ergonomic handle ensures precise control during delicate medical procedures. Standard equipment in advanced medical facilities.</description>
         <costStuffCount>25</costStuffCount>
+        <stuffCategories>
+            <li>Metallic</li>
+        </stuffCategories>
         <statBases>
             <Mass>0.2</Mass>
         </statBases>
@@ -988,6 +1003,9 @@
         <label>knife</label>
         <description>A versatile cutting implement with a sharp blade essential for precise work. Perfect for butchery operations, medical procedures, and general cutting tasks. The balanced design allows for controlled, accurate cuts while the keen edge ensures clean work. An indispensable tool for any serious colonist.</description>
         <costStuffCount>25</costStuffCount>
+        <stuffCategories>
+            <li>Stony</li>
+        </stuffCategories>
         <statBases>
             <Mass>0.3</Mass>
         </statBases>
@@ -1028,6 +1046,31 @@
                 <cooldownTime>1.6</cooldownTime>
             </li>
         </tools>
+        <recipeMaker>
+            <researchPrerequisite>Stonecutting</researchPrerequisite>
+            <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+            <workSkill>Crafting</workSkill>
+            <effectWorking>Smith</effectWorking>
+            <soundWorking>Recipe_Smith</soundWorking>
+            <recipeUsers>
+                <li>CraftingSpot</li>
+                <li>ElectricSmithy</li>
+                <li>FueledSmithy</li>
+            </recipeUsers>
+            <skillRequirements>
+                <Crafting>1</Crafting>
+            </skillRequirements>
+            <defaultIngredientFilter>
+                <categories>
+                    <li>Root</li>
+                </categories>
+                <disallowedThingDefs>
+                    <li>Silver</li>
+                    <li>Gold</li>
+                </disallowedThingDefs>
+            </defaultIngredientFilter>
+            <unfinishedThingDef>UnfinishedWeapon</unfinishedThingDef>
+        </recipeMaker>
     </ThingDef>
 
     <ThingDef ParentName="SurvivalToolBasic">
@@ -1079,6 +1122,10 @@
         <label>bone sickle</label>
         <description>A primitive harvesting tool crafted from carved bone with a sharpened edge. While not as durable as metal variants, this traditional implement serves admirably for crop harvesting and plant cutting. The curved design follows ancient patterns proven effective across countless generations of agricultural work.</description>
         <costStuffCount>20</costStuffCount>
+        <stuffCategories>
+            <li>Stony</li>
+            <li>Woody</li>
+        </stuffCategories>
         <statBases>
             <Mass>0.4</Mass>
         </statBases>
@@ -1116,6 +1163,31 @@
                 <cooldownTime>2.3</cooldownTime>
             </li>
         </tools>
+        <recipeMaker>
+            <researchPrerequisite>Stonecutting</researchPrerequisite>
+            <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+            <workSkill>Crafting</workSkill>
+            <effectWorking>Smith</effectWorking>
+            <soundWorking>Recipe_Smith</soundWorking>
+            <recipeUsers>
+                <li>CraftingSpot</li>
+                <li>ElectricSmithy</li>
+                <li>FueledSmithy</li>
+            </recipeUsers>
+            <skillRequirements>
+                <Crafting>1</Crafting>
+            </skillRequirements>
+            <defaultIngredientFilter>
+                <categories>
+                    <li>Root</li>
+                </categories>
+                <disallowedThingDefs>
+                    <li>Silver</li>
+                    <li>Gold</li>
+                </disallowedThingDefs>
+            </defaultIngredientFilter>
+            <unfinishedThingDef>UnfinishedWeapon</unfinishedThingDef>
+        </recipeMaker>
     </ThingDef>
 
     <!-- =================================================== -->
@@ -1190,6 +1262,560 @@
                 <compClass>CompQuality</compClass>
             </li>
         </comps>
+    </ThingDef>
+
+    <!-- =================================================== -->
+    <!-- MULTIPURPOSE GENERAL WORK TOOLS (WorkSpeedGlobal)   -->
+    <!-- Re-added after revert                               -->
+    <!-- =================================================== -->
+
+    <!-- Tribal Tier -->
+    <ThingDef ParentName="BaseSurvivalTool">
+        <defName>SurvivalTools_MultipurposeStoneTool</defName>
+        <label>multipurpose stone tool</label>
+        <description>A rugged, versatile stone implement shaped to cover many general tasks. While primitive, it grants a modest improvement to overall work speed.</description>
+        <techLevel>Neolithic</techLevel>
+        <costStuffCount>35</costStuffCount>
+        <stuffCategories>
+            <li>Stony</li>
+            <li>Woody</li>
+        </stuffCategories>
+        <statBases>
+            <Mass>1.2</Mass>
+            <MaxHitPoints>120</MaxHitPoints>
+            <WorkToMake>1400</WorkToMake>
+        </statBases>
+        <graphicData>
+            <texPath>Things/Item/Equipment/Tool/MultipurposeStoneTool</texPath>
+            <graphicClass>Graphic_Single</graphicClass>
+        </graphicData>
+        <thingCategories>
+            <li>SurvivalToolsNeolithic</li>
+        </thingCategories>
+        <modExtensions>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <WorkSpeedGlobal>1.00</WorkSpeedGlobal>
+                </baseWorkStatFactors>
+                <toolWearFactor>1.10</toolWearFactor>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Generalist</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+        </modExtensions>
+        <tools>
+            <li>
+                <label>body</label>
+                <capacities>
+                    <li>Blunt</li>
+                </capacities>
+                <power>1</power>
+                <cooldownTime>2.5</cooldownTime>
+            </li>
+        </tools>
+        <recipeMaker>
+            <workSpeedStat>WorkSpeedGlobal</workSpeedStat>
+            <workSkill>Crafting</workSkill>
+            <effectWorking>Smith</effectWorking>
+            <soundWorking>Recipe_Smith</soundWorking>
+            <recipeUsers>
+                <li>CraftingSpot</li>
+                <li>FueledSmithy</li>
+                <li>ElectricSmithy</li>
+            </recipeUsers>
+            <researchPrerequisite>Stonecutting</researchPrerequisite>
+            <skillRequirements>
+                <Crafting>1</Crafting>
+            </skillRequirements>
+            <defaultIngredientFilter>
+                <categories>
+                    <li>Root</li>
+                </categories>
+                <disallowedThingDefs>
+                    <li>Silver</li>
+                    <li>Gold</li>
+                    <li>Steel</li>
+                    <li>Plasteel</li>
+                    <li>Uranium</li>
+                    <li MayRequire="Anomaly">Bioferrite</li>
+                    <!-- Tune later, This should only be basic stone -->
+                </disallowedThingDefs>
+            </defaultIngredientFilter>
+
+        </recipeMaker>
+    </ThingDef>
+
+    <ThingDef ParentName="BaseSurvivalTool">
+        <defName>SurvivalTools_CarvedBoneImplements</defName>
+        <label>carved bone implements</label>
+        <description>A collection of carefully carved bone implements bundled together for multi-purpose use. Fragile, but shaped for efficiency, giving a noticeable boost to general work speed.</description>
+        <techLevel>Neolithic</techLevel>
+        <costStuffCount>30</costStuffCount>
+        <stuffCategories>
+            <li>Woody</li>
+        </stuffCategories>
+        <statBases>
+            <Mass>0.9</Mass>
+            <MaxHitPoints>90</MaxHitPoints>
+            <WorkToMake>1500</WorkToMake>
+            <Flammability>0.7</Flammability>
+        </statBases>
+        <graphicData>
+            <texPath>Things/Item/Equipment/Tool/CarvedBoneImplements</texPath>
+            <graphicClass>Graphic_Single</graphicClass>
+        </graphicData>
+        <thingCategories>
+            <li>SurvivalToolsNeolithic</li>
+        </thingCategories>
+        <modExtensions>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <WorkSpeedGlobal>1.05</WorkSpeedGlobal>
+                </baseWorkStatFactors>
+                <toolWearFactor>1.00</toolWearFactor>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Generalist</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+        </modExtensions>
+        <tools>
+            <li>
+                <label>bundle</label>
+                <capacities>
+                    <li>Blunt</li>
+                </capacities>
+                <power>1</power>
+                <cooldownTime>2.5</cooldownTime>
+            </li>
+        </tools>
+        <recipeMaker>
+            <workSpeedStat>WorkSpeedGlobal</workSpeedStat>
+            <workSkill>Crafting</workSkill>
+            <effectWorking>Smith</effectWorking>
+            <soundWorking>Recipe_Smith</soundWorking>
+            <recipeUsers>
+                <li>CraftingSpot</li>
+                <li>FueledSmithy</li>
+                <li>ElectricSmithy</li>
+            </recipeUsers>
+            <researchPrerequisite>Stonecutting</researchPrerequisite>
+            <skillRequirements>
+                <Crafting>1</Crafting>
+            </skillRequirements>
+            <defaultIngredientFilter>
+                <categories>
+                    <li>Root</li>
+                </categories>
+                <disallowedThingDefs>
+                    <li>Silver</li>
+                    <li>Gold</li>
+                    <li>Steel</li>
+                    <li>Plasteel</li>
+                    <li>Uranium</li>
+                    <li MayRequire="Anomaly">Bioferrite</li>
+                    <!-- Tune later, This should only be basic stone -->
+                </disallowedThingDefs>
+            </defaultIngredientFilter>
+
+        </recipeMaker>
+    </ThingDef>
+
+    <!-- Medieval Tier -->
+    <ThingDef ParentName="BaseSurvivalTool">
+        <defName>SurvivalTools_ArtisansToolkit</defName>
+        <label>artisan's toolkit</label>
+        <description>A curated collection of quality medieval-era implements for crafting, shaping, and assembly. Improves overall work throughput across many tasks.</description>
+        <techLevel>Medieval</techLevel>
+        <costStuffCount>45</costStuffCount>
+        <stuffCategories>
+            <li>Metallic</li>
+            <li>Woody</li>
+        </stuffCategories>
+        <statBases>
+            <Mass>2.0</Mass>
+            <MaxHitPoints>160</MaxHitPoints>
+            <WorkToMake>2200</WorkToMake>
+        </statBases>
+        <graphicData>
+            <texPath>Things/Item/Equipment/Tool/ArtisansToolkit</texPath>
+            <graphicClass>Graphic_Single</graphicClass>
+        </graphicData>
+        <thingCategories>
+            <li>SurvivalToolsNeolithic</li>
+        </thingCategories>
+        <modExtensions>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <WorkSpeedGlobal>1.10</WorkSpeedGlobal>
+                </baseWorkStatFactors>
+                <toolWearFactor>0.90</toolWearFactor>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Generalist</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+        </modExtensions>
+        <recipeMaker>
+            <workSpeedStat>WorkSpeedGlobal</workSpeedStat>
+            <workSkill>Crafting</workSkill>
+            <effectWorking>Smith</effectWorking>
+            <soundWorking>Recipe_Smith</soundWorking>
+            <recipeUsers>
+                <li>FueledSmithy</li>
+                <li>ElectricSmithy</li>
+            </recipeUsers>
+            <researchPrerequisite>Smithing</researchPrerequisite>
+            <skillRequirements>
+                <Crafting>4</Crafting>
+            </skillRequirements>
+            <defaultIngredientFilter>
+                <categories>
+                    <li>Root</li>
+                </categories>
+                <disallowedThingDefs>
+                    <li>Silver</li>
+                    <li>Gold</li>
+                    <li>Plasteel</li>
+                    <li MayRequire="Anomaly">Bioferrite</li>
+                    <!-- Tune later -->
+                </disallowedThingDefs>
+            </defaultIngredientFilter>
+
+        </recipeMaker>
+        <tools>
+            <li>
+                <label>implements</label>
+                <capacities>
+                    <li>Blunt</li>
+                </capacities>
+                <power>2</power>
+                <cooldownTime>2.4</cooldownTime>
+            </li>
+        </tools>
+    </ThingDef>
+
+    <ThingDef ParentName="BaseSurvivalTool">
+        <defName>SurvivalTools_WoodworkersKit</defName>
+        <label>woodworker's kit</label>
+        <description>A specialized assortment of saws, chisels, planes and gauges optimized for timber shaping and joinery. Its organization and quality grant a strong boost to general work speed.</description>
+        <techLevel>Medieval</techLevel>
+        <costStuffCount>55</costStuffCount>
+        <stuffCategories>
+            <li>Woody</li>
+            <li>Metallic</li>
+        </stuffCategories>
+        <statBases>
+            <Mass>2.2</Mass>
+            <MaxHitPoints>170</MaxHitPoints>
+            <WorkToMake>2400</WorkToMake>
+        </statBases>
+        <graphicData>
+            <texPath>Things/Item/Equipment/Tool/WoodworkersKit</texPath>
+            <graphicClass>Graphic_Single</graphicClass>
+        </graphicData>
+        <thingCategories>
+            <li>SurvivalToolsNeolithic</li>
+        </thingCategories>
+        <modExtensions>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <WorkSpeedGlobal>1.15</WorkSpeedGlobal>
+                </baseWorkStatFactors>
+                <toolWearFactor>0.80</toolWearFactor>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Generalist</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+        </modExtensions>
+        <recipeMaker>
+            <workSpeedStat>WorkSpeedGlobal</workSpeedStat>
+            <workSkill>Crafting</workSkill>
+            <effectWorking>Smith</effectWorking>
+            <soundWorking>Recipe_Smith</soundWorking>
+            <recipeUsers>
+                <li>FueledSmithy</li>
+                <li>ElectricSmithy</li>
+            </recipeUsers>
+            <researchPrerequisite>Smithing</researchPrerequisite>
+            <skillRequirements>
+                <Crafting>5</Crafting>
+            </skillRequirements>
+            <defaultIngredientFilter>
+                <categories>
+                    <li>Root</li>
+                </categories>
+                <disallowedThingDefs>
+                    <li>Plasteel</li>
+                    <li MayRequire="Anomaly">Bioferrite</li>
+                    <!-- Tune later -->
+                </disallowedThingDefs>
+            </defaultIngredientFilter>
+
+        </recipeMaker>
+        <tools>
+            <li>
+                <label>kit frame</label>
+                <capacities>
+                    <li>Blunt</li>
+                </capacities>
+                <power>2</power>
+                <cooldownTime>2.4</cooldownTime>
+            </li>
+        </tools>
+    </ThingDef>
+
+    <!-- Industrial Tier -->
+    <ThingDef ParentName="BaseSurvivalTool">
+        <defName>SurvivalTools_MechanicsToolkit</defName>
+        <label>mechanic's toolkit</label>
+        <description>An organized industrial-era toolkit containing precision wrenches, gauges, torque implements and fast-retrieval storage. Greatly improves overall task flow and coordination in general work.</description>
+        <techLevel>Industrial</techLevel>
+        <costStuffCount>60</costStuffCount>
+        <costList>
+            <ComponentIndustrial>2</ComponentIndustrial>
+        </costList>
+        <stuffCategories>
+            <li>Metallic</li>
+        </stuffCategories>
+        <statBases>
+            <Mass>2.4</Mass>
+            <MaxHitPoints>200</MaxHitPoints>
+            <WorkToMake>3000</WorkToMake>
+        </statBases>
+        <graphicData>
+            <texPath>Things/Item/Equipment/Tool/MechanicsToolkit</texPath>
+            <graphicClass>Graphic_Single</graphicClass>
+        </graphicData>
+        <thingCategories Inherit="false">
+            <li>SurvivalToolsIndustrial</li>
+        </thingCategories>
+        <modExtensions>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <WorkSpeedGlobal>1.22</WorkSpeedGlobal>
+                </baseWorkStatFactors>
+                <toolWearFactor>0.65</toolWearFactor>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Generalist</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+        </modExtensions>
+        <recipeMaker>
+            <workSpeedStat>WorkSpeedGlobal</workSpeedStat>
+            <workSkill>Crafting</workSkill>
+            <effectWorking>Smith</effectWorking>
+            <soundWorking>Recipe_Machining</soundWorking>
+            <recipeUsers>
+                <li>ElectricSmithy</li>
+                <li>FueledSmithy</li>
+            </recipeUsers>
+            <researchPrerequisite>Machining</researchPrerequisite>
+            <skillRequirements>
+                <Crafting>6</Crafting>
+            </skillRequirements>
+            <defaultIngredientFilter>
+                <categories>
+                    <li>Root</li>
+                </categories>
+                <disallowedThingDefs>
+                    <!-- Tune later -->
+                </disallowedThingDefs>
+            </defaultIngredientFilter>
+
+        </recipeMaker>
+        <tools>
+            <li>
+                <label>case</label>
+                <capacities>
+                    <li>Blunt</li>
+                </capacities>
+                <power>3</power>
+                <cooldownTime>2.6</cooldownTime>
+            </li>
+        </tools>
+    </ThingDef>
+
+    <ThingDef ParentName="BaseSurvivalTool">
+        <defName>SurvivalTools_WorkshopHammerDrill</defName>
+        <label>workshop hammer drill</label>
+        <description>A heavy-duty powered hammer drill with interchangeable percussion and rotary modules. Its integrated clamping and alignment system accelerates virtually any mechanical or construction task.</description>
+        <techLevel>Industrial</techLevel>
+        <costStuffCount>70</costStuffCount>
+        <costList>
+            <ComponentIndustrial>2</ComponentIndustrial>
+        </costList>
+        <stuffCategories>
+            <li>Metallic</li>
+        </stuffCategories>
+        <statBases>
+            <Mass>3.2</Mass>
+            <MaxHitPoints>220</MaxHitPoints>
+            <WorkToMake>3600</WorkToMake>
+        </statBases>
+        <graphicData>
+            <texPath>Things/Item/Equipment/Tool/WorkshopHammerDrill</texPath>
+            <graphicClass>Graphic_Single</graphicClass>
+        </graphicData>
+        <thingCategories Inherit="false">
+            <li>SurvivalToolsIndustrial</li>
+        </thingCategories>
+        <modExtensions>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <WorkSpeedGlobal>1.30</WorkSpeedGlobal>
+                </baseWorkStatFactors>
+                <toolWearFactor>0.50</toolWearFactor>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Generalist</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+        </modExtensions>
+        <recipeMaker>
+            <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+            <workSkill>Crafting</workSkill>
+            <effectWorking>Smith</effectWorking>
+            <soundWorking>Recipe_Machining</soundWorking>
+            <recipeUsers>
+                <li>ElectricSmithy</li>
+                <li>FabricationBench</li>
+            </recipeUsers>
+            <researchPrerequisite>Machining</researchPrerequisite>
+            <skillRequirements>
+                <Crafting>7</Crafting>
+            </skillRequirements>
+
+            <defaultIngredientFilter>
+                <categories>
+                    <li>Root</li>
+                </categories>
+                <disallowedThingDefs>
+                    <!-- Tune later -->
+                </disallowedThingDefs>
+            </defaultIngredientFilter>
+        </recipeMaker>
+        <tools>
+            <li>
+                <label>housing</label>
+                <capacities>
+                    <li>Blunt</li>
+                </capacities>
+                <power>4</power>
+                <cooldownTime>2.6</cooldownTime>
+            </li>
+        </tools>
+    </ThingDef>
+
+    <!-- Spacer / Glitterworld Tier / EXPENSIVE TO MAKE if Makeable -->
+    <ThingDef ParentName="BaseSurvivalTool">
+        <defName>SurvivalTools_NanofabricatorInterface</defName>
+        <label>nanofabricator interface</label>
+        <description>A sleek control and augmentation module that synchronizes the user's motions with adaptive nano-assembly routines. Dramatically improves general task execution efficiency.</description>
+        <techLevel>Ultra</techLevel>
+        <costList>
+            <ComponentSpacer>1</ComponentSpacer>
+            <Gold>1</Gold>
+            <Plasteel>25</Plasteel>
+            <Silver>50</Silver>
+            <Uranium>1</Uranium>
+            <Steel>10</Steel>
+        </costList>
+        <statBases>
+            <Mass>1.0</Mass>
+            <MaxHitPoints>240</MaxHitPoints>
+            <WorkToMake>5000</WorkToMake>
+            <MarketValue>900</MarketValue>
+        </statBases>
+        <graphicData>
+            <texPath>Things/Item/Equipment/Tool/NanofabricatorInterface</texPath>
+            <graphicClass>Graphic_Single</graphicClass>
+        </graphicData>
+        <thingCategories Inherit="false">
+            <li>SurvivalToolsSpacer</li>
+        </thingCategories>
+        <modExtensions>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <WorkSpeedGlobal>1.45</WorkSpeedGlobal>
+                </baseWorkStatFactors>
+                <toolWearFactor>0.30</toolWearFactor>
+                <defaultSurvivalToolAssignmentTags>
+                    <li>Generalist</li>
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+        </modExtensions>
+        <recipeMaker>
+            <workSpeedStat>WorkSpeedGlobal</workSpeedStat>
+            <workSkill>Crafting</workSkill>
+            <effectWorking>Smith</effectWorking>
+            <soundWorking>Recipe_Machining</soundWorking>
+            <recipeUsers>
+                <li>FabricationBench</li>
+            </recipeUsers>
+            <researchPrerequisite>Fabrication</researchPrerequisite>
+            <skillRequirements>
+                <Crafting>15</Crafting>
+            </skillRequirements>
+
+        </recipeMaker>
+        <tools>
+            <li>
+                <label>interface shell</label>
+                <capacities>
+                    <li>Blunt</li>
+                </capacities>
+                <power>5</power>
+                <cooldownTime>2.4</cooldownTime>
+            </li>
+        </tools>
+    </ThingDef>
+
+    <ThingDef ParentName="BaseSurvivalTool">
+        <defName>SurvivalTools_OmniToolGauntlet</defName>
+        <label>omni-tool gauntlet</label>
+        <description>A cutting-edge modular gauntlet embedding field projectors, micro-fabricators and force-aligned manipulators. Provides an unparalleled increase to general work speed through predictive optimization.</description>
+        <techLevel>Ultra</techLevel>
+        <statBases>
+            <MarketValue>1400</MarketValue>
+            <Flammability>0.5</Flammability>
+            <Mass>1.1</Mass>
+            <MaxHitPoints>260</MaxHitPoints>
+        </statBases>
+        <graphicData>
+            <texPath>Things/Item/Equipment/Tool/OmniToolGauntlet</texPath>
+            <graphicClass>Graphic_Single</graphicClass>
+        </graphicData>
+        <thingCategories>
+            <li>SurvivalToolsSpacer</li>
+        </thingCategories>
+        <modExtensions>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <baseWorkStatFactors>
+                    <WorkSpeedGlobal>1.60</WorkSpeedGlobal>
+                </baseWorkStatFactors>
+                <toolWearFactor>0.10</toolWearFactor>
+                <defaultSurvivalToolAssignmentTags>
+                    <!--<li>Generalist</li>-->
+                </defaultSurvivalToolAssignmentTags>
+            </li>
+        </modExtensions>
+        <tools>
+            <li>
+                <label>emitter housing</label>
+                <capacities>
+                    <li>Poke</li>
+                </capacities>
+                <power>8</power>
+                <cooldownTime>2.2</cooldownTime>
+            </li>
+            <li>
+                <label>manipulator array</label>
+                <labelUsedInLogging>false</labelUsedInLogging>
+                <capacities>
+                    <li>Blunt</li>
+                </capacities>
+                <power>11</power>
+                <cooldownTime>2.0</cooldownTime>
+            </li>
+        </tools>
     </ThingDef>
 
 </Defs>

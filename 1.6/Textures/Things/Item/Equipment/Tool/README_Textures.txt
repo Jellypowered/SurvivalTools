@@ -1,117 +1,206 @@
-COMMISSIONED ARTWORK SHOPPING LIST:
+=================================================================
+COMMISSIONED ARTWORK SHOPPING LIST
+=================================================================
 
 === PRIMITIVE TIER TOOLS ===
+1. Knife.png - Basic Utility Knife
+   • Resolution: 128x128
+   • Style: Primitive/rustic
+   • Description: Simple blade with wooden or stone handle
+   • Use: Butchery, basic medical work
 
-1. Knife.png - Basic utility knife texture
-   - Should be ~64x64 pixels
-   - Simple blade with handle, adaptable to wood/stone/metal materials
-   - Used for butchery and basic medical work
-   - Style: Primitive/rustic appearance
+2. HandSaw.png - Primitive Hand Saw
+   • Resolution: 128x128
+   • Style: Simple, functional
+   • Description: Toothed blade with wooden handle
+   • Use: Basic woodworking, construction
 
-2. HandSaw.png - Basic hand saw texture
-   - Should be ~64x64 pixels
-   - Toothed blade with handle, adaptable to wood/stone/metal materials
-   - Used for basic woodworking and construction
-   - Style: Simple, functional design
+3. BoneSickle.png - Bone Sickle
+   • Resolution: 128x128
+   • Style: Bone/fossil aesthetic
+   • Description: Curved blade shaped like carved bone
+   • Use: Harvesting crops/plants
 
-3. BoneSickle.png - Bone-themed sickle texture
-   - Should be ~64x64 pixels
-   - Curved blade with bone-like appearance (uses Stony materials)
-   - Used for harvesting crops and plants
-   - Style: Primitive, bone/fossil aesthetic
+4. Hoe.png - Farming Hoe
+   • Resolution: 128x128
+   • Style: Agricultural
+   • Description: Wooden handle, metal or stone blade
+   • Use: Soil preparation, farming
 
-4. Hoe.png - Farming hoe tool texture
-   - Should be ~64x64 pixels
-   - Wood handle with metal blade, adaptable to materials
-   - Used for soil preparation and farming
-   - Style: Agricultural tool appearance
+5. PryBar.png - Primitive Lever Tool
+   • Resolution: 128x128
+   • Style: Primitive
+   • Description: Wood or stone pry tool
+   • Use: Demolition, leverage
 
-5. PryBar.png - Primitive pry bar/lever tool texture
-   - Should be ~64x64 pixels
-   - Wood/stone materials based on stuff
-   - Used for demolition and leverage work
-   - Style: Simpler, more primitive appearance than wrench
+6. Abacus.png - Counting Frame
+   • Resolution: 128x128
+   • Style: Neolithic research aid
+   • Description: Wooden frame with beads
+   • Use: Research, intellectual work
 
-6. Abacus.png - Simple counting frame texture
-   - Should be ~64x64 pixels
-   - Wood frame with counting beads
-   - Used for research and intellectual work
-   - Style: Primitive/neolithic appearance
+7. PileOfRags.png - Cleaning Rags
+   • Resolution: 128x128
+   • Style: Practical
+   • Description: Bundle of cloth rags
+   • Use: Cleaning, maintenance
 
-7. PileOfRags.png - Bundle of cleaning rags texture
-   - Should be ~64x64 pixels
-   - Collection of cloth pieces/rags bundled together
-   - Used for cleaning and basic maintenance work
-   - Style: Simple, practical appearance with fabric texture
+8. MultipurposeStoneTool.png - Crude Stone Tool
+   • Resolution: 128x128
+   • Style: Tribal/neolithic
+   • Description: Chipped stone lashed to wood grip with twine
+   • Use: WorkSpeedGlobal (primitive tier)
+
+9. CarvedBoneImplements.png - Bundle of Bone Tools
+   • Resolution: 128x128
+   • Style: Tribal/organic
+   • Description: Carved animal bones (scrapers, chisels, awl) tied with sinew
+   • Use: WorkSpeedGlobal (primitive tier)
+
+-----------------------------------------------------------------
+
+=== MEDIEVAL / ARTISAN TIER TOOLS ===
+10. Artisan’sToolkit.png - Leather Tool Wrap
+    • Resolution: 128x128
+    • Style: Medieval craftsman
+    • Description: Leather roll with hammer, chisel, awl, hand drill
+    • Use: WorkSpeedGlobal (medieval)
+
+11. Woodworker’sKit.png - Fine Carpentry Set
+    • Resolution: 128x128
+    • Style: Late medieval
+    • Description: Polished oak box with saws, rasps, knives, brass fittings
+    • Use: WorkSpeedGlobal (medieval)
+
+-----------------------------------------------------------------
 
 === INDUSTRIAL TIER TOOLS ===
+12. SteelKnife.png - Professional Knife
+    • Resolution: 128x128
+    • Style: Industrial
+    • Description: High-quality steel blade with ergonomic grip
+    • Use: Butchery, medical
 
-8. SteelKnife.png - Professional steel knife texture
-   - Should be ~64x64 pixels
-   - High-quality steel blade with ergonomic handle
-   - Enhanced version of basic knife for precision work
-   - Style: Clean, professional, industrial appearance
+13. CrosscutSaw.png - Industrial Saw
+    • Resolution: 128x128
+    • Style: Heavy-duty
+    • Description: Large toothed blade for lumber
+    • Use: Advanced construction, woodworking
 
-9. CrosscutSaw.png - Industrial crosscut saw texture
-   - Should be ~64x64 pixels
-   - Large toothed blade designed for lumber processing
-   - Used for advanced construction and woodworking
-   - Style: Heavy-duty, industrial tool appearance
+14. Wrench.png - Adjustable Wrench
+    • Resolution: 128x128
+    • Style: Industrial
+    • Description: Steel adjustable jaw wrench
+    • Use: Construction, repairs
 
-10. Wrench.png - Modern adjustable wrench tool texture
-    - Should be ~64x64 pixels
-    - Steel/metal appearance with adjustable jaw
-    - Used for mechanical repairs and construction
-    - Style: Similar to existing tools but more refined
+15. Mechanic’sToolkit.png - Industrial Toolbox
+    • Resolution: 128x128
+    • Style: Utilitarian
+    • Description: Red metal box with wrenches/pliers, grease smudges
+    • Use: WorkSpeedGlobal (industrial)
 
-=== PRECISION TIER TOOLS ===
+16. WorkshopHammerDrill.png - Early Power Drill
+    • Resolution: 128x128
+    • Style: Industrial, rugged
+    • Description: Bulky handheld hammer drill with steel bit
+    • Use: WorkSpeedGlobal (industrial)
 
-11. CarbidePick.png - Advanced carbide-tipped pickaxe texture
-    - Should be ~64x64 pixels
-    - Pickaxe head with carbide-tipped edges (metallic shine)
-    - Enhanced mining tool with superior durability
-    - Style: High-tech, precision-engineered appearance
+-----------------------------------------------------------------
 
-12. PrecisionScalpel.png - Surgical scalpel texture
-    - Should be ~64x64 pixels
-    - Ultra-sharp surgical blade with precision handle
-    - Used for advanced medical procedures
-    - Style: Medical-grade, sterile, precise appearance
+=== PRECISION / SPACER PREP TOOLS ===
+17. CarbidePick.png - Carbide Pickaxe
+    • Resolution: 128x128
+    • Style: Precision engineered
+    • Description: Pickaxe with carbide-tipped metallic head
+    • Use: Enhanced mining
 
-13. PowerDrill.png - Motorized power drill texture
-    - Should be ~64x64 pixels
-    - Electric drill with motor housing and drill bit
-    - Mechanized construction tool
-    - Style: Modern power tool, industrial appearance
+18. PrecisionScalpel.png - Surgical Scalpel
+    • Resolution: 128x128
+    • Style: Medical/sterile
+    • Description: Ultra-sharp surgical blade
+    • Use: Advanced medical procedures
 
-14. Microscope.png - Scientific microscope texture
-    - Should be ~64x64 pixels
-    - Metal/glass optical instrument with precision optics
-    - Used for research and scientific work
-    - Style: Industrial/modern laboratory equipment
+19. PowerDrill.png - Motorized Drill
+    • Resolution: 128x128
+    • Style: Industrial/modern
+    • Description: Electric drill with motor housing
+    • Use: Construction, fabrication
 
-=== SPACER TIER TOOLS ===
+20. Microscope.png - Research Microscope
+    • Resolution: 128x128
+    • Style: Scientific
+    • Description: Optical instrument for research
+    • Use: Research boost
 
-15. GlitterworldMultitool.png - Advanced multitool texture
-    - Should be ~64x64 pixels
-    - Futuristic, high-tech universal tool
-    - Ultimate all-in-one efficiency tool
-    - Style: Sleek, glitterworld technology aesthetic
+-----------------------------------------------------------------
 
-=== EXISTING TEXTURES (Keeping Current Art) ===
-✅ Axe.png - Basic forestry axe
-✅ Pickaxe.png - Basic mining pickaxe  
-✅ Hammer.png - Construction hammer
-✅ Sickle.png - Basic harvesting sickle
+=== SPACER / GLITTERWORLD TOOLS ===
+21. NanofabricatorInterface.png - Holo Tablet
+    • Resolution: 128x128
+    • Style: Sleek spacer tech
+    • Description: White/silver handheld slab with cyan holographic projection
+    • Use: WorkSpeedGlobal (spacer)
+
+22. OmniToolGauntlet.png - Wrist Gauntlet
+    • Resolution: 128x128
+    • Style: Glitterworld elegance
+    • Description: Wrist-mounted gauntlet with glowing conduits + nano-arms
+    • Use: WorkSpeedGlobal (glitterworld)
+
+23. GlitterworldMultitool.png - Ultimate Multitool
+    • Resolution: 128x128
+    • Style: Sleek, futuristic
+    • Description: High-tech universal tool with glow accents
+    • Use: All-purpose survival tool
+
+-----------------------------------------------------------------
+
+=== EXISTING TOOL TEXTURES (TO BE REDONE AT 128×128) ===
+24. Axe.png - Forestry Axe
+    • Resolution: 128x128
+    • Style: Functional, primitive-to-industrial variants
+    • Use: Tree felling, wood chopping
+
+25. Pickaxe.png - Mining Pickaxe
+    • Resolution: 128x128
+    • Style: Sturdy, material-adaptive (stone/iron/steel)
+    • Use: Mining, digging
+
+26. Hammer.png - Construction Hammer
+    • Resolution: 128x128
+    • Style: Simple head + wooden/metal shaft
+    • Use: Building, construction
+
+27. Sickle.png - Harvesting Sickle
+    • Resolution: 128x128
+    • Style: Curved blade with wood/metal handle
+    • Use: Crop/plant harvesting  
+
+-----------------------------------------------------------------
 
 === ARTWORK SPECIFICATIONS ===
-- All textures should be 64x64 pixels
-- PNG format with transparency support
-- Consistent art style matching existing RimWorld aesthetic
-- Tools should appear functional and period-appropriate for their tech level
-- Consider how textures will look when made from different materials (wood/stone/metal)
-- Maintain clear silhouettes for easy recognition at small sizes
-- Progressive visual complexity: Primitive → Industrial → Precision → Spacer
+• Resolution: All textures 128x128  
+• Format: PNG with transparency  
+• Lighting: RimWorld top-down, NW soft light, SE shadow  
+• Style: Match RimWorld vanilla aesthetic  
+• Silhouette: Must be distinct/readable at 25% scale  
+• Material Adaptability: Wood/stone/metal where applicable  
+• Tech Progression: Primitive → Medieval → Industrial → Precision → Spacer → Glitterworld  
 
-TOTAL NEW TEXTURES NEEDED: 15
-PRIORITY: High (needed for mod completion)
+-----------------------------------------------------------------
+
+=== COMMISSION DELIVERY GUIDELINES ===
+• Provide layered source files (PSD or equivalent) + PNG exports  
+• Keep holograms/glow elements on separate layers for flexibility  
+• Test readability at 50% and 25% scales  
+• Avoid over-detailing fine lines (<1px)  
+• Ensure silhouettes remain clear against RimWorld floors  
+
+-----------------------------------------------------------------
+
+TOTAL NEW TEXTURES: 23  
+- Primitive/Medieval: 11  
+- Industrial: 5  
+- Precision: 4  
+- Spacer/Glitterworld: 3  
+=================================================================

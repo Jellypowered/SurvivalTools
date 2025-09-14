@@ -47,6 +47,14 @@
     <Settings_AutoTool>Smart pre-work tool pickup</Settings_AutoTool>
     <Settings_AutoTool_Tooltip>Revolutionizes workflow efficiency by having colonists automatically acquire the optimal tool before starting any job. They'll intelligently swap tools, upgrade to better variants, and ensure they have the right equipment for maximum productivity. The cornerstone feature for seamless tool-based gameplay.</Settings_AutoTool_Tooltip>
 
+    <!-- Cleaning penalty (replaces hard blocking) -->
+    <Settings_EnableCleaningPenalties>Enable cleaning penalties (no blocking)</Settings_EnableCleaningPenalties>
+    <Settings_EnableCleaningPenalties_Tooltip>When enabled, pawns without appropriate cleaning tools (brooms / mops etc.) suffer a severe Cleaning Speed penalty instead of being blocked from cleaning entirely. Penalty severity scales with Hardcore / Extra Hardcore modes. Disable to revert to vanilla-like behavior (no penalty). Recommended for balanced challenge without soft-locking colony hygiene.</Settings_EnableCleaningPenalties_Tooltip>
+
+    <!-- Alert verbosity toggle -->
+    <SurvivalTools_ShowDetailedToolListInAlert>Show detailed tool list in alert</SurvivalTools_ShowDetailedToolListInAlert>
+    <SurvivalTools_ShowDetailedToolListInAlert_Tooltip>When enabled, the 'Colonist lacks essential tools' alert expands each pawn entry to list every missing or underpowered work stat along with the best tool (if any) they currently have. When disabled, a concise one-line summary per pawn is shown. Helpful for diagnostics; disable for a cleaner alert panel.</SurvivalTools_ShowDetailedToolListInAlert_Tooltip>
+
     <!-- Alerts -->
     <ColonistNeedsSurvivalTool>Colonist lacks essential tools</ColonistNeedsSurvivalTool>
     <ColonistsNeedSurvivalTool>Colonists lack essential tools</ColonistsNeedSurvivalTool>
