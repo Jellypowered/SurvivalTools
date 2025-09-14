@@ -25,7 +25,7 @@ namespace SurvivalTools.HarmonyStuff
 
                 // If the first unloadable item is an in-use tool (real or virtual), try to pick another item.
                 bool inUse =
-                    (thing is SurvivalTool st && st.InUse) ||
+                    (thing is SurvivalTool st && SurvivalToolUtility.IsToolInUse(st)) ||
                     (thing.def.IsToolStuff() && VirtualInUse(thing));
 
                 if (!inUse) return;
@@ -68,7 +68,7 @@ namespace SurvivalTools.HarmonyStuff
             {
                 // Tool-stuff can be virtually wrapped; if that wrapper is "in use", treat this as in-use.
                 var v = VirtualSurvivalTool.FromThing(toolStuff);
-                return v != null && v.InUse;
+                return v != null && SurvivalToolUtility.IsToolInUse(v);
             }
         }
 
@@ -172,7 +172,7 @@ namespace SurvivalTools.HarmonyStuff
                     var asTool = t as SurvivalTool; // includes VirtualSurvivalTool
                     if (asTool != null)
                     {
-                        if (!asTool.InUse)
+                        if (!SurvivalToolUtility.IsToolInUse(asTool))
                             return t;
                     }
                     else
@@ -218,8 +218,85 @@ namespace SurvivalTools.HarmonyStuff
                     var fh = tracker?.forcedHandler;
                     fh?.SetForced(item, false);
                     try { SurvivalToolUtility.ToolFactorCache.InvalidateForThing(item); } catch { }
+                    try { SurvivalToolUtility.ClearCountersForThing(item); } catch { }
                 }
             }
         }
+
+        // ------------------------------
+        // Append "(in use)" to tool-stuff items in gear tab if wrapped as a virtual tool
+        // ------------------------------
+        [HarmonyPatch(typeof(Thing), nameof(Thing.LabelCap), MethodType.Getter)]
+        public static class Thing_LabelCap_Postfix
+        {
+            public static void Postfix(Thing __instance, ref string __result)
+            {
+                if (__instance == null) return;
+
+                // Only applies to tool-stuff (cloth, etc.)
+                if (!__instance.def.IsToolStuff()) return;
+
+                var v = VirtualSurvivalTool.FromThing(__instance);
+                if (v != null && SurvivalToolUtility.IsToolInUse(v))
+                {
+                    if (!__result.EndsWith(" (in use)"))
+                        __result += " (in use)";
+                }
+            }
+        }
+
+        // Append "(in use)" to tool-stuff items in inventory/gear labels if wrapped as a virtual tool
+        [HarmonyPatch(typeof(Thing), nameof(Thing.Label), MethodType.Getter)]
+        public static class Thing_Label_Postfix
+        {
+            public static void Postfix(Thing __instance, ref string __result)
+            {
+                if (__instance == null) return;
+                if (!__instance.def.IsToolStuff()) return;
+
+                var v = VirtualSurvivalTool.FromThing(__instance);
+                if (v != null && SurvivalToolUtility.IsToolInUse(v))
+                {
+                    if (!__result.EndsWith(" (in use)"))
+                        __result += " (in use)";
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(Thing), nameof(Thing.LabelShort), MethodType.Getter)]
+        public static class Thing_LabelShort_Postfix
+        {
+            public static void Postfix(Thing __instance, ref string __result)
+            {
+                if (__instance == null) return;
+                if (!__instance.def.IsToolStuff()) return;
+
+                var v = VirtualSurvivalTool.FromThing(__instance);
+                if (v != null && SurvivalToolUtility.IsToolInUse(v))
+                {
+                    if (!__result.EndsWith(" (in use)"))
+                        __result += " (in use)";
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(Thing), nameof(Thing.LabelNoCount), MethodType.Getter)]
+        public static class Thing_LabelNoCount_Postfix
+        {
+            public static void Postfix(Thing __instance, ref string __result)
+            {
+                if (__instance == null) return;
+                if (!__instance.def.IsToolStuff()) return;
+
+                var v = VirtualSurvivalTool.FromThing(__instance);
+                if (v != null && SurvivalToolUtility.IsToolInUse(v))
+                {
+                    if (!__result.EndsWith(" (in use)"))
+                        __result += " (in use)";
+                }
+            }
+        }
+
+
     }
 }

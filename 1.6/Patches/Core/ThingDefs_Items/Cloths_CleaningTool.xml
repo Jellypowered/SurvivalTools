@@ -15,7 +15,7 @@
                     <li>Cleaner</li>
                     <li>Doctor</li>
                 </defaultSurvivalToolAssignmentTags>
-                <toolWearFactor>3.0</toolWearFactor>
+                <toolWearFactor>2.75</toolWearFactor>
             </li>
         </value>
     </Operation>

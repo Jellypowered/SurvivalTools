@@ -46,7 +46,7 @@
         <scenarioRandomizable>true</scenarioRandomizable>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.5</noToolStatFactor>
+                <noToolStatFactor>0.4</noToolStatFactor>
             </li>
         </parts>
         <postProcessCurve>
@@ -111,7 +111,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.5</noToolStatFactor>
+                <noToolStatFactor>0.4</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -149,7 +149,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.5</noToolStatFactor>
+                <noToolStatFactor>0.4</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -186,7 +186,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.5</noToolStatFactor>
+                <noToolStatFactor>0.4</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -223,7 +223,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.5</noToolStatFactor>
+                <noToolStatFactor>0.4</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -260,7 +260,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.5</noToolStatFactor>
+                <noToolStatFactor>0.4</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -296,7 +296,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.5</noToolStatFactor>
+                <noToolStatFactor>0.4</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -338,7 +338,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.5</noToolStatFactor>
+                <noToolStatFactor>0.4</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -368,7 +368,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.5</noToolStatFactor>
+                <noToolStatFactor>0.4</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -410,7 +410,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.5</noToolStatFactor>
+                <noToolStatFactor>0.4</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -449,7 +449,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.5</noToolStatFactor>
+                <noToolStatFactor>0.4</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -486,7 +486,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.5</noToolStatFactor>
+                <noToolStatFactor>0.4</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -520,7 +520,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.5</noToolStatFactor>
+                <noToolStatFactor>0.4</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -560,7 +560,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.5</noToolStatFactor>
+                <noToolStatFactor>0.4</noToolStatFactor>
             </li>
         </parts>
     </StatDef>

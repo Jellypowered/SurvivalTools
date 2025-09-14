@@ -16,7 +16,10 @@ namespace SurvivalTools
 {
     public class Alert_SurvivalToolNeedsReplacing : Alert
     {
-        private const float DamagedToolRemainingLifespanThreshold = 0.5f;
+        // Threshold expressed as remaining HP fraction (0..1). Tools at or below this
+        // HP fraction will trigger the replacing alert. Using HP% is clearer for players
+        // than the internal "lifespan" estimate which combined multiple factors.
+        private const float DamagedToolHpFractionThreshold = 0.5f;
 
         public Alert_SurvivalToolNeedsReplacing()
         {
@@ -39,11 +42,11 @@ namespace SurvivalTools
             var twc = ResolveThingWithComps(tool);
             if (twc == null || !twc.def.useHitPoints) return false;
 
+            // Use direct HP fraction for thresholding. This is more intuitive and stable
+            // than combining lifespan estimates with HP.
             float hpFrac = twc.MaxHitPoints > 0 ? (float)twc.HitPoints / twc.MaxHitPoints : 0f;
             hpFrac = Math.Max(0f, Math.Min(1f, hpFrac));
-            float lifespanRemaining = twc.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) * hpFrac;
-            lifespanRemaining = Math.Max(0f, Math.Min(1f, lifespanRemaining));
-            return lifespanRemaining <= DamagedToolRemainingLifespanThreshold;
+            return hpFrac <= DamagedToolHpFractionThreshold;
         }
 
         private static ThingWithComps ResolveThingWithComps(SurvivalTool tool)
@@ -64,15 +67,12 @@ namespace SurvivalTools
         {
             var twc = ResolveThingWithComps(tool);
             if (twc == null || !twc.def.useHitPoints) return tool.LabelShort;
-
+            // Display the actual HP / MaxHP and a human-friendly percentage (HP%). This
+            // replaces the previous "lifespan" presentation so players see the concrete
+            // condition of the item.
             float hpFrac = twc.MaxHitPoints > 0 ? (float)twc.HitPoints / twc.MaxHitPoints : 0f;
             hpFrac = Math.Max(0f, Math.Min(1f, hpFrac));
-            float lifespanRemaining = twc.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) * hpFrac;
-            lifespanRemaining = Math.Max(0f, Math.Min(1f, lifespanRemaining));
-
-            int percent = (int)(lifespanRemaining * 100f);
-            percent = Math.Max(0, Math.Min(100, percent));
-            return $"{tool.LabelShort} ({percent}%)";
+            return $"{tool.LabelShort} - Condition: {twc.HitPoints}/{twc.MaxHitPoints} ({hpFrac:P0})";
         }
 
         public override TaggedString GetExplanation()

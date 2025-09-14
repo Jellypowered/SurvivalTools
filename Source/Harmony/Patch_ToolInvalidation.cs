@@ -78,6 +78,7 @@ namespace SurvivalTools.HarmonyStuff
                 if (__instance.Destroyed || (__instance.HitPoints <= 0))
                 {
                     SurvivalToolUtility.ToolFactorCache.InvalidateForThing(__instance);
+                    try { SurvivalToolUtility.ClearCountersForThing(__instance); } catch { }
                 }
             }
             catch { }
@@ -142,6 +143,7 @@ namespace SurvivalTools.HarmonyStuff
                     catch { }
                 }
                 SurvivalToolUtility.ToolFactorCache.InvalidateForThing(__instance);
+                try { SurvivalToolUtility.ClearCountersForThing(__instance); } catch { }
             }
             catch { }
         }
@@ -169,6 +171,7 @@ namespace SurvivalTools.HarmonyStuff
                 if (__result.def != null && (__result.def.IsSurvivalTool() || __result.def.IsToolStuff()))
                 {
                     SurvivalToolUtility.ToolFactorCache.InvalidateForThing(__result);
+                    try { SurvivalToolUtility.ClearCountersForThing(__result); } catch { }
                 }
             }
             catch { }
@@ -198,6 +201,7 @@ namespace SurvivalTools.HarmonyStuff
                     catch { }
                 }
                 SurvivalToolUtility.ToolFactorCache.InvalidateForThing(equipment);
+                try { SurvivalToolUtility.ClearCountersForThing(equipment); } catch { }
             }
             catch { }
         }

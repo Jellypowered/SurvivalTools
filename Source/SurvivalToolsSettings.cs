@@ -34,7 +34,9 @@ namespace SurvivalTools
         public bool extraHardcoreMode = false;
 
         // Normal mode penalty settings
-        public float noToolStatFactorNormal = 0.5f;
+        public float noToolStatFactorNormal = 0.4f;
+        // Enable quality-based tool scaling (multiplies tool factors by quality curve)
+        public bool useQualityToolScaling = true;
         public bool enableNormalModePenalties = true;
 
         // Tree felling system toggle
@@ -137,7 +139,8 @@ namespace SurvivalTools
             Scribe_Values.Look(ref requireCleaningTools, nameof(requireCleaningTools), true);
             Scribe_Values.Look(ref requireButcheryTools, nameof(requireButcheryTools), true);
             Scribe_Values.Look(ref requireMedicalTools, nameof(requireMedicalTools), true);
-            Scribe_Values.Look(ref noToolStatFactorNormal, nameof(noToolStatFactorNormal), 0.5f);
+            Scribe_Values.Look(ref noToolStatFactorNormal, nameof(noToolStatFactorNormal), 0.4f);
+            Scribe_Values.Look(ref useQualityToolScaling, nameof(useQualityToolScaling), true);
             Scribe_Values.Look(ref enableNormalModePenalties, nameof(enableNormalModePenalties), true);
             Scribe_Values.Look(ref enableRRCompatibility, nameof(enableRRCompatibility), true);
             Scribe_Values.Look(ref rrResearchRequiredInExtraHardcore, nameof(rrResearchRequiredInExtraHardcore), false);
@@ -344,6 +347,9 @@ namespace SurvivalTools
                 Text.Font = prevFont;
             }
             listing.Gap();
+
+            // Quality-based tool scaling toggle
+            listing.CheckboxLabeled("Settings_QualityToolScaling".Translate(), ref useQualityToolScaling, "Settings_QualityToolScaling_Tooltip".Translate());
 
             // Degradation slider
             var degrLabel = "Settings_ToolDegradationRate".Translate();

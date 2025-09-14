@@ -148,6 +148,45 @@ namespace SurvivalTools
                 }
             }
 
+            // ALSO include the global work-speed stat if applicable — it isn't tied to a specific WorkGiver
+            if (Stat_WorkSpeedGlobal != null)
+            {
+                string globalLabel = NormalizeStatLabel(Stat_WorkSpeedGlobal);
+                foreach (var pawn in culprits)
+                {
+                    if (!ShouldShowAlertForStat(pawn, Stat_WorkSpeedGlobal, settings))
+                        continue;
+                    if (pawn.HasSurvivalToolFor(Stat_WorkSpeedGlobal))
+                        continue;
+
+                    if (!statToPawns.TryGetValue(globalLabel, out var list))
+                    {
+                        list = new List<Pawn>();
+                        statToPawns[globalLabel] = list;
+                    }
+                    if (!list.Contains(pawn)) list.Add(pawn);
+
+                    if (settings.showUpgradeSuggestions)
+                    {
+                        var tools = SurvivalToolDiscovery.GetToolsForStat(Stat_WorkSpeedGlobal)
+                            .Where(t => t != null)
+                            // Exclude Glitterworld Multitool
+                            .Where(t => !t.defName.Contains("Glitterworld", StringComparison.OrdinalIgnoreCase)
+                                        && !t.label.ToLower().Contains("glitterworld"))
+                            .Where(ResearchUnlocks.IsToolResearchUnlocked)
+                            .Select(t => t.label)
+                            .Distinct()
+                            .Take(3)
+                            .ToList();
+
+                        if (tools.Any())
+                            statToSuggestions[globalLabel] = statToSuggestions.ContainsKey(globalLabel)
+                                ? statToSuggestions[globalLabel].Union(tools).Distinct().Take(3).ToList()
+                                : tools;
+                    }
+                }
+            }
+
             // Write grouped output
             foreach (var kv in statToPawns.OrderBy(kv => kv.Key))
             {

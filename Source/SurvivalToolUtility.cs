@@ -16,6 +16,39 @@ namespace SurvivalTools
 {
     public static class SurvivalToolUtility
     {
+        /// <summary>
+        /// Deterministic counters for virtual-source wear. Keyed by SourceThing.thingIDNumber.
+        /// We use this to implement tick-based deterministic degradation for virtual tools
+        /// instead of probabilistic per-call damage. This prevents variance across runs
+        /// and makes debugging easier.
+        /// </summary>
+        private static readonly Dictionary<int, int> _virtualToolDegradeCounters = new Dictionary<int, int>();
+
+        /// <summary>
+        /// Safely removes any deterministic counters associated with the provided thing.
+        /// Call this when a backing thing is destroyed, dropped, or otherwise replaced so
+        /// counters don't accumulate for stale Thing ids across maps/saves.
+        /// </summary>
+        public static void ClearCountersForThing(Thing t)
+        {
+            try
+            {
+                if (t == null) return;
+                int key = t.thingIDNumber;
+                if (_virtualToolDegradeCounters.ContainsKey(key))
+                    _virtualToolDegradeCounters.Remove(key);
+            }
+            catch { }
+        }
+
+        /// <summary>
+        /// Remove all deterministic counters. Useful on map unload / game load to avoid
+        /// retaining stale thing ids across sessions.
+        /// </summary>
+        public static void ClearAllCounters()
+        {
+            try { _virtualToolDegradeCounters.Clear(); } catch { }
+        }
         // Deduplication for debug logs in RelevantStatsFor
         private static readonly HashSet<string> loggedJobStatKeys = new HashSet<string>();
         private static readonly HashSet<string> loggedJobDefStatKeys = new HashSet<string>();
@@ -23,6 +56,20 @@ namespace SurvivalTools
 
         public static readonly FloatRange MapGenToolHitPointsRange = new FloatRange(0.3f, 0.7f);
         public const float MapGenToolMaxStuffMarketValue = 3f;
+
+        // Quality multiplier curve for tools. This maps QualityCategory (as int) to an effectiveness multiplier.
+        // Values chosen to make quality meaningfully impact work speed without dominating base tool factors.
+        // Awful=0, Poor=1, Normal=2, Good=3, Excellent=4, Masterwork=5, Legendary=6
+        public static readonly SimpleCurve ToolQualityCurve = new SimpleCurve()
+        {
+            new CurvePoint(0f, 0.6f), // Awful
+            new CurvePoint(1f, 0.8f), // Poor
+            new CurvePoint(2f, 1.0f), // Normal
+            new CurvePoint(3f, 1.1f), // Good
+            new CurvePoint(4f, 1.25f), // Excellent
+            new CurvePoint(5f, 1.4f), // Masterwork
+            new CurvePoint(6f, 1.6f)  // Legendary
+        };
 
         #endregion
 
@@ -182,7 +229,7 @@ namespace SurvivalTools
                     return cached;
 
                 // Compute
-                float baseNormal = SurvivalTools.Settings?.noToolStatFactorNormal ?? 0.5f; // default fallback
+                float baseNormal = SurvivalTools.Settings?.noToolStatFactorNormal ?? 0.4f; // default fallback
 
                 // If stat is optional in normal mode, treat as 1
                 if (!SurvivalTools.Settings?.enableNormalModePenalties ?? false)
@@ -221,19 +268,19 @@ namespace SurvivalTools
                 // Start with normal base
                 result = baseNormal;
 
-                // Hardcore/extra-hardcore stacking multiplicatively but never zero here (we enforce minimum tiny value)
+                // Stack additional penalties additively on the remaining deficit so they feel multiplicative
+                // Penalty stacking formula:
+                // penalty = normal;
+                // if hardcore: penalty += 0.4f * (1f - penalty);
+                // if extraHardcore: penalty += 0.3f * (1f - penalty);
+                // This ensures each mode increases the penalty towards 1 by the specified share of the remaining gap.
                 if (settingsRef?.hardcoreMode ?? false)
                 {
-                    // additional 25% penalty => multiply by (1 + 0.25)?? The user requested "apply an additional 25% penalty" which increases factor towards 1.
-                    // Interpretation per example: with base 0.5, Hardcore -> 0.62, Extra -> 0.78
-                    // This corresponds to: hardcoreFactor = 1 - (1 - base) * 0.75 => equivalent to base + (1-base)*0.25? Simpler: multiply the deficit by 0.75 and subtract from 1.
-                    float deficit = 1f - result;
-                    result = 1f - (deficit * 0.75f);
+                    result += 0.4f * (1f - result);
                 }
                 if (settingsRef?.extraHardcoreMode ?? false)
                 {
-                    float deficit = 1f - result;
-                    result = 1f - (deficit * 0.75f);
+                    result += 0.3f * (1f - result);
                 }
 
                 // Ensure never zero
@@ -328,14 +375,30 @@ namespace SurvivalTools
                     // If we have an instance and it has effectiveness multipliers, apply them
                     if (instance != null)
                     {
+                        // Base effectiveness value (can come from instance wear/HP or other mechanics)
                         float effectiveness = instance.GetStatValue(ST_StatDefOf.ToolEffectivenessFactor);
-                        if (effectiveness != 1f)
+
+                        // Determine quality factor: if enabled in settings, read CompQuality on the backing thing
+                        float qualityFactor = 1f;
+                        try
+                        {
+                            if (SurvivalTools.Settings?.useQualityToolScaling ?? false)
+                            {
+                                var comp = (instance as ThingWithComps)?.TryGetComp<CompQuality>();
+                                QualityCategory qc = comp != null ? comp.Quality : QualityCategory.Normal;
+                                qualityFactor = ToolQualityCurve.Evaluate((int)qc);
+                            }
+                        }
+                        catch { /* best-effort quality scaling */ }
+
+                        float combinedMult = effectiveness * qualityFactor;
+                        if (combinedMult != 1f)
                         {
                             for (int i = 0; i < final.Count; i++)
-                                final[i] = new StatModifier { stat = final[i].stat, value = final[i].value * effectiveness };
+                                final[i] = new StatModifier { stat = final[i].stat, value = final[i].value * combinedMult };
                         }
 
-                        // Apply StuffPropsTool multipliers if applicable
+                        // Apply StuffPropsTool multipliers if applicable (material multipliers)
                         if (instance.Stuff != null)
                         {
                             var sprops = instance.Stuff.GetModExtension<StuffPropsTool>();
@@ -403,18 +466,32 @@ namespace SurvivalTools
             // Never gate keywords
             var neverGateKeywords = new[]
             {
-                    "repair", "buildroofs", "deconstruct", "deliver", "haul", "clean", "rescue", "tend", "handling", "feed", "cookfillhopper", "paint", "remove", "train", "childcarer"
+                    /*"repair", "buildroofs", "deconstruct", */ "deliver", "haul", "clean", "rescue", "tend", "handling", "feed", "cookfillhopper", "paint", "remove", "train", "childcarer"
                 };
             if (neverGateKeywords.Any(keyword => name.Contains(keyword) || label.Contains(keyword)))
+            {
+                // Targeted debug log for deconstruct decisions
+                if (ST_Logging.IsDebugLoggingEnabled && (name.Contains("deconstruct") || label.Contains("deconstruct")))
+                {
+                    ST_Logging.LogDebug($"[SurvivalTools.ShouldGateByDefault] WorkGiver '{wgDef.defName}' labeled '{wgDef.label}' matched never-gate keywords -> NOT gate-eligible.", $"ShouldGate_Deconstruct_{wgDef.defName}");
+                }
                 return false;
+            }
 
             // Gate-eligible keywords
             var gateKeywords = new[]
             {
-                    "craft", "smith", "tailor", "art", "sculpt", "fabricate", "produce", "drug", "butcher", "cook", "medical", "surgery", "research", "analyse"
+                    "repair", "buildroofs","craft", "smith", "tailor", "art", "sculpt", "fabricate", "produce", "drug", "butcher", "cook", "medical", "surgery", "research", "analyse", "deconstruct"
                 };
             if (gateKeywords.Any(keyword => name.Contains(keyword) || label.Contains(keyword)))
+            {
+                // Targeted debug log for deconstruct decisions
+                if (ST_Logging.IsDebugLoggingEnabled && (name.Contains("deconstruct") || label.Contains("deconstruct")))
+                {
+                    ST_Logging.LogDebug($"[SurvivalTools.ShouldGateByDefault] WorkGiver '{wgDef.defName}' labeled '{wgDef.label}' matched gate keywords -> gate-eligible.", $"ShouldGate_Deconstruct_{wgDef.defName}");
+                }
                 return true;
+            }
 
             // Default: not gate-eligible
             return false;
@@ -465,24 +542,49 @@ namespace SurvivalTools
 
         /// <summary>
         /// Return the physical backing <see cref="Thing"/> for a <see cref="SurvivalTool"/> (real or virtual).
-        /// For virtuals, prefers an instance in pawn inventory, then closest reachable on pawn.Map, then any spawned.
+        /// For virtuals, prefers SourceThing if available, then pawn inventory, then closest reachable on pawn.Map, then any spawned.
         /// </summary>
         public static Thing BackingThing(SurvivalTool tool, Pawn pawn = null)
         {
             if (tool == null) return null;
 
-            // Real tool: it's already a Thing
-            if (tool is Thing thingTool)
+            // Real tool: it's already a Thing (exclude virtual wrappers here)
+            if (tool is Thing thingTool && !(tool is VirtualSurvivalTool))
                 return thingTool;
 
             // Virtual wrapper (tool-stuff)
             if (tool is VirtualSurvivalTool vtool)
             {
-                // 1) Pawn inventory first (most relevant for pick/drop logic)
+                // 0) Direct SourceThing if available
+                if (vtool.SourceThing != null)
+                {
+                    if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"BackingThing_Source_{vtool.SourceThing.ThingID}"))
+                        Log.Message($"[BackingThing] Using direct SourceThing for {vtool.LabelNoCount}: {vtool.SourceThing.LabelCap}");
+                    return vtool.SourceThing;
+                }
+
+                // 1) Pawn inventory (try exact match first, then by def)
                 if (pawn?.inventory?.innerContainer != null)
                 {
+                    try
+                    {
+                        var exact = pawn.inventory.innerContainer.FirstOrDefault(t => ReferenceEquals(t, vtool.SourceThing));
+                        if (exact != null)
+                        {
+                            if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"BackingThing_InvExact_{exact.ThingID}"))
+                                Log.Message($"[BackingThing] Found exact SourceThing in inventory for {vtool.LabelNoCount}: {exact.LabelCap}");
+                            return exact;
+                        }
+                    }
+                    catch { /* safe fail */ }
+
                     var invThing = pawn.inventory.innerContainer.FirstOrDefault(t => t.def == vtool.SourceDef);
-                    if (invThing != null) return invThing;
+                    if (invThing != null)
+                    {
+                        if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"BackingThing_InvDef_{invThing.ThingID}"))
+                            Log.Message($"[BackingThing] Found by def in inventory for {vtool.LabelNoCount}: {invThing.LabelCap}");
+                        return invThing;
+                    }
                 }
 
                 // 2) Closest reachable on pawn's map
@@ -502,15 +604,28 @@ namespace SurvivalTools
                         maxDistance: 9999f,
                         validator: validator);
 
-                    if (found != null) return found;
+                    if (found != null)
+                    {
+                        if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"BackingThing_Map_{found.ThingID}"))
+                            Log.Message($"[BackingThing] Found closest reachable on map for {vtool.LabelNoCount}: {found.LabelCap}");
+                        return found;
+                    }
                 }
 
                 // 3) Any spawned instance (fallback)
                 foreach (var map in Find.Maps)
                 {
                     var any = map.listerThings.ThingsOfDef(vtool.SourceDef).FirstOrDefault(t => t.Spawned);
-                    if (any != null) return any;
+                    if (any != null)
+                    {
+                        if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"BackingThing_Global_{any.ThingID}"))
+                            Log.Message($"[BackingThing] Found fallback spawned instance for {vtool.LabelNoCount}: {any.LabelCap}");
+                        return any;
+                    }
                 }
+
+                if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"BackingThing_None_{vtool.GetHashCode()}"))
+                    Log.Message($"[BackingThing] No backing Thing found for {vtool.LabelNoCount}");
 
                 return null;
             }
@@ -519,10 +634,13 @@ namespace SurvivalTools
             return null;
         }
 
+
         public static bool HasBackingThing(SurvivalTool tool, Pawn pawn = null) => BackingThing(tool, pawn) != null;
 
         public static bool IsToolStuff(this ThingDef def) =>
-            def.IsStuff && def.GetModExtension<SurvivalToolProperties>()?.baseWorkStatFactors?.Any() == true;
+            def.IsStuff && (
+                def.GetModExtension<SurvivalToolProperties>()?.baseWorkStatFactors?.Any() == true
+                || def.statBases?.Any(sb => sb != null && sb.stat != null) == true);
 
         #endregion
 
@@ -546,6 +664,10 @@ namespace SurvivalTools
             // or heuristics.
 
             // 1) Job-level detection
+            // Handle explicit common null-workgiver jobs first (defensive)
+            if (job?.def == JobDefOf.Clean)
+                return new List<StatDef> { ST_StatDefOf.CleaningSpeed };
+
             var jobStats = StatsForJob(job?.def);
             if (jobStats != null && jobStats.Count > 0)
                 return jobStats;
@@ -596,6 +718,25 @@ namespace SurvivalTools
             // job-def mapping yields no stats.
             if (jobDef == JobDefOf.CutPlant)
                 return new List<StatDef> { ST_StatDefOf.PlantHarvestingSpeed };
+
+            // Explicit mapping for cleaning job when workGiver may be null
+            if (jobDef == JobDefOf.Clean)
+                return new List<StatDef> { ST_StatDefOf.CleaningSpeed };
+            // Quick pattern: crafting/bill-like jobs -> WorkSpeedGlobal
+            var jobNameLower = jobDef?.defName?.ToLowerInvariant() ?? string.Empty;
+            if (jobNameLower.Contains("dobill") || jobNameLower.Contains("do_bill") || jobNameLower.Contains("bill") || jobNameLower.Contains("craft") || jobNameLower.Contains("fabricate") || jobNameLower.Contains("produce") || jobNameLower.Contains("manufacture") || jobNameLower.Contains("smith") || jobNameLower.Contains("tailor") || jobNameLower.Contains("sculpt"))
+            {
+                if (IsDebugLoggingEnabled)
+                {
+                    string key = $"JobDef_CraftingFallback_{jobDef?.defName ?? "null"}";
+                    if (!loggedJobDefStatKeys.Contains(key))
+                    {
+                        loggedJobDefStatKeys.Add(key);
+                        LogDebug($"[SurvivalTools] JobDef '{jobDef?.defName ?? "null"}' matched crafting fallback -> WorkSpeedGlobal", key);
+                    }
+                }
+                return new List<StatDef> { ST_StatDefOf.WorkSpeedGlobal };
+            }
 
             var fallback = StatsForJob(jobDef);
             if (fallback != null && fallback.Count > 0)
@@ -669,9 +810,37 @@ namespace SurvivalTools
                 return list;
             }
 
+            if (jobDef == JobDefOf.Clean)
+            {
+                list.Add(ST_StatDefOf.CleaningSpeed);
+                if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
+                    LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> CleaningSpeed (direct JobDefOf.Clean mapping)", $"CleaningSpeed_{jobDef.defName}");
+                return list;
+            }
+
+
             var s = jobDef.defName.ToLowerInvariant();
             if (IsDebugLoggingEnabled && relevant && ShouldLogJobForPawn(pawn, jobDef))
                 LogDebug($"[SurvivalTools.Debug] Checking job: '{jobDef.defName}' (lowercase: '{s}')", $"CheckingJob_{jobDef.defName}_{s}");
+
+            // Crafting / bills / production tasks -> WorkSpeedGlobal
+            // Many mods and vanilla use 'DoBill' or 'bill' in job names for production; catch those.
+            if (s.Contains("dobill") || s.Contains("do_bill") || s.Contains("bill") || s.Contains("craft") || s.Contains("fabricate") || s.Contains("produce") || s.Contains("manufacture") || s.Contains("smith") || s.Contains("tailor") || s.Contains("art") || s.Contains("sculpt"))
+            {
+                list.Add(ST_StatDefOf.WorkSpeedGlobal);
+                if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
+                    LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> WorkSpeedGlobal (crafting/production)", $"WorkSpeedGlobal_{jobDef.defName}");
+                return list;
+            }
+
+            // Cooking / food production -> WorkSpeedGlobal (catch cook/cookfillhopper)
+            if (s.Contains("cook") || s.Contains("cookfillhopper") || s.Contains("preparefood") || s.Contains("food"))
+            {
+                list.Add(ST_StatDefOf.WorkSpeedGlobal);
+                if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
+                    LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> WorkSpeedGlobal (cooking)", $"WorkSpeedGlobal_Cook_{jobDef.defName}");
+                return list;
+            }
 
             if (s == "cutplant")
             {
@@ -716,6 +885,15 @@ namespace SurvivalTools
                 list.Add(ST_StatDefOf.DeconstructionSpeed);
                 if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
                     LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> DeconstructionSpeed", $"DeconstructionSpeed_{jobDef.defName}");
+                return list;
+            }
+
+            // Salvage / dismantle synonyms -> DeconstructionSpeed
+            if (s.Contains("salvage") || s.Contains("dismantle") || s.Contains("scrap"))
+            {
+                list.Add(ST_StatDefOf.DeconstructionSpeed);
+                if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
+                    LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> DeconstructionSpeed (salvage/dismantle)", $"DeconstructionSpeed_Salvage_{jobDef.defName}");
                 return list;
             }
 
@@ -772,6 +950,19 @@ namespace SurvivalTools
 
             if (IsDebugLoggingEnabled && relevant && ShouldLogJobForPawn(pawn, jobDef))
                 LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> No stats (no patterns matched)", $"NoStats_{jobDef.defName}");
+
+            // If this jobDef appears tool-relevant but we didn't match any known patterns,
+            // log once per jobDef to help mod authors diagnose unmapped jobs.
+            if (IsToolRelevantJob(jobDef) && IsDebugLoggingEnabled)
+            {
+                string key = $"StatsForJob_Fallback_{jobDef.defName}";
+                if (!loggedJobStatKeys.Contains(key))
+                {
+                    loggedJobStatKeys.Add(key);
+                    LogDebug($"[SurvivalTools] StatsForJob fallback: jobDef='{jobDef.defName}' did not match patterns. Consider adding mapping.", key);
+                }
+            }
+
             return list;
         }
 
@@ -804,7 +995,9 @@ namespace SurvivalTools
 
             // Or "enhanced" item with our extension & factors
             var ext = tDef.SafeGetModExtension<SurvivalToolProperties>();
-            return ext != null && ext != SurvivalToolProperties.defaultValues && ext.baseWorkStatFactors.SafeAny();
+            // Also consider defs that provide relevant stats via statBases (eg WorkSpeedGlobal)
+            bool hasStatBases = tDef.statBases?.Any(sb => sb != null && sb.stat != null) == true;
+            return ext != null && ext != SurvivalToolProperties.defaultValues && (ext.baseWorkStatFactors.SafeAny() || hasStatBases);
         }
 
         #endregion
@@ -863,16 +1056,31 @@ namespace SurvivalTools
         public static bool CanUseSurvivalTool(this Pawn pawn, ThingDef def)
         {
             var props = def?.GetModExtension<SurvivalToolProperties>();
-            if (props?.baseWorkStatFactors == null)
+            // Consider statBases as a valid source of tool stats (e.g., global work speed)
+            bool hasStatBases = def?.statBases?.Any(sb => sb != null && sb.stat != null) == true;
+            if (props?.baseWorkStatFactors == null && !hasStatBases)
             {
                 if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"CanUseTool_NullProps_{def?.defName ?? "null"}"))
                     Log.Error($"Tried to check if {def} is a usable tool but has null tool properties or work stat factors.");
                 return false;
             }
 
-            foreach (var modifier in props.baseWorkStatFactors)
-                if (modifier?.stat?.Worker?.IsDisabledFor(pawn) == false)
-                    return true;
+            // Check explicit baseWorkStatFactors
+            if (props?.baseWorkStatFactors != null)
+            {
+                foreach (var modifier in props.baseWorkStatFactors)
+                    if (modifier?.stat?.Worker?.IsDisabledFor(pawn) == false)
+                        return true;
+            }
+
+            // Fallback: check statBases on the def itself
+            if (hasStatBases)
+            {
+                foreach (var sb in def.statBases)
+                    if (sb?.stat?.Worker?.IsDisabledFor(pawn) == false)
+                        return true;
+            }
+
             return false;
         }
 
@@ -885,19 +1093,16 @@ namespace SurvivalTools
 
         /// <summary>
         /// True if this tool is actively "used" by its holder for the current job's required stats.
+        /// Handles both real tools and virtual wrappers (tool-stuff).
         /// </summary>
         public static bool IsToolInUse(SurvivalTool tool)
         {
             var holder = tool?.HoldingPawn;
-            if (holder == null || !holder.CanUseSurvivalTools() || !holder.CanUseSurvivalTool(tool.def))
-                return false;
-
+            if (holder == null || !holder.CanUseSurvivalTools() || !holder.CanUseSurvivalTool(tool.def)) return false;
             var job = holder.CurJob?.def;
             if (job == null) return false;
-
             var req = StatsForJob(job, holder);
             if (req.NullOrEmpty()) return false;
-
             var toolStats = tool.WorkStatFactors.Select(m => m.stat).ToList();
             var relevant = req.Where(s => toolStats.Contains(s)).ToList();
             if (relevant.NullOrEmpty()) return false;
@@ -913,8 +1118,7 @@ namespace SurvivalTools
                 Thing bestBacking = BackingThing(best, holder);
                 if (bestBacking != null && toolBacking != null)
                 {
-                    if (ReferenceEquals(bestBacking, toolBacking))
-                        return true;
+                    if (ReferenceEquals(bestBacking, toolBacking)) return true;
                 }
                 else
                 {
@@ -922,7 +1126,6 @@ namespace SurvivalTools
                     if (ReferenceEquals(best, tool)) return true;
                 }
             }
-
             return false;
         }
 
@@ -936,6 +1139,18 @@ namespace SurvivalTools
             var tProps = SurvivalToolProperties.For(tool.def);
             var sProps = StuffPropsTool.For(tool.Stuff);
             float effectiveness = tool.GetStatValue(ST_StatDefOf.ToolEffectivenessFactor);
+            // Apply quality-based multiplier if enabled in settings. We read CompQuality from the physical tool.
+            if (SurvivalTools.Settings?.useQualityToolScaling ?? false)
+            {
+                try
+                {
+                    var comp = (tool as ThingWithComps)?.TryGetComp<CompQuality>();
+                    QualityCategory qc = comp != null ? comp.Quality : QualityCategory.Normal;
+                    float qualityFactor = ToolQualityCurve.Evaluate((int)qc);
+                    effectiveness *= qualityFactor;
+                }
+                catch { /* best-effort */ }
+            }
 
             if (tProps.baseWorkStatFactors == null) yield break;
 
@@ -989,6 +1204,7 @@ namespace SurvivalTools
         public static bool HasSurvivalTool(this Pawn pawn, ThingDef tool) =>
             pawn.GetHeldSurvivalTools().Any(t => t.def == tool);
 
+
         public static SurvivalTool GetBestSurvivalTool(this Pawn pawn, List<StatDef> stats)
         {
             if (!pawn.CanUseSurvivalTools() || stats.NullOrEmpty()) return null;
@@ -996,7 +1212,6 @@ namespace SurvivalTools
             // If stats imply an expected tool kind, we'll restrict candidates to that kind
             // to avoid cross-kind false positives (e.g., hammer considered for tree felling).
             var expectedKind = ToolUtility.ToolKindForStats(stats);
-
             SurvivalTool bestTool = null;
             float bestScore = 0f;
 
@@ -1013,19 +1228,16 @@ namespace SurvivalTools
                 if (thing is SurvivalTool real)
                 {
                     // If expected kind is known and this real tool doesn't match, skip it
-                    if (expectedKind != STToolKind.None && ToolUtility.ToolKindOf(real) != expectedKind)
-                        continue;
+                    if (expectedKind != STToolKind.None && ToolUtility.ToolKindOf(real) != expectedKind) continue;
                     factors = real.WorkStatFactors.ToList();
                     candidate = real;
                 }
                 else if (thing.def.IsToolStuff())
                 {
                     // Skip tool-stuff that doesn't match expected kind when we have one
-                    if (expectedKind != STToolKind.None && ToolUtility.ToolKindOf(thing) != expectedKind)
-                        continue;
+                    if (expectedKind != STToolKind.None && ToolUtility.ToolKindOf(thing) != expectedKind) continue;
                     var ext = thing.def.GetModExtension<SurvivalToolProperties>();
                     factors = ext?.baseWorkStatFactors?.ToList() ?? new List<StatModifier>();
-
                     // Wrap held stuff into a virtual tool so we can return a SurvivalTool
                     candidate = VirtualSurvivalTool.FromThing(thing);
                 }
@@ -1034,10 +1246,8 @@ namespace SurvivalTools
                 foreach (var s in stats)
                 {
                     var mod = factors.FirstOrDefault(m => m.stat == s);
-                    if (mod != null)
-                        current += mod.value;
-                    else
-                        current += baselineFactor; // Use hardcoded baseline
+                    if (mod != null) current += mod.value;
+                    else current += baselineFactor; // Use hardcoded baseline
                 }
 
                 if (current > baseline && current > bestScore)
@@ -1049,6 +1259,7 @@ namespace SurvivalTools
 
             return bestTool;
         }
+
 
         public static float GetStatFactorFromList(this SurvivalTool tool, StatDef stat) =>
             tool.WorkStatFactors.GetStatFactorFromList(stat);
@@ -1077,6 +1288,7 @@ namespace SurvivalTools
             return tool != null;
         }
 
+
         public static SurvivalTool GetBestSurvivalTool(this Pawn pawn, StatDef stat)
         {
             if (!pawn.CanUseSurvivalTools() || stat == null || !stat.RequiresSurvivalTool()) return null;
@@ -1085,6 +1297,7 @@ namespace SurvivalTools
             if (part == null) return null;
 
             SurvivalTool best = null;
+
             // Use hardcoded baseline to avoid triggering stat calculations during validation
             float bestFactor = SurvivalToolUtility.IsHardcoreModeEnabled ? 0f : 0.3f;
 
@@ -1095,8 +1308,8 @@ namespace SurvivalTools
             {
                 if (thing is SurvivalTool cur)
                 {
-                    if (expectedKind != STToolKind.None && ToolUtility.ToolKindOf(cur) != expectedKind)
-                        continue;
+                    if (expectedKind != STToolKind.None && ToolUtility.ToolKindOf(cur) != expectedKind) continue;
+
                     foreach (var mod in cur.WorkStatFactors)
                     {
                         if (mod?.stat == stat && mod.value > bestFactor)
@@ -1123,8 +1336,7 @@ namespace SurvivalTools
                 }
             }
 
-            if (best != null)
-                LessonAutoActivator.TeachOpportunity(ST_ConceptDefOf.UsingSurvivalTools, OpportunityType.Important);
+            if (best != null) LessonAutoActivator.TeachOpportunity(ST_ConceptDefOf.UsingSurvivalTools, OpportunityType.Important);
 
             // Log the selection outcome (low-noise keyed log)
             //LogDebug($"GetBestSurvivalTool: pawn={pawn?.LabelShort ?? "null"} stat={stat?.defName ?? "null"} bestTool={(best != null ? best.LabelCapNoCount : "null")} bestFactor={bestFactor}", $"GetBest_{pawn?.ThingID ?? "null"}_{stat?.defName ?? "null"}");
@@ -1172,44 +1384,76 @@ namespace SurvivalTools
             try
             {
                 // If this is a virtual wrapper with a known source, target that thing directly.
-                if (tool is VirtualSurvivalTool vtool && vtool.SourceThing != null)
+                if (tool is VirtualSurvivalTool vtool)
                 {
                     var src = vtool.SourceThing;
-                    if (IsToolDegradationEnabled)
+                    // Defensive checks
+                    if (src == null) return;
+
+                    if (!IsToolDegradationEnabled) return;
+
+                    LessonAutoActivator.TeachOpportunity(ST_ConceptDefOf.SurvivalToolDegradation, OpportunityType.GoodToKnow);
+
+                    // For virtual tools we maintain a deterministic tick-counter per backing thing
+                    // keyed by its ThingIDNumber. Each call increments the counter and when it
+                    // reaches WorkTicksToDegrade we apply exactly 1 HP of damage and reset it.
+                    try
                     {
-                        LessonAutoActivator.TeachOpportunity(ST_ConceptDefOf.SurvivalToolDegradation, OpportunityType.GoodToKnow);
-
-                        // If the backing has HP, apply a small-chance damage like existing logic.
-                        float degrFactor = SurvivalTools.Settings?.EffectiveToolDegradationFactor ?? 1f;
-                        // Base per-call chance (matches previous behaviour at factor==1)
-                        float perCallChance = 0.01f * degrFactor;
-
+                        // If this backing thing has HP, apply deterministic HP damage.
                         if (src is ThingWithComps srcTwc && src.def.useHitPoints)
                         {
-                            if (Rand.Chance(perCallChance))
+                            // Get key and target threshold
+                            int key = src.thingIDNumber;
+                            int threshold = Math.Max(1, vtool.SourceThing.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) > 0f ? (int)Math.Floor(vtool.SourceThing.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) * GenDate.TicksPerDay / Math.Max(1, srcTwc.MaxHitPoints)) : 1);
+
+                            // Use existing precomputed WorkTicksToDegrade if available on a SurvivalTool instance
+                            // but for virtual items we approximate using the backing thing's MaxHitPoints and lifespan stat.
+                            if (!_virtualToolDegradeCounters.TryGetValue(key, out var counter)) counter = 0;
+                            counter++;
+                            _virtualToolDegradeCounters[key] = counter;
+
+                            LogDebug($"VirtualDegrade: src={src.def?.defName ?? "null"} id={key} counter={counter}/{threshold}", $"VirtualDegrade_{key}");
+
+                            if (counter >= threshold)
                             {
                                 srcTwc.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, 1));
-                                // If destroyed, invalidate cache for safety
-                                try { if (srcTwc.Destroyed) ToolFactorCache.InvalidateForThing(srcTwc); } catch { }
+                                _virtualToolDegradeCounters[key] = 0;
+                                // If destroyed, invalidate cache and clear counters
+                                try { if (srcTwc.Destroyed) { ToolFactorCache.InvalidateForThing(srcTwc); ClearCountersForThing(srcTwc); } } catch { }
                             }
                         }
                         else
                         {
-                            // Non-HP stackable items: occasionally consume one from the stack.
-                            if (src.stackCount > 0 && Rand.Chance(perCallChance))
+                            // Non-HP stackable items: decrement stack deterministically every N ticks
+                            // Here we approximate threshold=100 (previously ~1% per-call). Use a fixed
+                            // threshold scaled by EffectiveToolDegradationFactor for consistency.
+                            int key = src.thingIDNumber;
+                            float factor = SurvivalTools.Settings?.EffectiveToolDegradationFactor ?? 1f;
+                            int threshold = Math.Max(1, (int)Math.Floor(100f / Math.Max(0.001f, factor)));
+
+                            if (!_virtualToolDegradeCounters.TryGetValue(key, out var counter)) counter = 0;
+                            counter++;
+                            _virtualToolDegradeCounters[key] = counter;
+
+                            LogDebug($"VirtualDegradeStack: src={src.def?.defName ?? "null"} id={key} counter={counter}/{threshold}", $"VirtualDegradeStack_{key}");
+
+                            if (counter >= threshold)
                             {
-                                // Remove a single unit from the stack in a safe way.
-                                try
+                                if (src.stackCount > 0)
                                 {
                                     var one = src.SplitOff(1);
                                     one.Destroy(DestroyMode.Vanish);
                                     try { ToolFactorCache.InvalidateForThing(src); } catch { }
                                 }
-                                catch
-                                {
-                                    // best-effort: nothing more to do
-                                }
+                                _virtualToolDegradeCounters[key] = 0;
                             }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        if (IsDebugLoggingEnabled)
+                        {
+                            try { LogDebug($"VirtualTryDegrade exception: {ex}", $"VirtualDegradeEx_{src?.ThingID ?? "null"}"); } catch { }
                         }
                     }
 
@@ -1290,7 +1534,7 @@ namespace SurvivalTools
                     {
                         LogDebug(
                             $"MeetsWorkGiverStatRequirements: pawn={pawn?.LabelShort ?? "null"} stat={stat.defName} value={v} -> FAIL (<=0)",
-                            $"MeetsWG_{pawn?.ThingID ?? "null"}_{stat.defName}"
+                            $"MeetsWG_{pawn?.ThingID ?? "null"}_{stat?.defName ?? "null"}"
                         );
                         return false;
                     }
@@ -1299,8 +1543,6 @@ namespace SurvivalTools
 
             return true;
         }
-
-
         public static bool CanFellTrees(this Pawn pawn)
         {
             var fellWG = ST_WorkGiverDefOf.FellTrees;
@@ -1452,7 +1694,11 @@ namespace SurvivalTools
             foreach (var thingDef in DefDatabase<ThingDef>.AllDefs)
             {
                 var toolProps = thingDef.GetModExtension<SurvivalToolProperties>();
+                // Check mod extension baseWorkStatFactors
                 if (toolProps?.baseWorkStatFactors?.Any(f => f?.stat == stat) == true)
+                    return true;
+                // Also check statBases on the def (for stats like WorkSpeedGlobal)
+                if (thingDef.statBases?.Any(sb => sb != null && sb.stat == stat) == true)
                     return true;
             }
             return false;

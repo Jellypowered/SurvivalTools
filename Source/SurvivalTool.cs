@@ -125,6 +125,17 @@ namespace SurvivalTools
         {
             get
             {
+                // Special-case: if this is a VirtualSurvivalTool, its physical SourceThing
+                // may be in a pawn's inventory/equipment. Prefer that holder when present.
+                var vtool = this as VirtualSurvivalTool;
+                if (vtool != null && vtool.SourceThing != null)
+                {
+                    if (vtool.SourceThing.ParentHolder is Pawn_EquipmentTracker eq2 && eq2?.pawn != null)
+                        return eq2.pawn;
+                    if (vtool.SourceThing.ParentHolder is Pawn_InventoryTracker inv2 && inv2?.pawn != null)
+                        return inv2.pawn;
+                }
+
                 if (ParentHolder is Pawn_EquipmentTracker eq && eq?.pawn != null)
                     return eq.pawn;
                 if (ParentHolder is Pawn_InventoryTracker inv && inv?.pawn != null)
@@ -143,10 +154,14 @@ namespace SurvivalTools
                 var curJob = holder.jobs?.curJob;
                 if (curJob == null) return false;
 
-                // Safe checks across the common targets
-                if (curJob.targetA.Thing == this) return true;
-                if (curJob.targetB.Thing == this) return true;
-                if (curJob.targetC.Thing == this) return true;
+                // For virtual wrappers, the job will target the physical backing thing.
+                // Use a canonical comparison thing: the source physical thing for virtuals,
+                // otherwise the tool object itself.
+                Thing comparisonThing = (this is VirtualSurvivalTool v && v.SourceThing != null) ? (Thing)v.SourceThing : (Thing)this;
+
+                if (curJob.targetA.Thing == comparisonThing) return true;
+                if (curJob.targetB.Thing == comparisonThing) return true;
+                if (curJob.targetC.Thing == comparisonThing) return true;
                 return false;
             }
         }

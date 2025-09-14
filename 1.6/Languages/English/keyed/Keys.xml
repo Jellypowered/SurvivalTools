@@ -114,6 +114,9 @@
     <Settings_NormalModePenalties_HelperText>(Applies only to core work: mining, construction, farming, crafting. Optional work like cleaning is unaffected.)</Settings_NormalModePenalties_HelperText>
     <Settings_NormalModePenalties_Disabled>Normal mode penalties disabled - pawns work at full speed without tools except in hardcore mode.</Settings_NormalModePenalties_Disabled>
 
+    <Settings_QualityToolScaling>Use quality-based tool scaling</Settings_QualityToolScaling>
+    <Settings_QualityToolScaling_Tooltip>Awful tools are less effective, Legendary tools are stronger. Balances difficulty by making tool choice and quality matter in addition to material.</Settings_QualityToolScaling_Tooltip>
+
     <!-- Mod Compatibility -->
     <Compat_ResearchReinvented>Reinvented Research</Compat_ResearchReinvented>
     <Compat_FieldResearch>Field Research</Compat_FieldResearch>

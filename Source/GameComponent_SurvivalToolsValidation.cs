@@ -25,6 +25,8 @@ namespace SurvivalTools
             // Trigger validation after game initialization with proper timing
             if (!hasValidatedThisSession)
             {
+                // Ensure any leftover deterministic counters from previous sessions/maps are cleared.
+                try { SurvivalToolUtility.ClearAllCounters(); } catch { }
                 // Immediate stat refresh - don't queue it, do it now before anything else
                 RefreshAllToolStats();
 

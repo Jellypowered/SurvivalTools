@@ -1,4 +1,4 @@
-﻿//rimworld 1.6 / C# 7.3
+﻿// Rimworld 1.6 / C# 7.3
 // Source/Harmony/Patch_ITab_Pawn_Gear_DrawThingRow.cs
 using System.Collections.Generic;
 using System.Linq;
@@ -24,19 +24,6 @@ namespace SurvivalTools.HarmonyStuff
         private static readonly MethodInfo MI_Adjust =
             AccessTools.Method(typeof(Patch_ITab_Pawn_Gear_DrawThingRow), nameof(AdjustDisplayedLabel));
 
-        /// <summary>
-        /// Transpiler: replace the string argument passed to Widgets.Label with the result of
-        /// AdjustDisplayedLabel(originalLabel, thing, pawn).
-        /// 
-        /// The strategy:
-        ///  - At the call site for Widgets.Label(Rect, string) the evaluation stack contains:
-        ///      ... Rect, string
-        ///  - We inject: push thing, push pawn -> call Adjust(originalString, thing, pawn)
-        ///  - Adjust will pop (string, thing, pawn) and push a new string -> stack becomes: ... Rect, newString
-        ///  - The original Widgets.Label call then executes with Rect, newString
-        /// 
-        /// This mirrors the existing approach but includes defensive checks and reduced logging.
-        /// </summary>
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             var list = instructions.ToList();
@@ -46,19 +33,12 @@ namespace SurvivalTools.HarmonyStuff
             {
                 var ins = list[i];
 
-                // We're looking for the call to Widgets.Label(Rect, string)
                 if (!didPatch && ins.Calls(MI_Widgets_Label))
                 {
-                    // Inject: ..., Rect, originalString, thing, pawn -> Call Adjust -> yields ..., Rect, adjustedString
-                    // push the "thing" argument (the original method had it as arg index 3) and the pawn via SelPawnForGear
                     yield return new CodeInstruction(OpCodes.Ldarg_3); // thing
                     yield return new CodeInstruction(OpCodes.Ldarg_0); // this (ITab_Pawn_Gear)
-                    // call property getter to get pawn (may be null, Adjust handles that)
                     yield return new CodeInstruction(OpCodes.Call, MI_SelPawnForGear); // pawn
-
-                    // call our adjust method: pops (string, thing, pawn), returns string
                     yield return new CodeInstruction(OpCodes.Call, MI_Adjust);
-
                     didPatch = true;
                 }
 
@@ -73,57 +53,29 @@ namespace SurvivalTools.HarmonyStuff
             }
         }
 
-        /// <summary>
-        /// Adjust the displayed label for survival tools:
-        /// - Append 'forced' if the pawn has forced the item.
-        /// - Append 'in use' if the tool is currently used by the pawn.
-        /// Be careful with nulls and minimize debug spam.
-        /// </summary>
         public static string AdjustDisplayedLabel(string originalLabel, Thing thing, Pawn pawn)
         {
             if (string.IsNullOrEmpty(originalLabel)) originalLabel = string.Empty;
-
             if (thing == null) return originalLabel;
 
-            // We care about real SurvivalTool items and tool-stuff stacks (virtual tools).
-            SurvivalTool tool = null;
+            var tool = thing as SurvivalTool;
             bool isToolStuff = thing.def?.IsToolStuff() == true;
-            if (thing is SurvivalTool st)
-                tool = st;
 
-            // Ensure pawn-safe checks
-            Pawn_SurvivalToolAssignmentTracker tracker = null;
+            // Forced handler suffix
             try
             {
-                tracker = pawn?.GetComp<Pawn_SurvivalToolAssignmentTracker>();
-            }
-            catch
-            {
-                // Defensive: in very odd cases GetComp could throw; just return original label
-                return originalLabel;
-            }
-
-            if (tracker != null)
-            {
-                try
+                var tracker = pawn?.GetComp<Pawn_SurvivalToolAssignmentTracker>();
+                if (tracker != null)
                 {
-                    // For real SurvivalTool instances, check forced status on the tool.
-                    // For plain tool-stuff stacks, check forced status on the physical item.
-                    Thing physicalForForced = (tool is VirtualSurvivalTool v && v.SourceThing != null) ? v.SourceThing : thing;
+                    Thing physicalForForced =
+                        (tool is VirtualSurvivalTool v && v.SourceThing != null) ? v.SourceThing : thing;
+
                     if (tracker.forcedHandler?.IsForced(physicalForForced) == true)
-                    {
                         originalLabel += $", {"ApparelForcedLower".Translate()}";
-                    }
-                }
-                catch
-                {
-                    // swallow — forcedHandler should be safe but be defensive about mod interactions
                 }
             }
+            catch { }
 
-            // Tool in-use indicator: only the single tool selected as the pawn's best tool for
-            // the current job's required stats should be marked. This avoids multiple rows showing
-            // 'in use' when multiple stats are involved.
             bool inUse = false;
             try
             {
@@ -133,19 +85,21 @@ namespace SurvivalTools.HarmonyStuff
                     var required = SurvivalToolUtility.RelevantStatsFor(job.workGiverDef, job);
                     if (!required.NullOrEmpty())
                     {
-                        var best = pawn.GetBestSurvivalTool(required);
-                        if (best != null)
+                        if (isToolStuff)
                         {
-                            var bestBacking = SurvivalToolUtility.BackingThing(best, pawn);
-                            // Compare canonical backing for virtual wrappers and direct reference for real tools
-                            if (bestBacking != null)
+                            // Wrap the stack in a virtual tool and check if it’s marked as in-use
+                            var vtool = VirtualSurvivalTool.FromThing(thing);
+                            if (vtool != null && SurvivalToolUtility.IsToolInUse(vtool))
+                                inUse = true;
+                        }
+                        else
+                        {
+                            var best = pawn.GetBestSurvivalTool(required);
+                            if (best != null)
                             {
-                                if (ReferenceEquals(bestBacking, thing)) inUse = true;
-                            }
-                            else
-                            {
-                                // If no backing (unexpected), fall back to direct comparison
-                                if (best == thing) inUse = true;
+                                var bestBacking = SurvivalToolUtility.BackingThing(best, pawn);
+                                if (ReferenceEquals(bestBacking, thing) || ReferenceEquals(best, thing))
+                                    inUse = true;
                             }
                         }
                     }
@@ -157,41 +111,7 @@ namespace SurvivalTools.HarmonyStuff
             }
 
             if (inUse)
-            {
                 originalLabel += $", {"ToolInUse".Translate()}";
-
-                // Optional extra debug context (very throttled)
-                if (IsDebugLoggingEnabled && pawn != null && pawn.jobs?.curJob != null)
-                {
-                    var job = pawn.jobs.curJob;
-                    string key = $"ITab_Gear_ToolLabelDebug_{pawn.ThingID}_{tool.ThingID}_{job.def?.defName}";
-                    if (ShouldLogWithCooldown(key))
-                    {
-                        List<StatDef> relevantStats = new List<StatDef>();
-                        try
-                        {
-                            relevantStats = SurvivalToolUtility.RelevantStatsFor(job.workGiverDef, job)?.ToList() ?? new List<StatDef>();
-                        }
-                        catch
-                        {
-                            relevantStats = new List<StatDef>();
-                        }
-
-                        SurvivalTool bestTool = null;
-                        try
-                        {
-                            bestTool = pawn.GetBestSurvivalTool(relevantStats);
-                        }
-                        catch { bestTool = null; }
-
-                        // Only append small debug fragment to label when bestTool matches to avoid confusion and keep label short.
-                        if (bestTool == tool)
-                        {
-                            originalLabel += $" [{job.def?.defName ?? "job?"}]";
-                        }
-                    }
-                }
-            }
 
             return originalLabel;
         }

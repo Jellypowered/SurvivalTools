@@ -114,6 +114,80 @@ namespace SurvivalTools.HarmonyStuff
             return CheckJobAssignment(__instance, job, setOrderedResult: ref __result);
         }
 
+        /// <summary>
+        /// Prefix for TryFindAndStartJob: intercept the thinker job selection so we can prevent
+        /// StartJob from being called when gating determines the job should be blocked.
+        /// Uses reflection to call the private DetermineNextJob(out ThinkTreeDef) method and
+        /// inspect the returned ThinkResult.
+        /// </summary>
+        [HarmonyPrefix]
+        [HarmonyPatch("TryFindAndStartJob")]
+        [HarmonyPriority(Priority.Last)]
+        public static bool Prefix_TryFindAndStartJob(Pawn_JobTracker __instance)
+        {
+            if (__instance == null) return true;
+
+            // Resolve pawn and settings defensively
+            var pawn = (Pawn)PawnField.GetValue(__instance);
+            var settings = SurvivalTools.Settings;
+            if (pawn == null || settings == null) return true;
+            if (!settings.hardcoreMode || !pawn.CanUseSurvivalTools()) return true;
+            //if (Prefs.DevMode) return true; // don't interfere in dev mode
+
+            try
+            {
+                // Call private DetermineNextJob(out ThinkTreeDef thinkTree) via reflection
+                var jobTrackerType = typeof(Pawn_JobTracker);
+                var determineMethod = AccessTools.Method(jobTrackerType, "DetermineNextJob");
+                if (determineMethod == null) return true;
+
+                object[] parameters = new object[] { null };
+                var resultObj = determineMethod.Invoke(__instance, parameters);
+                if (resultObj == null) return true;
+
+                // resultObj is a ThinkResult
+                var thinkResult = resultObj;
+                // Use reflection to read properties IsValid and Job
+                var isValidProp = thinkResult.GetType().GetProperty("IsValid");
+                var jobProp = thinkResult.GetType().GetProperty("Job");
+                if (isValidProp == null || jobProp == null) return true;
+
+                bool isValid = (bool)isValidProp.GetValue(thinkResult);
+                if (!isValid) return true;
+
+                var nextJob = (Job)jobProp.GetValue(thinkResult);
+                if (nextJob == null || nextJob.def == null) return true;
+
+                // Determine relevant stats for this job and ask StatGatingHelper if any should block
+                var requiredStats = SurvivalToolUtility.RelevantStatsFor(null, nextJob.def);
+                if (requiredStats == null || requiredStats.Count == 0) return true;
+
+                for (int i = 0; i < requiredStats.Count; i++)
+                {
+                    var stat = requiredStats[i];
+                    if (stat == null) continue;
+
+                    if (StatGatingHelper.ShouldBlockJobForStat(stat, settings, pawn))
+                    {
+                        try { ST_Logging.LogToolGateEvent(pawn, nextJob.def, stat, "missing required tool"); } catch { }
+
+                        // Prevent TryFindAndStartJob from calling StartJob by returning false.
+                        return false;
+                    }
+                }
+            }
+            catch
+            {
+                // Defensive: if reflection fails, allow normal behavior
+                return true;
+            }
+
+            return true; // allow original method if not blocked
+        }
+
+        // NOTE: RimWorld 1.6 does not expose a Pawn_JobTracker.TryStartJob method to patch.
+        // Gating is handled via TryTakeOrderedJob (prefix) and StartJob (postfix) above.
+
         [HarmonyPostfix]
         [HarmonyPatch(nameof(Pawn_JobTracker.StartJob))]
         [HarmonyPriority(Priority.Last)]
@@ -165,7 +239,8 @@ namespace SurvivalTools.HarmonyStuff
                 var stat = requiredStats[i];
                 if (stat == null) continue;
 
-                if (ShouldBlockJobForMissingStat(stat, settings) && !pawn.HasSurvivalToolFor(stat))
+                // Use centralized gating helper which knows about optional stats and exceptions
+                if (StatGatingHelper.ShouldBlockJobForStat(stat, settings, pawn))
                 {
                     // Special handling for BuildRoof/RoofJob to avoid repeated abort/requeue spam
                     var jobDefName = newJob.def?.defName;
@@ -184,9 +259,13 @@ namespace SurvivalTools.HarmonyStuff
                     {
                         var logKey = isRoofJob ? $"JobBlock_BuildRoof_{pawn.ThingID}_{brKey}" : $"JobBlock_{pawn.ThingID}_{newJob.def.defName}_{stat.defName}";
                         if (ShouldLogWithCooldown(logKey))
-                            Log.Message($"[SurvivalTools.JobBlock] Aborting just-started job {newJob.def.defName} on {pawn.LabelShort} (missing {stat.defName}).");
+                        {
+                            try { ST_Logging.LogToolGateEvent(pawn, newJob.def, stat, "missing required tool"); } catch { }
+                        }
                         else
+                        {
                             suppressedLogCounts[logKey] = suppressedLogCounts.TryGetValue(logKey, out int c) ? c + 1 : 1;
+                        }
                     }
 
                     // Record guard BEFORE ending job to prevent immediate same-tick loops
@@ -198,8 +277,15 @@ namespace SurvivalTools.HarmonyStuff
 
                     // CRITICAL CHANGE: do NOT request immediate requeue here.
                     // Let vanilla re-evaluate on the next normal opportunity.
-                    if (__instance.curJob == newJob)
-                        __instance.EndCurrentJob(JobCondition.Incompletable, startNewJob: false, canReturnToPool: true);
+                    try
+                    {
+                        // End current job forcefully so work ticks won't continue
+                        if (__instance != null)
+                            __instance.EndCurrentJob(JobCondition.Incompletable, startNewJob: false, canReturnToPool: true);
+                        if (pawn?.jobs != null)
+                            pawn.jobs.EndCurrentJob(JobCondition.Incompletable);
+                    }
+                    catch { }
 
                     break;
                 }
@@ -252,7 +338,8 @@ namespace SurvivalTools.HarmonyStuff
             var settings = SurvivalTools.Settings;
 
             // Only gate in hardcore mode, with a valid pawn that can use tools, and a valid job def
-            if (settings == null || settings.hardcoreMode != true || pawn == null || !pawn.CanUseSurvivalTools() || job?.def == null)
+            // Also skip gating when developer/debug mode is enabled to avoid interfering with testing.
+            if (settings == null || settings.hardcoreMode != true || pawn == null || !pawn.CanUseSurvivalTools() || job?.def == null || Prefs.DevMode)
                 return true;
 
             // Which stats matter for this job?
@@ -266,15 +353,24 @@ namespace SurvivalTools.HarmonyStuff
                 var stat = requiredStats[i];
                 if (stat == null) continue;
 
-                if (ShouldBlockJobForMissingStat(stat, settings) && !pawn.HasSurvivalToolFor(stat))
+                if (StatGatingHelper.ShouldBlockJobForStat(stat, settings, pawn))
                 {
                     // Cooldown the log to avoid spam
                     if (IsDebugLoggingEnabled)
                     {
-                        var key = $"JobBlock_{pawn.ThingID}_{job.def.defName}_{stat.defName}";
-                        if (ShouldLogWithCooldown(key))
-                            Log.Message($"[SurvivalTools.JobBlock] Blocking direct job: {pawn.LabelShort} -> {job.def.defName} (missing tool for {stat.defName})");
+                        try { ST_Logging.LogToolGateEvent(pawn, job.def, stat, "missing required tool"); } catch { }
                     }
+
+                    // Immediately cancel the job so it cannot continue working ticks.
+                    try
+                    {
+                        // If we have a jobTracker instance, end the current job as Incompletable to force-drop it.
+                        jobTracker?.EndCurrentJob(JobCondition.Incompletable);
+                        var pawnObj = pawn;
+                        if (pawnObj?.jobs != null)
+                            pawnObj.jobs.EndCurrentJob(JobCondition.Incompletable);
+                    }
+                    catch { }
 
                     // Tell TryTakeOrderedJob we handled it (fail) and skip original
                     setOrderedResult = false;

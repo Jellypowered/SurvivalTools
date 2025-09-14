@@ -30,7 +30,19 @@ namespace SurvivalTools.Helpers
 
             // Core work stats (mining, construction, etc.) always gate in hardcore.
             if (StatFilters.ShouldBlockJobForMissingStat(stat))
-                return pawn == null || !pawn.HasSurvivalToolFor(stat);
+            {
+                bool result = pawn == null || !pawn.HasSurvivalToolFor(stat);
+                // Debug logging for deconstruction decisions
+                if (ST_Logging.IsDebugLoggingEnabled && stat == ST_StatDefOf.DeconstructionSpeed)
+                {
+                    string pawnId = pawn?.ThingID ?? "null";
+                    string msg = result
+                        ? $"[SurvivalTools.StatGatingHelper] Stat '{stat.defName}' -> BLOCK job for pawn {pawnId} (missing tool)."
+                        : $"[SurvivalTools.StatGatingHelper] Stat '{stat.defName}' -> ALLOW job for pawn {pawnId} (has tool).";
+                    ST_Logging.LogDebug(msg, $"StatGate_Deconstruct_{pawnId}");
+                }
+                return result;
+            }
 
             // Optional families — only hard-gate if explicitly enabled or in extra-hardcore.
             bool xhc = settings.extraHardcoreMode;
@@ -50,7 +62,18 @@ namespace SurvivalTools.Helpers
 
             // Extra-hardcore custom rules (RR or future packs)
             if (xhc && settings.IsStatRequiredInExtraHardcore(stat))
-                return pawn == null || !pawn.HasSurvivalToolFor(stat);
+            {
+                bool result = pawn == null || !pawn.HasSurvivalToolFor(stat);
+                if (ST_Logging.IsDebugLoggingEnabled && stat == ST_StatDefOf.DeconstructionSpeed)
+                {
+                    string pawnId = pawn?.ThingID ?? "null";
+                    string msg = result
+                        ? $"[SurvivalTools.StatGatingHelper] Extra-hardcore rule: Stat '{stat.defName}' -> BLOCK job for pawn {pawnId} (missing tool)."
+                        : $"[SurvivalTools.StatGatingHelper] Extra-hardcore rule: Stat '{stat.defName}' -> ALLOW job for pawn {pawnId} (has tool).";
+                    ST_Logging.LogDebug(msg, $"StatGate_Deconstruct_XHC_{pawnId}");
+                }
+                return result;
+            }
 
             return false;
         }

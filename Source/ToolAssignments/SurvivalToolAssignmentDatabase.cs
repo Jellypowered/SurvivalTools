@@ -93,10 +93,17 @@ namespace SurvivalTools
             staGeneral.filter.SetDisallowAll();
 
             // Include EVERYTHING that has SurvivalToolProperties (real tools + tool-stuffs)
+            // Previously this only included defs with baseWorkStatFactors; also include defs
+            // that declare defaultSurvivalToolAssignmentTags so they appear in starting sets.
             foreach (ThingDef tDef in DefDatabase<ThingDef>.AllDefs)
             {
                 var props = tDef.GetModExtension<SurvivalToolProperties>();
-                if (props?.baseWorkStatFactors?.Any() == true)
+                if (props == null) continue;
+
+                bool hasStatFactors = props.baseWorkStatFactors?.Any() == true;
+                bool hasAssignmentTags = props.defaultSurvivalToolAssignmentTags != null && props.defaultSurvivalToolAssignmentTags.Any();
+
+                if (hasStatFactors || hasAssignmentTags)
                     staGeneral.filter.SetAllow(tDef, true);
             }
 
@@ -105,10 +112,16 @@ namespace SurvivalTools
             staAnything.label = "OutfitAnything".Translate();
             staAnything.filter.SetDisallowAll();
             // Allow all survival-tool defs + tool-stuffs (anything with SurvivalToolProperties)
+            // Also include defs that only specify assignment tags.
             foreach (ThingDef tDef in DefDatabase<ThingDef>.AllDefs)
             {
                 var props = tDef.GetModExtension<SurvivalToolProperties>();
-                if (props?.baseWorkStatFactors?.Any() == true)
+                if (props == null) continue;
+
+                bool hasStatFactors = props.baseWorkStatFactors?.Any() == true;
+                bool hasAssignmentTags = props.defaultSurvivalToolAssignmentTags != null && props.defaultSurvivalToolAssignmentTags.Any();
+
+                if (hasStatFactors || hasAssignmentTags)
                     staAnything.filter.SetAllow(tDef, true);
             }
 
