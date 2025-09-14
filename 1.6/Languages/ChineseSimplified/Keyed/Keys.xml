@@ -90,11 +90,27 @@
   <Compat_FieldResearch>实地研究</Compat_FieldResearch>
   <Compat_ReinventedResearchAlert>重新发明的研究</Compat_ReinventedResearchAlert>
 
-</LanguageData>
+  <!-- WorkSpeedGlobal 配置（新增） -->
+  <!-- Added WorkSpeedGlobal translation keys -->
+  <WorkSpeedGlobal_Title>通用工作速度任务配置</WorkSpeedGlobal_Title>
+  <WorkSpeedGlobal_Description>选择哪些使用“通用工作速度”属性的工作需要生存工具进行限制。未限制的工作在缺少工具时不受惩罚。</WorkSpeedGlobal_Description>
+  <WorkSpeedGlobal_JobTypeHeader>工作类型</WorkSpeedGlobal_JobTypeHeader>
+  <WorkSpeedGlobal_GatedHeader>限制</WorkSpeedGlobal_GatedHeader>
+  <WorkSpeedGlobal_DescriptionHeader>描述</WorkSpeedGlobal_DescriptionHeader>
+  <WorkSpeedGlobal_NoJobsFound>未找到通用工作速度任务。</WorkSpeedGlobal_NoJobsFound>
+  <WorkSpeedGlobal_EnableAll>全部启用</WorkSpeedGlobal_EnableAll>
+  <WorkSpeedGlobal_DisableAll>全部禁用</WorkSpeedGlobal_DisableAll>
+  <WorkSpeedGlobal_ResetDefaults>恢复默认</WorkSpeedGlobal_ResetDefaults>
+  <WorkSpeedGlobal_TraceWorkGivers>跟踪工作提供者</WorkSpeedGlobal_TraceWorkGivers>
+  <WorkSpeedGlobal_JobStatus_Gated>在硬核模式中需要工具</WorkSpeedGlobal_JobStatus_Gated>
+  <WorkSpeedGlobal_JobStatus_Ungated>不适用工具惩罚</WorkSpeedGlobal_JobStatus_Ungated>
+  <WorkSpeedGlobal_OpenConfigButton>配置通用工作速度任务</WorkSpeedGlobal_OpenConfigButton>
 
-<!-- Mod Compatibility -->
-<Compat_ResearchReinvented>重新发明的研究</Compat_ResearchReinvented>
-<Compat_FieldResearch>野外研究</Compat_FieldResearch>
-<Compat_ReinventedResearchAlert>重新发明的研究</Compat_ReinventedResearchAlert>
+  <!-- Job Table Additional (新增) -->
+  <JobTable_NoActiveMode>未选择任何模式。</JobTable_NoActiveMode>
+  <JobTable_GatedFormat>限制 ({0}/{1})</JobTable_GatedFormat>
+  <JobTable_GatedExample>限制 (99/99)</JobTable_GatedExample>
+  <JobTable_Status_Unknown>未知</JobTable_Status_Unknown>
+  <JobTable_Blocked>阻止</JobTable_Blocked>
 
 </LanguageData>

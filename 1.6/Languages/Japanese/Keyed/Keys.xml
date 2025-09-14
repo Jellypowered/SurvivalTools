@@ -104,4 +104,27 @@
     <Settings_AllowPacifistEquip>平和主義者がサバイバルツールを装備することを許可</Settings_AllowPacifistEquip>
     <Settings_AllowPacifistEquip_Tooltip>武器として分類されているサバイバルツール（斧、つるはし、ナイフなど）を平和主義の入植者が装備することを許可します。これらのツールは戦闘能力を持っていますが、木の伐採、採掘、食料準備などの作業タスクに不可欠です。有効にすると、平和主義者は暴力に関与することを拒否しながら、生産的な作業にこれらのツールを使用できます。</Settings_AllowPacifistEquip_Tooltip>
 
+    <!-- WorkSpeedGlobal 設定（追加） -->
+    <!-- Added WorkSpeedGlobal translation keys -->
+    <WorkSpeedGlobal_Title>一般作業速度ジョブ設定</WorkSpeedGlobal_Title>
+    <WorkSpeedGlobal_Description>「一般作業速度」ステータスを使用するジョブのうち、生存ツールによる制限（ゲート）対象にするものを選択します。制限されていないジョブは適切なツールがなくてもペナルティを受けません。</WorkSpeedGlobal_Description>
+    <WorkSpeedGlobal_JobTypeHeader>ジョブタイプ</WorkSpeedGlobal_JobTypeHeader>
+    <WorkSpeedGlobal_GatedHeader>制限</WorkSpeedGlobal_GatedHeader>
+    <WorkSpeedGlobal_DescriptionHeader>説明</WorkSpeedGlobal_DescriptionHeader>
+    <WorkSpeedGlobal_NoJobsFound>一般作業速度ジョブが見つかりません。</WorkSpeedGlobal_NoJobsFound>
+    <WorkSpeedGlobal_EnableAll>全て有効</WorkSpeedGlobal_EnableAll>
+    <WorkSpeedGlobal_DisableAll>全て無効</WorkSpeedGlobal_DisableAll>
+    <WorkSpeedGlobal_ResetDefaults>デフォルトに戻す</WorkSpeedGlobal_ResetDefaults>
+    <WorkSpeedGlobal_TraceWorkGivers>WorkGiverをトレース</WorkSpeedGlobal_TraceWorkGivers>
+    <WorkSpeedGlobal_JobStatus_Gated>ハードコア系モードでツール必須</WorkSpeedGlobal_JobStatus_Gated>
+    <WorkSpeedGlobal_JobStatus_Ungated>ツールペナルティなし</WorkSpeedGlobal_JobStatus_Ungated>
+    <WorkSpeedGlobal_OpenConfigButton>一般作業速度ジョブを設定</WorkSpeedGlobal_OpenConfigButton>
+
+    <!-- Job Table Additional (追加) -->
+    <JobTable_NoActiveMode>有効なモードが選択されていません。</JobTable_NoActiveMode>
+    <JobTable_GatedFormat>制限 ({0}/{1})</JobTable_GatedFormat>
+    <JobTable_GatedExample>制限 (99/99)</JobTable_GatedExample>
+    <JobTable_Status_Unknown>不明</JobTable_Status_Unknown>
+    <JobTable_Blocked>ブロック</JobTable_Blocked>
+
 </LanguageData>

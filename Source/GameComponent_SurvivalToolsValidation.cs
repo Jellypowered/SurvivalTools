@@ -35,6 +35,11 @@ namespace SurvivalTools
                     var ticksToWait = 180; // 3 seconds at 60 TPS
                     scheduledValidationTick = Find.TickManager.TicksGame + ticksToWait;
 
+                    // Schedule the ToolFactorCache activation at the same time so computed
+                    // factors are cached only after the world is stable. This prevents
+                    // early caching during PostLoadInit which has caused CTDs in the past.
+                    SurvivalToolUtility.ToolFactorCache.ScheduleActivation(scheduledValidationTick);
+
                     Log.Message("[SurvivalTools.JobValidation] Tool stats refreshed immediately. Job validation scheduled for 3 seconds after load.");
 
                 }, "SurvivalTools: Scheduling delayed job validation...", false, null);
@@ -44,6 +49,9 @@ namespace SurvivalTools
         public override void GameComponentTick()
         {
             // Execute delayed validation when the time comes
+            // Allow the ToolFactorCache to flip into Initialized when the scheduled tick arrives
+            SurvivalToolUtility.ToolFactorCache.CheckActivation();
+
             if (scheduledValidationTick > 0 && !hasValidatedThisSession && Find.TickManager.TicksGame >= scheduledValidationTick)
             {
                 hasValidatedThisSession = true;

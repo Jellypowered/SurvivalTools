@@ -1,4 +1,5 @@
-﻿// JobDriver_HarvestTree_Designated.cs
+﻿// RimWorld 1.6 / C# 7.3
+// Source/AI/JobDriver_HarvestTree_Designated.cs
 using RimWorld;
 using Verse;
 

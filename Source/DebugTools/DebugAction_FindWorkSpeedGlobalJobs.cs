@@ -1,3 +1,6 @@
+﻿// RimWorld 1.6 / C# 7.3
+// Source/DebugTools/DebugAction_FindWorkSpeedGlobalJobs.cs
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,6 +16,7 @@ namespace SurvivalTools
     /// </summary>
     public static class DebugAction_FindWorkSpeedGlobalJobs
     {
+#if DEBUG
         [DebugAction("Survival Tools", "Find WorkSpeedGlobal Jobs", allowedGameStates = AllowedGameStates.PlayingOnMap)]
         public static void FindWorkSpeedGlobalJobs()
         {
@@ -53,7 +57,7 @@ namespace SurvivalTools
                 foreach (var workGiver in categorizedJobs[category])
                 {
                     var recommendation = GetToolGatingRecommendation(workGiver);
-                    results.AppendLine($"  • {workGiver.defName} - {workGiver.label}");
+                    results.AppendLine($"  â€¢ {workGiver.defName} - {workGiver.label}");
                     results.AppendLine($"    Recommendation: {recommendation}");
                     if (workGiver.GetModExtension<WorkGiverExtension>() != null)
                         results.AppendLine($"    Status: ALREADY HAS SURVIVAL TOOLS EXTENSION");
@@ -175,5 +179,6 @@ namespace SurvivalTools
 
             return "MANUAL REVIEW NEEDED - Unclear category";
         }
+#endif
     }
 }

@@ -28,6 +28,8 @@ namespace SurvivalTools.Helpers
         {
             return pawn != null &&
                    pawn.RaceProps?.Humanlike == true &&
+                   // Exclude animals entirely as a safeguard regardless of faction
+                   pawn.RaceProps?.Animal != true &&
                    !pawn.RaceProps.IsMechanoid &&    // 🚫 Block all mechs
                    !pawn.Dead &&
                    !pawn.InMentalState &&
@@ -98,6 +100,8 @@ namespace SurvivalTools.Helpers
             if (pawn == null || pawn.Dead || pawn.Downed) return false;
             if (pawn.InMentalState || pawn.IsPrisoner) return false;
             if (pawn.RaceProps?.IsMechanoid == true) return false; // 🚫 Block all mechs
+            // Exclude animals as a safeguard (consistent with CanUseSurvivalTools)
+            if (pawn.RaceProps?.Animal == true) return false;
             return pawn.RaceProps?.Humanlike == true;
         }
 

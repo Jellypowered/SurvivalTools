@@ -1,5 +1,6 @@
-// RimWorld 1.6 / C# 7.3
+﻿// RimWorld 1.6 / C# 7.3
 // Source/ToolUtility.cs
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
@@ -83,6 +84,15 @@ namespace SurvivalTools
             if (set.Overlaps(Stats_Saw)) return STToolKind.Saw;
 
             return STToolKind.None;
+        }
+
+        /// <summary>
+        /// Public wrapper to determine the STToolKind implied by a set of StatDefs.
+        /// Used by other modules that only have stat lists available.
+        /// </summary>
+        public static STToolKind ToolKindForStats(IEnumerable<StatDef> stats)
+        {
+            return KindForStats(stats);
         }
 
         private static bool Overlaps(this HashSet<StatDef> a, IEnumerable<StatDef> b) =>

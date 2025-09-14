@@ -1,5 +1,5 @@
 ﻿// Rimworld 1.6 / C# 7.3
-// Patch_Mineable_Notify_TookMiningDamage.cs
+// Source/Harmony/Patch_Mineable_Notify_TookMiningDamage.cs
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;

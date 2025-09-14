@@ -1,3 +1,5 @@
+﻿// RimWorld 1.6 / C# 7.3
+// Source/WorkSpeedGlobalConfigWindow.cs
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -71,12 +73,12 @@ namespace SurvivalTools
                 // Title
                 Text.Font = GameFont.Medium;
                 var titleRect = new Rect(inRect.x, inRect.y, inRect.width, 30f);
-                Widgets.Label(titleRect, "WorkSpeedGlobal Job Configuration");
+                Widgets.Label(titleRect, "WorkSpeedGlobal_Title".Translate());
                 Text.Font = GameFont.Small;
 
                 // Description
                 var descRect = new Rect(inRect.x, titleRect.yMax + 5f, inRect.width, 50f);
-                Widgets.Label(descRect, "Configure which jobs that use 'general work speed' should be gated by survival tools. Unchecked jobs will not be penalized when no tools are available.");
+                Widgets.Label(descRect, "WorkSpeedGlobal_Description".Translate());
 
                 // Reserve space for bottom buttons (plus padding and close button)
                 const float bottomButtonHeight = 40f;
@@ -101,7 +103,7 @@ namespace SurvivalTools
                 Text.Font = GameFont.Small;
 
                 // Calculate max job name width
-                float maxJobNameWidth = Text.CalcSize("Job Type").x + 20f; // Header text plus padding
+                float maxJobNameWidth = Text.CalcSize("WorkSpeedGlobal_JobTypeHeader".Translate()).x + 20f; // Header text plus padding
                 for (int i = 0; i < workSpeedJobs.Count; i++)
                 {
                     var jobName = !string.IsNullOrEmpty(workSpeedJobs[i].label) ? workSpeedJobs[i].label.CapitalizeFirst() : workSpeedJobs[i].defName;
@@ -110,7 +112,7 @@ namespace SurvivalTools
                 }
 
                 // Calculate Gated column width (centered checkbox)
-                float gatedColumnWidth = Mathf.Max(Text.CalcSize("Gated").x + 10f, 60f); // Minimum 60f for checkbox space
+                float gatedColumnWidth = Mathf.Max(Text.CalcSize("WorkSpeedGlobal_GatedHeader".Translate()).x + 10f, 60f); // Minimum 60f for checkbox space
 
                 Text.Font = measuringFont;
 
@@ -118,15 +120,15 @@ namespace SurvivalTools
                 var jobHeaderRect = new Rect(headerRect.x + 5f, headerRect.y, maxJobNameWidth, headerRect.height);
                 GUI.color = Color.cyan;
                 Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(jobHeaderRect, "Job Type");
+                Widgets.Label(jobHeaderRect, "WorkSpeedGlobal_JobTypeHeader".Translate());
 
                 // Gated header - centered
                 var gatedHeaderRect = new Rect(jobHeaderRect.xMax + 10f, headerRect.y, gatedColumnWidth, headerRect.height);
-                Widgets.Label(gatedHeaderRect, "Gated");
+                Widgets.Label(gatedHeaderRect, "WorkSpeedGlobal_GatedHeader".Translate());
 
                 // Description header
                 var descHeaderRect = new Rect(gatedHeaderRect.xMax + 10f, headerRect.y, headerRect.width - gatedHeaderRect.xMax - 15f, headerRect.height);
-                Widgets.Label(descHeaderRect, "Description");
+                Widgets.Label(descHeaderRect, "WorkSpeedGlobal_DescriptionHeader".Translate());
                 GUI.color = Color.white;
                 Text.Anchor = TextAnchor.UpperLeft;
 
@@ -145,13 +147,14 @@ namespace SurvivalTools
 
                 if (workSpeedJobs.Count == 0)
                 {
-                    Widgets.Label(contentRect, "No WorkSpeedGlobal jobs found.");
+                    Widgets.Label(contentRect, "WorkSpeedGlobal_NoJobsFound".Translate());
                     return;
                 }
 
                 // Calculate content height for scrolling
                 float contentHeight = workSpeedJobs.Count * 30f + 20f; // Extra padding
-                var viewRect = new Rect(0, 0, contentRect.width - 20f, contentHeight);
+                // Ensure the inner view rect height is at least the visible content area to prevent clipping the bottom buttons
+                var viewRect = new Rect(0, 0, contentRect.width - 20f, Mathf.Max(contentRect.height, contentHeight));
 
                 Widgets.BeginScrollView(contentRect, ref scrollPosition, viewRect);
 
@@ -214,7 +217,7 @@ namespace SurvivalTools
                 var buttonY = contentRect.yMax + 10f;
                 var buttonRect = new Rect(inRect.x, buttonY, 120f, 30f);
 
-                if (Widgets.ButtonText(buttonRect, "Enable All"))
+                if (Widgets.ButtonText(buttonRect, "WorkSpeedGlobal_EnableAll".Translate()))
                 {
                     for (int i = 0; i < workSpeedJobs.Count; i++)
                     {
@@ -224,7 +227,7 @@ namespace SurvivalTools
                 }
 
                 buttonRect.x += 130f;
-                if (Widgets.ButtonText(buttonRect, "Disable All"))
+                if (Widgets.ButtonText(buttonRect, "WorkSpeedGlobal_DisableAll".Translate()))
                 {
                     for (int i = 0; i < workSpeedJobs.Count; i++)
                     {
@@ -234,7 +237,7 @@ namespace SurvivalTools
                 }
 
                 buttonRect.x += 130f;
-                if (Widgets.ButtonText(buttonRect, "Reset to Defaults"))
+                if (Widgets.ButtonText(buttonRect, "WorkSpeedGlobal_ResetDefaults".Translate()))
                 {
                     for (int i = 0; i < workSpeedJobs.Count; i++)
                     {
@@ -246,7 +249,7 @@ namespace SurvivalTools
 
                 buttonRect.x += 150f;
                 // Debug-only trace button
-                if (Prefs.DevMode && Widgets.ButtonText(buttonRect, "Trace WorkGivers"))
+                if (Prefs.DevMode && Widgets.ButtonText(buttonRect, "WorkSpeedGlobal_TraceWorkGivers".Translate()))
                 {
                     DumpWorkSpeedGlobalInfo();
                 }
@@ -261,8 +264,8 @@ namespace SurvivalTools
 
         private string GetJobDescription(WorkGiverDef job, bool isGated)
         {
-            if (isGated) return "Requires tools in hardcore modes";
-            return "No tool penalties applied";
+            if (isGated) return "WorkSpeedGlobal_JobStatus_Gated".Translate();
+            return "WorkSpeedGlobal_JobStatus_Ungated".Translate();
         }
 
         private bool GetDefaultGatingForJob(WorkGiverDef job)

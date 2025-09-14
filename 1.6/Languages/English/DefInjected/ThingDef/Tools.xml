@@ -63,4 +63,37 @@
     <SurvivalTools_Multitool.label>glitterworld multitool</SurvivalTools_Multitool.label>
     <SurvivalTools_Multitool.description>A high-tech universal tool commonly used by domestic mechanoids in glitterworld societies. This advanced device can seamlessly adapt to any task - construction, mining, forestry, maintenance, and deconstruction - making it the ultimate all-in-one survival tool. Though designed for mechanoids, it's perfectly usable by humanoids due to physiological similarities.</SurvivalTools_Multitool.description>
 
+    <!-- =================================================== -->
+    <!-- MULTIPURPOSE GENERAL WORK TOOLS (WorkSpeedGlobal)   -->
+    <!-- Newly added tool defs requiring DefInjected entries -->
+    <!-- =================================================== -->
+
+    <!-- Tribal / Primitive Tier -->
+    <SurvivalTools_MultipurposeStoneTool.label>multipurpose stone tool</SurvivalTools_MultipurposeStoneTool.label>
+    <SurvivalTools_MultipurposeStoneTool.description>A rugged, versatile stone implement shaped to cover many general tasks. While primitive, it grants a modest improvement to overall work speed.</SurvivalTools_MultipurposeStoneTool.description>
+
+    <SurvivalTools_CarvedBoneImplements.label>carved bone implements</SurvivalTools_CarvedBoneImplements.label>
+    <SurvivalTools_CarvedBoneImplements.description>A collection of carefully carved bone implements bundled together for multi-purpose use. Fragile, but shaped for efficiency, giving a noticeable boost to general work speed.</SurvivalTools_CarvedBoneImplements.description>
+
+    <!-- Medieval Tier -->
+    <SurvivalTools_ArtisansToolkit.label>artisan's toolkit</SurvivalTools_ArtisansToolkit.label>
+    <SurvivalTools_ArtisansToolkit.description>A curated collection of quality medieval-era implements for crafting, shaping, and assembly. Improves overall work throughput across many tasks.</SurvivalTools_ArtisansToolkit.description>
+
+    <SurvivalTools_WoodworkersKit.label>woodworker's kit</SurvivalTools_WoodworkersKit.label>
+    <SurvivalTools_WoodworkersKit.description>A specialized assortment of saws, chisels, planes and gauges optimized for timber shaping and joinery. Its organization and quality grant a strong boost to general work speed.</SurvivalTools_WoodworkersKit.description>
+
+    <!-- Industrial Tier -->
+    <SurvivalTools_MechanicsToolkit.label>mechanic's toolkit</SurvivalTools_MechanicsToolkit.label>
+    <SurvivalTools_MechanicsToolkit.description>An organized industrial-era toolkit containing precision wrenches, gauges, torque implements and fast-retrieval storage. Greatly improves overall task flow and coordination in general work.</SurvivalTools_MechanicsToolkit.description>
+
+    <SurvivalTools_WorkshopHammerDrill.label>workshop hammer drill</SurvivalTools_WorkshopHammerDrill.label>
+    <SurvivalTools_WorkshopHammerDrill.description>A heavy-duty powered hammer drill with interchangeable percussion and rotary modules. Its integrated clamping and alignment system accelerates virtually any mechanical or construction task.</SurvivalTools_WorkshopHammerDrill.description>
+
+    <!-- Spacer / Ultra Tech Tier -->
+    <SurvivalTools_NanofabricatorInterface.label>nanofabricator interface</SurvivalTools_NanofabricatorInterface.label>
+    <SurvivalTools_NanofabricatorInterface.description>A sleek control and augmentation module that synchronizes the user's motions with adaptive nano-assembly routines. Dramatically improves general task execution efficiency.</SurvivalTools_NanofabricatorInterface.description>
+
+    <SurvivalTools_OmniToolGauntlet.label>omni-tool gauntlet</SurvivalTools_OmniToolGauntlet.label>
+    <SurvivalTools_OmniToolGauntlet.description>A cutting-edge modular gauntlet embedding field projectors, micro-fabricators and force-aligned manipulators. Provides an unparalleled increase to general work speed through predictive optimization.</SurvivalTools_OmniToolGauntlet.description>
+
 </LanguageData>

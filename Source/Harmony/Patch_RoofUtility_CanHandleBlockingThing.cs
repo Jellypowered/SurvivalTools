@@ -1,5 +1,5 @@
 ﻿// RimWorld 1.6 / C# 7.3
-// Patch_RoofUtility_CanHandleBlockingThing.cs
+// Source/Harmony/Patch_RoofUtility_CanHandleBlockingThing.cs
 //
 // Purpose:
 //   Prevents pawns from handling roof-blocking trees unless they meet tree-felling requirements.

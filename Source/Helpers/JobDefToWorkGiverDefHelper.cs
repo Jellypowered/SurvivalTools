@@ -1,5 +1,6 @@
-// RimWorld 1.6 / C# 7.3
+﻿// RimWorld 1.6 / C# 7.3
 // Source/Helpers/JobDefToWorkGiverDefHelper.cs
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
@@ -16,10 +17,10 @@ namespace SurvivalTools.Helpers
     public static class JobDefToWorkGiverDefHelper
     {
         /// <summary>
-        /// Explicit mappings (JobDef → WorkGiverDef) for jobs where the link
+        /// Explicit mappings (JobDef â†’ WorkGiverDef) for jobs where the link
         /// is not obvious or where defName patterns are unreliable.
         /// 
-        /// 🔮 Future: could be externalized to XML defs or settings for easier patching
+        /// ðŸ”® Future: could be externalized to XML defs or settings for easier patching
         /// by other mods (instead of hardcoding here).
         /// </summary>
         private static readonly Dictionary<string, string> ExplicitJobToWorkGiverMap =
@@ -83,7 +84,7 @@ namespace SurvivalTools.Helpers
             // Step 2: special-case fallbacks
             var defName = jobDef.defName.ToLower();
 
-            // 🔨 Construction (catch-all: build, construct, roof, floor, blueprints, frames)
+            // ðŸ”¨ Construction (catch-all: build, construct, roof, floor, blueprints, frames)
             if (defName.Contains("construct") || defName.Contains("build") ||
                 defName.Contains("roof") || defName.Contains("floor") ||
                 defName.Contains("blueprint") || defName.Contains("frame"))
@@ -93,11 +94,11 @@ namespace SurvivalTools.Helpers
                     ?? DefDatabase<WorkGiverDef>.GetNamedSilentFail("ConstructDeliverResources");
             }
 
-            // 📖 Research Reinvented – fieldwork jobs
+            // ðŸ“– Research Reinvented â€“ fieldwork jobs
             if (defName.Contains("fieldresearch") || defName.Contains("survey"))
                 return DefDatabase<WorkGiverDef>.GetNamedSilentFail("Research");
 
-            // 🌱 Plant work (catch-all: sow, harvest, cut)
+            // ðŸŒ± Plant work (catch-all: sow, harvest, cut)
             if (defName.Contains("sow"))
                 return DefDatabase<WorkGiverDef>.GetNamedSilentFail("GrowerSow");
             if (defName.Contains("harvest"))

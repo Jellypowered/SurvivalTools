@@ -62,4 +62,37 @@
     <SurvivalTools_PileOfRags.label>tas de chiffons</SurvivalTools_PileOfRags.label>
     <SurvivalTools_PileOfRags.description>Un simple outil de nettoyage fait de chiffons et de morceaux de tissu. Utile pour les tâches de nettoyage de base mais s'use rapidement.</SurvivalTools_PileOfRags.description>
 
+    <!-- =================================================== -->
+    <!-- OUTILS GÉNÉRAUX MULTI-USAGES (WorkSpeedGlobal)       -->
+    <!-- Nouvelles définitions nécessitant des entrées        -->
+    <!-- =================================================== -->
+
+    <!-- Palier tribal / primitif -->
+    <SurvivalTools_MultipurposeStoneTool.label>outil en pierre polyvalent</SurvivalTools_MultipurposeStoneTool.label>
+    <SurvivalTools_MultipurposeStoneTool.description>Un instrument en pierre robuste et polyvalent, façonné pour couvrir de nombreuses tâches générales. Bien que primitif, il confère une légère amélioration de la vitesse de travail globale.</SurvivalTools_MultipurposeStoneTool.description>
+
+    <SurvivalTools_CarvedBoneImplements.label>implements en os sculptés</SurvivalTools_CarvedBoneImplements.label>
+    <SurvivalTools_CarvedBoneImplements.description>Un ensemble d'outils en os soigneusement sculptés et groupés pour un usage multi‑fonction. Fragiles mais bien profilés, ils procurent un gain notable à la vitesse générale de travail.</SurvivalTools_CarvedBoneImplements.description>
+
+    <!-- Palier médiéval -->
+    <SurvivalTools_ArtisansToolkit.label>trousse de l'artisan</SurvivalTools_ArtisansToolkit.label>
+    <SurvivalTools_ArtisansToolkit.description>Une collection sélectionnée d'outils de qualité d'époque médiévale pour l'artisanat, le façonnage et l'assemblage. Améliore le débit global à travers de nombreuses tâches.</SurvivalTools_ArtisansToolkit.description>
+
+    <SurvivalTools_WoodworkersKit.label>kit du menuisier</SurvivalTools_WoodworkersKit.label>
+    <SurvivalTools_WoodworkersKit.description>Un assortiment spécialisé de scies, ciseaux, rabots et jauges optimisés pour le façonnage et l'assemblage du bois. Son organisation et sa qualité accordent un fort bonus à la vitesse de travail générale.</SurvivalTools_WoodworkersKit.description>
+
+    <!-- Palier industriel -->
+    <SurvivalTools_MechanicsToolkit.label>trousse du mécanicien</SurvivalTools_MechanicsToolkit.label>
+    <SurvivalTools_MechanicsToolkit.description>Une trousse industrielle organisée contenant clés de précision, jauges, outils de couple et rangement à accès rapide. Améliore grandement le flux et la coordination des tâches générales.</SurvivalTools_MechanicsToolkit.description>
+
+    <SurvivalTools_WorkshopHammerDrill.label>marteau-perforateur d'atelier</SurvivalTools_WorkshopHammerDrill.label>
+    <SurvivalTools_WorkshopHammerDrill.description>Un marteau-perforateur robuste avec modules percussifs et rotatifs interchangeables. Son système intégré de serrage et d'alignement accélère presque toute tâche mécanique ou de construction.</SurvivalTools_WorkshopHammerDrill.description>
+
+    <!-- Palier ultra‑tech / spatial -->
+    <SurvivalTools_NanofabricatorInterface.label>interface de nanofabrication</SurvivalTools_NanofabricatorInterface.label>
+    <SurvivalTools_NanofabricatorInterface.description>Un module élégant de contrôle et d'augmentation qui synchronise les mouvements de l'utilisateur avec des routines adaptatives nano‑assemblées. Améliore profondément l'efficacité d'exécution des tâches générales.</SurvivalTools_NanofabricatorInterface.description>
+
+    <SurvivalTools_OmniToolGauntlet.label>gantelet omni‑outil</SurvivalTools_OmniToolGauntlet.label>
+    <SurvivalTools_OmniToolGauntlet.description>Un gantelet modulaire de pointe incorporant projecteurs de champ, micro‑fabricateurs et manipulateurs à alignement de force. Fournit un accroissement inégalé de la vitesse générale de travail via une optimisation prédictive.</SurvivalTools_OmniToolGauntlet.description>
+
 </LanguageData>

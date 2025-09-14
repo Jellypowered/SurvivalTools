@@ -1,5 +1,5 @@
-// RimWorld 1.6 / C# 7.3
-// ST_Logging.cs — buffered, de-duplicated logging for Survival Tools
+﻿// RimWorld 1.6 / C# 7.3
+// Source/Helpers/ST_Logging.cs
 
 using System;
 using System.Collections.Generic;
@@ -54,6 +54,132 @@ namespace SurvivalTools
         // Enable dedup only in DevMode and when at least one toggle is active
         private static bool DedupEnabled =>
             Prefs.DevMode && (IsDebugLoggingEnabled || IsCompatLogging());
+
+        #endregion
+
+        #region ToolGate deduped logging (Part B)
+
+        // Compact key: "pawnId|jobDef|statDef"
+        private struct LogBucket
+        {
+            public int lastTick;
+            public int suppressedCount;
+        }
+
+        private static readonly Dictionary<string, LogBucket> _toolGateBuckets = new Dictionary<string, LogBucket>(512);
+        private const int TOOLGATE_SUPPRESS_TICKS = 250; // suppress identical entries within this window
+        private const int TOOLGATE_REPORT_TICKS = 2500; // periodic flush threshold for reporting
+
+        /// <summary>
+        /// Log a ToolGate event with deduplication. Emits the first event immediately (unless debug off), then
+        /// suppresses repeated identical events for TOOLGATE_SUPPRESS_TICKS. When suppressed events exist and the
+        /// cooldown expires, emits a summary line indicating how many events were suppressed.
+        /// If DebugMode is enabled in settings, suppression is bypassed and all events are logged.
+        /// </summary>
+        internal static void LogToolGateEvent(Pawn pawn, JobDef jobDef, StatDef statDef, string reason)
+        {
+            // jobDef may be null (we'll include a placeholder in messages). pawn and statDef are required.
+            if (pawn == null || statDef == null) return;
+
+            // If debug logging is globally disabled, don't do any heavy work
+            bool debugOn = IsDebugLoggingEnabled;
+            if (!debugOn)
+            {
+                // Still allow a minimal non-debug message in release runs (rare)
+                return;
+            }
+
+            // Developer override: if debug logging flag is true, bypass suppression
+            if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
+            {
+                try { Log.Message($"[SurvivalTools.ToolGate] {pawn.LabelShort} denied {jobDef.defName} ({statDef.defName}) - {reason}"); } catch { }
+                return;
+            }
+
+            int now = 0;
+            try { now = Find.TickManager?.TicksGame ?? 0; } catch { }
+
+            string jobName = jobDef?.defName ?? "<noJob>";
+            string key = pawn.ThingID + "|" + jobName + "|" + (statDef.defName ?? "null");
+
+            LogBucket bucket;
+            if (!_toolGateBuckets.TryGetValue(key, out bucket))
+            {
+                // First occurrence: log immediately and record tick
+                try { Log.Message($"[SurvivalTools.ToolGate] {pawn.LabelShort} denied {jobName} ({statDef.defName}) - {reason}"); } catch { }
+                bucket.lastTick = now;
+                bucket.suppressedCount = 0;
+                _toolGateBuckets[key] = bucket;
+                return;
+            }
+
+            // If within suppression window, increment counter and return
+            if (now - bucket.lastTick < TOOLGATE_SUPPRESS_TICKS)
+            {
+                bucket.suppressedCount++;
+                _toolGateBuckets[key] = bucket;
+                return;
+            }
+
+            // Suppression window expired: if we suppressed events, emit a summary, then log the current event
+            if (bucket.suppressedCount > 0)
+            {
+                try
+                {
+                    Log.Message($"[SurvivalTools.ToolGate] {pawn.LabelShort} denied {jobName} ({statDef.defName}) — suppressed {bucket.suppressedCount} similar events.");
+                }
+                catch { }
+                bucket.suppressedCount = 0;
+            }
+
+            // Log the current event and update lastTick
+            try { Log.Message($"[SurvivalTools.ToolGate] {pawn.LabelShort} denied {jobName} ({statDef.defName}) - {reason}"); } catch { }
+            bucket.lastTick = now;
+            _toolGateBuckets[key] = bucket;
+        }
+
+        /// <summary>
+        /// Called periodically (e.g., in ST_LogRunner.GameComponentUpdate) to flush stale buckets
+        /// and emit summary messages for suppressed counts that haven't been reported yet.
+        /// </summary>
+        internal static void TickToolGateBuckets()
+        {
+            if (!IsDebugLoggingEnabled) return;
+            int now = 0;
+            try { now = Find.TickManager?.TicksGame ?? 0; } catch { }
+
+            var toReport = new List<string>();
+            foreach (var kv in _toolGateBuckets)
+            {
+                var k = kv.Key;
+                var b = kv.Value;
+                if (b.suppressedCount > 0 && now - b.lastTick >= TOOLGATE_SUPPRESS_TICKS)
+                {
+                    toReport.Add(k);
+                }
+                else if (now - b.lastTick >= TOOLGATE_REPORT_TICKS)
+                {
+                    // Stale bucket: purge
+                    toReport.Add(k);
+                }
+            }
+
+            for (int i = 0; i < toReport.Count; i++)
+            {
+                var k = toReport[i];
+                if (!_toolGateBuckets.TryGetValue(k, out var b)) continue;
+                if (b.suppressedCount > 0)
+                {
+                    // Key format: pawnId|jobDef|statDef
+                    var parts = k.Split('|');
+                    string pawnId = parts.Length > 0 ? parts[0] : "?";
+                    string job = parts.Length > 1 ? parts[1] : "?";
+                    string stat = parts.Length > 2 ? parts[2] : "?";
+                    try { Log.Message($"[SurvivalTools.ToolGate] {pawnId} denied {job} ({stat}) — suppressed {b.suppressedCount} similar events."); } catch { }
+                }
+                _toolGateBuckets.Remove(k);
+            }
+        }
 
         #endregion
 
@@ -422,6 +548,7 @@ namespace SurvivalTools
         public override void GameComponentUpdate()
         {
             ST_Logging.TickBuffered();
+            ST_Logging.TickToolGateBuckets();
         }
     }
 }

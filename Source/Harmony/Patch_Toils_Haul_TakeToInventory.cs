@@ -1,5 +1,5 @@
 ﻿//RimWorld 1.6 / C# 7.3
-//Patch_Toils_Haul_TakeToInventory.cs
+// Source/Harmony/Patch_Toils_Haul_TakeToInventory.cs
 using System;
 using HarmonyLib;
 using Verse;

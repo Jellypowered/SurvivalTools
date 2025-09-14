@@ -42,7 +42,7 @@
             <xpath>Defs/StatDef[defName="ConstructionSpeed"]/parts</xpath>
             <value>
                 <li Class="SurvivalTools.StatPart_SurvivalTool">
-                    <noToolStatFactorHardcore>0</noToolStatFactorHardcore>
+                    <noToolStatFactor>0.5</noToolStatFactor>
                 </li>
             </value>
         </nomatch>

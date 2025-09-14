@@ -1,5 +1,6 @@
 ﻿// Rimworld 1.6 / C# 7.3
-// Patch_ThingFilter_SetFromPreset.cs
+// Source/Harmony/Patch_ThingFilter_SetFromPreset.cs
+using System;
 using HarmonyLib;
 using RimWorld;
 using Verse;

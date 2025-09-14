@@ -22,8 +22,9 @@ namespace SurvivalTools.DebugTools
 {
     public static class ResearchReinventedPatchLogger
     {
+#if DEBUG
         [DebugAction("SurvivalTools", "Dump Research Reinvented diagnostics", allowedGameStates = AllowedGameStates.Playing)]
-        public static void DumpRR_DebugAction()
+        public static void DumpRRDiagnostics()
         {
             // Gate: only show when Research Reinvented is active
             if (!RRHelpers.IsRRActive)
@@ -59,6 +60,7 @@ namespace SurvivalTools.DebugTools
                 LogError($"[SurvivalTools] ResearchReinventedPatchLogger: failed during debug dump: {e}");
             }
         }
+#endif
 
         public static void DumpPatchesByHeuristics()
         {

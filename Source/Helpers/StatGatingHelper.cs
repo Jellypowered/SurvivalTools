@@ -23,6 +23,11 @@ namespace SurvivalTools.Helpers
         {
             if (stat == null || settings == null) return false;
 
+            // Never hard-block CleaningSpeed or WorkSpeedGlobal here - these are handled
+            // by StatPart_SurvivalTool as a penalty-based fallback and should not abort jobs.
+            if (stat == ST_StatDefOf.CleaningSpeed || stat == ST_StatDefOf.WorkSpeedGlobal)
+                return false;
+
             // Core work stats (mining, construction, etc.) always gate in hardcore.
             if (StatFilters.ShouldBlockJobForMissingStat(stat))
                 return pawn == null || !pawn.HasSurvivalToolFor(stat);
@@ -121,6 +126,38 @@ namespace SurvivalTools.Helpers
 
             // Keep only real survival-tool stats, unique
             return stats.Where(s => s != null && s.RequiresSurvivalTool()).Distinct().ToList();
+        }
+
+        /// <summary>
+        /// Centralized BuildRoof gating helper.
+        /// Returns true if the pawn should be blocked from BuildRoof jobs under current settings.
+        /// Produces a small logKey suitable for ShouldLogWithCooldown when needed.
+        /// </summary>
+        public static bool ShouldBlockBuildRoof(Pawn pawn, out string logKey, IntVec3? cell = null)
+        {
+            logKey = null;
+            if (pawn == null) return false;
+
+            var settings = SurvivalTools.Settings;
+            if (settings == null || settings.extraHardcoreMode != true) return false; // only hard-block in extra-hardcore
+
+            // Respect general pawn/tool capability (mechs, prisoners, etc.)
+            if (!PawnToolValidator.CanUseSurvivalTools(pawn)) return false;
+
+            // ConstructionSpeed is the canonical stat for roofing
+            var stat = StatDefOf.ConstructionSpeed;
+            if (stat == null) return false;
+
+            bool should = ShouldBlockJobForStat(stat, settings, pawn);
+            if (should)
+            {
+                // Build a compact log key: include pawn id and optional cell coordinates
+                if (cell.HasValue)
+                    logKey = $"BuildRoof_Block_{pawn.ThingID}_{cell.Value.x}_{cell.Value.y}_{cell.Value.z}";
+                else
+                    logKey = $"BuildRoof_Block_{pawn.ThingID}";
+            }
+            return should;
         }
     }
 }

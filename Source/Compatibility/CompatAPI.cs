@@ -16,11 +16,17 @@ using Verse;
 using SurvivalTools.Compat.PrimitiveTools;
 using SurvivalTools.Compat.SeparateTreeChopping;
 using SurvivalTools.Compat.ResearchReinvented;
+using SurvivalTools.Compat.CommonSense;
+using SurvivalTools.Compat.SmarterConstruction;
+using SurvivalTools.Compat.SmarterDeconstruction;
+using SurvivalTools.Compat.TDEnhancementPack;
 
 using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.Compat
 {
+    // Pacifist equip handled centrally in Patch_EquipmentUtility_CanEquip_PacifistTools.cs
+
     // ---------- Module Interface ----------
     public interface ICompatibilityModule
     {
@@ -138,6 +144,12 @@ namespace SurvivalTools.Compat
                 RegisterModule(new ResearchReinventedCompatibilityModule());
                 RegisterModule(new PrimitiveToolsCompatibilityModule());
                 RegisterModule(new SeparateTreeChoppingCompatibilityModule());
+                // New compat modules
+                // Register new compatibility modules explicitly so they are discoverable and type-checked at compile time.
+                try { RegisterModule(new CommonSenseCompatibilityModule()); } catch { }
+                try { RegisterModule(new SmarterConstructionCompatibilityModule()); } catch { }
+                try { RegisterModule(new SmarterDeconstructionCompatibilityModule()); } catch { }
+                try { RegisterModule(new TDEnhancementPackCompatibilityModule()); } catch { }
 
                 foreach (var m in Modules.Where(m => m.IsModActive))
                 {
@@ -194,6 +206,7 @@ namespace SurvivalTools.Compat
             return all.Where(s => s != null).Distinct().ToList();
         }
 
+#if DEBUG
         [DebugAction("SurvivalTools", "Dump compatibility modules status")]
         public static void DumpCompatibilityStatus()
         {
@@ -218,6 +231,7 @@ namespace SurvivalTools.Compat
             }
             Log.Message("[SurvivalTools Compat] === End Compatibility Status ===");
         }
+#endif
     }
 
     // ---------- Public API ----------

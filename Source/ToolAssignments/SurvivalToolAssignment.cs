@@ -1,5 +1,5 @@
 ﻿// Rimworld 1.6 / C# 7.3
-// SurvivalToolAssignment.cs
+// Source/ToolAssignments/SurvivalToolAssignment.cs
 using Verse;
 
 namespace SurvivalTools

@@ -1,4 +1,5 @@
-using HarmonyLib;
+﻿// RimWorld 1.6 / C# 7.3
+// Source/Compatibility/SeparateTreeChopping/STCPatches.cs
 using Verse;
 
 namespace SurvivalTools.Compat.SeparateTreeChopping

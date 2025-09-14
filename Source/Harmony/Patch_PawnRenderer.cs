@@ -1,5 +1,5 @@
-// RimWorld 1.6 / C# 7.3
-// Patch_PawnRenderer.cs
+﻿// RimWorld 1.6 / C# 7.3
+// Source/Harmony/Patch_PawnRenderer.cs
 //
 // Purpose:
 //   Ensures pawns visibly "use" survival tools while working by drawing the tool
@@ -11,13 +11,14 @@
 //   - Skips portrait / invisible renders and invalid pawn states.
 //   - Skips drafted pawns unless they're actually performing a work job (i.e., relevant stats exist).
 //   - Avoids double-drawing if the same physical item is already shown as Primary.
-//   - Uses a small JobDef → required-stats cache to reduce allocations.
+//   - Uses a small JobDef â†’ required-stats cache to reduce allocations.
 //
 // Future ideas (comments only, not implemented):
 //   - Animated tools (e.g., swinging pick/axe, wrench turning, microscope oscillation).
 //   - Per-job offsets/orientations so a hammer sits differently than a wrench.
 //   - Sync lightweight animations to pawn tick or job progress for smooth motion.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
@@ -39,7 +40,7 @@ namespace SurvivalTools.HarmonyStuff
         private static readonly Dictionary<JobDef, List<StatDef>> _jobStatCache =
             new Dictionary<JobDef, List<StatDef>>();
 
-        // Optional: static ctor (no reload hook in 1.6 — we just start empty)
+        // Optional: static ctor (no reload hook in 1.6 â€” we just start empty)
         static ShowWhileWorking_Draw_Postfix()
         {
             _jobStatCache.Clear();
@@ -61,7 +62,7 @@ namespace SurvivalTools.HarmonyStuff
             //  - but if they're actually doing a "work job" (i.e., stats are relevant),
             //    we'll draw the tool. We enforce this indirectly because we only draw
             //    when RelevantStatsFor() returns a non-empty set.
-            //    (So no special hard block here — the stat check below is the gate.)
+            //    (So no special hard block here â€” the stat check below is the gate.)
 
             // Decide which tool is in use (real or virtual) and what stats are required.
             var (toolThing, requiredStats) = GetActiveToolForJob(pawn, job);
@@ -71,8 +72,18 @@ namespace SurvivalTools.HarmonyStuff
             var primary = pawn.equipment?.Primary;
             if (primary != null)
             {
-                if (ReferenceEquals(primary, toolThing)) return;
-                if (toolThing is VirtualSurvivalTool vt && primary.def == vt.SourceDef) return;
+                // Compare by backing thing for virtual wrappers so we don't draw a virtual wrapper
+                // when the actual spawned thing is already drawn as primary.
+                Thing backing = SurvivalToolUtility.BackingThing(toolThing as SurvivalTool, pawn);
+                if (backing != null)
+                {
+                    if (ReferenceEquals(primary, backing)) return;
+                }
+                else
+                {
+                    if (ReferenceEquals(primary, toolThing)) return;
+                    if (toolThing is VirtualSurvivalTool vt && primary.def == vt.SourceDef) return;
+                }
             }
 
             // Vanilla equipment distance factor (children hold closer).
@@ -112,7 +123,7 @@ namespace SurvivalTools.HarmonyStuff
                     DrawVirtualTool(toolThing, drawPos, Quaternion.AngleAxis(aimAngle, Vector3.up), virtualTint);
 
                     // Animation hook (future):
-                    //  - For “swinging” tools, vary a small extra rotation (e.g., +/- 10°) with a sin wave
+                    //  - For â€œswingingâ€ tools, vary a small extra rotation (e.g., +/- 10Â°) with a sin wave
                     //    tied to pawn tick: float wobble = Mathf.Sin(Time.time * 6f) * 10f;
                     //  - Apply to 'aimAngle' before building the Quaternion.
                 }
@@ -223,6 +234,64 @@ namespace SurvivalTools.HarmonyStuff
             // 1) Normal path: best survival tool (real or virtual) selected by our core logic.
             var best = pawn.GetBestSurvivalTool(requiredStats);
             if (best != null) return (best, requiredStats);
+
+            // 1b) Defensive fallback: if core selection returned null (possibly due to delayed cache
+            // initialization or stale factors), compute a one-off best candidate using the same
+            // factor computation used by the runtime cache so the drawn tool matches the job's
+            // effective stat contributor. This avoids showing the wrong tool (e.g., hammer when
+            // the pawn is actually using an axe-like virtual tool for tree felling).
+            try
+            {
+                float bestScore = 0f;
+                Thing bestThing = null;
+
+                var candidates = pawn.GetAllUsableSurvivalTools();
+                if (candidates != null)
+                {
+                    var stats = requiredStats;
+                    foreach (var cand in candidates)
+                    {
+                        if (cand == null) continue;
+
+                        // Determine def + stuff for the candidate (virtual wrappers supply def)
+                        ThingDef toolDef = cand.def;
+                        ThingDef stuffDef = null;
+                        SurvivalTool asTool = cand as SurvivalTool;
+                        if (asTool != null) stuffDef = asTool.Stuff;
+
+                        // Get base factors (may compute ad-hoc if cache not ready)
+                        var factors = SurvivalToolUtility.ToolFactorCache.GetOrComputeToolFactors(toolDef, stuffDef, asTool);
+                        if (factors == null || factors.Count == 0) continue;
+
+                        // Sum relevant stat values
+                        float score = 0f;
+                        for (int si = 0; si < stats.Count; si++)
+                        {
+                            var sdef = stats[si];
+                            if (sdef == null) continue;
+                            for (int fi = 0; fi < factors.Count; fi++)
+                            {
+                                var fm = factors[fi];
+                                if (fm?.stat == sdef) { score += fm.value; break; }
+                            }
+                        }
+
+                        // Apply HP penalty for damaged physical tools
+                        var backing = SurvivalToolUtility.BackingThing(asTool, pawn);
+                        if (backing is Thing tb && tb.MaxHitPoints > 0 && tb.HitPoints < tb.MaxHitPoints)
+                            score *= (float)tb.HitPoints / tb.MaxHitPoints;
+
+                        if (score > bestScore)
+                        {
+                            bestScore = score;
+                            bestThing = cand;
+                        }
+                    }
+                }
+
+                if (bestThing != null) return (bestThing, requiredStats);
+            }
+            catch { /* fallback silently if anything goes wrong during draw-time selection */ }
 
             // 2) Fallback: wrap any relevant tool-stuff stack into a VirtualSurvivalTool for display.
             var inner = pawn.inventory?.innerContainer;

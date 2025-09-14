@@ -1,5 +1,5 @@
 ﻿//RimWorld 1.6 / C# 7.3
-//WorkGiverExtension.cs
+// Source/ModExtensions/WorkGiverExtension.cs
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;

@@ -1,8 +1,9 @@
 ﻿// RimWorld 1.6 / C# 7.3
-// Alert_SurvivalToolNeedsReplacing.cs
+// Source/Alerts/Alert_SurvivalToolNeedsReplacing.cs
 //
 // QoL: shows damaged tool % remaining and suggests researched replacements.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -39,19 +40,20 @@ namespace SurvivalTools
             if (twc == null || !twc.def.useHitPoints) return false;
 
             float hpFrac = twc.MaxHitPoints > 0 ? (float)twc.HitPoints / twc.MaxHitPoints : 0f;
+            hpFrac = Math.Max(0f, Math.Min(1f, hpFrac));
             float lifespanRemaining = twc.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) * hpFrac;
-
-            if (IsDebugLoggingEnabled)
-            {
-                LogDebug($"[SurvivalTools.AlertReplace] tool={tool.LabelShort} hpFrac={hpFrac:F2} lifespanRemaining={lifespanRemaining:F2}",
-                    $"AlertReplace_{tool.def.defName}_{tool.thingIDNumber}");
-            }
-
+            lifespanRemaining = Math.Max(0f, Math.Min(1f, lifespanRemaining));
             return lifespanRemaining <= DamagedToolRemainingLifespanThreshold;
         }
 
         private static ThingWithComps ResolveThingWithComps(SurvivalTool tool)
         {
+            // Prefer an explicit SourceThing for virtual wrappers (most accurate for inventory stacks)
+            if (tool is VirtualSurvivalTool vtool)
+            {
+                if (vtool.SourceThing is ThingWithComps srcTwc) return srcTwc;
+            }
+
             var backingThing = SurvivalToolUtility.BackingThing(tool);
             if (backingThing is ThingWithComps btc) return btc;
             if (tool is ThingWithComps twc) return twc;
@@ -64,9 +66,12 @@ namespace SurvivalTools
             if (twc == null || !twc.def.useHitPoints) return tool.LabelShort;
 
             float hpFrac = twc.MaxHitPoints > 0 ? (float)twc.HitPoints / twc.MaxHitPoints : 0f;
+            hpFrac = Math.Max(0f, Math.Min(1f, hpFrac));
             float lifespanRemaining = twc.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) * hpFrac;
+            lifespanRemaining = Math.Max(0f, Math.Min(1f, lifespanRemaining));
 
             int percent = (int)(lifespanRemaining * 100f);
+            percent = Math.Max(0, Math.Min(100, percent));
             return $"{tool.LabelShort} ({percent}%)";
         }
 
@@ -74,12 +79,17 @@ namespace SurvivalTools
         {
             var culprits = WorkersDamagedTools.ToList();
             if (culprits.Count == 0) return TaggedString.Empty;
-
+            // Build concise grouped explanation like:
+            // (2) 30% - Hammer, Axe
             var sb = new StringBuilder();
             sb.AppendLine("SurvivalToolNeedsReplacingDesc".Translate());
 
+            // Map from tool summary -> list of pawns
+            var groups = new Dictionary<string, List<string>>();
+
             foreach (var p in culprits)
             {
+                if (p == null) continue;
                 var failing = p.GetAllUsableSurvivalTools()
                     .OfType<SurvivalTool>()
                     .Where(IsToolBelowThreshold)
@@ -87,21 +97,25 @@ namespace SurvivalTools
 
                 if (failing.Count == 0) continue;
 
-                sb.AppendLine($"\n{p.LabelShort}:");
-
                 foreach (var tool in failing)
                 {
-                    var replacement = SurvivalToolDiscovery.GetBestReplacement(p, tool);
-                    if (replacement != null)
-                    {
-                        sb.AppendLine($"  {FormatToolLifespan(tool)} → Replacement: {replacement.label}");
-                    }
-                    else
-                    {
-                        sb.AppendLine($"  {FormatToolLifespan(tool)}");
-                    }
+                    var summary = FormatToolLifespan(tool);
+                    if (!groups.ContainsKey(summary)) groups[summary] = new List<string>();
+                    groups[summary].Add(p.LabelShort);
                 }
             }
+
+            // Render up to 3 lines ordered by number of affected pawns
+            foreach (var kv in groups.OrderByDescending(kv => kv.Value.Count).Take(3))
+            {
+                var toolNames = kv.Key; // already contains percent info
+                var pawnList = kv.Value.Distinct().Take(3);
+                sb.AppendLine($"({kv.Value.Count}) {toolNames} - {string.Join(", ", pawnList)}");
+            }
+
+            int remaining = groups.Values.Sum(list => list.Count) - groups.Values.Take(3).Sum(list => list.Count);
+            if (remaining > 0)
+                sb.AppendLine("...and " + remaining + " more");
 
             return sb.ToString();
         }

@@ -1,5 +1,5 @@
 ﻿// Rimworld 1.6 / C# 7.3
-// PawnColumnWorker_SurvivalToolAssignment.cs
+// Source/ToolAssignments/PawnColumnWorker_SurvivalToolAssignment.cs
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;

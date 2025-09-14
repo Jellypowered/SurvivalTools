@@ -1,5 +1,6 @@
 ﻿// Rimworld 1.6 / C# 7.3
-// SurvivalToolSettings.cs
+// Source/SurvivalToolsSettings.cs
+using System;
 using UnityEngine;
 using Verse;
 using RimWorld;
@@ -162,31 +163,51 @@ namespace SurvivalTools
             {
                 Text.Font = GameFont.Small;
                 Text.Anchor = TextAnchor.UpperLeft;
+                // Reserve space at the bottom for the pinned Enhanced Settings button so it's always visible
+                const float bottomReserved = 60f; // button height + padding
 
                 // Calculate content height for scrolling
                 float contentHeight = CalculateMainWindowContentHeight();
 
-                // Create scrollable area if content is taller than available space
-                if (contentHeight > inRect.height)
-                {
-                    var viewRect = new Rect(0, 0, inRect.width - 20f, contentHeight);
-                    Widgets.BeginScrollView(inRect, ref mainScrollPosition, viewRect);
+                // Scroll area (exclude reserved bottom area)
+                var scrollRect = new Rect(inRect.x, inRect.y, inRect.width, Mathf.Max(0f, inRect.height - bottomReserved));
 
-                    var listing = new Listing_Standard();
-                    listing.Begin(viewRect);
-                    DrawSettingsContent(listing);
-                    listing.End();
+                // Inner view rect: width accounts for vertical scrollbar, height is at least the visible scroll area
+                var viewRect = new Rect(0, 0, scrollRect.width - 20f, Mathf.Max(scrollRect.height, contentHeight));
 
-                    Widgets.EndScrollView();
-                }
-                else
+                Widgets.BeginScrollView(scrollRect, ref mainScrollPosition, viewRect);
+                var listing = new Listing_Standard();
+                listing.Begin(viewRect);
+                DrawSettingsContent(listing);
+                listing.End();
+                Widgets.EndScrollView();
+
+                // Draw pinned Enhanced Settings button centered in the reserved bottom area
+                var buttonWidth = 280f;
+                var buttonHeight = 45f;
+                var buttonArea = new Rect(inRect.x, inRect.yMax - bottomReserved, inRect.width, bottomReserved);
+                var buttonRect = new Rect(
+                    buttonArea.x + (buttonArea.width - buttonWidth) / 2f,
+                    buttonArea.y + (buttonArea.height - buttonHeight) / 2f,
+                    buttonWidth,
+                    buttonHeight
+                );
+
+                var originalColor = GUI.color;
+                GUI.color = new Color(1f, 0.3f, 0.3f); // Red color
+                if (Widgets.ButtonText(buttonRect, "Settings_OpenEnhancedButton".Translate()))
                 {
-                    // No scrolling needed, use standard approach
-                    var listing = new Listing_Standard();
-                    listing.Begin(inRect);
-                    DrawSettingsContent(listing);
-                    listing.End();
+                    InitializeOptionalToolCache();
+                    var existingWindow = Find.WindowStack.Windows.OfType<SurvivalToolsResizableSettingsWindow>().FirstOrDefault();
+                    if (existingWindow != null)
+                    {
+                        Find.WindowStack.TryRemove(existingWindow);
+                    }
+
+                    var window = new SurvivalToolsResizableSettingsWindow(this);
+                    Find.WindowStack.Add(window);
                 }
+                GUI.color = originalColor;
             }
             finally
             {
@@ -278,7 +299,7 @@ namespace SurvivalTools
             listing.GapLine();
             Text.Font = GameFont.Medium;
             GUI.color = Color.cyan;
-            listing.Label("Normal Mode Work Speed Settings");
+            listing.Label("Settings_NormalModeSection".Translate());
             GUI.color = prevColor;
             Text.Font = prevFont;
 
@@ -288,23 +309,19 @@ namespace SurvivalTools
             var explanationRect = listing.GetRect(60f);
             Widgets.DrawBoxSolid(explanationRect, new Color(0.1f, 0.1f, 0.2f, 0.3f));
             var textRect = explanationRect.ContractedBy(6f);
-            Widgets.Label(textRect,
-                "Normal Mode Behavior:\n" +
-                "• Core work (mining, construction, farming, crafting) gets penalties without tools\n" +
-                "• Optional work (cleaning, research, medical) is unaffected\n" +
-                "• Hardcore mode applies penalties to ALL work types");
+            Widgets.Label(textRect, "Settings_NormalMode_Explanation".Translate());
             GUI.color = prevColor;
             Text.Font = prevFont;
             listing.Gap(4f);
 
             // Enable/disable penalties entirely
-            listing.CheckboxLabeled("Enable Normal Mode Penalties", ref enableNormalModePenalties,
-                "When enabled, pawns work slower at core tasks without proper tools in normal mode. When disabled, only hardcore mode applies penalties.");
+            listing.CheckboxLabeled("Settings_EnableNormalModePenalties".Translate(), ref enableNormalModePenalties,
+                "Settings_EnableNormalModePenalties_Tooltip".Translate());
 
             // Penalty severity slider (only show when penalties are enabled)
             if (enableNormalModePenalties)
             {
-                var penaltyLabel = "Normal Mode Tool Penalty";
+                var penaltyLabel = "Settings_NormalModeToolPenalty".Translate();
                 var penaltyPercent = (1f - noToolStatFactorNormal) * 100f;
                 listing.Label($"{penaltyLabel}: {penaltyPercent:F0}% slower without tools");
                 noToolStatFactorNormal = 1f - (listing.Slider(1f - noToolStatFactorNormal, 0f, 0.8f));
@@ -313,7 +330,7 @@ namespace SurvivalTools
                 // Helper text
                 GUI.color = Color.gray;
                 Text.Font = GameFont.Tiny;
-                listing.Label("(Applies only to core work: mining, construction, farming, crafting. Optional work like cleaning is unaffected.)");
+                listing.Label("Settings_NormalModePenalties_HelperText".Translate());
                 GUI.color = prevColor;
                 Text.Font = prevFont;
             }
@@ -322,7 +339,7 @@ namespace SurvivalTools
                 // Show what this means when disabled
                 GUI.color = Color.gray;
                 Text.Font = GameFont.Tiny;
-                listing.Label("Normal mode penalties disabled - pawns work at full speed without tools except in hardcore mode.");
+                listing.Label("Settings_NormalModePenalties_Disabled".Translate());
                 GUI.color = prevColor;
                 Text.Font = prevFont;
             }
@@ -362,46 +379,7 @@ namespace SurvivalTools
             listing.GapLine();
             listing.Gap(6f);
 
-            // Enhanced Settings Button - Red and Centered
-            Text.Font = prevFont;
-            Text.Anchor = prevAnchor;
-
-            // Use listing to get properly positioned button
-            var buttonWidth = 280f;
-            var buttonHeight = 45f;
-            var fullButtonRect = listing.GetRect(buttonHeight);
-
-            // Center the button within the available width
-            var buttonRect = new Rect(
-                fullButtonRect.x + (fullButtonRect.width - buttonWidth) / 2f,
-                fullButtonRect.y,
-                buttonWidth,
-                buttonHeight
-            );
-
-            // Draw red enhanced settings button
-            var originalColor = GUI.color;
-            GUI.color = new Color(1f, 0.3f, 0.3f); // Red color
-
-            if (Widgets.ButtonText(buttonRect, "Settings_OpenEnhancedButton".Translate()))
-            {
-                // Ensure cache is initialized before showing settings
-                InitializeOptionalToolCache();
-
-                // Close any existing resizable window first
-                var existingWindow = Find.WindowStack.Windows.OfType<SurvivalToolsResizableSettingsWindow>().FirstOrDefault();
-                if (existingWindow != null)
-                {
-                    Find.WindowStack.TryRemove(existingWindow);
-                }
-
-                var window = new SurvivalToolsResizableSettingsWindow(this);
-                Find.WindowStack.Add(window);
-            }
-
-            GUI.color = originalColor;
-
-            // Restore original styling
+            // Restore original styling (button is pinned below the scroll area)
             Text.Font = prevFont;
             Text.Anchor = prevAnchor;
             GUI.color = prevColor;
@@ -434,7 +412,7 @@ namespace SurvivalTools
             // Draw blue WorkSpeedGlobal config button
             GUI.color = new Color(0.3f, 0.5f, 1f); // Blue color
 
-            if (Widgets.ButtonText(buttonRect, "Configure WorkSpeedGlobal Jobs"))
+            if (Widgets.ButtonText(buttonRect, "WorkSpeedGlobal_OpenConfigButton".Translate()))
             {
                 // Close any existing WorkSpeedGlobal window first
                 var existingWindow = Find.WindowStack.Windows.OfType<WorkSpeedGlobalConfigWindow>().FirstOrDefault();
@@ -506,7 +484,7 @@ namespace SurvivalTools
 
             if (activeColumns == 0)
             {
-                listing.Label("No active mode selected.");
+                listing.Label("JobTable_NoActiveMode".Translate());
                 return;
             }
 
@@ -527,9 +505,9 @@ namespace SurvivalTools
             }
 
             // Also check the column headers to ensure they fit with more generous padding
-            var extraHardcoreHeaderWidth = Text.CalcSize("Extra Hardcore").x + 60f; // Increased padding significantly
-            var requiredTextWidth = Text.CalcSize("Required").x + 60f;
-            var gatedTextWidth = Text.CalcSize("Gated (99/99)").x + 60f; // Account for worst case gated text with extra padding
+            var extraHardcoreHeaderWidth = Text.CalcSize("JobTable_ExtraHardcore".Translate()).x + 80f; // Increased padding significantly
+            var requiredTextWidth = Text.CalcSize("JobTable_Required".Translate()).x + 80f;
+            var gatedTextWidth = Text.CalcSize("JobTable_GatedExample".Translate()).x + 80f; // Account for worst case gated text with extra padding
             var minNeededColumnWidth = Mathf.Max(extraHardcoreHeaderWidth, Mathf.Max(requiredTextWidth, gatedTextWidth));
 
             Text.Font = measureFont; // Restore font
@@ -857,7 +835,7 @@ namespace SurvivalTools
                         var totalJobs = WorkSpeedGlobalHelper.GetWorkSpeedGlobalJobs().Count();
                         if (gatedJobs == totalJobs) return "JobTable_Required".Translate();
                         if (gatedJobs == 0) return "JobTable_Enhanced".Translate();
-                        return $"Gated ({gatedJobs}/{totalJobs})";
+                        return "JobTable_GatedFormat".Translate(gatedJobs, totalJobs);
                     }
                     if (category.IsOptional && (category.Name == "Cleaning" || category.Name == "Butchery"))
                         return "JobTable_Enhanced".Translate(); // Still optional in hardcore
@@ -871,7 +849,7 @@ namespace SurvivalTools
                         var totalJobs = WorkSpeedGlobalHelper.GetWorkSpeedGlobalJobs().Count();
                         if (gatedJobs == totalJobs) return "JobTable_Required".Translate();
                         if (gatedJobs == 0) return "JobTable_Enhanced".Translate();
-                        return $"Gated ({gatedJobs}/{totalJobs})";
+                        return "JobTable_GatedFormat".Translate(gatedJobs, totalJobs);
                     }
                     if (category.Name == "Cleaning" && !requireCleaningTools) return "JobTable_Enhanced".Translate();
                     if (category.Name == "Butchery" && !requireButcheryTools) return "JobTable_Enhanced".Translate();
@@ -879,20 +857,18 @@ namespace SurvivalTools
                     return "JobTable_Required".Translate(); // Tools are required based on settings
 
                 default:
-                    return "Unknown";
+                    return "JobTable_Status_Unknown".Translate();
             }
         }
 
         private Color GetModeColor(JobCategory category, GameMode mode)
         {
             var status = GetModeStatusText(category, mode);
-            switch (status)
-            {
-                case "Enhanced": return Color.green;
-                case "Required": return Color.yellow;
-                case "Blocked": return Color.red;
-                default: return Color.white;
-            }
+            // Compare with localized equivalents
+            if (status == "JobTable_Enhanced".Translate()) return Color.green;
+            if (status == "JobTable_Required".Translate()) return Color.yellow;
+            if (status == "JobTable_Blocked".Translate()) return Color.red;
+            return Color.white;
         }
 
         private enum GameMode
@@ -1034,8 +1010,8 @@ namespace SurvivalTools
                 // Calculate dynamic content height
                 float contentHeight = CalculateDynamicContentHeight(contentRect.width);
 
-                // Create scrollable area
-                var viewRect = new Rect(0, 0, contentRect.width - 20f, contentHeight);
+                // Ensure the inner view rect height is at least the visible view height so bottom controls remain reachable
+                var viewRect = new Rect(0, 0, contentRect.width - 20f, Mathf.Max(contentRect.height, contentHeight));
 
                 Widgets.BeginScrollView(contentRect, ref scrollPosition, viewRect);
 
@@ -1388,8 +1364,8 @@ namespace SurvivalTools
 
             if (needsScrolling)
             {
-                // Use scroll view for content
-                Rect viewRect = new Rect(0, 0, contentAreaRect.width - 20f, contentHeight);
+                // Use scroll view for content. Ensure view height is at least the visible content area to prevent clipping
+                Rect viewRect = new Rect(0, 0, contentAreaRect.width - 20f, Mathf.Max(contentAreaRect.height, contentHeight));
 
                 Widgets.BeginScrollView(contentAreaRect, ref enhancedScrollPosition, viewRect);
 

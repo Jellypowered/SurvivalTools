@@ -107,11 +107,27 @@
     <Compat_FieldResearch>Feldforschung</Compat_FieldResearch>
     <Compat_ReinventedResearchAlert>Neu Erfundene Forschung</Compat_ReinventedResearchAlert>
 
-</LanguageData>
+    <!-- WorkSpeedGlobal Konfiguration (hinzugefügt) -->
+    <!-- Added WorkSpeedGlobal translation keys -->
+    <WorkSpeedGlobal_Title>Konfiguration allgemeine Arbeitsgeschwindigkeit</WorkSpeedGlobal_Title>
+    <WorkSpeedGlobal_Description>Wählen Sie, welche Arbeiten, die die allgemeine Arbeitsgeschwindigkeits-Stat verwenden, durch Überlebenswerkzeuge begrenzt werden sollen. Nicht begrenzte Arbeiten ignorieren Werkzeugstrafen ohne passende Werkzeuge.</WorkSpeedGlobal_Description>
+    <WorkSpeedGlobal_JobTypeHeader>Arbeitstyp</WorkSpeedGlobal_JobTypeHeader>
+    <WorkSpeedGlobal_GatedHeader>Begrenzt</WorkSpeedGlobal_GatedHeader>
+    <WorkSpeedGlobal_DescriptionHeader>Beschreibung</WorkSpeedGlobal_DescriptionHeader>
+    <WorkSpeedGlobal_NoJobsFound>Keine allgemeinen Arbeitsgeschwindigkeits-Jobs gefunden.</WorkSpeedGlobal_NoJobsFound>
+    <WorkSpeedGlobal_EnableAll>Alle aktivieren</WorkSpeedGlobal_EnableAll>
+    <WorkSpeedGlobal_DisableAll>Alle deaktivieren</WorkSpeedGlobal_DisableAll>
+    <WorkSpeedGlobal_ResetDefaults>Standard wiederherstellen</WorkSpeedGlobal_ResetDefaults>
+    <WorkSpeedGlobal_TraceWorkGivers>WorkGivers protokollieren</WorkSpeedGlobal_TraceWorkGivers>
+    <WorkSpeedGlobal_JobStatus_Gated>Benötigt Werkzeuge in Hardcore-Modi</WorkSpeedGlobal_JobStatus_Gated>
+    <WorkSpeedGlobal_JobStatus_Ungated>Keine Werkzeugstrafen</WorkSpeedGlobal_JobStatus_Ungated>
+    <WorkSpeedGlobal_OpenConfigButton>Allgemeine Arbeitsgeschwindigkeits-Jobs konfigurieren</WorkSpeedGlobal_OpenConfigButton>
 
-<!-- Mod Compatibility -->
-<Compat_ResearchReinvented>Forschung Neu Erfunden</Compat_ResearchReinvented>
-<Compat_FieldResearch>Feldforschung</Compat_FieldResearch>
-<Compat_ReinventedResearchAlert>Forschung Neu Erfunden</Compat_ReinventedResearchAlert>
+    <!-- Job Table Additional (hinzugefügt) -->
+    <JobTable_NoActiveMode>Kein aktiver Modus ausgewählt.</JobTable_NoActiveMode>
+    <JobTable_GatedFormat>Begrenzt ({0}/{1})</JobTable_GatedFormat>
+    <JobTable_GatedExample>Begrenzt (99/99)</JobTable_GatedExample>
+    <JobTable_Status_Unknown>Unbekannt</JobTable_Status_Unknown>
+    <JobTable_Blocked>Blockiert</JobTable_Blocked>
 
 </LanguageData>

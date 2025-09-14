@@ -1,5 +1,5 @@
-// RimWorld 1.6 / C# 7.3
-// RR debug helpers and patch logger (consolidated)
+﻿// RimWorld 1.6 / C# 7.3
+// Source/Compatibility/ResearchReinvented/RRDebug.cs
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,8 +13,10 @@ namespace SurvivalTools.Compat.ResearchReinvented
 {
     public static class RRDebug
     {
+#if DEBUG
         [DebugAction("SurvivalTools", "Dump Research Reinvented Harmony patches")]
         public static void DumpResearchReinventedPatches_DebugAction() => DumpResearchReinventedPatches();
+#endif
 
         public static void DumpResearchReinventedPatches()
         {

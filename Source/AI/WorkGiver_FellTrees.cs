@@ -1,5 +1,5 @@
 ﻿// RimWorld 1.6 / C# 7.3
-// WorkGiver_FellTrees.cs — defensive + unified style
+// Source/AI/WorkGiver_FellTrees.cs
 using System.Collections.Generic;
 using RimWorld;
 using Verse;

@@ -1,5 +1,5 @@
-// RimWorld 1.6 / C# 7.3
-// Consolidated helpers for Research Reinvented compat (reflection, runtime adapters, settings)
+﻿// RimWorld 1.6 / C# 7.3
+// Source/Compatibility/ResearchReinvented/RRHelpers.cs
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -12,6 +12,8 @@ using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.Compat.ResearchReinvented
 {
+    // Pacifist equip handled centrally in Patch_EquipmentUtility_CanEquip_PacifistTools.cs
+
     public static class RRHelpers
     {
         // ---- detection cache ------------------------------------------------
@@ -216,25 +218,22 @@ namespace SurvivalTools.Compat.ResearchReinvented
         // ---- postfixes ------------------------------------------------------
         internal static class RRPostfixes
         {
-            private static readonly Dictionary<int, int> _lastLoggedTick = new Dictionary<int, int>();
-            private static bool CanLogNow(Pawn p, int cooldownTicks = 120)
-            {
-                if (!ST_Logging.IsDebugLoggingEnabled) return false;
-                int now = Find.TickManager.TicksGame;
-                int id = p?.thingIDNumber ?? -1;
-                if (id < 0) return false;
-                if (_lastLoggedTick.TryGetValue(id, out int last) && now - last < cooldownTicks) return false;
-                _lastLoggedTick[id] = now;
-                return true;
-            }
-
+            // Use the deduplicated tool-gate logger to avoid spamming ResearchReinvented's frequent checks.
+            // Keyed by pawn+job/stat, the logger immediately emits the first denial and suppresses repeats for
+            // a short window, then prints a summary when suppressed counts exist.
             public static void CanEverDoResearch_Postfix(Pawn __0, ref bool __result)
             {
                 if (!__result || __0 == null) return;
                 if (!CompatAPI.PawnHasResearchTools(__0) && ShouldRRReturnFalseWhenNoTool())
                 {
                     __result = false;
-                    if (CanLogNow(__0)) Log.Message($"[SurvivalTools RR] CanEverDoResearch=false for {__0.LabelShort} (missing research tool, extra-hardcore).");
+                    try
+                    {
+                        // Use ResearchSpeed stat where available
+                        var stat = CompatAPI.GetResearchSpeedStat() ?? ST_StatDefOf.ResearchSpeed;
+                        ST_Logging.LogToolGateEvent(__0, null, stat, "missing research tool (RR CanEverDoResearch)");
+                    }
+                    catch { }
                 }
             }
 
@@ -244,7 +243,12 @@ namespace SurvivalTools.Compat.ResearchReinvented
                 if (!CompatAPI.PawnHasResearchTools(__0) && ShouldRRReturnFalseWhenNoTool())
                 {
                     __result = false;
-                    if (CanLogNow(__0)) Log.Message($"[SurvivalTools RR] CanNowDoResearch=false for {__0.LabelShort} (missing research tool, extra-hardcore).");
+                    try
+                    {
+                        var stat = CompatAPI.GetResearchSpeedStat() ?? ST_StatDefOf.ResearchSpeed;
+                        ST_Logging.LogToolGateEvent(__0, null, stat, "missing research tool (RR CanNowDoResearch)");
+                    }
+                    catch { }
                 }
             }
         }

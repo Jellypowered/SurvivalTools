@@ -104,4 +104,27 @@
     <Settings_AllowPacifistEquip>Permitir a pacifistas equipar herramientas de supervivencia</Settings_AllowPacifistEquip>
     <Settings_AllowPacifistEquip_Tooltip>Permite a los colonos pacifistas equipar herramientas de supervivencia clasificadas como armas (como hachas, picos o cuchillos). Aunque estas herramientas tienen capacidades de combate, son esenciales para tareas laborales como tala de árboles, minería o preparación de alimentos. Cuando está habilitado, los pacifistas pueden usar estas herramientas para trabajo productivo mientras siguen rehusando participar en violencia.</Settings_AllowPacifistEquip_Tooltip>
 
+    <!-- Configuración WorkSpeedGlobal (añadido) -->
+    <!-- Added WorkSpeedGlobal translation keys -->
+    <WorkSpeedGlobal_Title>Configuración de trabajos velocidad general</WorkSpeedGlobal_Title>
+    <WorkSpeedGlobal_Description>Seleccione qué trabajos que usan la estadística de velocidad de trabajo general deben estar restringidos por herramientas de supervivencia. Los trabajos no restringidos ignoran penalizaciones por falta de herramientas.</WorkSpeedGlobal_Description>
+    <WorkSpeedGlobal_JobTypeHeader>Tipo de trabajo</WorkSpeedGlobal_JobTypeHeader>
+    <WorkSpeedGlobal_GatedHeader>Restringido</WorkSpeedGlobal_GatedHeader>
+    <WorkSpeedGlobal_DescriptionHeader>Descripción</WorkSpeedGlobal_DescriptionHeader>
+    <WorkSpeedGlobal_NoJobsFound>No se encontraron trabajos de velocidad general.</WorkSpeedGlobal_NoJobsFound>
+    <WorkSpeedGlobal_EnableAll>Habilitar todo</WorkSpeedGlobal_EnableAll>
+    <WorkSpeedGlobal_DisableAll>Deshabilitar todo</WorkSpeedGlobal_DisableAll>
+    <WorkSpeedGlobal_ResetDefaults>Restablecer</WorkSpeedGlobal_ResetDefaults>
+    <WorkSpeedGlobal_TraceWorkGivers>Rastrear WorkGivers</WorkSpeedGlobal_TraceWorkGivers>
+    <WorkSpeedGlobal_JobStatus_Gated>Requiere herramientas en modos hardcore</WorkSpeedGlobal_JobStatus_Gated>
+    <WorkSpeedGlobal_JobStatus_Ungated>Sin penalización de herramientas</WorkSpeedGlobal_JobStatus_Ungated>
+    <WorkSpeedGlobal_OpenConfigButton>Configurar trabajos de velocidad general</WorkSpeedGlobal_OpenConfigButton>
+
+    <!-- Job Table Additional (añadido) -->
+    <JobTable_NoActiveMode>No hay modo activo seleccionado.</JobTable_NoActiveMode>
+    <JobTable_GatedFormat>Restringido ({0}/{1})</JobTable_GatedFormat>
+    <JobTable_GatedExample>Restringido (99/99)</JobTable_GatedExample>
+    <JobTable_Status_Unknown>Desconocido</JobTable_Status_Unknown>
+    <JobTable_Blocked>Bloqueado</JobTable_Blocked>
+
 </LanguageData>

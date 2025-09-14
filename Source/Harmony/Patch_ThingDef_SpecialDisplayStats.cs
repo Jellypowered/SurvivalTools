@@ -1,5 +1,5 @@
 ﻿// Rimworld 1.6 / C# 7.3
-// Patch_ThingDef_SpecialDisplayStats.cs
+// Source/Harmony/Patch_ThingDef_SpecialDisplayStats.cs
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;

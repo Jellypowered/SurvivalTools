@@ -1,5 +1,6 @@
-// RimWorld 1.6 / C# 7.3
+﻿// RimWorld 1.6 / C# 7.3
 // Source/Helpers/ToolClassification.cs
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;

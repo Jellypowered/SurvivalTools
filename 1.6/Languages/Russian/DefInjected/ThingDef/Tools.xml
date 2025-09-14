@@ -62,4 +62,37 @@
     <SurvivalTools_PileOfRags.label>груда тряпок</SurvivalTools_PileOfRags.label>
     <SurvivalTools_PileOfRags.description>Простой инструмент для уборки, изготовленный из тряпок и кусков ткани. Полезен для основных задач по уборке, но быстро изнашивается.</SurvivalTools_PileOfRags.description>
 
+    <!-- =================================================== -->
+    <!-- МНОГОФУНКЦИОНАЛЬНЫЕ ОБЩИЕ ИНСТРУМЕНТЫ (WorkSpeedGlobal) -->
+    <!-- Новые определения требуют локализации                 -->
+    <!-- =================================================== -->
+
+    <!-- Племенной / Примитивный уровень -->
+    <SurvivalTools_MultipurposeStoneTool.label>многоцельной каменный инструмент</SurvivalTools_MultipurposeStoneTool.label>
+    <SurvivalTools_MultipurposeStoneTool.description>Прочный универсальный каменный инструмент, обтёсанный для покрытия множества общих задач. Примитивен, но слегка повышает общую скорость работы.</SurvivalTools_MultipurposeStoneTool.description>
+
+    <SurvivalTools_CarvedBoneImplements.label>набор резных костяных принадлежностей</SurvivalTools_CarvedBoneImplements.label>
+    <SurvivalTools_CarvedBoneImplements.description>Набранный вместе комплект аккуратно вырезанных костяных приспособлений для многоцелевого применения. Хрупок, но эффективная форма даёт заметный прирост общей скорости работы.</SurvivalTools_CarvedBoneImplements.description>
+
+    <!-- Средневековый уровень -->
+    <SurvivalTools_ArtisansToolkit.label>набор инструментов ремесленника</SurvivalTools_ArtisansToolkit.label>
+    <SurvivalTools_ArtisansToolkit.description>Курированный набор качественных инструментов средневековой эпохи для изготовления, формования и сборки. Повышает общий пропуск множества задач.</SurvivalTools_ArtisansToolkit.description>
+
+    <SurvivalTools_WoodworkersKit.label>набор столяра</SurvivalTools_WoodworkersKit.label>
+    <SurvivalTools_WoodworkersKit.description>Специализированный набор пил, стамесок, рубанков и шаблонов, оптимизированных под обработку древесины и соединения. Организация и качество дают сильный бонус к общей скорости.</SurvivalTools_WoodworkersKit.description>
+
+    <!-- Индустриальный уровень -->
+    <SurvivalTools_MechanicsToolkit.label>инструментальный набор механика</SurvivalTools_MechanicsToolkit.label>
+    <SurvivalTools_MechanicsToolkit.description>Организованный индустриальный комплект с точными ключами, измерительными приборами, моментными инструментами и быстрой системой хранения. Сильно улучшает поток и координацию общих задач.</SurvivalTools_MechanicsToolkit.description>
+
+    <SurvivalTools_WorkshopHammerDrill.label>мастерская ударная дрель</SurvivalTools_WorkshopHammerDrill.label>
+    <SurvivalTools_WorkshopHammerDrill.description>Тяжёлая приводная ударная дрель со сменными ударными и вращательными модулями. Интегрированная система зажима и выравнивания ускоряет почти любую механическую или строительную задачу.</SurvivalTools_WorkshopHammerDrill.description>
+
+    <!-- Ультра-тех / Космический уровень -->
+    <SurvivalTools_NanofabricatorInterface.label>интерфейс нано-фабрикатора</SurvivalTools_NanofabricatorInterface.label>
+    <SurvivalTools_NanofabricatorInterface.description>Обтекаемый модуль управления и усиления, синхронизирующий движения пользователя с адаптивными nano-сборочными процедурами. Радикально повышает эффективность выполнения общих задач.</SurvivalTools_NanofabricatorInterface.description>
+
+    <SurvivalTools_OmniToolGauntlet.label>перчатка омни-инструмент</SurvivalTools_OmniToolGauntlet.label>
+    <SurvivalTools_OmniToolGauntlet.description>Передовая модульная перчатка с полевыми проекторами, микро-фабрикаторами и силовыми манипуляторами. Обеспечивает непревзойдённый рост общей скорости работы через предиктивную оптимизацию.</SurvivalTools_OmniToolGauntlet.description>
+
 </LanguageData>

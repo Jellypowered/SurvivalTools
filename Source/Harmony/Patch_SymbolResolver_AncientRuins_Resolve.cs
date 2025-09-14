@@ -1,5 +1,5 @@
 ﻿// RimWorld 1.6 / C# 7.3
-// Patch_SymbolResolver_AncientRuins_Resolve.cs
+// Source/Harmony/Patch_SymbolResolver_AncientRuins_Resolve.cs
 //
 // Ensures Survival Tools can spawn inside ancient ruins.
 // Fix: moved from Prefix → Postfix so tools are placed AFTER

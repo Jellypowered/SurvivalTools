@@ -62,4 +62,37 @@
     <SurvivalTools_PileOfRags.label>ぼろ布の山</SurvivalTools_PileOfRags.label>
     <SurvivalTools_PileOfRags.description>ぼろ布と布切れで作られたシンプルな清掃道具。基本的な清掃作業には有用ですが、すぐに摩耗します。</SurvivalTools_PileOfRags.description>
 
+    <!-- =================================================== -->
+    <!-- 汎用多目的作業ツール (WorkSpeedGlobal)             -->
+    <!-- 新規ツール定義のローカライズ                       -->
+    <!-- =================================================== -->
+
+    <!-- 部族 / 原始ティア -->
+    <SurvivalTools_MultipurposeStoneTool.label>多目的石器</SurvivalTools_MultipurposeStoneTool.label>
+    <SurvivalTools_MultipurposeStoneTool.description>多くの一般作業をカバーする形状に整えられた頑丈で多用途な石製器具。原始的ではあるが、全体的な作業速度をわずかに高める。</SurvivalTools_MultipurposeStoneTool.description>
+
+    <SurvivalTools_CarvedBoneImplements.label>彫刻骨製用具束</SurvivalTools_CarvedBoneImplements.label>
+    <SurvivalTools_CarvedBoneImplements.description>丁寧に彫刻された複数の骨製小道具を束ねた多目的セット。脆いが効率的な形状で、一般作業速度に目立つ向上を与える。</SurvivalTools_CarvedBoneImplements.description>
+
+    <!-- 中世ティア -->
+    <SurvivalTools_ArtisansToolkit.label>職人工具セット</SurvivalTools_ArtisansToolkit.label>
+    <SurvivalTools_ArtisansToolkit.description>製作・整形・組立のために厳選された中世期品質の工具コレクション。多数の作業全体の処理スループットを向上させる。</SurvivalTools_ArtisansToolkit.description>
+
+    <SurvivalTools_WoodworkersKit.label>木工職人工具キット</SurvivalTools_WoodworkersKit.label>
+    <SurvivalTools_WoodworkersKit.description>木材成形と仕口作業に最適化された鋸・鑿・鉋・ゲージ類の専門アソート。整理と品質により一般作業速度へ強力なボーナスを付与。</SurvivalTools_WoodworkersKit.description>
+
+    <!-- 産業ティア -->
+    <SurvivalTools_MechanicsToolkit.label>整備技師ツールキット</SurvivalTools_MechanicsToolkit.label>
+    <SurvivalTools_MechanicsToolkit.description>精密レンチ、ゲージ、トルク用具と迅速アクセス収納を収めた産業期の整理済みキット。一般タスクの流れと連携を大幅に改善する。</SurvivalTools_MechanicsToolkit.description>
+
+    <SurvivalTools_WorkshopHammerDrill.label>工房用ヘビーデューティーハンマードリル</SurvivalTools_WorkshopHammerDrill.label>
+    <SurvivalTools_WorkshopHammerDrill.description>打撃と回転モジュールを交換可能な重作業用動力ハンマードリル。統合されたクランプとアライメント機構がほぼ全ての機械/建設タスクを加速する。</SurvivalTools_WorkshopHammerDrill.description>
+
+    <!-- スペーサー / 超先進ティア -->
+    <SurvivalTools_NanofabricatorInterface.label>ナノファブリケータ・インターフェース</SurvivalTools_NanofabricatorInterface.label>
+    <SurvivalTools_NanofabricatorInterface.description>ユーザーの動作を適応型ナノ組立ルーチンと同期させる流線型の制御・強化モジュール。一般タスク遂行効率を劇的に向上させる。</SurvivalTools_NanofabricatorInterface.description>
+
+    <SurvivalTools_OmniToolGauntlet.label>オムニツール・ガントレット</SurvivalTools_OmniToolGauntlet.label>
+    <SurvivalTools_OmniToolGauntlet.description>フィールドプロジェクタ、マイクロファブリケータ、力整列マニピュレータを内蔵した最先端モジュラーガントレット。予測的最適化により一般作業速度を比類なきほど引き上げる。</SurvivalTools_OmniToolGauntlet.description>
+
 </LanguageData>

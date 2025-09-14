@@ -1,5 +1,5 @@
 ﻿//Rimworld 1.6 / C# 7.3
-//SurvivalToolsAssignmentDatabase.cs
+// Source/ToolAssignments/SurvivalToolAssignmentDatabase.cs
 using System.Linq;
 using Verse;
 using RimWorld;

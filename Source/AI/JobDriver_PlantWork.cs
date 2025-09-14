@@ -1,5 +1,5 @@
 ﻿// RimWorld 1.6 / C# 7.3
-// JobDriver_PlantWork.cs (defensive / unified gating / NRE-safe tweaks)
+// Source/AI/JobDriver_PlantWork.cs
 using System;
 using System.Collections.Generic;
 using RimWorld;

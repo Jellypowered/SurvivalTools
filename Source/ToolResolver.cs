@@ -1,5 +1,8 @@
-using System.Collections.Generic;
+﻿// RimWorld 1.6 / C# 7.3
+// Source/ToolResolver.cs
+using System;
 using System.Linq;
+using System.Collections.Generic;
 using RimWorld;
 using Verse;
 using static SurvivalTools.ST_Logging;

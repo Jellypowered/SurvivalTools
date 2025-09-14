@@ -1,4 +1,5 @@
-// RimWorld 1.6, C# 7.3
+﻿// RimWorld 1.6 / C# 7.3
+// Source/Harmony/Patch_EquipmentUtility_CanEquip_PacifistTools.cs
 // Patch_EquipmentUtility_CanEquip_PacifistTools.cs
 using System;
 using System.Collections.Generic;
@@ -58,7 +59,7 @@ namespace SurvivalTools.HarmonyStuff
             }
             catch
             {
-                // Unexpected pawn state — be conservative
+                // Unexpected pawn state â€” be conservative
                 return;
             }
 
@@ -70,7 +71,7 @@ namespace SurvivalTools.HarmonyStuff
             if (thing.IsForbidden(pawn)) return;
             if (IsBiocodedForDifferentPawn(thing, pawn)) return;
 
-            // Passed all checks — allow equip for pacifist
+            // Passed all checks â€” allow equip for pacifist
             if (IsDebugLoggingEnabled)
             {
                 string key = $"AllowPacifistEquip_{pawn.ThingID}_{thing.ThingID}";

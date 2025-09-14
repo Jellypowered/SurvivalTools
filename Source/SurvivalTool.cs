@@ -95,61 +95,25 @@ namespace SurvivalTools
 
         private void InitializeWorkStatFactors()
         {
-            var factors = new List<StatModifier>();
-
+            // Use the centralized ToolFactorCache for fast, safe caching. The cache implements
+            // delayed activation so we avoid using it too early during PostLoad init which
+            // previously led to CTDs. Before activation the cache computes results on-the-fly
+            // without storing them. Once initialized, results are cached and re-used.
             try
             {
-                // 1) From tool def mod extension (e.g., Abacus has ResearchSpeed here)
-                var defExt = def?.GetModExtension<SurvivalToolProperties>();
-                if (defExt?.baseWorkStatFactors != null)
-                {
-                    factors.AddRange(defExt.baseWorkStatFactors
-                        .Where(m => m?.stat != null && m.value != 0f));
-                }
-
-                // 2) From tool def statBases (legacy / harmless extras)
-                if (def?.statBases != null)
-                {
-                    factors.AddRange(def.statBases
-                        .Where(m => m?.stat != null && m.value != 0f));
-                }
-
-                // 3) From stuff’s mod extension (cloth, hyperweave, etc.)
-                if (def?.MadeFromStuff == true && Stuff != null)
-                {
-                    var stuffExt = Stuff.GetModExtension<SurvivalToolProperties>();
-                    if (stuffExt?.baseWorkStatFactors != null)
-                    {
-                        factors.AddRange(stuffExt.baseWorkStatFactors
-                            .Where(m => m?.stat != null && m.value != 0f));
-                    }
-
-                    // Also check for StuffPropsTool (for DLC materials like Bioferrite/Obsidian)
-                    var stuffPropsExt = Stuff.GetModExtension<StuffPropsTool>();
-                    if (stuffPropsExt?.toolStatFactors != null)
-                    {
-                        LogDebug($"SurvivalTool.InitializeWorkStatFactors: Found StuffPropsTool on {Stuff?.defName} with {stuffPropsExt.toolStatFactors.Count} factors (applied as multipliers)");
-                        // Note: StuffPropsTool factors are applied as multipliers in CalculateWorkStatFactors,
-                        // not added as base stats here. This prevents tools from gaining unrelated stats.
-                    }
-                    else
-                    {
-                        LogDebug($"SurvivalTool.InitializeWorkStatFactors: No StuffPropsTool found on {Stuff?.defName}");
-                    }
-                }
-
-                // Dedupe by stat; keep highest value for stability/readability
-                _workStatFactors = factors
-                    .GroupBy(m => m.stat)
-                    .Select(g => new StatModifier { stat = g.Key, value = g.Max(x => x.value) })
-                    .ToList();
-
-                LogDebug($"SurvivalTool.InitializeWorkStatFactors: Final factors for {def?.defName} made from {Stuff?.defName}: {string.Join(", ", _workStatFactors.Select(f => $"{f.stat?.defName}={f.value:F2}"))}");
+                // Request precomputed factors from the central cache. Pass this SurvivalTool
+                // so the cache can apply any instance-specific multipliers if necessary.
+                var computed = SurvivalToolUtility.ToolFactorCache.GetOrComputeToolFactors(def, Stuff, this);
+                _workStatFactors = computed ?? new List<StatModifier>();
             }
-            catch
+            catch (Exception ex)
             {
-                // If something goes sideways, keep it empty rather than throwing
+                // Never throw during initialization; keep an empty list on failure.
                 _workStatFactors = new List<StatModifier>();
+                if (IsDebugLoggingEnabled)
+                {
+                    try { Log.Message($"[SurvivalTools] InitializeWorkStatFactors failed for {def?.defName ?? "null"}: {ex}"); } catch { }
+                }
             }
         }
 

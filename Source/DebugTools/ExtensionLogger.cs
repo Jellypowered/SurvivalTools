@@ -1,5 +1,6 @@
-// RimWorld 1.6 / C# 7.3
+﻿// RimWorld 1.6 / C# 7.3
 // Source/DebugTools/ExtensionLogger.cs
+using System;
 //
 // Debug utility for logging ThingDefs with SurvivalToolProperties and dumping Harmony patches.
 // Runs only when triggered from the in-game Debug Actions menu.
@@ -16,6 +17,7 @@ namespace SurvivalTools.DebugTools
 {
     public static class SurvivalToolExtensionLogger
     {
+#if DEBUG
         [DebugAction("SurvivalTools", "Dump SurvivalTool extensions + Harmony patches")]
         public static void DumpExtensionsAndPatches_DebugAction()
         {
@@ -30,6 +32,7 @@ namespace SurvivalTools.DebugTools
                 LogError($"[SurvivalTools] ExtensionLogger failed: {e}");
             }
         }
+#endif
 
         private static void LogSurvivalToolExtensions()
         {

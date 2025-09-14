@@ -46,7 +46,7 @@
         <scenarioRandomizable>true</scenarioRandomizable>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactorHardcore>0</noToolStatFactorHardcore>
+                <noToolStatFactor>0.5</noToolStatFactor>
             </li>
         </parts>
         <postProcessCurve>
@@ -112,7 +112,6 @@
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
                 <noToolStatFactor>0.5</noToolStatFactor>
-                <noToolStatFactorHardcore>0</noToolStatFactorHardcore>
             </li>
         </parts>
     </StatDef>
@@ -187,8 +186,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.7</noToolStatFactor>
-                <noToolStatFactorHardcore>0</noToolStatFactorHardcore>
+                <noToolStatFactor>0.5</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -225,7 +223,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactorHardcore>0</noToolStatFactorHardcore>
+                <noToolStatFactor>0.5</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -263,7 +261,6 @@
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
                 <noToolStatFactor>0.5</noToolStatFactor>
-                <noToolStatFactorHardcore>0</noToolStatFactorHardcore>
             </li>
         </parts>
     </StatDef>
@@ -299,8 +296,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.7</noToolStatFactor>
-                <noToolStatFactorHardcore>0</noToolStatFactorHardcore>
+                <noToolStatFactor>0.5</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -342,8 +338,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.7</noToolStatFactor>
-                <noToolStatFactorHardcore>0</noToolStatFactorHardcore>
+                <noToolStatFactor>0.5</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -374,7 +369,6 @@
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
                 <noToolStatFactor>0.5</noToolStatFactor>
-                <noToolStatFactorHardcore>0.5</noToolStatFactorHardcore>
             </li>
         </parts>
     </StatDef>
@@ -416,8 +410,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.7</noToolStatFactor>
-                <noToolStatFactorHardcore>0</noToolStatFactorHardcore>
+                <noToolStatFactor>0.5</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -456,8 +449,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.8</noToolStatFactor>
-                <noToolStatFactorHardcore>0</noToolStatFactorHardcore>
+                <noToolStatFactor>0.5</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -494,8 +486,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.6</noToolStatFactor>
-                <noToolStatFactorHardcore>0.4</noToolStatFactorHardcore>
+                <noToolStatFactor>0.5</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -529,8 +520,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.7</noToolStatFactor>
-                <noToolStatFactorHardcore>0.5</noToolStatFactorHardcore>
+                <noToolStatFactor>0.5</noToolStatFactor>
             </li>
         </parts>
     </StatDef>
@@ -570,9 +560,7 @@
         </capacityFactors>
         <parts>
             <li Class="SurvivalTools.StatPart_SurvivalTool">
-                <noToolStatFactor>0.7</noToolStatFactor>
-                <noToolStatFactorHardcore>0.4</noToolStatFactorHardcore>
-                <noToolStatFactorExtraHardcore>0</noToolStatFactorExtraHardcore>
+                <noToolStatFactor>0.5</noToolStatFactor>
             </li>
         </parts>
     </StatDef>

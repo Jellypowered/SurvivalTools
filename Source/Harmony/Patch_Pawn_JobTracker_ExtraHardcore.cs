@@ -1,5 +1,6 @@
-// RimWorld 1.6 / C# 7.3
-// Patch_Pawn_JobTracker_ExtraHardcore.cs
+﻿// RimWorld 1.6 / C# 7.3
+// Source/Harmony/Patch_Pawn_JobTracker_ExtraHardcore.cs
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
@@ -25,6 +26,84 @@ namespace SurvivalTools.HarmonyStuff
         private static readonly Dictionary<int, int> lastAbortTickByPawn = new Dictionary<int, int>();
         // Track suppressed logs so we can print counts later
         private static readonly Dictionary<string, int> suppressedLogCounts = new Dictionary<string, int>();
+        // Low-frequency reporting of suppressed log counts (debug only)
+        private const int SuppressedLogReportInterval = 600; // 10s
+        private static int lastSuppressedReportTick = 0;
+
+        // ------------------------------
+        // BuildRoof cooldown gate
+        // Prevents repeated abort/requeue spam when roofing jobs are blocked by hardcore gating
+        // Keying is by pawn ID -> textual target key (cell or job def) -> tick expiry.
+        // Using string keys avoids allocations of complex structs in a hot path and keeps lookups fast.
+        private static readonly Dictionary<int, Dictionary<string, int>> _buildRoofCooldowns = new Dictionary<int, Dictionary<string, int>>();
+        // Cooldown window in ticks (5s at 60 TPS)
+        private const int BuildRoofCooldownTicks = 5 * 60;
+
+        /// <summary>
+        /// Build a compact string key for a job target. Prefer target cell when available.
+        /// </summary>
+        private static string BuildRoofTargetKey(Job job)
+        {
+            if (job == null || job.def == null) return "job:unknown";
+            try
+            {
+                if (job.targetA.IsValid)
+                {
+                    var c = job.targetA.Cell;
+                    return $"cell:{c.x}:{c.y}:{c.z}:{job.def.defName}";
+                }
+            }
+            catch { }
+            return $"job:{job.def.defName}";
+        }
+
+        /// <summary>
+        /// Returns true if the pawn+target is currently on cooldown. Cleans expired entries.
+        /// </summary>
+        private static bool IsBuildRoofOnCooldown(Pawn pawn, string key, int now)
+        {
+            if (pawn == null || key == null) return false;
+            int pid = pawn.thingIDNumber;
+            if (!_buildRoofCooldowns.TryGetValue(pid, out var inner)) return false;
+            if (inner == null) { _buildRoofCooldowns.Remove(pid); return false; }
+            if (inner.TryGetValue(key, out int expiry))
+            {
+                if (expiry > now) return true;
+                // expired — remove
+                inner.Remove(key);
+                if (inner.Count == 0) _buildRoofCooldowns.Remove(pid);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Set a cooldown for pawn+target until now + BuildRoofCooldownTicks.
+        /// </summary>
+        private static void SetBuildRoofCooldown(Pawn pawn, string key, int now)
+        {
+            if (pawn == null || key == null) return;
+            int pid = pawn.thingIDNumber;
+            if (!_buildRoofCooldowns.TryGetValue(pid, out var inner))
+            {
+                inner = new Dictionary<string, int>();
+                _buildRoofCooldowns[pid] = inner;
+            }
+            inner[key] = now + BuildRoofCooldownTicks;
+        }
+
+        /// <summary>
+        /// Clear any cooldown entry for pawn+target (called when job succeeds or is validated ok).
+        /// </summary>
+        private static void ClearBuildRoofCooldown(Pawn pawn, string key)
+        {
+            if (pawn == null || key == null) return;
+            int pid = pawn.thingIDNumber;
+            if (_buildRoofCooldowns.TryGetValue(pid, out var inner) && inner != null)
+            {
+                inner.Remove(key);
+                if (inner.Count == 0) _buildRoofCooldowns.Remove(pid);
+            }
+        }
 
 
         [HarmonyPrefix]
@@ -56,39 +135,24 @@ namespace SurvivalTools.HarmonyStuff
             // Optional: don't auto-cancel explicit player-forced jobs in the postfix
             if (newJob.playerForced) return;
 
-            // 🔧 Special-case: Ingest jobs sometimes sneak in CleaningSpeed as a requirement.
-            // They normally don't map to a WorkGiver, so catch them here instead.
+            // Report suppressed logs at low frequency (debug only)
+            try { ReportSuppressedLogsIfDue(tick); } catch { }
+
+            // Special-case: Ingest jobs sometimes include CleaningSpeed as a requirement.
+            // We intentionally do NOT hard-abort jobs for CleaningSpeed or WorkSpeedGlobal
+            // because those stats are penalty-based only (see StatPart_SurvivalTool).
+            // This check ensures we don't incorrectly abort Ingest or similar jobs.
             if (newJob.def == JobDefOf.Ingest &&
-    StatGatingHelper.ShouldBlockJobForStat(ST_StatDefOf.CleaningSpeed, settings, pawn))
+                StatGatingHelper.ShouldBlockJobForStat(ST_StatDefOf.CleaningSpeed, settings, pawn))
             {
-                if (IsDebugLoggingEnabled)
+                // Log via deduped tool-gate logger so repeated denials are suppressed
+                try
                 {
-                    var key = $"JobBlock_Ingest_{pawn.ThingID}";
-                    if (ShouldLogWithCooldown(key))
-                    {
-                        // Print normal + suppressed count if any
-                        if (suppressedLogCounts.TryGetValue(key, out int count) && count > 0)
-                        {
-                            Log.Message($"[SurvivalTools.JobBlock] Aborting Ingest job on {pawn.LabelShort} (cleaning requirement, no tool). " +
-                                        $"[{count} suppressed]");
-                            suppressedLogCounts[key] = 0;
-                        }
-                        else
-                        {
-                            Log.Message($"[SurvivalTools.JobBlock] Aborting Ingest job on {pawn.LabelShort} (cleaning requirement, no tool).");
-                        }
-                    }
-                    else
-                    {
-                        suppressedLogCounts[key] = suppressedLogCounts.TryGetValue(key, out int count) ? count + 1 : 1;
-                    }
+                    LogToolGateEvent(pawn, JobDefOf.Ingest, ST_StatDefOf.CleaningSpeed, "missing cleaning tool (ingest)");
                 }
+                catch { }
 
-                lastAbortTickByPawn[id] = tick;
-
-                if (__instance.curJob == newJob)
-                    __instance.EndCurrentJob(JobCondition.Incompletable, startNewJob: false, canReturnToPool: true);
-
+                // Do NOT abort the job here; StatPart will apply the penalty and the job may proceed.
                 return;
             }
 
@@ -96,15 +160,41 @@ namespace SurvivalTools.HarmonyStuff
             var requiredStats = SurvivalToolUtility.RelevantStatsFor(null, newJob.def);
             if (requiredStats.NullOrEmpty()) return;
 
-            foreach (var stat in requiredStats)
+            for (int i = 0; i < requiredStats.Count; i++)
             {
+                var stat = requiredStats[i];
+                if (stat == null) continue;
+
                 if (ShouldBlockJobForMissingStat(stat, settings) && !pawn.HasSurvivalToolFor(stat))
                 {
+                    // Special handling for BuildRoof/RoofJob to avoid repeated abort/requeue spam
+                    var jobDefName = newJob.def?.defName;
+                    bool isRoofJob = jobDefName == "BuildRoof" || jobDefName == "RoofJob" || (jobDefName != null && jobDefName.IndexOf("buildroof", StringComparison.OrdinalIgnoreCase) >= 0);
+
+                    string brKey = null;
+                    if (isRoofJob)
+                    {
+                        brKey = BuildRoofTargetKey(newJob);
+                        // If we're on cooldown for this pawn+target, silently skip abort to avoid thrash
+                        if (IsBuildRoofOnCooldown(pawn, brKey, tick))
+                            return;
+                    }
+
                     if (IsDebugLoggingEnabled)
-                        Log.Message($"[SurvivalTools.JobBlock] Aborting just-started job {newJob.def.defName} on {pawn.LabelShort} (missing {stat.defName}).");
+                    {
+                        var logKey = isRoofJob ? $"JobBlock_BuildRoof_{pawn.ThingID}_{brKey}" : $"JobBlock_{pawn.ThingID}_{newJob.def.defName}_{stat.defName}";
+                        if (ShouldLogWithCooldown(logKey))
+                            Log.Message($"[SurvivalTools.JobBlock] Aborting just-started job {newJob.def.defName} on {pawn.LabelShort} (missing {stat.defName}).");
+                        else
+                            suppressedLogCounts[logKey] = suppressedLogCounts.TryGetValue(logKey, out int c) ? c + 1 : 1;
+                    }
 
                     // Record guard BEFORE ending job to prevent immediate same-tick loops
                     lastAbortTickByPawn[id] = tick;
+
+                    // Set per-pawn+target cooldown for roofing jobs
+                    if (isRoofJob)
+                        SetBuildRoofCooldown(pawn, brKey, tick);
 
                     // CRITICAL CHANGE: do NOT request immediate requeue here.
                     // Let vanilla re-evaluate on the next normal opportunity.
@@ -113,6 +203,44 @@ namespace SurvivalTools.HarmonyStuff
 
                     break;
                 }
+            }
+        }
+
+        /// <summary>
+        /// When a job ends successfully, clear any BuildRoof cooldown for that pawn+target so
+        /// future valid attempts are allowed immediately.
+        /// This is a Prefix so we can inspect the current job before it's cleared by EndCurrentJob.
+        /// </summary>
+        [HarmonyPrefix]
+        [HarmonyPatch("EndCurrentJob")]
+        [HarmonyPriority(Priority.Last)]
+        public static void Prefix_EndCurrentJob(Pawn_JobTracker __instance, JobCondition condition)
+        {
+            try
+            {
+                if (__instance == null) return;
+                var pawn = (Pawn)PawnField.GetValue(__instance);
+                if (pawn == null) return;
+
+                // Only care about successful completion
+                if (condition != JobCondition.Succeeded)
+                    return;
+
+                var job = pawn.jobs?.curJob;
+                if (job == null) return;
+
+                var name = job.def?.defName;
+                if (name == null) return;
+
+                bool isRoofJob = name == "BuildRoof" || name == "RoofJob" || (name.IndexOf("buildroof", StringComparison.OrdinalIgnoreCase) >= 0);
+                if (!isRoofJob) return;
+
+                var key = BuildRoofTargetKey(job);
+                ClearBuildRoofCooldown(pawn, key);
+            }
+            catch
+            {
+                // Defensive: do not let cleanup fail the game
             }
         }
 
@@ -155,6 +283,41 @@ namespace SurvivalTools.HarmonyStuff
             }
 
             return true; // allow original method
+        }
+
+        /// <summary>
+        /// Emits a low-frequency debug summary of suppressed log counts, then clears them.
+        /// Keeps overhead minimal by only running when debug logging is enabled and at a low tick interval.
+        /// </summary>
+        private static void ReportSuppressedLogsIfDue(int now)
+        {
+            if (!IsDebugLoggingEnabled) return;
+            if (now - lastSuppressedReportTick < SuppressedLogReportInterval) return;
+            lastSuppressedReportTick = now;
+
+            try
+            {
+                if (suppressedLogCounts == null || suppressedLogCounts.Count == 0) return;
+
+                // Build a compact summary
+                var sb = new System.Text.StringBuilder();
+                sb.Append("[SurvivalTools.JobBlock] Suppressed abort counts:");
+                int total = 0;
+                foreach (var kv in suppressedLogCounts)
+                {
+                    sb.Append(' ').Append(kv.Key).Append(':').Append(kv.Value).Append(';');
+                    total += kv.Value;
+                }
+
+                Log.Message(sb.ToString());
+
+                // Clear counts after reporting
+                suppressedLogCounts.Clear();
+            }
+            catch
+            {
+                // swallow
+            }
         }
 
         /// <summary>

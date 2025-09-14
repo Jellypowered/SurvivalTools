@@ -62,4 +62,37 @@
     <SurvivalTools_PileOfRags.label>Lumpenhaufen</SurvivalTools_PileOfRags.label>
     <SurvivalTools_PileOfRags.description>Ein einfaches Reinigungswerkzeug aus Lumpen und Stoffresten. Nützlich für grundlegende Reinigungsarbeiten, aber nutzt sich schnell ab.</SurvivalTools_PileOfRags.description>
 
+    <!-- =================================================== -->
+    <!-- MEHRZWECK-ALLGEMEINWERKZEUGE (WorkSpeedGlobal)       -->
+    <!-- Neue Tool-Defs benötigen Einträge                   -->
+    <!-- =================================================== -->
+
+    <!-- Tribal / Primitiv Stufe -->
+    <SurvivalTools_MultipurposeStoneTool.label>mehrzweck-steinwerkzeug</SurvivalTools_MultipurposeStoneTool.label>
+    <SurvivalTools_MultipurposeStoneTool.description>Ein robustes, vielseitiges Steinwerkzeug, geformt um viele allgemeine Aufgaben abzudecken. Primitiv, aber verleiht einen kleinen Bonus auf die gesamte Arbeitsgeschwindigkeit.</SurvivalTools_MultipurposeStoneTool.description>
+
+    <SurvivalTools_CarvedBoneImplements.label>geschnitzte knochenimplements</SurvivalTools_CarvedBoneImplements.label>
+    <SurvivalTools_CarvedBoneImplements.description>Ein Bündel sorgfältig geschnitzter Knochengeräte für Mehrzweckgebrauch. Zerbrechlich, aber effizient geformt und verleiht einen bemerkbaren Schub zur allgemeinen Arbeitsgeschwindigkeit.</SurvivalTools_CarvedBoneImplements.description>
+
+    <!-- Mittelalter Stufe -->
+    <SurvivalTools_ArtisansToolkit.label>werkzeugsatz des handwerkers</SurvivalTools_ArtisansToolkit.label>
+    <SurvivalTools_ArtisansToolkit.description>Eine kuratierte Sammlung mittelalterlicher Qualitätswerkzeuge zum Fertigen, Formen und Montieren. Verbessert den Gesamtdurchsatz vieler Aufgaben.</SurvivalTools_ArtisansToolkit.description>
+
+    <SurvivalTools_WoodworkersKit.label>holzarbeiter-kit</SurvivalTools_WoodworkersKit.label>
+    <SurvivalTools_WoodworkersKit.description>Eine spezialisierte Auswahl aus Sägen, Meißeln, Hobeln und Lehren für Holzformung und Verbindungen. Organisation und Qualität gewähren einen starken Bonus auf die allgemeine Arbeitsgeschwindigkeit.</SurvivalTools_WoodworkersKit.description>
+
+    <!-- Industrielle Stufe -->
+    <SurvivalTools_MechanicsToolkit.label>werkzeugsatz des mechanikers</SurvivalTools_MechanicsToolkit.label>
+    <SurvivalTools_MechanicsToolkit.description>Ein gut organisierter Industriesatz mit Präzisionsschlüsseln, Lehren, Drehmomentwerkzeugen und Schnellzugriffsaufbewahrung. Verbessert den Ablauf und die Koordination allgemeiner Aufgaben stark.</SurvivalTools_MechanicsToolkit.description>
+
+    <SurvivalTools_WorkshopHammerDrill.label>werkstatt-schlagbohrer</SurvivalTools_WorkshopHammerDrill.label>
+    <SurvivalTools_WorkshopHammerDrill.description>Ein schwerer, angetriebener Schlagbohrer mit austauschbaren Schlag- und Rotationsmodulen. Das integrierte Spann- und Ausrichtungssystem beschleunigt nahezu jede mechanische oder bauliche Aufgabe.</SurvivalTools_WorkshopHammerDrill.description>
+
+    <!-- Spacer / Ultra-Tech Stufe -->
+    <SurvivalTools_NanofabricatorInterface.label>nanofabrikations-interface</SurvivalTools_NanofabricatorInterface.label>
+    <SurvivalTools_NanofabricatorInterface.description>Ein schlankes Steuer- und Verstärkungsmodul, das die Bewegungen des Benutzers mit adaptiven Nano-Assemblierungsroutinen synchronisiert. Steigert die Effizienz allgemeiner Aufgaben dramatisch.</SurvivalTools_NanofabricatorInterface.description>
+
+    <SurvivalTools_OmniToolGauntlet.label>omni-werkzeugstulpe</SurvivalTools_OmniToolGauntlet.label>
+    <SurvivalTools_OmniToolGauntlet.description>Eine hochmoderne modulare Stulpe mit Feldprojektoren, Mikro-Fabrikatoren und kraftausgerichteten Manipulatoren. Bietet durch prädiktive Optimierung einen unerreichten Anstieg der allgemeinen Arbeitsgeschwindigkeit.</SurvivalTools_OmniToolGauntlet.description>
+
 </LanguageData>

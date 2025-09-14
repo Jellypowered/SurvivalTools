@@ -1,5 +1,5 @@
 ﻿// RimWorld 1.6 / C# 7.3
-// Patch_WorkGiver_MissingRequiredCapacity.cs
+// Source/Harmony/Patch_WorkGiver_MissingRequiredCapacity.cs
 using HarmonyLib;
 using RimWorld;
 using Verse;

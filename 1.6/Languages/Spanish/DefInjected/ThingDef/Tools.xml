@@ -62,4 +62,37 @@
     <SurvivalTools_PileOfRags.label>montón de trapos</SurvivalTools_PileOfRags.label>
     <SurvivalTools_PileOfRags.description>Una herramienta de limpieza simple hecha de trapos y trozos de tela. Útil para tareas básicas de limpieza pero se desgasta rápidamente.</SurvivalTools_PileOfRags.description>
 
+    <!-- =================================================== -->
+    <!-- HERRAMIENTAS GENERALES MULTIUSO (WorkSpeedGlobal)     -->
+    <!-- Nuevas definiciones que requieren entradas           -->
+    <!-- =================================================== -->
+
+    <!-- Nivel tribal / primitivo -->
+    <SurvivalTools_MultipurposeStoneTool.label>herramienta de piedra multifunción</SurvivalTools_MultipurposeStoneTool.label>
+    <SurvivalTools_MultipurposeStoneTool.description>Un implemento de piedra resistente y versátil moldeado para abarcar muchas tareas generales. Aunque primitivo, otorga una leve mejora a la velocidad global de trabajo.</SurvivalTools_MultipurposeStoneTool.description>
+
+    <SurvivalTools_CarvedBoneImplements.label>implementos de hueso tallados</SurvivalTools_CarvedBoneImplements.label>
+    <SurvivalTools_CarvedBoneImplements.description>Un conjunto de implementos de hueso cuidadosamente tallados y atados para uso multiuso. Frágiles, pero con formas eficientes que brindan un aumento notable a la velocidad general de trabajo.</SurvivalTools_CarvedBoneImplements.description>
+
+    <!-- Nivel medieval -->
+    <SurvivalTools_ArtisansToolkit.label>juego de herramientas de artesano</SurvivalTools_ArtisansToolkit.label>
+    <SurvivalTools_ArtisansToolkit.description>Una colección seleccionada de implementos de calidad de época medieval para fabricar, dar forma y ensamblar. Mejora el rendimiento global a través de muchas tareas.</SurvivalTools_ArtisansToolkit.description>
+
+    <SurvivalTools_WoodworkersKit.label>kit de carpintero</SurvivalTools_WoodworkersKit.label>
+    <SurvivalTools_WoodworkersKit.description>Un surtido especializado de sierras, cinceles, cepillos y galgas optimizados para el moldeado y ensamble de madera. Su organización y calidad otorgan un fuerte impulso a la velocidad general de trabajo.</SurvivalTools_WoodworkersKit.description>
+
+    <!-- Nivel industrial -->
+    <SurvivalTools_MechanicsToolkit.label>juego de herramientas de mecánico</SurvivalTools_MechanicsToolkit.label>
+    <SurvivalTools_MechanicsToolkit.description>Un kit industrial bien organizado que contiene llaves de precisión, galgas, implementos de torque y almacenamiento de acceso rápido. Mejora en gran medida el flujo y coordinación de tareas generales.</SurvivalTools_MechanicsToolkit.description>
+
+    <SurvivalTools_WorkshopHammerDrill.label>taladro percutor de taller</SurvivalTools_WorkshopHammerDrill.label>
+    <SurvivalTools_WorkshopHammerDrill.description>Un pesado taladro percutor motorizado con módulos intercambiables de percusión y rotación. Su sistema integrado de sujeción y alineación acelera prácticamente cualquier tarea mecánica o de construcción.</SurvivalTools_WorkshopHammerDrill.description>
+
+    <!-- Nivel espacial / ultra tecnológico -->
+    <SurvivalTools_NanofabricatorInterface.label>interfaz de nanofabricador</SurvivalTools_NanofabricatorInterface.label>
+    <SurvivalTools_NanofabricatorInterface.description>Un módulo elegante de control y aumento que sincroniza los movimientos del usuario con rutinas adaptativas de nanoensamblaje. Mejora drásticamente la eficiencia de ejecución de tareas generales.</SurvivalTools_NanofabricatorInterface.description>
+
+    <SurvivalTools_OmniToolGauntlet.label>guantelete omni‑herramienta</SurvivalTools_OmniToolGauntlet.label>
+    <SurvivalTools_OmniToolGauntlet.description>Un guantelete modular de última generación con proyectores de campo, micro-fabricadores y manipuladores alineados por fuerza. Proporciona un aumento sin igual a la velocidad general de trabajo mediante optimización predictiva.</SurvivalTools_OmniToolGauntlet.description>
+
 </LanguageData>

@@ -1,5 +1,5 @@
 ﻿// Rimworld 1.6 / C# 7.3
-// Patch_Pawn_InventoryTracker.cs
+// Source/Harmony/Patch_Pawn_InventoryTracker.cs
 using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
@@ -217,6 +217,7 @@ namespace SurvivalTools.HarmonyStuff
                     var tracker = pawn.GetComp<Pawn_SurvivalToolAssignmentTracker>();
                     var fh = tracker?.forcedHandler;
                     fh?.SetForced(item, false);
+                    try { SurvivalToolUtility.ToolFactorCache.InvalidateForThing(item); } catch { }
                 }
             }
         }

@@ -1,5 +1,5 @@
 ﻿//RimWorld 1.6 / C# 7.3
-//StatWorker_EstimatedLifespan.cs
+// Source/Stats/StatWorker_EstimatedLifespan.cs
 using System.Text;
 using RimWorld;
 using UnityEngine;

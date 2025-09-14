@@ -1,10 +1,12 @@
-﻿using System;
+﻿// RimWorld 1.6 / C# 7.3
+// Source/Stats/StatPart_SurvivalTool.cs
 using System.Linq;
 using System.Collections.Concurrent;
 using Verse;
 using RimWorld;
 using SurvivalTools.Helpers;
 using static SurvivalTools.ST_Logging;
+using Verse.AI;
 
 namespace SurvivalTools
 {
@@ -210,6 +212,24 @@ namespace SurvivalTools
                         val = valAfterTS;
                         return;
                     }
+                    // If parent stat is CleaningSpeed or WorkSpeedGlobal and the job already
+                    // requires some other gated work stat, do not apply the cleaning/global fallback.
+                    if ((parentStat == ST_StatDefOf.CleaningSpeed || parentStat == ST_StatDefOf.WorkSpeedGlobal) && pawn.CurJob != null)
+                    {
+                        var jobStats = SurvivalToolUtility.StatsForJob(pawn.CurJob.def, pawn);
+                        if (jobStats != null)
+                        {
+                            foreach (var s in jobStats)
+                            {
+                                if (s != null && s != parentStat && s.RequiresSurvivalTool())
+                                {
+                                    // Another gated stat is in effect for this job; do not apply cleaning/global penalty here.
+                                    return;
+                                }
+                            }
+                        }
+                    }
+
                     float penaltyFactor = this.GetNoToolPenaltyFactor();
                     float valBeforeNT = val;
                     float effectiveBaseNT;
@@ -228,7 +248,13 @@ namespace SurvivalTools
                         effectiveBaseNT = valBeforeNT;
                     }
                     float valAfterNT = effectiveBaseNT * penaltyFactor;
-                    LogDebug($"StatPart_SurvivalTool: pawn={pawn?.LabelShort ?? "null"} job={pawn?.CurJob?.def?.defName ?? "null"} stat={parentStat?.defName ?? "null"} noToolPenalty={penaltyFactor} valBefore={valBeforeNT} valAfter={valAfterNT}", $"StatPart_NoTool_{pawn?.ThingID ?? "null"}_{parentStat?.defName ?? "null"}");
+                    // Non-spammy logging: only log once per pawn/stat per cooldown
+                    string logKey = $"StatPart_NoTool_{pawn?.ThingID ?? "null"}_{parentStat?.defName ?? "null"}";
+                    if (ST_Logging.ShouldLogWithCooldown(logKey))
+                        LogDebug($"StatPart_SurvivalTool: pawn={pawn?.LabelShort ?? "null"} job={pawn?.CurJob?.def?.defName ?? "null"} stat={parentStat?.defName ?? "null"} noToolPenalty={penaltyFactor} valBefore={valBeforeNT} valAfter={valAfterNT}", logKey);
+
+                    // Spawn a mote once when a job begins that suffers a penalty for cleaning/global work
+                    TrySpawnPenaltyMote(pawn, parentStat, penaltyFactor);
                     val = valAfterNT;
                 }
                 finally
@@ -240,72 +266,86 @@ namespace SurvivalTools
         }
 
         // Default factor when no tool is used (non-hardcore).
+        // Kept as a fallback for safety, but runtime value should come from settings.
         private float noToolStatFactor = 0.3f;
 
-        // Factor when no tool is used in hardcore mode (usually 0).
-        private float noToolStatFactorHardcore = 0f;
-
-        // Factor when no tool is used in extra hardcore mode (usually 0, can be specified separately).
-        private float? noToolStatFactorExtraHardcore = null;
-
-        // Expose NoToolStatFactor as a public property
-        public float NoToolStatFactor => noToolStatFactor;
+        // Expose NoToolStatFactor as a public property; prefer the value from settings when available
+        public float NoToolStatFactor
+        {
+            get
+            {
+                try
+                {
+                    // Settings provide the user-tweakable 'noToolStatFactorNormal'
+                    var s = SurvivalTools.Settings?.noToolStatFactorNormal;
+                    if (s != null) return s.Value;
+                }
+                catch { }
+                return noToolStatFactor;
+            }
+        }
 
         // Expose penalty logic as a public method
         public float GetNoToolPenaltyFactor()
         {
-            var settings = SurvivalTools.Settings;
-
-
-            // Extra-hardcore mode: disallow jobs for required optional stats if tools are required
-            if (settings?.extraHardcoreMode == true)
+            // Delegate computation + caching to the centralized ToolFactorCache
+            try
             {
-                if (parentStat != null && settings.IsStatRequiredInExtraHardcore(parentStat))
+                // If parentStat is null fall back to the default
+                if (parentStat == null) return noToolStatFactor;
+                return SurvivalToolUtility.ToolFactorCache.GetOrComputeNoToolPenalty(parentStat);
+            }
+            catch
+            {
+                return noToolStatFactor;
+            }
+        }
+
+        // Track last job reference per pawn to ensure motes spawn only once per job start
+        private static readonly ConcurrentDictionary<int, Job> _lastMoteJob = new ConcurrentDictionary<int, Job>();
+
+        private static void TrySpawnPenaltyMote(Pawn pawn, StatDef stat, float penaltyFactor)
+        {
+            if (pawn == null || pawn.CurJob == null) return;
+
+            // Only apply motes for CleaningSpeed or WorkSpeedGlobal
+            if (stat != ST_StatDefOf.CleaningSpeed && stat != ST_StatDefOf.WorkSpeedGlobal) return;
+
+            // If the current job actually uses other gated stats, skip spawning for the cleaning/global fallback
+            var jobStats = SurvivalToolUtility.StatsForJob(pawn.CurJob.def, pawn);
+            if (jobStats != null)
+            {
+                foreach (var s in jobStats)
                 {
-                    return 0f;
-                }
-                // If an explicit extra-hardcore factor was provided, use it; otherwise fallback to 0
-                return noToolStatFactorExtraHardcore ?? 0f;
-            }
-
-            // Hardcore mode: use hardcore factor (usually 0)
-            if (settings?.hardcoreMode == true)
-            {
-                return noToolStatFactorHardcore;
-            }
-
-            // Normal mode: respect global toggle
-            if (settings != null && !settings.enableNormalModePenalties)
-            {
-                return 0.75f; // In normal mode, no work is disabled but is more efficient with tools
-            }
-
-            // Optional stats are unaffected in normal mode
-            if (StatFilters.IsOptionalStat(parentStat))
-                return 1f;
-
-            // Special-case WorkSpeedGlobal: only apply penalties if any gate-eligible job is enabled in settings
-            if (parentStat == ST_StatDefOf.WorkSpeedGlobal && settings != null)
-            {
-                var jobDict = settings.workSpeedGlobalJobGating;
-                if (jobDict != null)
-                {
-                    bool anyGateEligibleJobEnabled = false;
-                    foreach (var kvp in jobDict)
+                    if (s == null || s == stat) continue;
+                    if (s.RequiresSurvivalTool())
                     {
-                        var jobDef = DefDatabase<WorkGiverDef>.GetNamedSilentFail(kvp.Key);
-                        if (jobDef != null && SurvivalToolUtility.ShouldGateByDefault(jobDef) && kvp.Value)
-                        {
-                            anyGateEligibleJobEnabled = true;
-                            break;
-                        }
+                        // Another gated stat is in use; do not show cleaning/global fallback mote
+                        return;
                     }
-                    if (!anyGateEligibleJobEnabled) return 1f;
                 }
             }
 
-            // Otherwise use the user-configurable normal mode factor if available
-            return settings?.noToolStatFactorNormal ?? noToolStatFactor;
+            Job current = pawn.CurJob;
+            if (_lastMoteJob.TryGetValue(pawn.thingIDNumber, out var recorded) && ReferenceEquals(recorded, current))
+                return; // already shown for this job
+
+            // Record the job so we don't spam motes
+            _lastMoteJob[pawn.thingIDNumber] = current;
+
+            try
+            {
+                string statLabel = stat == ST_StatDefOf.WorkSpeedGlobal ? "Global" : "Cleaning";
+                string shortText = $"Slow ({statLabel} x{penaltyFactor.ToString("F2")})";
+                // Position above pawn
+                MoteMaker.ThrowText(pawn.DrawPos, pawn.Map, shortText, 3.5f);
+
+                // Non-spammy log once per pawn/stat per cooldown
+                string logk = $"SurvivalTools.StatPart_{pawn.ThingID}_{stat.defName}";
+                if (ST_Logging.ShouldLogWithCooldown(logk))
+                    ST_Logging.LogDebug($"[SurvivalTools.StatPart] {pawn.LabelShort} missing {statLabel} tool — penalty applied ({penaltyFactor.ToString("F2")}x).", logk);
+            }
+            catch { /* best-effort mote */ }
         }
 
         /// <summary>

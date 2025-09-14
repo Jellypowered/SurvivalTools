@@ -1,5 +1,5 @@
 ﻿// Rimworld 1.6 / C# 7.3
-// Pawn_SurvivalToolAssignmentTracker.cs
+// Source/ToolAssignments/Pawn_SurvivalToolAssignmentTracker.cs
 using Verse;
 using RimWorld;
 using static SurvivalTools.ST_Logging;

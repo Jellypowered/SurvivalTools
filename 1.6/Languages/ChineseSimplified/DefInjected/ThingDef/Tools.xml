@@ -72,4 +72,37 @@
   <SurvivalTools_PileOfRags.label>一堆破布</SurvivalTools_PileOfRags.label>
   <SurvivalTools_PileOfRags.description>简单的清洁工具，由破布和织物碎片制成。对于基本的清洁工作很有用，但磨损很快。</SurvivalTools_PileOfRags.description>
 
+  <!-- =================================================== -->
+  <!-- 多用途通用工作工具 (WorkSpeedGlobal)                -->
+  <!-- 新增工具定义需要本地化条目                         -->
+  <!-- =================================================== -->
+
+  <!-- 部落 / 原始阶层 -->
+  <SurvivalTools_MultipurposeStoneTool.label>多用途石制工具</SurvivalTools_MultipurposeStoneTool.label>
+  <SurvivalTools_MultipurposeStoneTool.description>一种粗糙但多功能的石制器具，打磨成可覆盖多种通用任务的形状。虽属原始，却能略微提升整体工作速度。</SurvivalTools_MultipurposeStoneTool.description>
+
+  <SurvivalTools_CarvedBoneImplements.label>雕刻骨制多件工具</SurvivalTools_CarvedBoneImplements.label>
+  <SurvivalTools_CarvedBoneImplements.description>一组精心雕刻并捆绑在一起的骨制小工具，供多用途使用。较脆弱，但造型高效，可带来显著的通用工作速度提升。</SurvivalTools_CarvedBoneImplements.description>
+
+  <!-- 中世纪阶层 -->
+  <SurvivalTools_ArtisansToolkit.label>工匠工具套件</SurvivalTools_ArtisansToolkit.label>
+  <SurvivalTools_ArtisansToolkit.description>一套精心挑选的中世纪时期优质工具，用于制作、整形与装配。可提升多类任务的整体处理效率。</SurvivalTools_ArtisansToolkit.description>
+
+  <SurvivalTools_WoodworkersKit.label>木工工具包</SurvivalTools_WoodworkersKit.label>
+  <SurvivalTools_WoodworkersKit.description>一组专用锯、凿、刨与量具，优化于木材成形与榫卯作业。良好的组织与品质赋予显著的通用工作速度增益。</SurvivalTools_WoodworkersKit.description>
+
+  <!-- 工业阶层 -->
+  <SurvivalTools_MechanicsToolkit.label>机械技师工具箱</SurvivalTools_MechanicsToolkit.label>
+  <SurvivalTools_MechanicsToolkit.description>一个整理良好的工业时代工具箱，内含精密扳手、量规、扭矩工具与快速取放的收纳。大幅改善通用任务流程与协调。</SurvivalTools_MechanicsToolkit.description>
+
+  <SurvivalTools_WorkshopHammerDrill.label>重型车间锤击钻</SurvivalTools_WorkshopHammerDrill.label>
+  <SurvivalTools_WorkshopHammerDrill.description>一台可更换冲击与旋转模块的重型动力锤击钻。其集成夹持与对准系统几乎加速所有机械或建造相关任务。</SurvivalTools_WorkshopHammerDrill.description>
+
+  <!-- 超科技 / 闪耀阶层 -->
+  <SurvivalTools_NanofabricatorInterface.label>纳米制造接口</SurvivalTools_NanofabricatorInterface.label>
+  <SurvivalTools_NanofabricatorInterface.description>一个流线型的控制与增强模块，将用户动作与自适应纳米组装流程同步。显著提升通用任务执行效率。</SurvivalTools_NanofabricatorInterface.description>
+
+  <SurvivalTools_OmniToolGauntlet.label>全域多能工具护臂</SurvivalTools_OmniToolGauntlet.label>
+  <SurvivalTools_OmniToolGauntlet.description>一只前沿的模块化护臂，内嵌力场投射器、微型制造器与力对齐操作器。通过预测式优化提供无与伦比的通用工作速度提升。</SurvivalTools_OmniToolGauntlet.description>
+
 </LanguageData>

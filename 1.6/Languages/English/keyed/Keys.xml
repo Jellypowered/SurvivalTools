@@ -36,6 +36,8 @@
     <Settings_ToolOptimization_Tooltip>Enables intelligent tool management where colonists automatically select and carry the most effective tools for their assigned work. They'll upgrade to better tools and drop inferior ones as needed. Disable this if you prefer manual tool control or experience performance issues with modded materials.</Settings_ToolOptimization_Tooltip>
     <Settings_EnableTreeFelling>Enable Survival Tools tree felling system</Settings_EnableTreeFelling>
     <Settings_EnableTreeFelling_Tooltip>Controls whether Survival Tools manages tree cutting jobs with its specialized Fell Trees and Harvest Trees system. When enabled (default), colonists use ST's enhanced tree felling that requires appropriate tools and provides better efficiency. When disabled, trees are handled by the standard Plant Cut job or other mods like Separate Tree Chopping (Continued). Disable this if you prefer to use other tree-cutting mods without overlap.</Settings_EnableTreeFelling_Tooltip>
+    <Settings_ShowUpgradeSuggestions>Show upgrade suggestions</Settings_ShowUpgradeSuggestions>
+    <Settings_ShowUpgradeSuggestions_Tooltip>When enabled, the UI will show suggestions to upgrade currently equipped tools to better materials or higher-quality variants when available.</Settings_ShowUpgradeSuggestions_Tooltip>
     <Settings_PickupFromStorageOnly>Restrict tool pickup to storage areas</Settings_PickupFromStorageOnly>
     <Settings_PickupFromStorageOnly_Tooltip>When enabled, colonists will only acquire tools from designated storage zones, maintaining better organization and preventing them from grabbing tools from work areas. When disabled, they can pick up any accessible tool in the Home area (excluding forbidden or burning items), providing more flexibility but less control.</Settings_PickupFromStorageOnly_Tooltip>
     <Settings_AllowPacifistEquip>Allow pacifists to equip survival tools</Settings_AllowPacifistEquip>
@@ -59,6 +61,9 @@
     <ColonistNeedsSurvivalTool>Colonist lacks essential tools</ColonistNeedsSurvivalTool>
     <ColonistsNeedSurvivalTool>Colonists lack essential tools</ColonistsNeedSurvivalTool>
     <ColonistNeedsSurvivalToolDesc>These colonists need proper tools for their assigned work but lack the necessary equipment. Their productivity is severely compromised.</ColonistNeedsSurvivalToolDesc>
+    <ST_MissingToolsShort>Missing</ST_MissingToolsShort>
+    <ST_NoActionableItems>No actionable items</ST_NoActionableItems>
+    <WorkSpeedGlobalShort>Global</WorkSpeedGlobalShort>
 
     <SurvivalToolsNeedReplacing>Tools approaching failure</SurvivalToolsNeedReplacing>
     <SurvivalToolNeedsReplacingDesc>These colonists are using tools in critical condition that will break soon. Replace them immediately to avoid work disruption.</SurvivalToolNeedsReplacingDesc>
@@ -100,9 +105,41 @@
     <Settings_EnhancedWindowDescription>Click the button below to open the enhanced, resizable settings window with all mod options.</Settings_EnhancedWindowDescription>
     <Settings_OpenEnhancedButton>Open Enhanced Settings</Settings_OpenEnhancedButton>
 
+    <!-- Normal Mode explanatory texts -->
+    <Settings_NormalModeSection>Normal Mode Work Speed Settings</Settings_NormalModeSection>
+    <Settings_NormalMode_Explanation>Normal Mode Behavior:\n• Core work (mining, construction, farming, crafting) gets penalties without tools\n• Optional work (cleaning, research, medical) is unaffected\n• Hardcore mode applies penalties to ALL work types</Settings_NormalMode_Explanation>
+    <Settings_EnableNormalModePenalties>Enable Normal Mode Penalties</Settings_EnableNormalModePenalties>
+    <Settings_EnableNormalModePenalties_Tooltip>When enabled, pawns work slower at core tasks without proper tools in normal mode. When disabled, only hardcore mode applies penalties.</Settings_EnableNormalModePenalties_Tooltip>
+    <Settings_NormalModeToolPenalty>Normal Mode Tool Penalty</Settings_NormalModeToolPenalty>
+    <Settings_NormalModePenalties_HelperText>(Applies only to core work: mining, construction, farming, crafting. Optional work like cleaning is unaffected.)</Settings_NormalModePenalties_HelperText>
+    <Settings_NormalModePenalties_Disabled>Normal mode penalties disabled - pawns work at full speed without tools except in hardcore mode.</Settings_NormalModePenalties_Disabled>
+
     <!-- Mod Compatibility -->
     <Compat_ResearchReinvented>Reinvented Research</Compat_ResearchReinvented>
     <Compat_FieldResearch>Field Research</Compat_FieldResearch>
     <Compat_ReinventedResearchAlert>Reinvented Research</Compat_ReinventedResearchAlert>
+
+    <!-- WorkSpeedGlobal Configuration (Added) -->
+    <!-- Added WorkSpeedGlobal translation keys -->
+    <WorkSpeedGlobal_Title>General Work Speed Job Configuration</WorkSpeedGlobal_Title>
+    <WorkSpeedGlobal_Description>Select which jobs that use the general work speed stat should be gated by survival tools. Ungated jobs ignore tool penalties when colonists lack proper tools.</WorkSpeedGlobal_Description>
+    <WorkSpeedGlobal_JobTypeHeader>Job Type</WorkSpeedGlobal_JobTypeHeader>
+    <WorkSpeedGlobal_GatedHeader>Gated</WorkSpeedGlobal_GatedHeader>
+    <WorkSpeedGlobal_DescriptionHeader>Description</WorkSpeedGlobal_DescriptionHeader>
+    <WorkSpeedGlobal_NoJobsFound>No general work speed jobs found.</WorkSpeedGlobal_NoJobsFound>
+    <WorkSpeedGlobal_EnableAll>Enable All</WorkSpeedGlobal_EnableAll>
+    <WorkSpeedGlobal_DisableAll>Disable All</WorkSpeedGlobal_DisableAll>
+    <WorkSpeedGlobal_ResetDefaults>Reset to Defaults</WorkSpeedGlobal_ResetDefaults>
+    <WorkSpeedGlobal_TraceWorkGivers>Trace WorkGivers</WorkSpeedGlobal_TraceWorkGivers>
+    <WorkSpeedGlobal_JobStatus_Gated>Requires tools in hardcore modes</WorkSpeedGlobal_JobStatus_Gated>
+    <WorkSpeedGlobal_JobStatus_Ungated>No tool penalties applied</WorkSpeedGlobal_JobStatus_Ungated>
+    <WorkSpeedGlobal_OpenConfigButton>Configure General Work Speed Jobs</WorkSpeedGlobal_OpenConfigButton>
+
+    <!-- Job Table Additional (Added) -->
+    <JobTable_NoActiveMode>No active mode selected.</JobTable_NoActiveMode>
+    <JobTable_GatedFormat>Gated ({0}/{1})</JobTable_GatedFormat>
+    <JobTable_GatedExample>Gated (99/99)</JobTable_GatedExample>
+    <JobTable_Status_Unknown>Unknown</JobTable_Status_Unknown>
+    <JobTable_Blocked>Blocked</JobTable_Blocked>
 
 </LanguageData>

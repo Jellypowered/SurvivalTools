@@ -1,5 +1,5 @@
 ﻿//rimworld 1.6 / C# 7.3
-//Patch_ITab_Pawn_Gear_DrawThingRow.cs
+// Source/Harmony/Patch_ITab_Pawn_Gear_DrawThingRow.cs
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -85,9 +85,11 @@ namespace SurvivalTools.HarmonyStuff
 
             if (thing == null) return originalLabel;
 
-            // We only care about survival tools (includes VirtualSurvivalTool since it inherits SurvivalTool)
-            if (!(thing is SurvivalTool tool))
-                return originalLabel;
+            // We care about real SurvivalTool items and tool-stuff stacks (virtual tools).
+            SurvivalTool tool = null;
+            bool isToolStuff = thing.def?.IsToolStuff() == true;
+            if (thing is SurvivalTool st)
+                tool = st;
 
             // Ensure pawn-safe checks
             Pawn_SurvivalToolAssignmentTracker tracker = null;
@@ -105,7 +107,10 @@ namespace SurvivalTools.HarmonyStuff
             {
                 try
                 {
-                    if (tracker.forcedHandler?.IsForced(tool) == true)
+                    // For real SurvivalTool instances, check forced status on the tool.
+                    // For plain tool-stuff stacks, check forced status on the physical item.
+                    Thing physicalForForced = (tool is VirtualSurvivalTool v && v.SourceThing != null) ? v.SourceThing : thing;
+                    if (tracker.forcedHandler?.IsForced(physicalForForced) == true)
                     {
                         originalLabel += $", {"ApparelForcedLower".Translate()}";
                     }
@@ -116,11 +121,35 @@ namespace SurvivalTools.HarmonyStuff
                 }
             }
 
-            // Tool in-use indicator (be careful reading pawn.jobs)
+            // Tool in-use indicator: only the single tool selected as the pawn's best tool for
+            // the current job's required stats should be marked. This avoids multiple rows showing
+            // 'in use' when multiple stats are involved.
             bool inUse = false;
             try
             {
-                inUse = tool.InUse;
+                var job = pawn?.jobs?.curJob;
+                if (job != null)
+                {
+                    var required = SurvivalToolUtility.RelevantStatsFor(job.workGiverDef, job);
+                    if (!required.NullOrEmpty())
+                    {
+                        var best = pawn.GetBestSurvivalTool(required);
+                        if (best != null)
+                        {
+                            var bestBacking = SurvivalToolUtility.BackingThing(best, pawn);
+                            // Compare canonical backing for virtual wrappers and direct reference for real tools
+                            if (bestBacking != null)
+                            {
+                                if (ReferenceEquals(bestBacking, thing)) inUse = true;
+                            }
+                            else
+                            {
+                                // If no backing (unexpected), fall back to direct comparison
+                                if (best == thing) inUse = true;
+                            }
+                        }
+                    }
+                }
             }
             catch
             {

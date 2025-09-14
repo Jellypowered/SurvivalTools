@@ -1,4 +1,5 @@
-using System.Linq;
+﻿// RimWorld 1.6 / C# 7.3
+// Source/Helpers/ConditionalRegistration.cs
 using RimWorld;
 using Verse;
 using SurvivalTools.Helpers;
@@ -11,7 +12,7 @@ namespace SurvivalTools
     /// Handles conditional registration/deregistration of SurvivalTools features
     /// (currently only tree felling) based on settings and compat checks.
     /// 
-    /// 🔮 Future: This can be expanded into a general-purpose feature toggle system.
+    /// ðŸ”® Future: This can be expanded into a general-purpose feature toggle system.
     ///    Example: gating medical tool usage, research tool requirements, etc.,
     ///    with helpers to both disable and re-enable features at runtime instead of
     ///    only removing WorkGivers.

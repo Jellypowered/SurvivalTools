@@ -1,11 +1,6 @@
 // RimWorld 1.6 / C# 7.3
 // Source/Compatibility/PrimitiveTools/PrimitiveToolsHelpers.cs
 // Canonical helpers file for Primitive Tools compatibility (renamed from PrimitiveToolsCompat.cs)
-// The public class name has been canonicalized to `PrimitiveToolsHelpers`.
-
-// RimWorld 1.6 / C# 7.3
-// Source/Compatibility/PrimitiveTools/PrimitiveToolsHelpers.cs
-// Canonical helpers file for Primitive Tools compatibility (renamed from PrimitiveToolsCompat.cs)
 // The canonical public class name is `PrimitiveToolsHelpers`.
 
 using System;
@@ -21,6 +16,7 @@ namespace SurvivalTools.Compat.PrimitiveTools
         private static bool? _isActive;
         private static HashSet<ThingDef> _primitiveToolDefs;
         private static readonly object _lock = new object();
+        // Pacifist equip handled centrally in Patch_EquipmentUtility_CanEquip_PacifistTools.cs
 
         // Known/fallback defNames (kept from your original)
         private static readonly string[] KnownPrimitiveToolDefNames =

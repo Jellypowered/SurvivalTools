@@ -1,5 +1,4 @@
-﻿using static SurvivalTools.ST_Logging;
-// RimWorld 1.6 / C# 7.3
+﻿// RimWorld 1.6 / C# 7.3
 // Source/Helpers/CollectionExtensions.cs
 //
 // Centralized extension methods for collections and common data patterns.
@@ -12,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using Verse;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.Helpers
 {

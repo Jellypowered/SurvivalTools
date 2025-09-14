@@ -1,3 +1,5 @@
+﻿// RimWorld 1.6 / C# 7.3
+// Source/DebugTools/DebugAction_SpawnSurvivalToolWithStuff.cs
 using System.Collections.Generic;
 using System.Linq;
 using Verse;

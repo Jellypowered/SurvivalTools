@@ -1,5 +1,5 @@
 ﻿//Rimworld 1.6 / C# 7.3
-//Patch_MassUtility.cs
+// Source/Harmony/Patch_MassUtility.cs
 using HarmonyLib;
 using RimWorld;
 using Verse;

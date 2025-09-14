@@ -1,5 +1,5 @@
-// RimWorld 1.6 / C# 7.3
-// SurvivalToolDiscovery.cs
+﻿// RimWorld 1.6 / C# 7.3
+// Source/Helpers/SurvivalToolDiscovery.cs
 //
 // Central helper for discovering survival tools, valid replacements, and
 // research-gated tool availability. Used by alerts and optimizers.

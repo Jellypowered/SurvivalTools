@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿// RimWorld 1.6 / C# 7.3
+// Source/ModExtensions/StuffPropsTool.cs
 using System.Linq;
+using System.Collections.Generic;
 using RimWorld;
 using Verse;
 

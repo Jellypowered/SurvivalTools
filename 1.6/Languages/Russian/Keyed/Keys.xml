@@ -107,4 +107,27 @@
     <Settings_AllowPacifistEquip>Разрешить пацифистам экипировать инструменты выживания</Settings_AllowPacifistEquip>
     <Settings_AllowPacifistEquip_Tooltip>Позволяет пацифистским колонистам экипировать инструменты выживания, классифицированные как оружие (такие как топоры, кирки или ножи). Хотя эти инструменты обладают боевыми возможностями, они необходимы для рабочих задач, таких как рубка деревьев, добыча полезных ископаемых или приготовление пищи. При включении пацифисты могут использовать эти инструменты для продуктивной работы, продолжая отказываться от участия в насилии.</Settings_AllowPacifistEquip_Tooltip>
 
+    <!-- WorkSpeedGlobal Конфигурация (добавлено) -->
+    <!-- Added WorkSpeedGlobal translation keys -->
+    <WorkSpeedGlobal_Title>Конфигурация работ общей скорости</WorkSpeedGlobal_Title>
+    <WorkSpeedGlobal_Description>Выберите, какие работы, использующие стат общей скорости работы, должны ограничиваться инструментами выживания. Неограниченные работы игнорируют штрафы за отсутствие инструментов.</WorkSpeedGlobal_Description>
+    <WorkSpeedGlobal_JobTypeHeader>Тип работы</WorkSpeedGlobal_JobTypeHeader>
+    <WorkSpeedGlobal_GatedHeader>Ограничено</WorkSpeedGlobal_GatedHeader>
+    <WorkSpeedGlobal_DescriptionHeader>Описание</WorkSpeedGlobal_DescriptionHeader>
+    <WorkSpeedGlobal_NoJobsFound>Работы общей скорости не найдены.</WorkSpeedGlobal_NoJobsFound>
+    <WorkSpeedGlobal_EnableAll>Включить все</WorkSpeedGlobal_EnableAll>
+    <WorkSpeedGlobal_DisableAll>Выключить все</WorkSpeedGlobal_DisableAll>
+    <WorkSpeedGlobal_ResetDefaults>Сбросить по умолчанию</WorkSpeedGlobal_ResetDefaults>
+    <WorkSpeedGlobal_TraceWorkGivers>Трассировать WorkGivers</WorkSpeedGlobal_TraceWorkGivers>
+    <WorkSpeedGlobal_JobStatus_Gated>Требует инструменты в хардкор режимах</WorkSpeedGlobal_JobStatus_Gated>
+    <WorkSpeedGlobal_JobStatus_Ungated>Нет штрафов за инструменты</WorkSpeedGlobal_JobStatus_Ungated>
+    <WorkSpeedGlobal_OpenConfigButton>Настроить работы общей скорости</WorkSpeedGlobal_OpenConfigButton>
+
+    <!-- Job Table Additional (добавлено) -->
+    <JobTable_NoActiveMode>Не выбран активный режим.</JobTable_NoActiveMode>
+    <JobTable_GatedFormat>Ограничено ({0}/{1})</JobTable_GatedFormat>
+    <JobTable_GatedExample>Ограничено (99/99)</JobTable_GatedExample>
+    <JobTable_Status_Unknown>Неизвестно</JobTable_Status_Unknown>
+    <JobTable_Blocked>Заблокировано</JobTable_Blocked>
+
 </LanguageData>

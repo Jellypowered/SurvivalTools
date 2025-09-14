@@ -1,3 +1,5 @@
+﻿// RimWorld 1.6 / C# 7.3
+// Source/DebugTools/DebugAction_TestNewFeatures.cs
 using System.Linq;
 using RimWorld;
 using Verse;
@@ -10,6 +12,7 @@ namespace SurvivalTools
     /// </summary>
     public static class DebugAction_TestNewFeatures
     {
+#if DEBUG
         [DebugAction("Survival Tools", "Test Normal Mode Penalties", allowedGameStates = AllowedGameStates.PlayingOnMap)]
         public static void TestNormalModePenalties()
         {
@@ -36,21 +39,21 @@ namespace SurvivalTools
             }
 
             var message = $"{currentMode} Mode Penalty Settings:\n" +
-                         $"• Current Mode: {currentMode}\n" +
-                         $"• Hardcore Mode Setting: {settings.hardcoreMode}\n";
+                         $"â€¢ Current Mode: {currentMode}\n" +
+                         $"â€¢ Hardcore Mode Setting: {settings.hardcoreMode}\n";
 
             if (currentMode == "Normal")
             {
-                message += $"• Normal Mode Penalties Enabled: {settings.enableNormalModePenalties}\n" +
-                          $"• Normal Mode Penalty Factor: {settings.noToolStatFactorNormal:P0} ({(1f - settings.noToolStatFactorNormal):P0} slower)\n";
+                message += $"â€¢ Normal Mode Penalties Enabled: {settings.enableNormalModePenalties}\n" +
+                          $"â€¢ Normal Mode Penalty Factor: {settings.noToolStatFactorNormal:P0} ({(1f - settings.noToolStatFactorNormal):P0} slower)\n";
             }
             else if (currentMode == "Hardcore")
             {
-                message += $"• Hardcore Penalty: 0% speed (100% slower) for all work without tools\n";
+                message += $"â€¢ Hardcore Penalty: 0% speed (100% slower) for all work without tools\n";
             }
             else if (currentMode == "Extra Hardcore")
             {
-                message += $"• Extra Hardcore Penalty: 0% speed (100% slower) + tool degradation\n";
+                message += $"â€¢ Extra Hardcore Penalty: 0% speed (100% slower) + tool degradation\n";
             }
 
             message += "\n";
@@ -65,7 +68,7 @@ namespace SurvivalTools
                 foreach (var stat in coreStats.Where(s => s != null))
                 {
                     var value = pawn.GetStatValue(stat);
-                    message += $"• {stat.label}: {value:P0}";
+                    message += $"â€¢ {stat.label}: {value:P0}";
 
                     // Add context about what we expect to see
                     if (currentMode == "Normal" && settings.enableNormalModePenalties)
@@ -89,7 +92,7 @@ namespace SurvivalTools
                 foreach (var stat in optionalStats.Where(s => s != null))
                 {
                     var value = pawn.GetStatValue(stat);
-                    message += $"• {stat.label}: {value:P0}";
+                    message += $"â€¢ {stat.label}: {value:P0}";
 
                     if (currentMode == "Normal")
                     {
@@ -143,10 +146,10 @@ namespace SurvivalTools
             }
 
             var message = $"WorkSpeedGlobal Stat Test ({currentMode} Mode):\n" +
-                         $"• Stat Def: {ST_StatDefOf.WorkSpeedGlobal.defName}\n" +
-                         $"• Label: {ST_StatDefOf.WorkSpeedGlobal.label}\n" +
-                         $"• Base Value: {ST_StatDefOf.WorkSpeedGlobal.defaultBaseValue}\n" +
-                         $"• Current Mode: {currentMode}\n\n";
+                         $"â€¢ Stat Def: {ST_StatDefOf.WorkSpeedGlobal.defName}\n" +
+                         $"â€¢ Label: {ST_StatDefOf.WorkSpeedGlobal.label}\n" +
+                         $"â€¢ Base Value: {ST_StatDefOf.WorkSpeedGlobal.defaultBaseValue}\n" +
+                         $"â€¢ Current Mode: {currentMode}\n\n";
 
             if (Find.CurrentMap?.mapPawns?.FreeColonistsSpawned?.FirstOrDefault() is Pawn pawn)
             {
@@ -175,7 +178,7 @@ namespace SurvivalTools
                     message += $"Available tools: {tools.Count()}\n";
                     foreach (var tool in tools.Take(3))
                     {
-                        message += $"• {tool.Label}\n";
+                        message += $"â€¢ {tool.Label}\n";
                     }
                     message += "Note: Tools should improve WorkSpeedGlobal for crafting activities.\n";
                 }
@@ -284,5 +287,6 @@ namespace SurvivalTools
                 catch { }
             }
         }
+#endif
     }
 }

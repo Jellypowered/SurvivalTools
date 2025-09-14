@@ -1,5 +1,6 @@
-// RimWorld 1.6 / C# 7.3
+﻿// RimWorld 1.6 / C# 7.3
 // Source/Helpers/JobUtils.cs
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
@@ -20,7 +21,7 @@ namespace SurvivalTools.Helpers
         /// <summary>
         /// Create a shallow clone of a Job for immediate execution.
         /// Preserves references (queues, lists, etc.) from the original.
-        /// ⚠️ Only use this if the clone is short-lived and won’t be mutated
+        /// âš ï¸ Only use this if the clone is short-lived and wonâ€™t be mutated
         /// in parallel with the original.
         /// </summary>
         public static Job ShallowClone(Job originalJob)
@@ -89,7 +90,7 @@ namespace SurvivalTools.Helpers
         }
 
         /// <summary>
-        /// True if job is related to inventory hauling and shouldn’t be re-queued.
+        /// True if job is related to inventory hauling and shouldnâ€™t be re-queued.
         /// </summary>
         public static bool IsInventoryJob(Job job)
         {
@@ -139,7 +140,7 @@ namespace SurvivalTools.Helpers
             }
             catch
             {
-                // Defensive: don’t propagate exceptions from stat resolution
+                // Defensive: donâ€™t propagate exceptions from stat resolution
                 requiredStats = new List<StatDef>();
                 return false;
             }

@@ -21,6 +21,7 @@ namespace SurvivalTools.DebugTools
 {
     public static class PrimitiveToolsPatchLogger
     {
+#if DEBUG
         [DebugAction("SurvivalTools", "Dump Primitive Tools diagnostics", allowedGameStates = AllowedGameStates.Playing)]
         public static void DumpPrimitiveTools_DebugAction()
         {
@@ -62,6 +63,7 @@ namespace SurvivalTools.DebugTools
                 LogError($"[SurvivalTools] PrimitiveToolsPatchLogger: failed during debug dump: {e}");
             }
         }
+#endif
 
         public static void DumpPatchesByHeuristics()
         {

@@ -106,11 +106,27 @@
     <Compat_FieldResearch>Recherche de Terrain</Compat_FieldResearch>
     <Compat_ReinventedResearchAlert>Recherche Réinventée</Compat_ReinventedResearchAlert>
 
-</LanguageData>
+    <!-- Configuration WorkSpeedGlobal (ajout) -->
+    <!-- Added WorkSpeedGlobal translation keys -->
+    <WorkSpeedGlobal_Title>Configuration des travaux vitesse générale</WorkSpeedGlobal_Title>
+    <WorkSpeedGlobal_Description>Sélectionnez quels travaux utilisant la statistique de vitesse de travail générale doivent être soumis aux outils de survie. Les travaux non soumis ignorent les pénalités d'outils lorsque les colons manquent d'équipement.</WorkSpeedGlobal_Description>
+    <WorkSpeedGlobal_JobTypeHeader>Type de travail</WorkSpeedGlobal_JobTypeHeader>
+    <WorkSpeedGlobal_GatedHeader>Soumis</WorkSpeedGlobal_GatedHeader>
+    <WorkSpeedGlobal_DescriptionHeader>Description</WorkSpeedGlobal_DescriptionHeader>
+    <WorkSpeedGlobal_NoJobsFound>Aucun travail de vitesse générale trouvé.</WorkSpeedGlobal_NoJobsFound>
+    <WorkSpeedGlobal_EnableAll>Tout activer</WorkSpeedGlobal_EnableAll>
+    <WorkSpeedGlobal_DisableAll>Tout désactiver</WorkSpeedGlobal_DisableAll>
+    <WorkSpeedGlobal_ResetDefaults>Réinitialiser</WorkSpeedGlobal_ResetDefaults>
+    <WorkSpeedGlobal_TraceWorkGivers>Tracer WorkGivers</WorkSpeedGlobal_TraceWorkGivers>
+    <WorkSpeedGlobal_JobStatus_Gated>Nécessite des outils en modes hardcore</WorkSpeedGlobal_JobStatus_Gated>
+    <WorkSpeedGlobal_JobStatus_Ungated>Aucune pénalité d'outil</WorkSpeedGlobal_JobStatus_Ungated>
+    <WorkSpeedGlobal_OpenConfigButton>Configurer les travaux vitesse générale</WorkSpeedGlobal_OpenConfigButton>
 
-<!-- Mod Compatibility -->
-<Compat_ResearchReinvented>Recherche Réinventée</Compat_ResearchReinvented>
-<Compat_FieldResearch>Recherche de Terrain</Compat_FieldResearch>
-<Compat_ReinventedResearchAlert>Recherche Réinventée</Compat_ReinventedResearchAlert>
+    <!-- Job Table Additional (ajout) -->
+    <JobTable_NoActiveMode>Aucun mode actif sélectionné.</JobTable_NoActiveMode>
+    <JobTable_GatedFormat>Soumis ({0}/{1})</JobTable_GatedFormat>
+    <JobTable_GatedExample>Soumis (99/99)</JobTable_GatedExample>
+    <JobTable_Status_Unknown>Inconnu</JobTable_Status_Unknown>
+    <JobTable_Blocked>Bloqué</JobTable_Blocked>
 
 </LanguageData>
