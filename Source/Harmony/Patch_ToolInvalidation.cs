@@ -6,6 +6,7 @@ using RimWorld;
 using Verse;
 using Verse.AI;
 using SurvivalTools.Helpers;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.HarmonyStuff
 {
@@ -68,7 +69,7 @@ namespace SurvivalTools.HarmonyStuff
                         {
                             var dmgDef = dinfo.Def?.defName ?? "(null)";
                             var mapName = __instance.Map != null ? __instance.Map.ToString() : "(none)";
-                            Log.Message($"[SurvivalTools.Debug] Thing.TakeDamage: def={__instance.def?.defName ?? "null"} id={__instance.ThingID} hp={__instance.HitPoints}/{__instance.MaxHitPoints} dmg={dinfo.Amount} dmgDef={dmgDef} map={mapName}");
+                            LogDecision($"Thing_TakeDamage_{__instance.ThingID}", $"[SurvivalTools.Debug] Thing.TakeDamage: def={__instance.def?.defName ?? "null"} id={__instance.ThingID} hp={__instance.HitPoints}/{__instance.MaxHitPoints} dmg={dinfo.Amount} dmgDef={dmgDef} map={mapName}");
                         }
                     }
                     catch { }
@@ -137,7 +138,7 @@ namespace SurvivalTools.HarmonyStuff
                             }
                             catch { }
 
-                            Log.Message($"[SurvivalTools.Debug] Thing.Destroy: def={__instance.def?.defName ?? "null"} id={__instance.ThingID} destroyMode={mode} map={mapName}{holderInfo}");
+                            LogDecision($"Thing_Destroy_{__instance.ThingID}", $"[SurvivalTools.Debug] Thing.Destroy: def={__instance.def?.defName ?? "null"} id={__instance.ThingID} destroyMode={mode} map={mapName}{holderInfo}");
                         }
                     }
                     catch { }
@@ -161,7 +162,7 @@ namespace SurvivalTools.HarmonyStuff
                         bool isSurvival = __result is SurvivalTool || __result.def?.GetModExtension<SurvivalToolProperties>() != null;
                         if (isSurvival)
                         {
-                            Log.Message($"[SurvivalTools.Debug] ThingMaker.MakeThing: def={__result.def?.defName ?? "null"} id={__result.ThingID} stack={__result.stackCount}");
+                            LogDecision($"Thing_MakeThing_{__result.ThingID}", $"[SurvivalTools.Debug] ThingMaker.MakeThing: def={__result.def?.defName ?? "null"} id={__result.ThingID} stack={__result.stackCount}");
                         }
                     }
                     catch { }
@@ -195,7 +196,7 @@ namespace SurvivalTools.HarmonyStuff
                             var holder = equipment.ParentHolder as Pawn_EquipmentTracker;
                             var pawn = holder?.pawn ?? (equipment.ParentHolder as Pawn_InventoryTracker)?.pawn;
                             var pawnLabel = pawn?.LabelShort ?? "(unknown)";
-                            Log.Message($"[SurvivalTools.Debug] Equipment changed: {equipment.def?.defName ?? "null"} on pawn {pawnLabel}");
+                            LogDecision($"Equipment_Changed_{equipment.GetHashCode()}", $"[SurvivalTools.Debug] Equipment changed: {equipment.def?.defName ?? "null"} on pawn {pawnLabel}");
                         }
                     }
                     catch { }

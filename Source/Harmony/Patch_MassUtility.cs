@@ -32,7 +32,7 @@ namespace SurvivalTools.HarmonyStuff
                     {
                         const string key = "MassUtility_CountToPickUp_OverLimit";
                         if (ShouldLogWithCooldown(key))
-                            Log.Message($"[SurvivalTools] Preventing pickup: {pawn.LabelShort} cannot carry more survival tools (would pick up {thing.LabelCap}).");
+                            LogDecision(key, $"[SurvivalTools] Preventing pickup: {pawn.LabelShort} cannot carry more survival tools (would pick up {thing.LabelCap}).");
                     }
                 }
             }
@@ -58,7 +58,7 @@ namespace SurvivalTools.HarmonyStuff
                     {
                         const string key = "MassUtility_WillBeOver_OverLimit";
                         if (ShouldLogWithCooldown(key))
-                            Log.Message($"[SurvivalTools] WillBeOverEncumberedAfterPickingUp: {pawn.LabelShort} would exceed tool limit by picking up {thing.LabelCap} (count={count}).");
+                            LogDecision(key, $"[SurvivalTools] WillBeOverEncumberedAfterPickingUp: {pawn.LabelShort} would exceed tool limit by picking up {thing.LabelCap} (count={count}).");
                     }
                 }
             }

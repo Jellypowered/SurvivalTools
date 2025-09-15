@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.Helpers
 {
@@ -93,7 +94,7 @@ namespace SurvivalTools.Helpers
             }
             catch (Exception ex)
             {
-                Log.Error($"[SurvivalTools] Exception in {context}: {ex}");
+                LogError($"[SurvivalTools] Exception in {context}: {ex}");
             }
         }
 
@@ -108,7 +109,7 @@ namespace SurvivalTools.Helpers
             }
             catch (Exception ex)
             {
-                Log.Error($"[SurvivalTools] Exception in {context}: {ex}");
+                LogError($"[SurvivalTools] Exception in {context}: {ex}");
                 return defaultValue;
             }
         }
@@ -126,7 +127,7 @@ namespace SurvivalTools.Helpers
 
             var def = DefDatabase<ThingDef>.GetNamed(defName, errorOnFail: false);
             if (def == null)
-                Log.Warning($"[SurvivalTools] Could not find ThingDef '{defName}'");
+                LogWarning($"[SurvivalTools] Could not find ThingDef '{defName}'");
 
             return def ?? fallback;
         }

@@ -52,7 +52,7 @@ namespace SurvivalTools
                 try
                 {
                     var list = WorkStatFactors.Select(m => $"{m.stat?.defName ?? "null"}={m.value:G}").ToArray();
-                    Log.Message($"[SurvivalTools] {LabelCap} factors: {string.Join(", ", list)}");
+                    LogDebug($"[SurvivalTools] {LabelCap} factors: {string.Join(", ", list)}", $"SurvivalTool_Factors_{this.GetHashCode()}");
                 }
                 catch
                 {
@@ -112,7 +112,7 @@ namespace SurvivalTools
                 _workStatFactors = new List<StatModifier>();
                 if (IsDebugLoggingEnabled)
                 {
-                    try { Log.Message($"[SurvivalTools] InitializeWorkStatFactors failed for {def?.defName ?? "null"}: {ex}"); } catch { }
+                    try { LogDebug($"[SurvivalTools] InitializeWorkStatFactors failed for {def?.defName ?? "null"}: {ex}", $"InitFactorsFail_{def?.defName ?? "null"}"); } catch { }
                 }
             }
         }

@@ -76,7 +76,7 @@ namespace SurvivalTools.HarmonyStuff
             {
                 string key = $"AllowPacifistEquip_{pawn.ThingID}_{thing.ThingID}";
                 if (ShouldLogWithCooldown(key))
-                    Log.Message($"[SurvivalTools] Allowing pacifist {pawn.LabelShort} to equip survival tool: {thing.LabelShort}");
+                    LogDebug($"[SurvivalTools] Allowing pacifist {pawn.LabelShort} to equip survival tool: {thing.LabelShort}", key);
             }
 
             __result = true;

@@ -28,7 +28,7 @@ namespace SurvivalTools.HarmonyStuff
             if (cat == null)
             {
                 if (IsDebugLoggingEnabled)
-                    Log.Warning("[SurvivalTools] SurvivalTools ThingCategoryDef missing — stockpile patch skipped.");
+                    LogWarning("[SurvivalTools] SurvivalTools ThingCategoryDef missing — stockpile patch skipped.");
                 return;
             }
 
@@ -37,15 +37,14 @@ namespace SurvivalTools.HarmonyStuff
                 // Enable SurvivalTools in Default stockpile preset
                 __instance.SetAllow(cat, true);
 
-                if (IsDebugLoggingEnabled &&
-                    ShouldLogWithCooldown("ST_FilterPreset_DefaultStockpile"))
+                if (IsDebugLoggingEnabled && ShouldLogWithCooldown("ST_FilterPreset_DefaultStockpile"))
                 {
-                    Log.Message("[SurvivalTools] Enabled SurvivalTools category in Default stockpile preset.");
+                    LogInfo("[SurvivalTools] Enabled SurvivalTools category in Default stockpile preset.");
                 }
             }
             catch (System.Exception e)
             {
-                Log.Error($"[SurvivalTools] Failed to enable SurvivalTools in Default stockpile preset: {e}");
+                LogError($"[SurvivalTools] Failed to enable SurvivalTools in Default stockpile preset: {e}");
             }
         }
     }

@@ -49,7 +49,13 @@ namespace SurvivalTools.HarmonyStuff
             }
             catch (Exception e)
             {
-                Log.Warning($"[SurvivalTools] AncientRuins tool set generation failed: {e}");
+                // Non-fatal generation error — route through ST_Logging to respect dev gating
+                if (ST_Logging.IsDebugLoggingEnabled)
+                {
+                    const string key = "AncientRuins_ToolSetGen_Failed";
+                    if (ST_Logging.ShouldLogWithCooldown(key))
+                        ST_Logging.LogWarning($"[SurvivalTools] AncientRuins tool set generation failed: {e}");
+                }
                 return;
             }
 
@@ -127,7 +133,13 @@ namespace SurvivalTools.HarmonyStuff
                 }
                 catch (Exception e)
                 {
-                    Log.Warning($"[SurvivalTools] Skipped ancient-ruins tool '{thing?.def?.defName ?? "null"}' due to error: {e}");
+                    // Individual spawn errors are noisy in bulk — gate via ST_Logging
+                    if (ST_Logging.IsDebugLoggingEnabled)
+                    {
+                        const string key = "AncientRuins_SkippedTool_Error";
+                        if (ST_Logging.ShouldLogWithCooldown(key))
+                            ST_Logging.LogWarning($"[SurvivalTools] Skipped ancient-ruins tool '{thing?.def?.defName ?? "null"}' due to error: {e}");
+                    }
                 }
             }
         }

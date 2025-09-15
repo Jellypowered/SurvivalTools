@@ -151,8 +151,8 @@ namespace SurvivalTools
         /// </summary>
         public static void ResolveAllTools()
         {
-            // Always log (was previously gated behind IsDebugLoggingEnabled)
-            Log.Message("[SurvivalTools] Starting automatic tool resolution...");
+            // Always log via raw debug logger so messages appear unthrottled in DevMode when debug logging enabled.
+            LogRawDebug("[SurvivalTools] Starting automatic tool resolution...");
             LogModStatsVerification();
 
             int totalEnhanced = 0;
@@ -172,15 +172,16 @@ namespace SurvivalTools
             // Summary logging
             if (totalEnhanced > 0)
             {
-                Log.Message($"[SurvivalTools] Tool resolution complete: Enhanced {totalEnhanced} tools");
+                LogRawDebug($"[SurvivalTools] Tool resolution complete: Enhanced {totalEnhanced} tools");
                 foreach (string entry in enhancementLog)
                 {
-                    Log.Message($"[SurvivalTools]   - {entry}");
+                    LogRawDebug($"[SurvivalTools]   - {entry}");
                 }
             }
             else
             {
-                Log.Warning("[SurvivalTools] Tool resolution complete: No new tools found to enhance");
+                // Keep warning-level direct emit for noteworthy no-op completion
+                LogWarning("[SurvivalTools] Tool resolution complete: No new tools found to enhance");
             }
         }
 
@@ -419,13 +420,13 @@ namespace SurvivalTools
             // Check for stats that aren't used in any detection rule
             var unusedStats = allModStats.Where(stat => stat != null && !usedStats.Contains(stat)).ToList();
 
-            Log.Message($"[SurvivalTools] Stat coverage verification: {usedStats.Count}/{allModStats.Where(s => s != null).Count()} stats covered in detection rules");
+            LogRawDebug($"[SurvivalTools] Stat coverage verification: {usedStats.Count}/{allModStats.Where(s => s != null).Count()} stats covered in detection rules");
             if (unusedStats.Any())
             {
-                Log.Message("[SurvivalTools] The following stats are not covered by any detection rule:");
+                LogRawDebug("[SurvivalTools] The following stats are not covered by any detection rule:");
                 foreach (var stat in unusedStats)
                 {
-                    Log.Message($"[SurvivalTools]   - {stat.defName} ({stat.label})");
+                    LogRawDebug($"[SurvivalTools]   - {stat.defName} ({stat.label})");
                 }
             }
         }

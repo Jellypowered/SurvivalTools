@@ -405,7 +405,7 @@ namespace SurvivalTools.HarmonyStuff
                     total += kv.Value;
                 }
 
-                Log.Message(sb.ToString());
+                LogDecision("JobBlock_SuppressedSummary", sb.ToString());
 
                 // Clear counts after reporting
                 suppressedLogCounts.Clear();

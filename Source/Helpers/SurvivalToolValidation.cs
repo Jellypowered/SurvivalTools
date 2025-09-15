@@ -54,7 +54,7 @@ namespace SurvivalTools.Helpers
                     {
                         pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
                         if (ST_Logging.IsDebugLoggingEnabled)
-                            Log.Message($"[SurvivalTools.JobValidation] Cancelled bad Ingest job for {pawn.LabelShort} (required CleaningSpeed, no tool).");
+                            LogDebug($"[SurvivalTools.JobValidation] Cancelled bad Ingest job for {pawn.LabelShort} (required CleaningSpeed, no tool).", $"JobValidation_Cancel_{pawn.ThingID}");
                     }
                 }
             }
@@ -120,8 +120,8 @@ namespace SurvivalTools.Helpers
                         }
                     }
                     catch { /* best-effort, swallow errors */ }
-                    if (ST_Logging.IsDebugLoggingEnabled)
-                        Log.Message($"[SurvivalTools.JobValidation] Cancelled bad Ingest job for {pawn.LabelShort} (cleaning requirement, no tool).");
+                    // Use centralized debug logging with cooldown to avoid per-pawn spam
+                    LogDebug($"[SurvivalTools.JobValidation] Cancelled bad Ingest job for {pawn.LabelShort} (cleaning requirement, no tool).", $"JobValidation_Cancel_{pawn.ThingID}");
                     continue;
                 }
 

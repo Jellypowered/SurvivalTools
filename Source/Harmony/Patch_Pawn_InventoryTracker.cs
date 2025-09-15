@@ -88,7 +88,7 @@ namespace SurvivalTools.HarmonyStuff
                 if (tickRare != null) yield return tickRare;
 
                 if (tick == null && tickRare == null && IsDebugLoggingEnabled)
-                    Log.Warning("[SurvivalTools] No inventory tracker tick method found to patch.");
+                    LogWarning("[SurvivalTools] No inventory tracker tick method found to patch.");
             }
 
             public static void Postfix(Pawn_InventoryTracker __instance)
@@ -135,18 +135,14 @@ namespace SurvivalTools.HarmonyStuff
                 {
                     if (IsDebugLoggingEnabled)
                     {
-                        var key = $"InvOverCap_NoDrop_{pawn.ThingID}";
-                        if (ShouldLogWithCooldown(key))
-                            Log.Message($"[SurvivalTools.InventoryTick] {pawn.LabelShort} over tool limit, but all items are forced or in-use.");
+                        LogInfoOnce($"[SurvivalTools.InventoryTick] {pawn.LabelShort} over tool limit, but all items are forced or in-use.", $"InvOverCap_NoDrop_{pawn.ThingID}");
                     }
                     return;
                 }
 
                 if (IsDebugLoggingEnabled)
                 {
-                    var key = $"InvOverCap_Drop_{pawn.ThingID}";
-                    if (ShouldLogWithCooldown(key))
-                        Log.Message($"[SurvivalTools.InventoryTick] {pawn.LabelShort} idle & over limit. Dropping {toolToDrop.LabelShort}.");
+                    LogDecision($"InvOverCap_Drop_{pawn.ThingID}", $"[SurvivalTools.InventoryTick] {pawn.LabelShort} idle & over limit. Dropping {toolToDrop.LabelShort}.");
                 }
 
                 var dropJob = pawn.DequipAndTryStoreSurvivalTool(toolToDrop, enqueueCurrent: false);

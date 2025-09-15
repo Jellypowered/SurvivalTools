@@ -55,7 +55,7 @@ namespace SurvivalTools.HarmonyStuff
             if (original == null)
             {
                 if (IsDebugLoggingEnabled)
-                    Log.Warning($"[SurvivalTools] Skipping patch '{label}' — method not found.");
+                    LogWarning($"[SurvivalTools] Skipping patch '{label}' — method not found.");
                 return;
             }
             try
@@ -64,7 +64,7 @@ namespace SurvivalTools.HarmonyStuff
             }
             catch (Exception e)
             {
-                Log.Error($"[SurvivalTools] Failed to patch '{label}': {e}");
+                LogError($"[SurvivalTools] Failed to patch '{label}': {e}");
             }
         }
 
@@ -191,7 +191,7 @@ namespace SurvivalTools.HarmonyStuff
                         FindMakeNewToils(maintenanceDriver),
                         transpiler: new HarmonyMethod(patchType, nameof(Transpile_JobDriver_Maintenance_MakeNewToils)));
                 }
-                else Log.Error("Survival Tools - Could not find Fluffy_Breakdowns.JobDriver_Maintenance type to patch");
+                else LogError("Survival Tools - Could not find Fluffy_Breakdowns.JobDriver_Maintenance type to patch");
             }
 
             // -------- Quarry --------
@@ -207,7 +207,7 @@ namespace SurvivalTools.HarmonyStuff
                         AccessTools.Method(quarryDriver, "ResetTicksToPickHit"),
                         transpiler: new HarmonyMethod(patchType, nameof(Transpile_JobDriver_MineQuarry_ResetTicksToPickHit)));
                 }
-                else Log.Error("Survival Tools - Could not find Quarry.JobDriver_MineQuarry type to patch");
+                else LogError("Survival Tools - Could not find Quarry.JobDriver_MineQuarry type to patch");
             }
 
             // -------- Turret Extensions --------
@@ -220,7 +220,7 @@ namespace SurvivalTools.HarmonyStuff
                         AccessTools.Method(upgradeDriver, "Upgrade"),
                         postfix: new HarmonyMethod(patchType, nameof(Postfix_JobDriver_UpgradeTurret_Upgrade)));
                 }
-                else Log.Error("Survival Tools - Could not find TurretExtensions.JobDriver_UpgradeTurret type to patch");
+                else LogError("Survival Tools - Could not find TurretExtensions.JobDriver_UpgradeTurret type to patch");
             }
 
             // -------- Combat Extended --------
@@ -233,7 +233,7 @@ namespace SurvivalTools.HarmonyStuff
                         AccessTools.Method(holdTracker, "GetExcessThing"),
                         postfix: new HarmonyMethod(patchType, nameof(Postfix_CombatExtended_Utility_HoldTracker_GetExcessThing)));
                 }
-                else Log.Error("Survival Tools - Could not find CombatExtended.Utility_HoldTracker type to patch");
+                else LogError("Survival Tools - Could not find CombatExtended.Utility_HoldTracker type to patch");
 
                 var compInventory = GenTypes.GetTypeInAnyAssembly("CombatExtended.CompInventory");
                 if (compInventory != null)
@@ -249,7 +249,7 @@ namespace SurvivalTools.HarmonyStuff
                     TryPatch("CE.CompInventory.CanFitInInventory(ThingDef)",
                         mThingDef, postfix: new HarmonyMethod(patchType, nameof(Postfix_CombatExtended_CompInventory_CanFitInInventoryThingDef)));
                 }
-                else Log.Error("Survival Tools - Could not find CombatExtended.CompInventory type to patch");
+                else LogError("Survival Tools - Could not find CombatExtended.CompInventory type to patch");
             }
 
             // -------- Prison Labor --------
@@ -391,7 +391,7 @@ namespace SurvivalTools.HarmonyStuff
             if (displayToilField == null)
             {
                 if (IsDebugLoggingEnabled)
-                    Log.Warning("[SurvivalTools] AffectRoof tick transpiler: could not find captured Toil field; passing through.");
+                    LogWarning("[SurvivalTools] AffectRoof tick transpiler: could not find captured Toil field; passing through.");
                 for (int i = 0; i < code.Count; i++) yield return code[i];
                 yield break;
             }

@@ -221,14 +221,9 @@ namespace SurvivalTools.HarmonyStuff
             // Debug logging (throttled)
             if (IsDebugLoggingEnabled)
             {
-                var key = $"Drawing_Tool_{pawn.ThingID}_{job.def?.defName ?? "null"}";
-                if (ShouldLogWithCooldown(key))
-                {
-                    var bestForLog = pawn.GetBestSurvivalTool(requiredStats);
-                    Log.Message($"[SurvivalTools.Drawing] {pawn.LabelShort} doing {job.def?.defName ?? "null"} " +
-                                $"(WG: {job.workGiverDef?.defName ?? "null"}) needs {string.Join(", ", requiredStats.Select(s => s.defName))} " +
-                                $"-> drawing {bestForLog?.LabelShort ?? "no tool"}");
-                }
+                // Summarized per-pawn/job drawing info to avoid per-tool spam in the renderer
+                var bestForLog = pawn.GetBestSurvivalTool(requiredStats);
+                LogDebugSummary(pawn, job.def, bestForLog);
             }
 
             // 1) Normal path: best survival tool (real or virtual) selected by our core logic.
@@ -259,7 +254,7 @@ namespace SurvivalTools.HarmonyStuff
                 if (improverCount == 1 && singleImprover != null)
                 {
                     if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"Drawing_SingleHeldFallback_{pawn.ThingID}_{job.def?.defName ?? "null"}"))
-                        Log.Message($"[SurvivalTools.Drawing] {pawn.LabelShort} using single-held fallback {singleImprover.LabelCapNoCount} for {job.def?.defName ?? "null"}.");
+                        LogDecision($"Drawing_SingleHeldFallback_{pawn.ThingID}_{job.def?.defName ?? "null"}", $"[SurvivalTools.Drawing] {pawn.LabelShort} using single-held fallback {singleImprover.LabelCapNoCount} for {job.def?.defName ?? "null"}.");
                     return (singleImprover, requiredStats);
                 }
             }

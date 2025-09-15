@@ -29,7 +29,7 @@ namespace SurvivalTools.HarmonyStuff
                 {
                     const string key = "Mineable_TookMiningDamage_NullIL";
                     if (ShouldLogWithCooldown(key))
-                        Log.Warning("[SurvivalTools] Skipping Mineable.Notify_TookMiningDamage transpiler: null IL stream.");
+                        LogWarning("[SurvivalTools] Skipping Mineable.Notify_TookMiningDamage transpiler: null IL stream.");
                 }
                 yield break;
             }
@@ -41,7 +41,7 @@ namespace SurvivalTools.HarmonyStuff
                 {
                     const string key = "Mineable_TookMiningDamage_MissingFI";
                     if (ShouldLogWithCooldown(key))
-                        Log.Warning("[SurvivalTools] Skipping MiningYield→DiggingYield swap: FieldInfo not found.");
+                        LogWarning("[SurvivalTools] Skipping MiningYield→DiggingYield swap: FieldInfo not found.");
                 }
                 foreach (var ins in instructions) yield return ins;
                 yield break;
@@ -71,7 +71,7 @@ namespace SurvivalTools.HarmonyStuff
             {
                 const string key = "Mineable_TookMiningDamage_NoSwap";
                 if (ShouldLogWithCooldown(key))
-                    Log.Warning("[SurvivalTools] Mineable.Notify_TookMiningDamage transpiler: no MiningYield field load found to replace.");
+                    LogWarning("[SurvivalTools] Mineable.Notify_TookMiningDamage transpiler: no MiningYield field load found to replace.");
             }
         }
 

@@ -28,7 +28,7 @@ namespace SurvivalTools
 
             var enabled = SurvivalTools.Settings?.enableSurvivalToolTreeFelling ?? true;
 
-            Log.Message($"[SurvivalTools] Applying tree felling conditionals: enabled={enabled}");
+            ST_Logging.LogInfo($"[SurvivalTools] Applying tree felling conditionals: enabled={enabled}");
 
             if (!enabled)
             {
@@ -48,7 +48,7 @@ namespace SurvivalTools
                         workType.workGiversByPriority?.RemoveAll(wg => wg == fellTreesWG);
                     }
 
-                    Log.Message("[SurvivalTools] Disabled ST_FellTrees WorkGiver due to setting.");
+                    ST_Logging.LogInfo("[SurvivalTools] Disabled ST_FellTrees WorkGiver due to setting.");
                 }
             }, "DisableTreeFellingFeatures");
         }

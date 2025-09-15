@@ -109,7 +109,7 @@ namespace SurvivalTools.HarmonyStuff
             catch (Exception ex)
             {
                 if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"AutoTool_Exception_{pawn?.ThingID ?? "null"}"))
-                    Log.Error($"[SurvivalTools.AutoTool] Exception in AutoTool postfix: {ex}");
+                    LogError($"[SurvivalTools.AutoTool] Exception in AutoTool postfix: {ex}");
             }
         }
 

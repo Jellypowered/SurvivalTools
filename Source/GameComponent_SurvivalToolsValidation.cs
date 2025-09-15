@@ -5,6 +5,7 @@ using System.Linq;
 using RimWorld;
 using Verse;
 using SurvivalTools.Helpers;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools
 {
@@ -42,7 +43,7 @@ namespace SurvivalTools
                     // early caching during PostLoadInit which has caused CTDs in the past.
                     SurvivalToolUtility.ToolFactorCache.ScheduleActivation(scheduledValidationTick);
 
-                    Log.Message("[SurvivalTools.JobValidation] Tool stats refreshed immediately. Job validation scheduled for 3 seconds after load.");
+                    LogInfo("[SurvivalTools.JobValidation] Tool stats refreshed immediately. Job validation scheduled for 3 seconds after load.");
 
                 }, "SurvivalTools: Scheduling delayed job validation...", false, null);
             }
@@ -59,7 +60,7 @@ namespace SurvivalTools
                 hasValidatedThisSession = true;
                 scheduledValidationTick = -1;
 
-                Log.Message("[SurvivalTools.JobValidation] Executing delayed job validation after tool stats have been properly initialized.");
+                LogInfo("[SurvivalTools.JobValidation] Executing delayed job validation after tool stats have been properly initialized.");
                 SurvivalToolValidation.ValidateExistingJobs("delayed validation after game load");
             }
         }
@@ -121,7 +122,7 @@ namespace SurvivalTools
 
             if (refreshedCount > 0)
             {
-                Log.Message($"[SurvivalTools] Refreshed stat factors for {refreshedCount} existing tools and invalidated stat caches for {refreshedPawns.Count} pawns");
+                LogInfo($"[SurvivalTools] Refreshed stat factors for {refreshedCount} existing tools and invalidated stat caches for {refreshedPawns.Count} pawns");
             }
         }
     }

@@ -115,7 +115,7 @@ namespace SurvivalTools
                         var pawn = parent as Pawn;
                         var who = pawn?.LabelShort ?? parent?.ToString() ?? "unknown pawn";
                         if (ShouldLogWithCooldown($"InvalidAssignment_{who}"))
-                            Log.Warning($"[SurvivalTools] {who} had an invalid survival tool assignment; resetting to default.");
+                            LogWarning($"[SurvivalTools] {who} had an invalid survival tool assignment; resetting to default.");
                         _currentAssignment = null; // lazy default on next get
                     }
                 }

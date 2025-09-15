@@ -41,7 +41,7 @@ namespace SurvivalTools.HarmonyStuff
                     {
                         string pawnLabel = worker.LabelShort ?? worker.LabelCap ?? "pawn";
                         string blockerLabel = blocker.LabelShort ?? blocker.def?.label ?? "tree";
-                        Log.Message($"[SurvivalTools] {pawnLabel} cannot handle tree blocker {blockerLabel} (missing tree-felling tools).");
+                        LogDecision(key, $"[SurvivalTools] {pawnLabel} cannot handle tree blocker {blockerLabel} (missing tree-felling tools).");
                     }
                 }
 

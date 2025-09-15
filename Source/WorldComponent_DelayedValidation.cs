@@ -25,7 +25,7 @@ namespace SurvivalTools
                 hasValidated = true;
                 scheduledValidationTick = -1;
 
-                Log.Message("[SurvivalTools.JobValidation] Executing delayed job validation after tool stats have been properly initialized.");
+                ST_Logging.LogInfo("[SurvivalTools.JobValidation] Executing delayed job validation after tool stats have been properly initialized.");
                 SurvivalToolValidation.ValidateExistingJobs("delayed validation after game load");
             }
         }
@@ -35,7 +35,7 @@ namespace SurvivalTools
             if (!hasValidated)
             {
                 scheduledValidationTick = targetTick;
-                Log.Message($"[SurvivalTools.JobValidation] Scheduled validation for tick {targetTick} (current: {Find.TickManager.TicksGame})");
+                ST_Logging.LogInfo($"[SurvivalTools.JobValidation] Scheduled validation for tick {targetTick} (current: {Find.TickManager.TicksGame})");
             }
         }
 

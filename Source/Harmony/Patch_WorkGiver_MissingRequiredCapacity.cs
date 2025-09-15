@@ -42,7 +42,7 @@ namespace SurvivalTools.HarmonyStuff
                                     .Where(stat => pawn.GetBestSurvivalTool(stat) == null)
                                     .Select(stat => stat.defName));
 
-                        Log.Message($"[SurvivalTools] Blocking {wgDef.defName} for {pawn.LabelShort}: " +
+                        LogDecision(key, $"[SurvivalTools] Blocking {wgDef.defName} for {pawn.LabelShort}: " +
                                     $"missing required tool/stat(s) [{missingStats}] → Manipulation capacity gate.");
                     }
                 }

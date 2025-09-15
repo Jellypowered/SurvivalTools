@@ -27,7 +27,7 @@ namespace SurvivalTools.HarmonyStuff
                 catch (Exception e)
                 {
                     // If vanilla throws, we don’t want our patch to swallow it silently.
-                    Log.Error($"[SurvivalTools] Exception in Toils_Haul.TakeToInventory original initAction: {e}");
+                    LogError($"[SurvivalTools] Exception in Toils_Haul.TakeToInventory original initAction: {e}");
                 }
 
                 var actor = __result.actor;
@@ -75,7 +75,7 @@ namespace SurvivalTools.HarmonyStuff
                     if (ShouldLogWithCooldown(key))
                     {
                         var what = isSurvivalTool ? "survival tool" : "tool-stuff";
-                        Log.Message($"[SurvivalTools] Marked {what} '{thing.Label}' as forced for {actor.LabelShort}.");
+                        LogDecision(key, $"[SurvivalTools] Marked {what} '{thing.Label}' as forced for {actor.LabelShort}.");
                     }
                 }
             };

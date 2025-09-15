@@ -473,6 +473,77 @@ namespace SurvivalTools
         internal static void LogWarning(string message) => Emit(message, LogLevel.Warning);
         internal static void LogError(string message) => Emit(message, LogLevel.Error);
 
+        /// <summary>
+        /// Raw debug logger for special-case systems (ToolResolver). Bypasses buffering,
+        /// deduplication and cooldown but remains gated behind the debug-settings flag.
+        /// Use only where callers must always see unthrottled debug output when DevMode+debug
+        /// logging is enabled (e.g. automatic tool resolution at startup).
+        /// </summary>
+        internal static void LogRawDebug(string message)
+        {
+            if (!IsDebugLoggingEnabled) return;
+            Emit(message, LogLevel.Message);
+        }
+
+        /// <summary>
+        /// Decision-level logging: deduped and cooldown-aware. Intended for scoring/validation
+        /// and patch decision explanations.
+        /// </summary>
+        internal static void LogDecision(string key, string message)
+        {
+            if (!IsDebugLoggingEnabled) return;
+            if (string.IsNullOrEmpty(key))
+            {
+                EnqueueBuffered(message, LogLevel.Message);
+                return;
+            }
+            if (!ShouldLog(key, respectCooldown: true)) return;
+            EnqueueBuffered(message, LogLevel.Message);
+        }
+
+        /// <summary>
+        /// Summarized debug message for AI flows (single-line summary per pawn/job).
+        /// Respects cooldown keyed by pawn+job to avoid per-tool spam.
+        /// </summary>
+        internal static void LogDebugSummary(Pawn pawn, JobDef job, Thing chosenTool)
+        {
+            if (!IsDebugLoggingEnabled) return;
+            string pawnId = pawn?.ThingID ?? "null";
+            string jobName = job?.defName ?? "<noJob>";
+            string toolLabel = chosenTool?.LabelShort ?? "(none)";
+            string key = $"Summary|{pawnId}|{jobName}";
+            string msg = $"[SurvivalTools] Summary: pawn={pawn?.LabelShort ?? "null"} job={jobName} tool={toolLabel}";
+            LogDebug(msg, key, respectCooldown: true);
+        }
+
+        /// <summary>
+        /// Summarized stat debug for evaluation chains. Emits one line per pawn+stat key.
+        /// </summary>
+        internal static void LogStatDebug(Pawn pawn, StatDef stat, float factor)
+        {
+            if (!IsDebugLoggingEnabled) return;
+            if (pawn == null || stat == null) return;
+            string key = $"StatDebug|{pawn.ThingID}|{stat.defName}";
+            string msg = $"[SurvivalTools.StatDebug] pawn={pawn.LabelShort} stat={stat.defName} factor={factor:F3}";
+            LogDebug(msg, key, respectCooldown: true);
+        }
+
+        /// <summary>
+        /// Emits an info-level message but only once per supplied key (cooldown semantics).
+        /// Useful for alerts and UI change logs that should not spam every tick.
+        /// </summary>
+        internal static void LogInfoOnce(string message, string key)
+        {
+            if (!IsDebugLoggingEnabled) return;
+            if (string.IsNullOrEmpty(key))
+            {
+                Emit(message, LogLevel.Message);
+                return;
+            }
+            if (!ShouldLog(key, respectCooldown: true)) return;
+            Emit(message, LogLevel.Message);
+        }
+
         internal static void LogCompatWarning(string message) =>
             Emit($"[SurvivalTools Compat] {message}", LogLevel.Warning);
 

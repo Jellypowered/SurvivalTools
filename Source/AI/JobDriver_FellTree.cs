@@ -63,7 +63,8 @@ namespace SurvivalTools
                 }
                 catch (System.Exception ex)
                 {
-                    Log.Error($"[SurvivalTools] Exception in FellTree.DestroyThing initAction: {ex}"); // leave error unchanged
+                    // Critical exception — keep semantics but route through centralized logger
+                    LogError($"[SurvivalTools] Exception in FellTree.DestroyThing initAction: {ex}");
                 }
             };
             toil.defaultCompleteMode = ToilCompleteMode.Instant;

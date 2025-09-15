@@ -49,7 +49,7 @@ namespace SurvivalTools.HarmonyStuff
             {
                 const string key = "Transpile_ITab_Pawn_Gear_DrawThingRow_MissingLabel";
                 if (ShouldLogWithCooldown(key))
-                    Log.Warning("[SurvivalTools] Failed to patch ITab_Pawn_Gear.DrawThingRow: Widgets.Label call not found.");
+                    LogWarning("[SurvivalTools] Failed to patch ITab_Pawn_Gear.DrawThingRow: Widgets.Label call not found.");
             }
         }
 

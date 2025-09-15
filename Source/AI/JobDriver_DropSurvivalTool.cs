@@ -101,7 +101,7 @@ namespace SurvivalTools
                         {
                             var k = $"DropTool_PlaceFailed_{pawn.ThingID}";
                             if (ShouldLogWithCooldown(k))
-                                Log.Warning($"[SurvivalTools.DropTool] {pawn.LabelShort} failed to drop/place {toDrop.Label}.");
+                                LogWarning($"[SurvivalTools.DropTool] {pawn.LabelShort} failed to drop/place {toDrop.Label}.");
                         }
 
                         // Attempt to restore split-off items safely

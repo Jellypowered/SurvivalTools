@@ -702,7 +702,7 @@ namespace SurvivalTools
                 if (vtool.SourceThing != null)
                 {
                     if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"BackingThing_Source_{vtool.SourceThing.ThingID}"))
-                        Log.Message($"[BackingThing] Using direct SourceThing for {vtool.LabelNoCount}: {vtool.SourceThing.LabelCap}");
+                        LogDebug($"[BackingThing] Using direct SourceThing for {vtool.LabelNoCount}: {vtool.SourceThing.LabelCap}", $"BackingThing_Source_{vtool.SourceThing.ThingID}");
                     return vtool.SourceThing;
                 }
 
@@ -715,7 +715,7 @@ namespace SurvivalTools
                         if (exact != null)
                         {
                             if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"BackingThing_InvExact_{exact.ThingID}"))
-                                Log.Message($"[BackingThing] Found exact SourceThing in inventory for {vtool.LabelNoCount}: {exact.LabelCap}");
+                                LogDebug($"[BackingThing] Found exact SourceThing in inventory for {vtool.LabelNoCount}: {exact.LabelCap}", $"BackingThing_InvExact_{exact.ThingID}");
                             return exact;
                         }
                     }
@@ -725,7 +725,7 @@ namespace SurvivalTools
                     if (invThing != null)
                     {
                         if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"BackingThing_InvDef_{invThing.ThingID}"))
-                            Log.Message($"[BackingThing] Found by def in inventory for {vtool.LabelNoCount}: {invThing.LabelCap}");
+                            LogDebug($"[BackingThing] Found by def in inventory for {vtool.LabelNoCount}: {invThing.LabelCap}", $"BackingThing_InvDef_{invThing.ThingID}");
                         return invThing;
                     }
                 }
@@ -750,7 +750,7 @@ namespace SurvivalTools
                     if (found != null)
                     {
                         if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"BackingThing_Map_{found.ThingID}"))
-                            Log.Message($"[BackingThing] Found closest reachable on map for {vtool.LabelNoCount}: {found.LabelCap}");
+                            LogDebug($"[BackingThing] Found closest reachable on map for {vtool.LabelNoCount}: {found.LabelCap}", $"BackingThing_Map_{found.ThingID}");
                         return found;
                     }
                 }
@@ -762,13 +762,13 @@ namespace SurvivalTools
                     if (any != null)
                     {
                         if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"BackingThing_Global_{any.ThingID}"))
-                            Log.Message($"[BackingThing] Found fallback spawned instance for {vtool.LabelNoCount}: {any.LabelCap}");
+                            LogDebug($"[BackingThing] Found fallback spawned instance for {vtool.LabelNoCount}: {any.LabelCap}", $"BackingThing_Global_{any.ThingID}");
                         return any;
                     }
                 }
 
                 if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"BackingThing_None_{vtool.GetHashCode()}"))
-                    Log.Message($"[BackingThing] No backing Thing found for {vtool.LabelNoCount}");
+                    LogDebug($"[BackingThing] No backing Thing found for {vtool.LabelNoCount}", $"BackingThing_None_{vtool.GetHashCode()}");
 
                 return null;
             }
@@ -1087,7 +1087,7 @@ namespace SurvivalTools
                 list.Add(ST_StatDefOf.MedicalOperationSpeed);
                 list.Add(ST_StatDefOf.MedicalSurgerySuccessChance);
                 if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
-                    Log.Message($"[SurvivalTools.Debug] {jobDef.defName} -> MedicalOperationSpeed + MedicalSurgerySuccessChance");
+                    LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> MedicalOperationSpeed + MedicalSurgerySuccessChance", $"Medical_{jobDef.defName}");
                 return list;
             }
 
@@ -1096,7 +1096,7 @@ namespace SurvivalTools
                 list.Add(ST_StatDefOf.ButcheryFleshSpeed);
                 list.Add(ST_StatDefOf.ButcheryFleshEfficiency);
                 if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
-                    Log.Message($"[SurvivalTools.Debug] {jobDef.defName} -> ButcheryFleshSpeed + ButcheryFleshEfficiency");
+                    LogDebug($"[SurvivalTools.Debug] {jobDef.defName} -> ButcheryFleshSpeed + ButcheryFleshEfficiency", $"Butchery_{jobDef.defName}");
                 return list;
             }
 
@@ -1231,7 +1231,7 @@ namespace SurvivalTools
             if (props?.baseWorkStatFactors == null && !hasStatBases)
             {
                 if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"CanUseTool_NullProps_{def?.defName ?? "null"}"))
-                    Log.Error($"Tried to check if {def} is a usable tool but has null tool properties or work stat factors.");
+                    LogDecision($"CanUseTool_NullProps_{def?.defName ?? "null"}", $"[SurvivalTools] Tried to check if {def} is a usable tool but has null tool properties or work stat factors.");
                 return false;
             }
 
@@ -1413,7 +1413,7 @@ namespace SurvivalTools
             if (best == null && expectedKind != STToolKind.None)
             {
                 if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"BestTool_FallbackMulti_{pawn.ThingID}_{expectedKind}"))
-                    Log.Message($"[SurvivalTools.Debug] Fallback (multi-stat) re-scan without expectedKind for {pawn.LabelShort} (expected {expectedKind}) stats=[{string.Join(",", stats.Select(s => s.defName))}]");
+                    LogDebug($"[SurvivalTools.Debug] Fallback (multi-stat) re-scan without expectedKind for {pawn.LabelShort} (expected {expectedKind}) stats=[{string.Join(",", stats.Select(s => s.defName))}]", $"Fallback_Multi_{pawn?.ThingID}_{expectedKind}");
                 foreach (var thing in pawn.GetAllUsableSurvivalTools())
                 {
                     SurvivalTool cand = thing as SurvivalTool;
@@ -1681,7 +1681,7 @@ namespace SurvivalTools
             if (best == null && expectedKind != STToolKind.None)
             {
                 if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"BestTool_FallbackSingle_{pawn.ThingID}_{expectedKind}_{stat.defName}"))
-                    Log.Message($"[SurvivalTools.Debug] Fallback (single-stat) re-scan without expectedKind for {pawn.LabelShort} stat={stat.defName} expected={expectedKind}");
+                    LogDebug($"[SurvivalTools.Debug] Fallback (single-stat) re-scan without expectedKind for {pawn.LabelShort} stat={stat.defName} expected={expectedKind}", $"Fallback_Single_{pawn?.ThingID}_{stat?.defName}_{expectedKind}");
                 foreach (var thing in pawn.GetAllUsableSurvivalTools())
                 {
                     SurvivalTool candidate = thing as SurvivalTool;
@@ -1833,7 +1833,7 @@ namespace SurvivalTools
                         {
                             string statCategory = GetStatCategoryDescription(stat);
                             string ctx = GetJobContextDescription(workGiver, jobDef);
-                            Log.Message($"[SurvivalTools] {pawn.LabelShort} cannot start job: missing required tool for {statCategory} stat {stat.defName}{ctx}");
+                            LogInfoOnce($"[SurvivalTools] {pawn.LabelShort} cannot start job: missing required tool for {statCategory} stat {stat.defName}{ctx}", $"NoTool_StartJob_{pawn?.ThingID}_{stat?.defName}");
                         }
                         return false;
                     }

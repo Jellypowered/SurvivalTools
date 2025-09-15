@@ -33,7 +33,7 @@ namespace SurvivalTools.HarmonyStuff
                 var key = $"PlantsCut_BlockTree_{pawn?.ThingID ?? "nullPawn"}_{t.def.defName}";
                 if (ShouldLogWithCooldown(key))
                 {
-                    Log.Message($"[SurvivalTools] PlantsCut blocked on tree '{t.def.defName}' (pawn: {pawn?.LabelShort ?? "null"}) — use felling job instead.");
+                    LogDecision(key, $"[SurvivalTools] PlantsCut blocked on tree '{t.def.defName}' (pawn: {pawn?.LabelShort ?? "null"}) — use felling job instead.");
                 }
             }
         }

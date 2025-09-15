@@ -36,7 +36,7 @@ namespace SurvivalTools.HarmonyStuff
             {
                 var key = $"ST_BlockSowCutTree_{pawn.ThingID}";
                 if (ShouldLogWithCooldown(key))
-                    Log.Message($"[SurvivalTools] Blocked CutPlant on tree '{thing?.LabelShort ?? "unknown"}' for {pawn.LabelShort}: missing tree-felling tools.");
+                    LogDecision(key, $"[SurvivalTools] Blocked CutPlant on tree '{thing?.LabelShort ?? "unknown"}' for {pawn.LabelShort}: missing tree-felling tools.");
             }
         }
     }

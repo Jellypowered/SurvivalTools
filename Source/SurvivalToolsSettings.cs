@@ -93,7 +93,7 @@ namespace SurvivalTools
             _cacheInitialized = true;
 
             if (IsDebugLoggingEnabled)
-                Log.Message($"[SurvivalTools.Settings] Optional tool cache initialized: Cleaning={_hasCleaningToolsCache}, Butchery={_hasButcheryToolsCache}, Medical={_hasMedicalToolsCache}");
+                LogDebug($"[SurvivalTools.Settings] Optional tool cache initialized: Cleaning={_hasCleaningToolsCache}, Butchery={_hasButcheryToolsCache}, Medical={_hasMedicalToolsCache}", "Settings_OptionalToolCacheInitialized");
         }
 
         public void ResetOptionalToolCache()

@@ -9,6 +9,7 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 using SurvivalTools.Helpers;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools
 {
@@ -443,7 +444,7 @@ namespace SurvivalTools
             }
             catch (Exception ex)
             {
-                Log.Error("[SurvivalTools] Failed to dump WorkSpeedGlobal info: " + ex);
+                LogError("[SurvivalTools] Failed to dump WorkSpeedGlobal info: " + ex);
             }
         }
     }
