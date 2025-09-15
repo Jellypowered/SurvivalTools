@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using HarmonyLib;
 using RimWorld;
 using Verse;
@@ -27,20 +26,31 @@ namespace SurvivalTools.HarmonyStuff
                 if (pawn == null || __result.Job == null) return;
 
                 if (!ShouldAttemptAutoTool(__result.Job, pawn, out var requiredStats))
+                {
+                    if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"AutoTool_SkipPreconditions_{pawn?.ThingID ?? "null"}"))
+                        LogDebug($"[SurvivalTools.AutoTool] Skipping auto-tool for {pawn?.LabelShort ?? "<null pawn>"} — preconditions failed or job ineligible.", $"AutoTool_SkipPreconditions_{pawn?.ThingID ?? "null"}");
                     return;
+                }
 
                 bool isDebug = IsDebugLoggingEnabled;
                 var jobName = __result.Job.def?.defName ?? "unknown";
 
                 // Already has a suitable tool?
                 if (PawnHasHelpfulTool(pawn, requiredStats))
+                {
+                    if (isDebug && ShouldLogWithCooldown($"AutoTool_HasHelpfulEarly_{pawn.ThingID}"))
+                        LogDebug($"[SurvivalTools.AutoTool] {pawn.LabelShort} retains existing tool set for {jobName}; no pickup needed.", $"AutoTool_HasHelpfulEarly_{pawn.ThingID}");
                     return;
+                }
 
                 // Hardcore gating: if we can't acquire something, block the job
                 if (SurvivalTools.Settings?.hardcoreMode == true)
                 {
-                    foreach (var stat in requiredStats ?? Enumerable.Empty<StatDef>())
+                    int rsCount = requiredStats?.Count ?? 0;
+                    for (int i = 0; i < rsCount; i++)
                     {
+                        var stat = requiredStats[i];
+                        if (stat == null) continue;
                         if (StatGatingHelper.ShouldBlockJobForStat(stat, SurvivalTools.Settings, pawn) &&
                             !CanAcquireHelpfulToolNow(pawn, requiredStats, isDebug))
                         {
@@ -50,10 +60,51 @@ namespace SurvivalTools.HarmonyStuff
                     }
                 }
 
-                // Find & enqueue pickup
-                var bestTool = FindBestHelpfulTool(pawn, requiredStats, isDebug);
-                if (bestTool != null)
+                // Normal & Hardcore: attempt proactive pickup (Hardcore may have gated already).
+                Thing backing;
+                var bestTool = SurvivalToolUtility.FindBestToolCandidate(pawn, requiredStats, searchMap: true, out backing);
+
+                if (bestTool == null && backing == null)
+                {
+                    // Optional expansion: if single stat has no improving tool, broaden to a paired stat set
+                    var expanded = ExpandAcquisitionStats(requiredStats);
+                    if (expanded != null && expanded.Count > requiredStats.Count)
+                    {
+                        if (isDebug && ShouldLogWithCooldown($"AutoTool_Expand_{pawn.ThingID}_{jobName}"))
+                        {
+                            var beforeSb = new System.Text.StringBuilder();
+                            for (int i = 0; i < requiredStats.Count; i++)
+                            {
+                                var rs = requiredStats[i]; if (rs == null) continue; if (beforeSb.Length > 0) beforeSb.Append(", "); beforeSb.Append(rs.defName);
+                            }
+                            var afterSb = new System.Text.StringBuilder();
+                            for (int i = 0; i < expanded.Count; i++)
+                            {
+                                var rs = expanded[i]; if (rs == null) continue; if (afterSb.Length > 0) afterSb.Append(", "); afterSb.Append(rs.defName);
+                            }
+                            LogDebug($"[SurvivalTools.AutoTool] Expanding required stats for {pawn.LabelShort} job={jobName} from [{beforeSb}] to [{afterSb}] to find an improving tool.", $"AutoTool_Expand_{pawn.ThingID}_{jobName}");
+                        }
+                        requiredStats = expanded;
+                        bestTool = SurvivalToolUtility.FindBestToolCandidate(pawn, requiredStats, searchMap: true, out backing);
+                    }
+                }
+
+                if (bestTool != null && backing != null)
+                {
+                    if (isDebug && ShouldLogWithCooldown($"AutoTool_Pick_{pawn.ThingID}_{bestTool.LabelShort}"))
+                    {
+                        var statsSb = new System.Text.StringBuilder();
+                        for (int i = 0; i < requiredStats.Count; i++) { var rs = requiredStats[i]; if (rs == null) continue; if (statsSb.Length > 0) statsSb.Append(", "); statsSb.Append(rs.defName); }
+                        LogDebug($"[SurvivalTools.AutoTool] {pawn.LabelShort} will pick up {bestTool.LabelShort} for job {jobName}; stats=[{statsSb}].", $"AutoTool_Pick_{pawn.ThingID}_{bestTool.LabelShort}");
+                    }
                     __result = CreateToolPickupJobs(pawn, __result.Job, bestTool, requiredStats, __result.SourceNode);
+                }
+                else if (isDebug && ShouldLogWithCooldown($"AutoTool_NoCandidate_{pawn.ThingID}_{jobName}"))
+                {
+                    var statsSb = new System.Text.StringBuilder();
+                    for (int i = 0; i < requiredStats.Count; i++) { var rs = requiredStats[i]; if (rs == null) continue; if (statsSb.Length > 0) statsSb.Append(", "); statsSb.Append(rs.defName); }
+                    LogDebug($"[SurvivalTools.AutoTool] No improving tool candidate found for {pawn.LabelShort} job {jobName} (stats=[{statsSb}]).", $"AutoTool_NoCandidate_{pawn.ThingID}_{jobName}");
+                }
             }
             catch (Exception ex)
             {
@@ -89,10 +140,62 @@ namespace SurvivalTools.HarmonyStuff
             return !requiredStats.NullOrEmpty();
         }
 
-        private static bool PawnHasHelpfulTool(Pawn pawn, List<StatDef> requiredStats) =>
-            pawn?.GetAllUsableSurvivalTools()
-                .OfType<SurvivalTool>()
-                .Any(st => ToolScoring.ToolImprovesAnyRequiredStat(st, requiredStats)) == true;
+        private static bool PawnHasHelpfulTool(Pawn pawn, List<StatDef> requiredStats)
+        {
+            if (pawn == null || requiredStats == null || requiredStats.Count == 0) return false;
+            var tools = pawn.GetAllUsableSurvivalTools();
+            foreach (var thing in tools)
+            {
+                SurvivalTool st = thing as SurvivalTool;
+                if (st == null && thing.def != null && thing.def.IsToolStuff())
+                    st = VirtualTool.FromThing(thing);
+                if (st != null && SurvivalToolUtility.ToolImprovesAny(st, requiredStats))
+                {
+                    if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"AutoTool_HasHelpful_{pawn.ThingID}"))
+                    {
+                        var names = new System.Text.StringBuilder();
+                        for (int i = 0; i < requiredStats.Count; i++)
+                        {
+                            var rs = requiredStats[i];
+                            if (rs == null) continue;
+                            float toolFactor = SurvivalToolUtility.GetToolProvidedFactor(st, rs);
+                            float baseline = SurvivalToolUtility.GetNoToolBaseline(rs);
+                            if (toolFactor > baseline + 0.001f)
+                            {
+                                if (names.Length > 0) names.Append(", ");
+                                names.Append(rs.defName).Append("(baseline=").Append(baseline.ToString("F2")).Append(" -> ").Append(toolFactor.ToString("F2")).Append(")");
+                            }
+                        }
+                        LogDebug($"[SurvivalTools.AutoTool] {pawn.LabelShort} already has helpful tool {st.LabelShort}: improves [{names}]", $"AutoTool_HasHelpful_{pawn.ThingID}");
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Broadens a narrow single-stat requirement to a paired set when no direct improvement tool exists.
+        // Helps Normal Mode pick up multi-purpose tools that indirectly aid related tasks.
+        private static List<StatDef> ExpandAcquisitionStats(List<StatDef> current)
+        {
+            if (current == null || current.Count != 1) return current;
+            var only = current[0];
+            if (only == null) return current;
+            // Pair sow/harvest stats bidirectionally
+            if (only == ST_StatDefOf.SowingSpeed)
+            {
+                var list = new List<StatDef>(2) { only };
+                if (!list.Contains(ST_StatDefOf.PlantHarvestingSpeed)) list.Add(ST_StatDefOf.PlantHarvestingSpeed);
+                return list;
+            }
+            if (only == ST_StatDefOf.PlantHarvestingSpeed)
+            {
+                var list = new List<StatDef>(2) { only };
+                if (!list.Contains(ST_StatDefOf.SowingSpeed)) list.Add(ST_StatDefOf.SowingSpeed);
+                return list;
+            }
+            return current; // unchanged
+        }
 
         #endregion
 
@@ -100,12 +203,10 @@ namespace SurvivalTools.HarmonyStuff
 
         private static bool CanAcquireHelpfulToolNow(Pawn pawn, List<StatDef> requiredStats, bool isDebug)
         {
-            var best = FindBestHelpfulTool(pawn, requiredStats, isDebug);
-            if (best == null) return false;
-
-            var backing = SurvivalToolUtility.BackingThing(best, pawn) ?? (best as Thing);
-            if (backing == null || !backing.Spawned) return false;
-
+            Thing backing;
+            var best = SurvivalToolUtility.FindBestToolCandidate(pawn, requiredStats, searchMap: true, out backing);
+            if (best == null || backing == null) return false;
+            if (!backing.Spawned) return false;
             return pawn.CanReserveAndReach(backing, PathEndMode.OnCell, pawn.NormalMaxDanger());
         }
 
@@ -136,7 +237,20 @@ namespace SurvivalTools.HarmonyStuff
 
             // Simple: queue pickup, then resume original job
             if (originalJob.def != JobDefOf.TakeInventory)
-                pawn.jobs.jobQueue.EnqueueFirst(CloneJobForQueue(originalJob));
+            {
+                // Avoid cloning DoBill jobs because other mods (e.g. CommonSense) patch internal bill state.
+                if (originalJob.def.defName != null && originalJob.def.defName.IndexOf("DoBill", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"AutoTool_RequeueOriginal_{pawn.ThingID}"))
+                        LogDebug($"[SurvivalTools.AutoTool] Re-queuing original DoBill job (no clone) after pickup for {pawn.LabelShort}.", $"AutoTool_RequeueOriginal_{pawn.ThingID}");
+                    pawn.jobs.jobQueue.EnqueueFirst(originalJob);
+                }
+                else
+                {
+                    var cloned = CloneJobForQueue(originalJob);
+                    pawn.jobs.jobQueue.EnqueueFirst(cloned ?? originalJob);
+                }
+            }
 
             return new ThinkResult(pickupJob, sourceNode, JobTag.Misc, false);
         }
@@ -160,6 +274,12 @@ namespace SurvivalTools.HarmonyStuff
             copy.ignoreDesignations = j.ignoreDesignations;
             copy.ignoreJoyTimeAssignment = j.ignoreJoyTimeAssignment;
 
+            // Extra commonly used fields in DoBill & hauling contexts (defensive null checks)
+            try { copy.haulOpportunisticDuplicates = j.haulOpportunisticDuplicates; } catch { }
+            try { copy.bill = j.bill; } catch { }
+            try { copy.placedThings = j.placedThings != null ? new List<ThingCountClass>(j.placedThings) : null; } catch { }
+            try { copy.startTick = j.startTick; } catch { }
+
             // Copy queues safely
             if (j.targetQueueA != null)
                 copy.targetQueueA = new List<LocalTargetInfo>(j.targetQueueA);
@@ -174,163 +294,6 @@ namespace SurvivalTools.HarmonyStuff
 
         #endregion
 
-        #region Scanner & scoring (kept from before)
-
-        private static SurvivalTool FindBestHelpfulTool(Pawn pawn, List<StatDef> requiredStats, bool isDebug)
-        {
-            requiredStats = requiredStats ?? new List<StatDef>();
-            if (pawn == null || pawn.Map == null || !pawn.Position.IsValid || !pawn.Position.InBounds(pawn.Map))
-                return null;
-
-            SurvivalTool bestTool = null;
-            float bestScore = 0f;
-
-            // Consider both real SurvivalTool things and tool-stuff on the ground (wrapped as VirtualSurvivalTool)
-            var seen = new HashSet<int>(); // avoid scoring same backing thing twice
-            foreach (var thing in GenRadial.RadialDistinctThingsAround(pawn.Position, pawn.Map, SearchRadius, true))
-            {
-                if (thing == null) continue;
-
-                SurvivalTool candidate = null;
-
-                // Real SurvivalTool instance on the ground
-                if (thing is SurvivalTool st)
-                {
-                    candidate = st;
-                }
-                else if (thing.def != null && thing.def.IsToolStuff())
-                {
-                    // Wrap tool-stuff into a virtual survival tool for scoring
-                    candidate = VirtualSurvivalTool.FromThing(thing);
-                }
-
-                if (candidate == null) continue;
-                var backing = SurvivalToolUtility.BackingThing(candidate, pawn) ?? (candidate as Thing);
-                if (backing == null) continue;
-                if (seen.Contains(backing.thingIDNumber)) continue;
-                seen.Add(backing.thingIDNumber);
-
-                if (!IsViableCandidate(candidate, pawn, requiredStats)) continue;
-
-                float score = ToolScoring.CalculateToolScore(candidate, pawn, requiredStats);
-
-                if (backing != null) score -= 0.01f * backing.Position.DistanceTo(pawn.Position);
-
-                if (score > bestScore)
-                {
-                    bestScore = score;
-                    bestTool = candidate;
-                }
-            }
-            // Next: consider items in storage/stockpiles and haulable things on the map within a reasonable fallback radius.
-            // Prioritize storage items first (they're often closer-to-hand) then stockpiles/haulables.
-            const int StorageSearchRadius = 80; // tiles to search for storage items
-            const int FallbackSearchRadius = 200; // wider map fallback for haulable items
-
-            try
-            {
-                var map = pawn.Map;
-                if (map != null)
-                {
-                    // Scan haulable ever group but order: storage first, then nearby stockpiles, then fallback area
-                    var candidates = map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableEver);
-
-                    // 1) Storage items (IsInAnyStorage) within StorageSearchRadius
-                    foreach (var item in candidates)
-                    {
-                        if (item == null) continue;
-                        if (!item.IsInAnyStorage()) continue;
-                        if (item.Map != map) continue;
-                        if (item.Position.DistanceTo(pawn.Position) > StorageSearchRadius) continue;
-
-                        if (seen.Contains(item.thingIDNumber)) continue;
-                        seen.Add(item.thingIDNumber);
-
-                        SurvivalTool candidate2 = null;
-                        if (item is SurvivalTool st2) candidate2 = st2;
-                        else if (item.def != null && item.def.IsToolStuff()) candidate2 = VirtualSurvivalTool.FromThing(item);
-                        if (candidate2 == null) continue;
-                        if (!IsViableCandidate(candidate2, pawn, requiredStats)) continue;
-
-                        float score = ToolScoring.CalculateToolScore(candidate2, pawn, requiredStats);
-                        var backing2 = SurvivalToolUtility.BackingThing(candidate2, pawn) ?? (candidate2 as Thing);
-                        if (backing2 != null) score -= 0.01f * backing2.Position.DistanceTo(pawn.Position);
-                        if (score > bestScore)
-                        {
-                            bestScore = score;
-                            bestTool = candidate2;
-                        }
-                    }
-
-                    // 2) Nearby haulable (stockpiles, scattered) within StorageSearchRadius
-                    foreach (var item in candidates)
-                    {
-                        if (item == null) continue;
-                        if (item.IsInAnyStorage()) continue; // already considered
-                        if (item.Map != map) continue;
-                        if (item.Position.DistanceTo(pawn.Position) > StorageSearchRadius) continue;
-
-                        if (seen.Contains(item.thingIDNumber)) continue;
-                        seen.Add(item.thingIDNumber);
-
-                        SurvivalTool candidate2 = null;
-                        if (item is SurvivalTool st2) candidate2 = st2;
-                        else if (item.def != null && item.def.IsToolStuff()) candidate2 = VirtualSurvivalTool.FromThing(item);
-                        if (candidate2 == null) continue;
-                        if (!IsViableCandidate(candidate2, pawn, requiredStats)) continue;
-
-                        float score = ToolScoring.CalculateToolScore(candidate2, pawn, requiredStats);
-                        var backing2 = SurvivalToolUtility.BackingThing(candidate2, pawn) ?? (candidate2 as Thing);
-                        if (backing2 != null) score -= 0.01f * backing2.Position.DistanceTo(pawn.Position);
-                        if (score > bestScore)
-                        {
-                            bestScore = score;
-                            bestTool = candidate2;
-                        }
-                    }
-
-                    // 3) Fallback wider-area scan for haulable items (but limit to avoid perf issues)
-                    foreach (var item in candidates)
-                    {
-                        if (item == null) continue;
-                        if (item.Map != map) continue;
-                        if (item.Position.DistanceTo(pawn.Position) > FallbackSearchRadius) continue;
-
-                        if (seen.Contains(item.thingIDNumber)) continue;
-                        seen.Add(item.thingIDNumber);
-
-                        SurvivalTool candidate2 = null;
-                        if (item is SurvivalTool st2) candidate2 = st2;
-                        else if (item.def != null && item.def.IsToolStuff()) candidate2 = VirtualSurvivalTool.FromThing(item);
-                        if (candidate2 == null) continue;
-                        if (!IsViableCandidate(candidate2, pawn, requiredStats)) continue;
-
-                        float score = ToolScoring.CalculateToolScore(candidate2, pawn, requiredStats);
-                        var backing2 = SurvivalToolUtility.BackingThing(candidate2, pawn) ?? (candidate2 as Thing);
-                        if (backing2 != null) score -= 0.01f * backing2.Position.DistanceTo(pawn.Position);
-                        if (score > bestScore)
-                        {
-                            bestScore = score;
-                            bestTool = candidate2;
-                        }
-                    }
-                }
-            }
-            catch { /* best-effort: do not break auto-tool if map scanning fails */ }
-
-            return bestTool;
-        }
-
-        private static bool IsViableCandidate(SurvivalTool tool, Pawn pawn, List<StatDef> requiredStats)
-        {
-            if (tool == null || pawn == null || pawn.Map == null) return false;
-            var backing = SurvivalToolUtility.BackingThing(tool, pawn);
-            if (backing == null || !backing.Spawned || backing.Map != pawn.Map) return false;
-            if (backing.IsForbidden(pawn)) return false;
-            if (!pawn.CanReserveAndReach(backing, PathEndMode.OnCell, pawn.NormalMaxDanger())) return false;
-            return ToolScoring.ToolImprovesAnyRequiredStat(tool, requiredStats);
-        }
-
-        #endregion
+        // Legacy scanner & scoring removed: unified logic lives in SurvivalToolUtility.FindBestToolCandidate / ScoreToolForStats / ToolImprovesAny
     }
 }

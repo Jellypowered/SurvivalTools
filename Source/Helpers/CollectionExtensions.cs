@@ -29,28 +29,12 @@ namespace SurvivalTools.Helpers
         public static float GetStatFactorFromList(this IEnumerable<StatModifier> modifiers, StatDef stat)
         {
             if (modifiers == null || stat == null) return 1f;
-
-            // Defensive ToList() — prevents multiple enumeration of deferred IEnumerable
-            var modList = modifiers.ToList();
-
-            // Debug log (deduped by hash key)
-            string key = $"StatLookup|{stat.defName}|[{string.Join(",", modList.Select(m => m.stat?.defName + ":" + m.value))}]";
-            if (!loggedStatLookupKeys.Contains(key))
+            float val = 1f;
+            foreach (var m in modifiers)
             {
-                loggedStatLookupKeys.Add(key);
-                LogDebug($"[SurvivalTools.StatLookup] Looking for stat '{stat.defName}' in list: [{string.Join(", ", modList.Select(m => m.stat?.defName + ":" + m.value))}]");
-                foreach (var m in modList)
-                {
-                    if (m.stat == stat)
-                        LogDebug($"[SurvivalTools.StatLookup] Found reference match: '{m.stat.defName}' = {m.value}");
-                    else if (m.stat?.defName == stat.defName)
-                        LogDebug($"[SurvivalTools.StatLookup] Found defName match: '{m.stat.defName}' (not ref-equal) = {m.value}");
-                }
+                if (m?.stat == stat) { val = m.value; break; }
             }
-
-            // Direct reference check preferred
-            var modifier = modList.FirstOrDefault(m => m.stat == stat);
-            return modifier?.value ?? 1f;
+            return val;
         }
 
         /// <summary>Check if modifiers contain an entry for a specific stat.</summary>
@@ -78,18 +62,7 @@ namespace SurvivalTools.Helpers
         /// Baseline factor for a stat when no tools are equipped.
         /// Reads from StatPart_SurvivalTool if present.
         /// </summary>
-        private static float GetNoToolBaseline(StatDef stat)
-        {
-            if (stat?.parts == null) return 1f;
-
-            foreach (var part in stat.parts)
-            {
-                if (part is StatPart_SurvivalTool survivalPart)
-                    return survivalPart.NoToolStatFactor;
-            }
-
-            return 1f;
-        }
+        private static float GetNoToolBaseline(StatDef stat) => SurvivalToolUtility.GetNoToolBaseline(stat);
 
         #endregion
 

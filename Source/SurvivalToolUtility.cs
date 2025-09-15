@@ -1,6 +1,5 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/SurvivalToolUtility.cs
-// Source/SurvivalToolUtility.cs
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +15,150 @@ namespace SurvivalTools
 {
     public static class SurvivalToolUtility
     {
+        #region Unified Stat & Tool Selection (centralized API)
+        // These helpers unify previously duplicated logic spread across:
+        //  - (Removed) ToolScoring legacy class
+        //  - JobGiver_OptimizeSurvivalTools
+        //  - AutoToolPickup_UtilityIntegrated
+        //  - Alert classes & ad-hoc loops
+        // All new code should call these methods; legacy code will be migrated to them.
+
+        private const float ST_MultiStatBonusPerExtra = 0.10f; // 10% per extra matched stat
+        private const float ST_DistancePenaltyPerTile = 0.01f; // score penalty per tile (map searches)
+        private const int ST_RadialSearchRadius = 28;
+        private const int ST_StorageSearchRadius = 80;
+        private const int ST_FallbackSearchRadius = 200;
+
+        public static float GetNoToolBaseline(StatDef stat)
+        {
+            if (stat == null) return 1f;
+            try { return ToolFactorCache.GetOrComputeNoToolPenalty(stat); } catch { return 1f; }
+        }
+
+        public static float GetToolProvidedFactor(SurvivalTool tool, StatDef stat)
+        {
+            if (tool == null || stat == null) return 1f;
+            try
+            {
+                foreach (var m in tool.WorkStatFactors)
+                {
+                    if (m?.stat == stat) return m.value;
+                }
+            }
+            catch { }
+            // IMPORTANT: Returning 1f here incorrectly implied an improvement over the baseline
+            // no-tool penalty (e.g. 0.4 normal mode) even when the tool does NOT cover this stat.
+            // That caused any unrelated tool to appear to "improve" every penalized stat, blocking
+            // normal-mode proactive pickup (PawnHasHelpfulTool/ToolImprovesAny early-exited true).
+            // We now return the baseline penalty so absent modifiers yield zero delta in
+            // ScoreToolForStats and ToolImprovesAny.
+            return GetNoToolBaseline(stat);
+        }
+
+        public static bool ToolImprovesAny(SurvivalTool tool, List<StatDef> stats)
+        {
+            if (tool == null || stats == null) return false;
+            for (int i = 0; i < stats.Count; i++)
+            {
+                var s = stats[i];
+                if (s == null) continue;
+                if (GetToolProvidedFactor(tool, s) > GetNoToolBaseline(s) + 0.001f) return true;
+            }
+            return false;
+        }
+
+        public static float ScoreToolForStats(SurvivalTool tool, Pawn pawn, List<StatDef> stats)
+        {
+            if (tool == null || pawn == null || stats == null || stats.Count == 0) return 0f;
+            float total = 0f; int matched = 0;
+            for (int i = 0; i < stats.Count; i++)
+            {
+                var s = stats[i]; if (s == null) continue;
+                float f = GetToolProvidedFactor(tool, s); float baseline = GetNoToolBaseline(s);
+                if (f > baseline + 0.001f) { total += (f - baseline); matched++; }
+            }
+            if (matched > 1) total *= 1f + (matched - 1) * ST_MultiStatBonusPerExtra;
+            // Quality weighting if enabled
+            try
+            {
+                if (SurvivalTools.Settings?.useQualityToolScaling ?? false)
+                {
+                    if (tool is ThingWithComps twc)
+                    {
+                        var comp = twc.TryGetComp<CompQuality>();
+                        if (comp != null) total *= ToolQualityCurve.Evaluate((int)comp.Quality);
+                    }
+                }
+            }
+            catch { }
+            // Condition weighting 50%..100%
+            try
+            {
+                Thing backing = BackingThing(tool, pawn) ?? (tool as Thing);
+                if (backing?.def.useHitPoints == true && backing.MaxHitPoints > 0)
+                {
+                    float hpPct = backing.HitPoints / (float)backing.MaxHitPoints;
+                    total *= 0.5f + 0.5f * hpPct;
+                }
+            }
+            catch { }
+            return total;
+        }
+
+        public static SurvivalTool FindBestToolCandidate(Pawn pawn, List<StatDef> requiredStats, bool searchMap, out Thing backingThing)
+        {
+            backingThing = null;
+            if (pawn == null || requiredStats == null || requiredStats.Count == 0) return null;
+            SurvivalTool best = null; float bestScore = 0f;
+            // Held/equipped first
+            foreach (var thing in pawn.GetAllUsableSurvivalTools())
+            {
+                SurvivalTool cand = thing as SurvivalTool;
+                if (cand == null && thing.def.IsToolStuff()) cand = VirtualTool.FromThing(thing);
+                if (cand == null) continue;
+                if (!ToolImprovesAny(cand, requiredStats)) continue;
+                float sc = ScoreToolForStats(cand, pawn, requiredStats);
+                if (sc > bestScore)
+                {
+                    bestScore = sc; best = cand; backingThing = BackingThing(cand, pawn) ?? (cand as Thing);
+                }
+            }
+            if (!searchMap || pawn.Map == null) return best;
+            var map = pawn.Map; var seen = new HashSet<int>(); if (backingThing != null) seen.Add(backingThing.thingIDNumber);
+            // Radial
+            foreach (var t in GenRadial.RadialDistinctThingsAround(pawn.Position, map, ST_RadialSearchRadius, true))
+            {
+                if (t == null) continue; SurvivalTool cand = t as SurvivalTool;
+                if (cand == null && t.def.IsToolStuff()) cand = VirtualTool.FromThing(t);
+                if (cand == null) continue; var bt = BackingThing(cand, pawn) ?? (cand as Thing);
+                if (bt == null || seen.Contains(bt.thingIDNumber) || bt.IsForbidden(pawn) || !pawn.CanReserveAndReach(bt, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
+                if (!ToolImprovesAny(cand, requiredStats)) continue; seen.Add(bt.thingIDNumber);
+                float sc = ScoreToolForStats(cand, pawn, requiredStats) - ST_DistancePenaltyPerTile * bt.Position.DistanceTo(pawn.Position);
+                if (sc > bestScore) { bestScore = sc; best = cand; backingThing = bt; }
+            }
+            // Storage + haulables passes
+            var haulables = map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableEver);
+            for (int pass = 0; pass < 3; pass++)
+            {
+                for (int i = 0; i < haulables.Count; i++)
+                {
+                    var t = haulables[i]; if (t == null || t.Map != map) continue;
+                    float dist = t.Position.DistanceTo(pawn.Position);
+                    if (pass == 0 && (!t.IsInAnyStorage() || dist > ST_StorageSearchRadius)) continue;
+                    if (pass == 1 && (t.IsInAnyStorage() || dist > ST_StorageSearchRadius)) continue;
+                    if (pass == 2 && dist > ST_FallbackSearchRadius) continue;
+                    SurvivalTool cand = t as SurvivalTool; if (cand == null && t.def.IsToolStuff()) cand = VirtualTool.FromThing(t);
+                    if (cand == null) continue; var bt = BackingThing(cand, pawn) ?? (cand as Thing);
+                    if (bt == null || seen.Contains(bt.thingIDNumber) || bt.IsForbidden(pawn) || !pawn.CanReserveAndReach(bt, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
+                    if (!ToolImprovesAny(cand, requiredStats)) continue; seen.Add(bt.thingIDNumber);
+                    float sc = ScoreToolForStats(cand, pawn, requiredStats) - ST_DistancePenaltyPerTile * dist;
+                    if (sc > bestScore) { bestScore = sc; best = cand; backingThing = bt; }
+                }
+            }
+            return best;
+        }
+        #endregion
+
         /// <summary>
         /// Deterministic counters for virtual-source wear. Keyed by SourceThing.thingIDNumber.
         /// We use this to implement tick-based deterministic degradation for virtual tools
@@ -549,11 +692,11 @@ namespace SurvivalTools
             if (tool == null) return null;
 
             // Real tool: it's already a Thing (exclude virtual wrappers here)
-            if (tool is Thing thingTool && !(tool is VirtualSurvivalTool))
+            if (tool is Thing thingTool && !(tool is VirtualTool))
                 return thingTool;
 
             // Virtual wrapper (tool-stuff)
-            if (tool is VirtualSurvivalTool vtool)
+            if (tool is VirtualTool vtool)
             {
                 // 0) Direct SourceThing if available
                 if (vtool.SourceThing != null)
@@ -1033,7 +1176,7 @@ namespace SurvivalTools
             // Tool-stuffs => wrap into virtual tool objects (still Things)
             var virtualTools = pawn.inventory.innerContainer
                 .Where(t => t.def.IsToolStuff())
-                .Select(t => (Thing)VirtualSurvivalTool.FromThing(t))
+                .Select(t => (Thing)VirtualTool.FromThing(t))
                 .Where(vt => vt != null);
 
             return normalTools.Concat(virtualTools);
@@ -1048,8 +1191,16 @@ namespace SurvivalTools
 
         public static IEnumerable<Thing> GetUsableHeldSurvivalTools(this Pawn pawn)
         {
-            var held = pawn.GetHeldSurvivalTools().ToList();
-            return held.Where(t => held.IndexOf(t).IsUnderSurvivalToolCarryLimitFor(pawn));
+            // Historical behavior: we truncated the list to the pawn's carry limit so that
+            // excess tools (beyond limit) were ignored by optimizers and drawing logic.
+            // This caused a correctness bug: if the only matching/expected tool (e.g. an axe
+            // for TreeFellingSpeed) happened to be positioned beyond the truncated index range
+            // (e.g. third tool while carry limit stat allowed only two), best-tool selection
+            // and renderer passed over it, yielding null despite the pawn physically holding
+            // a valid improving tool. We now return the full set of held tools for selection
+            // purposes. Other systems that decide to drop excess tools still use the carry
+            // limit stat explicitly; they are unaffected by this change.
+            return pawn.GetHeldSurvivalTools();
         }
 
         public static IEnumerable<Thing> GetAllUsableSurvivalTools(this Pawn pawn)
@@ -1057,7 +1208,17 @@ namespace SurvivalTools
             if (pawn == null) return Enumerable.Empty<Thing>();
 
             var eqTools = pawn.equipment?.GetDirectlyHeldThings().Where(t => t.def.IsSurvivalTool()) ?? Enumerable.Empty<Thing>();
-            var invTools = pawn.GetUsableHeldSurvivalTools();
+
+            // Inventory tools (include all; no carry-limit truncation here).
+            // Wrap tool-stuff into virtual tools so downstream code can treat them uniformly.
+            IEnumerable<Thing> invRaw = Enumerable.Empty<Thing>();
+            if (pawn.inventory?.innerContainer != null)
+                invRaw = pawn.inventory.innerContainer.InnerListForReading; // use underlying list for perf
+
+            var invTools = invRaw
+                .Where(t => t != null && t.def != null && (t.def.IsSurvivalTool() || t.def.IsToolStuff()))
+                .Select(t => t.def.IsToolStuff() ? (Thing)VirtualTool.FromThing(t) : t)
+                .Where(t => t != null);
 
             return eqTools.Concat(invTools);
         }
@@ -1117,7 +1278,7 @@ namespace SurvivalTools
             if (relevant.NullOrEmpty()) return false;
 
             // Compare the canonical backing Thing for equality so virtual wrappers match their
-            // underlying physical item. This avoids false negatives where VirtualSurvivalTool
+            // underlying physical item. This avoids false negatives where VirtualTool
             // instances are ephemeral and differ by reference.
             Thing toolBacking = BackingThing(tool, holder);
             foreach (var s in relevant)
@@ -1218,55 +1379,63 @@ namespace SurvivalTools
         {
             if (!pawn.CanUseSurvivalTools() || stats.NullOrEmpty()) return null;
 
-            // If stats imply an expected tool kind, we'll restrict candidates to that kind
-            // to avoid cross-kind false positives (e.g., hammer considered for tree felling).
             var expectedKind = ToolUtility.ToolKindForStats(stats);
-            SurvivalTool bestTool = null;
+            SurvivalTool best = null;
             float bestScore = 0f;
-
-            // Use hardcoded baseline to avoid triggering stat calculations during validation
-            float baselineFactor = SurvivalToolUtility.IsHardcoreModeEnabled ? 0f : 0.3f;
-            float baseline = stats.Count * baselineFactor;
 
             foreach (var thing in pawn.GetAllUsableSurvivalTools())
             {
-                float current = 0f;
-                List<StatModifier> factors;
-                SurvivalTool candidate = null;
-
-                if (thing is SurvivalTool real)
+                SurvivalTool cand = thing as SurvivalTool;
+                if (cand == null)
                 {
-                    // If expected kind is known and this real tool doesn't match, skip it
-                    if (expectedKind != STToolKind.None && ToolUtility.ToolKindOf(real) != expectedKind) continue;
-                    factors = real.WorkStatFactors.ToList();
-                    candidate = real;
+                    // Wrap tool-stuff or virtualizable items
+                    if (thing.def != null && thing.def.IsToolStuff())
+                        cand = VirtualTool.FromThing(thing);
+                    else
+                        cand = ToolUtility.TryWrapVirtual(thing);
                 }
-                else if (thing.def.IsToolStuff())
-                {
-                    // Skip tool-stuff that doesn't match expected kind when we have one
-                    if (expectedKind != STToolKind.None && ToolUtility.ToolKindOf(thing) != expectedKind) continue;
-                    var ext = thing.def.GetModExtension<SurvivalToolProperties>();
-                    factors = ext?.baseWorkStatFactors?.ToList() ?? new List<StatModifier>();
-                    // Wrap held stuff into a virtual tool so we can return a SurvivalTool
-                    candidate = VirtualSurvivalTool.FromThing(thing);
-                }
-                else continue;
+                if (cand == null) continue;
 
-                foreach (var s in stats)
-                {
-                    var mod = factors.FirstOrDefault(m => m.stat == s);
-                    if (mod != null) current += mod.value;
-                    else current += baselineFactor; // Use hardcoded baseline
-                }
+                if (expectedKind != STToolKind.None && ToolUtility.ToolKindOf(thing) != expectedKind) continue;
+                if (!ToolImprovesAny(cand, stats)) continue;
 
-                if (current > baseline && current > bestScore)
+                float score = ScoreToolForStats(cand, pawn, stats);
+                if (score > bestScore)
                 {
-                    bestScore = current;
-                    bestTool = candidate;
+                    bestScore = score;
+                    best = cand;
+                }
+            }
+            // Fallback: if expected kind filtering eliminated all candidates (best==null),
+            // re-run without expectedKind restriction so we still display/recognize an
+            // improving tool of a different kind (e.g. hammer improving ConstructionSpeed
+            // when axe is beyond prior carry-limit ordering).
+            if (best == null && expectedKind != STToolKind.None)
+            {
+                if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"BestTool_FallbackMulti_{pawn.ThingID}_{expectedKind}"))
+                    Log.Message($"[SurvivalTools.Debug] Fallback (multi-stat) re-scan without expectedKind for {pawn.LabelShort} (expected {expectedKind}) stats=[{string.Join(",", stats.Select(s => s.defName))}]");
+                foreach (var thing in pawn.GetAllUsableSurvivalTools())
+                {
+                    SurvivalTool cand = thing as SurvivalTool;
+                    if (cand == null)
+                    {
+                        if (thing.def != null && thing.def.IsToolStuff())
+                            cand = VirtualTool.FromThing(thing);
+                        else
+                            cand = ToolUtility.TryWrapVirtual(thing);
+                    }
+                    if (cand == null) continue;
+                    if (!ToolImprovesAny(cand, stats)) continue;
+                    float score = ScoreToolForStats(cand, pawn, stats);
+                    if (score > bestScore)
+                    {
+                        bestScore = score;
+                        best = cand;
+                    }
                 }
             }
 
-            return bestTool;
+            return best;
         }
 
 
@@ -1279,14 +1448,19 @@ namespace SurvivalTools
 
         public static bool HasSurvivalToolFor(this Pawn pawn, StatDef stat)
         {
-            if (stat == null || !stat.RequiresSurvivalTool()) return false;
-
-            if (pawn.GetBestSurvivalTool(stat) != null) return true;
-
-            // Virtual/tool-stuff fallback
-            return pawn.GetAllUsableSurvivalTools()
-                .Any(t => t.def.IsToolStuff() &&
-                          t.def.GetModExtension<SurvivalToolProperties>()?.baseWorkStatFactors?.Any(m => m.stat == stat) == true);
+            if (pawn == null || stat == null || !stat.RequiresSurvivalTool()) return false;
+            // Scan usable tools (inventory + worn + eq) once, check factor improvement.
+            var tools = pawn.GetAllUsableSurvivalTools();
+            if (tools == null) return false;
+            float baseline = GetNoToolBaseline(stat);
+            foreach (var thing in tools)
+            {
+                SurvivalTool st = thing as SurvivalTool;
+                if (st == null && thing.def != null && thing.def.IsToolStuff()) st = VirtualTool.FromThing(thing);
+                if (st == null) continue;
+                if (GetToolProvidedFactor(st, stat) > baseline + 0.001f) return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -1302,7 +1476,7 @@ namespace SurvivalTools
                 if (!pawn.CanUseSurvivalTools()) return false;
 
                 // If pawn already has a helpful tool, nothing to do
-                if (pawn.GetAllUsableSurvivalTools().OfType<SurvivalTool>().Any(st => ToolScoring.ToolImprovesAnyRequiredStat(st, requiredStats)))
+                if (pawn.GetAllUsableSurvivalTools().OfType<SurvivalTool>().Any(st => ToolImprovesAny(st, requiredStats)))
                     return false;
 
                 var map = pawn.Map;
@@ -1320,7 +1494,7 @@ namespace SurvivalTools
 
                     SurvivalTool candidate = null;
                     if (thing is SurvivalTool st) candidate = st;
-                    else if (thing.def != null && thing.def.IsToolStuff()) candidate = VirtualSurvivalTool.FromThing(thing);
+                    else if (thing.def != null && thing.def.IsToolStuff()) candidate = VirtualTool.FromThing(thing);
                     if (candidate == null) continue;
 
                     var backing = BackingThing(candidate, pawn) ?? (candidate as Thing);
@@ -1330,9 +1504,9 @@ namespace SurvivalTools
                     if (!backing.Spawned || backing.Map != map) continue;
                     if (backing.IsForbidden(pawn)) continue;
                     if (!pawn.CanReserveAndReach(backing, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
-                    if (!ToolScoring.ToolImprovesAnyRequiredStat(candidate, requiredStats)) continue;
+                    if (!ToolImprovesAny(candidate, requiredStats)) continue;
 
-                    float score = ToolScoring.CalculateToolScore(candidate, pawn, requiredStats);
+                    float score = ScoreToolForStats(candidate, pawn, requiredStats);
                     score -= 0.01f * backing.Position.DistanceTo(pawn.Position);
 
                     if (score > bestScore)
@@ -1360,13 +1534,13 @@ namespace SurvivalTools
 
                     SurvivalTool candidate = null;
                     if (item is SurvivalTool st2) candidate = st2;
-                    else if (item.def != null && item.def.IsToolStuff()) candidate = VirtualSurvivalTool.FromThing(item);
+                    else if (item.def != null && item.def.IsToolStuff()) candidate = VirtualTool.FromThing(item);
                     if (candidate == null) continue;
-                    if (!ToolScoring.ToolImprovesAnyRequiredStat(candidate, requiredStats)) continue;
+                    if (!ToolImprovesAny(candidate, requiredStats)) continue;
                     if (backing.IsForbidden(pawn)) continue;
                     if (!pawn.CanReserveAndReach(backing, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
 
-                    float score = ToolScoring.CalculateToolScore(candidate, pawn, requiredStats);
+                    float score = ScoreToolForStats(candidate, pawn, requiredStats);
                     score -= 0.01f * backing.Position.DistanceTo(pawn.Position);
                     if (score > bestScore)
                     {
@@ -1388,13 +1562,13 @@ namespace SurvivalTools
 
                     SurvivalTool candidate = null;
                     if (item is SurvivalTool st2) candidate = st2;
-                    else if (item.def != null && item.def.IsToolStuff()) candidate = VirtualSurvivalTool.FromThing(item);
+                    else if (item.def != null && item.def.IsToolStuff()) candidate = VirtualTool.FromThing(item);
                     if (candidate == null) continue;
-                    if (!ToolScoring.ToolImprovesAnyRequiredStat(candidate, requiredStats)) continue;
+                    if (!ToolImprovesAny(candidate, requiredStats)) continue;
                     if (backing.IsForbidden(pawn)) continue;
                     if (!pawn.CanReserveAndReach(backing, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
 
-                    float score = ToolScoring.CalculateToolScore(candidate, pawn, requiredStats);
+                    float score = ScoreToolForStats(candidate, pawn, requiredStats);
                     score -= 0.01f * backing.Position.DistanceTo(pawn.Position);
                     if (score > bestScore)
                     {
@@ -1415,13 +1589,13 @@ namespace SurvivalTools
 
                     SurvivalTool candidate = null;
                     if (item is SurvivalTool st2) candidate = st2;
-                    else if (item.def != null && item.def.IsToolStuff()) candidate = VirtualSurvivalTool.FromThing(item);
+                    else if (item.def != null && item.def.IsToolStuff()) candidate = VirtualTool.FromThing(item);
                     if (candidate == null) continue;
-                    if (!ToolScoring.ToolImprovesAnyRequiredStat(candidate, requiredStats)) continue;
+                    if (!ToolImprovesAny(candidate, requiredStats)) continue;
                     if (backing.IsForbidden(pawn)) continue;
                     if (!pawn.CanReserveAndReach(backing, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
 
-                    float score = ToolScoring.CalculateToolScore(candidate, pawn, requiredStats);
+                    float score = ScoreToolForStats(candidate, pawn, requiredStats);
                     score -= 0.01f * backing.Position.DistanceTo(pawn.Position);
                     if (score > bestScore)
                     {
@@ -1451,64 +1625,88 @@ namespace SurvivalTools
 
         public static bool HasSurvivalToolFor(this Pawn pawn, StatDef stat, out SurvivalTool tool, out float statFactor)
         {
-            tool = pawn.GetBestSurvivalTool(new List<StatDef> { stat });
-            statFactor = tool?.WorkStatFactors.ToList().GetStatFactorFromList(stat) ?? -1f;
-            //LogDebug($"HasSurvivalToolFor: pawn={pawn?.LabelShort ?? "null"} stat={stat?.defName ?? "null"} tool={(tool != null ? tool.LabelCapNoCount : "null")} factor={statFactor}", $"HasTool_{pawn?.ThingID ?? "null"}_{stat?.defName ?? "null"}");
-            return tool != null;
+            tool = null; statFactor = -1f;
+            if (pawn == null || stat == null || !stat.RequiresSurvivalTool()) return false;
+            float baseline = GetNoToolBaseline(stat);
+            var tools = pawn.GetAllUsableSurvivalTools(); if (tools == null) return false;
+            SurvivalTool best = null; float bestFactor = baseline;
+            foreach (var thing in tools)
+            {
+                SurvivalTool st = thing as SurvivalTool;
+                if (st == null && thing.def != null && thing.def.IsToolStuff()) st = VirtualTool.FromThing(thing);
+                if (st == null) continue;
+                float f = GetToolProvidedFactor(st, stat);
+                if (f > bestFactor + 0.001f) { bestFactor = f; best = st; }
+            }
+            tool = best; statFactor = bestFactor;
+            return best != null;
         }
 
 
         public static SurvivalTool GetBestSurvivalTool(this Pawn pawn, StatDef stat)
         {
             if (!pawn.CanUseSurvivalTools() || stat == null || !stat.RequiresSurvivalTool()) return null;
-
             var part = stat.GetStatPart<StatPart_SurvivalTool>();
             if (part == null) return null;
 
-            SurvivalTool best = null;
-
-            // Use hardcoded baseline to avoid triggering stat calculations during validation
-            float bestFactor = SurvivalToolUtility.IsHardcoreModeEnabled ? 0f : 0.3f;
-
-            // Determine expected tool kind for this stat and skip candidates that do not match.
+            // Unified baseline & scoring path using existing helpers so behavior matches multi-stat overload
+            float baseline = GetNoToolBaseline(stat);
             var expectedKind = ToolUtility.ToolKindForStats(new[] { stat });
+            SurvivalTool best = null; float bestDelta = 0f; // store delta above baseline not absolute factor
 
             foreach (var thing in pawn.GetAllUsableSurvivalTools())
             {
-                if (thing is SurvivalTool cur)
+                SurvivalTool candidate = thing as SurvivalTool;
+                if (candidate == null)
                 {
-                    if (expectedKind != STToolKind.None && ToolUtility.ToolKindOf(cur) != expectedKind) continue;
-
-                    foreach (var mod in cur.WorkStatFactors)
-                    {
-                        if (mod?.stat == stat && mod.value > bestFactor)
-                        {
-                            best = cur;
-                            bestFactor = mod.value;
-                        }
-                    }
+                    // Wrap tool-stuff or other virtualizable items
+                    if (thing.def != null && thing.def.IsToolStuff())
+                        candidate = VirtualTool.FromThing(thing);
+                    else
+                        candidate = ToolUtility.TryWrapVirtual(thing);
                 }
-                else if (thing.def.IsToolStuff())
-                {
-                    var props = thing.def.GetModExtension<SurvivalToolProperties>();
-                    if (props?.baseWorkStatFactors == null) continue;
+                if (candidate == null) continue;
+                if (expectedKind != STToolKind.None && ToolUtility.ToolKindOf(thing) != expectedKind) continue;
 
-                    foreach (var mod in props.baseWorkStatFactors)
+                float provided = GetToolProvidedFactor(candidate, stat);
+                float delta = provided - baseline;
+                if (delta > bestDelta + 0.001f)
+                {
+                    bestDelta = delta;
+                    best = candidate;
+                }
+            }
+
+            // Fallback pass without expectedKind filtering if nothing selected.
+            if (best == null && expectedKind != STToolKind.None)
+            {
+                if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"BestTool_FallbackSingle_{pawn.ThingID}_{expectedKind}_{stat.defName}"))
+                    Log.Message($"[SurvivalTools.Debug] Fallback (single-stat) re-scan without expectedKind for {pawn.LabelShort} stat={stat.defName} expected={expectedKind}");
+                foreach (var thing in pawn.GetAllUsableSurvivalTools())
+                {
+                    SurvivalTool candidate = thing as SurvivalTool;
+                    if (candidate == null)
                     {
-                        if (mod?.stat == stat && mod.value > bestFactor)
-                        {
-                            // Note: do not return the stuff itself as SurvivalTool. We just track the factor.
-                            best = null;
-                            bestFactor = mod.value;
-                        }
+                        if (thing.def != null && thing.def.IsToolStuff())
+                            candidate = VirtualTool.FromThing(thing);
+                        else
+                            candidate = ToolUtility.TryWrapVirtual(thing);
+                    }
+                    if (candidate == null) continue;
+                    float provided = GetToolProvidedFactor(candidate, stat);
+                    float delta = provided - baseline;
+                    if (delta > bestDelta + 0.001f)
+                    {
+                        bestDelta = delta;
+                        best = candidate;
                     }
                 }
             }
 
-            if (best != null) LessonAutoActivator.TeachOpportunity(ST_ConceptDefOf.UsingSurvivalTools, OpportunityType.Important);
-
-            // Log the selection outcome (low-noise keyed log)
-            //LogDebug($"GetBestSurvivalTool: pawn={pawn?.LabelShort ?? "null"} stat={stat?.defName ?? "null"} bestTool={(best != null ? best.LabelCapNoCount : "null")} bestFactor={bestFactor}", $"GetBest_{pawn?.ThingID ?? "null"}_{stat?.defName ?? "null"}");
+            if (best != null)
+            {
+                try { LessonAutoActivator.TeachOpportunity(ST_ConceptDefOf.UsingSurvivalTools, OpportunityType.Important); } catch { }
+            }
             return best;
         }
 
@@ -1542,115 +1740,65 @@ namespace SurvivalTools
         {
             if (pawn == null || stat == null) return;
 
-            // Determine selected tool (avoid reading pawn.GetStatValue here to prevent recursive stat evals)
             var tool = pawn.GetBestSurvivalTool(stat);
             float toolFactor = tool != null ? tool.WorkStatFactors.ToList().GetStatFactorFromList(stat) : -1f;
             LogDebug($"TryDegradeTool: pawn={pawn?.LabelShort ?? "null"} stat={stat.defName} bestTool={(tool != null ? tool.LabelCapNoCount : "null")} bestFactor={toolFactor}", $"TryDegrade_{pawn?.ThingID ?? "null"}_{stat.defName}");
-            if (tool == null) return;
+            if (tool == null || !IsToolDegradationEnabled) return;
 
-            // Prefer explicit handling for virtual tools: if the selected tool is a VirtualSurvivalTool,
-            // directly target its SourceThing so physical stacks take damage / lose units.
             try
             {
-                // If this is a virtual wrapper with a known source, target that thing directly.
-                if (tool is VirtualSurvivalTool vtool)
+                var backing = BackingThing(tool, pawn) ?? (tool as Thing);
+                if (tool is VirtualTool vt && vt.SourceThing != null)
+                    backing = vt.SourceThing;
+
+                LessonAutoActivator.TeachOpportunity(ST_ConceptDefOf.SurvivalToolDegradation, OpportunityType.GoodToKnow);
+
+                if (backing is SurvivalTool realTool && realTool.def.useHitPoints)
                 {
-                    var src = vtool.SourceThing;
-                    // Defensive checks
-                    if (src == null) return;
-
-                    if (!IsToolDegradationEnabled) return;
-
-                    LessonAutoActivator.TeachOpportunity(ST_ConceptDefOf.SurvivalToolDegradation, OpportunityType.GoodToKnow);
-
-                    // For virtual tools we maintain a deterministic tick-counter per backing thing
-                    // keyed by its ThingIDNumber. Each call increments the counter and when it
-                    // reaches WorkTicksToDegrade we apply exactly 1 HP of damage and reset it.
-                    try
-                    {
-                        // If this backing thing has HP, apply deterministic HP damage.
-                        if (src is ThingWithComps srcTwc && src.def.useHitPoints)
-                        {
-                            // Get key and target threshold
-                            int key = src.thingIDNumber;
-                            int threshold = Math.Max(1, vtool.SourceThing.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) > 0f ? (int)Math.Floor(vtool.SourceThing.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan) * GenDate.TicksPerDay / Math.Max(1, srcTwc.MaxHitPoints)) : 1);
-
-                            // Use existing precomputed WorkTicksToDegrade if available on a SurvivalTool instance
-                            // but for virtual items we approximate using the backing thing's MaxHitPoints and lifespan stat.
-                            if (!_virtualToolDegradeCounters.TryGetValue(key, out var counter)) counter = 0;
-                            counter++;
-                            _virtualToolDegradeCounters[key] = counter;
-
-                            LogDebug($"VirtualDegrade: src={src.def?.defName ?? "null"} id={key} counter={counter}/{threshold}", $"VirtualDegrade_{key}");
-
-                            if (counter >= threshold)
-                            {
-                                srcTwc.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, 1));
-                                _virtualToolDegradeCounters[key] = 0;
-                                // If destroyed, invalidate cache and clear counters
-                                try { if (srcTwc.Destroyed) { ToolFactorCache.InvalidateForThing(srcTwc); ClearCountersForThing(srcTwc); } } catch { }
-                            }
-                        }
-                        else
-                        {
-                            // Non-HP stackable items: decrement stack deterministically every N ticks
-                            // Here we approximate threshold=100 (previously ~1% per-call). Use a fixed
-                            // threshold scaled by EffectiveToolDegradationFactor for consistency.
-                            int key = src.thingIDNumber;
-                            float factor = SurvivalTools.Settings?.EffectiveToolDegradationFactor ?? 1f;
-                            int threshold = Math.Max(1, (int)Math.Floor(100f / Math.Max(0.001f, factor)));
-
-                            if (!_virtualToolDegradeCounters.TryGetValue(key, out var counter)) counter = 0;
-                            counter++;
-                            _virtualToolDegradeCounters[key] = counter;
-
-                            LogDebug($"VirtualDegradeStack: src={src.def?.defName ?? "null"} id={key} counter={counter}/{threshold}", $"VirtualDegradeStack_{key}");
-
-                            if (counter >= threshold)
-                            {
-                                if (src.stackCount > 0)
-                                {
-                                    var one = src.SplitOff(1);
-                                    one.Destroy(DestroyMode.Vanish);
-                                    try { ToolFactorCache.InvalidateForThing(src); } catch { }
-                                }
-                                _virtualToolDegradeCounters[key] = 0;
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        if (IsDebugLoggingEnabled)
-                        {
-                            try { LogDebug($"VirtualTryDegrade exception: {ex}", $"VirtualDegradeEx_{src?.ThingID ?? "null"}"); } catch { }
-                        }
-                    }
-
-                    return;
-                }
-
-                var backing = BackingThing(tool, pawn);
-
-                if (backing is SurvivalTool realTool && realTool.def.useHitPoints && IsToolDegradationEnabled)
-                {
-                    LessonAutoActivator.TeachOpportunity(ST_ConceptDefOf.SurvivalToolDegradation, OpportunityType.GoodToKnow);
                     realTool.workTicksDone++;
                     if (realTool.workTicksDone >= realTool.WorkTicksToDegrade)
                     {
                         realTool.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, 1));
                         realTool.workTicksDone = 0;
                     }
+                    return;
                 }
-                else if (backing is ThingWithComps twc && IsToolDegradationEnabled)
+
+                if (backing is ThingWithComps twc && backing.def.useHitPoints)
                 {
-                    LessonAutoActivator.TeachOpportunity(ST_ConceptDefOf.SurvivalToolDegradation, OpportunityType.GoodToKnow);
-                    if (Rand.Chance(0.01f))
+                    int key = backing.thingIDNumber;
+                    if (!_virtualToolDegradeCounters.TryGetValue(key, out var counter)) counter = 0;
+                    counter++;
+                    _virtualToolDegradeCounters[key] = counter;
+                    float lifespanDays = tool.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan);
+                    int hp = Math.Max(1, twc.MaxHitPoints);
+                    int threshold = Math.Max(1, (int)Math.Floor((lifespanDays * GenDate.TicksPerDay) / hp));
+                    if (counter >= threshold)
+                    {
                         twc.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, 1));
+                        _virtualToolDegradeCounters[key] = 0;
+                    }
+                    return;
+                }
+
+                if (backing != null && backing.stackCount > 0)
+                {
+                    int key = backing.thingIDNumber;
+                    if (!_virtualToolDegradeCounters.TryGetValue(key, out var counter)) counter = 0;
+                    counter++;
+                    float factor = SurvivalTools.Settings?.EffectiveToolDegradationFactor ?? 1f;
+                    int threshold = Math.Max(1, (int)Math.Floor(100f / Math.Max(0.001f, factor)));
+                    _virtualToolDegradeCounters[key] = counter;
+                    if (counter >= threshold)
+                    {
+                        var one = backing.SplitOff(1);
+                        one.Destroy(DestroyMode.Vanish);
+                        _virtualToolDegradeCounters[key] = 0;
+                    }
                 }
             }
             catch (Exception ex)
             {
-                // Defensive: never let degradation throw and break jobs. Log in debug only.
                 if (IsDebugLoggingEnabled)
                 {
                     try { LogDebug($"TryDegradeTool exception: {ex}", $"TryDegrade_{pawn?.ThingID ?? "null"}_{stat?.defName ?? "null"}"); } catch { }

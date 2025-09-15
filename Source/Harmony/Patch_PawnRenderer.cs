@@ -82,7 +82,7 @@ namespace SurvivalTools.HarmonyStuff
                 else
                 {
                     if (ReferenceEquals(primary, toolThing)) return;
-                    if (toolThing is VirtualSurvivalTool vt && primary.def == vt.SourceDef) return;
+                    if (toolThing is VirtualTool vt && primary.def == vt.SourceDef) return;
                 }
             }
 
@@ -118,7 +118,7 @@ namespace SurvivalTools.HarmonyStuff
                 float eqOffset = toolThing.def?.equippedDistanceOffset ?? 0f;
                 drawPos += new Vector3(0f, 0f, 0.4f + eqOffset).RotatedBy(aimAngle) * distFactor;
 
-                if (toolThing is VirtualSurvivalTool)
+                if (toolThing is VirtualTool)
                 {
                     DrawVirtualTool(toolThing, drawPos, Quaternion.AngleAxis(aimAngle, Vector3.up), virtualTint);
 
@@ -135,7 +135,7 @@ namespace SurvivalTools.HarmonyStuff
             else
             {
                 // --- Carried-style draw (when not aiming) ---
-                if (toolThing is VirtualSurvivalTool)
+                if (toolThing is VirtualTool)
                 {
                     DrawVirtualTool(toolThing, drawPos, Quaternion.identity, virtualTint);
 
@@ -235,6 +235,36 @@ namespace SurvivalTools.HarmonyStuff
             var best = pawn.GetBestSurvivalTool(requiredStats);
             if (best != null) return (best, requiredStats);
 
+            // Held-only best tool edge case: if unified logic returns null but we have exactly one
+            // held/equipped candidate that improves any required stat, use it rather than falling
+            // all the way through to ad-hoc scoring / virtual wrapping. This can happen briefly
+            // during cache warm-up or when expectedKind filtering raced against delayed stat init.
+            try
+            {
+                var held = pawn.GetAllUsableSurvivalTools();
+                SurvivalTool singleImprover = null;
+                int improverCount = 0;
+                foreach (var h in held)
+                {
+                    SurvivalTool st = h as SurvivalTool;
+                    if (st == null && h?.def != null && h.def.IsToolStuff()) st = VirtualTool.FromThing(h);
+                    if (st == null) continue;
+                    if (SurvivalToolUtility.ToolImprovesAny(st, requiredStats))
+                    {
+                        improverCount++;
+                        if (singleImprover == null) singleImprover = st;
+                        if (improverCount > 1) break; // no longer a single improver case
+                    }
+                }
+                if (improverCount == 1 && singleImprover != null)
+                {
+                    if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"Drawing_SingleHeldFallback_{pawn.ThingID}_{job.def?.defName ?? "null"}"))
+                        Log.Message($"[SurvivalTools.Drawing] {pawn.LabelShort} using single-held fallback {singleImprover.LabelCapNoCount} for {job.def?.defName ?? "null"}.");
+                    return (singleImprover, requiredStats);
+                }
+            }
+            catch { /* ignore fallback errors */ }
+
             // 1b) Defensive fallback: if core selection returned null (possibly due to delayed cache
             // initialization or stale factors), compute a one-off best candidate using the same
             // factor computation used by the runtime cache so the drawn tool matches the job's
@@ -293,7 +323,7 @@ namespace SurvivalTools.HarmonyStuff
             }
             catch { /* fallback silently if anything goes wrong during draw-time selection */ }
 
-            // 2) Fallback: wrap any relevant tool-stuff stack into a VirtualSurvivalTool for display.
+            // 2) Fallback: wrap any relevant tool-stuff stack into a VirtualTool for display.
             var inner = pawn.inventory?.innerContainer;
             if (inner != null)
             {
@@ -309,7 +339,7 @@ namespace SurvivalTools.HarmonyStuff
                     {
                         var mod = ext.baseWorkStatFactors[m];
                         if (mod?.stat != null && requiredStats.Contains(mod.stat))
-                            return (VirtualSurvivalTool.FromThing(thing), requiredStats);
+                            return (VirtualTool.FromThing(thing), requiredStats);
                     }
                 }
             }

@@ -5,7 +5,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Linq; // retained for non-hot path grouping in explanation only
 using System.Text;
 using RimWorld;
 using Verse;
@@ -26,15 +26,33 @@ namespace SurvivalTools
             defaultPriority = AlertPriority.Medium;
         }
 
-        private IEnumerable<Pawn> WorkersDamagedTools =>
-            PawnsFinder.AllMaps_FreeColonistsSpawned
-                .Where(p => p.Spawned && PawnToolValidator.CanUseSurvivalTools(p) && HasDamagedTools(p));
+        private IEnumerable<Pawn> WorkersDamagedTools
+        {
+            get
+            {
+                var all = PawnsFinder.AllMaps_FreeColonistsSpawned;
+                for (int i = 0; i < all.Count; i++)
+                {
+                    var p = all[i];
+                    if (p == null || !p.Spawned) continue;
+                    if (!PawnToolValidator.CanUseSurvivalTools(p)) continue;
+                    if (HasDamagedTools(p)) yield return p;
+                }
+            }
+        }
 
         private static bool HasDamagedTools(Pawn pawn)
         {
-            return pawn.GetAllUsableSurvivalTools()
-                .OfType<SurvivalTool>()
-                .Any(IsToolBelowThreshold);
+            var toolsEnum = pawn.GetAllUsableSurvivalTools();
+            if (toolsEnum == null) return false;
+            foreach (var t in toolsEnum)
+            {
+                SurvivalTool st = t as SurvivalTool;
+                if (st == null && t?.def != null && t.def.IsToolStuff()) st = VirtualTool.FromThing(t);
+                if (st == null) continue;
+                if (IsToolBelowThreshold(st)) return true;
+            }
+            return false;
         }
 
         private static bool IsToolBelowThreshold(SurvivalTool tool)
@@ -52,7 +70,7 @@ namespace SurvivalTools
         private static ThingWithComps ResolveThingWithComps(SurvivalTool tool)
         {
             // Prefer an explicit SourceThing for virtual wrappers (most accurate for inventory stacks)
-            if (tool is VirtualSurvivalTool vtool)
+            if (tool is VirtualTool vtool)
             {
                 if (vtool.SourceThing is ThingWithComps srcTwc) return srcTwc;
             }

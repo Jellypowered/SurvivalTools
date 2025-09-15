@@ -151,11 +151,9 @@ namespace SurvivalTools
         /// </summary>
         public static void ResolveAllTools()
         {
-            if (IsDebugLoggingEnabled)
-            {
-                LogDebug("[SurvivalTools] Starting automatic tool resolution...", "ToolResolutionStart");
-                LogModStatsVerification();
-            }
+            // Always log (was previously gated behind IsDebugLoggingEnabled)
+            Log.Message("[SurvivalTools] Starting automatic tool resolution...");
+            LogModStatsVerification();
 
             int totalEnhanced = 0;
             var enhancementLog = new List<string>();
@@ -172,24 +170,17 @@ namespace SurvivalTools
             }
 
             // Summary logging
-            if (IsDebugLoggingEnabled)
+            if (totalEnhanced > 0)
             {
-                if (totalEnhanced > 0)
+                Log.Message($"[SurvivalTools] Tool resolution complete: Enhanced {totalEnhanced} tools");
+                foreach (string entry in enhancementLog)
                 {
-                    LogDebug($"[SurvivalTools] Tool resolution complete: Enhanced {totalEnhanced} tools", "ToolResolutionComplete");
-                    foreach (string entry in enhancementLog)
-                    {
-                        LogDebug($"  - {entry}", $"ToolResolutionEntry_{entry.GetHashCode()}");
-                    }
+                    Log.Message($"[SurvivalTools]   - {entry}");
                 }
-                else
-                {
-                    // Only log if author attention is needed
-                    if (totalEnhanced == 0)
-                    {
-                        Log.Warning("[SurvivalTools] Tool resolution complete: No new tools found to enhance");
-                    }
-                }
+            }
+            else
+            {
+                Log.Warning("[SurvivalTools] Tool resolution complete: No new tools found to enhance");
             }
         }
 
@@ -205,7 +196,8 @@ namespace SurvivalTools
             logEntry = null;
             if (thingDef?.label == null) return false;
 
-            string label = thingDef.label.ToLower();
+            // Use original label; perform case-insensitive comparisons via IndexOf
+            string label = thingDef.label;
             string modSource = GetModSource(thingDef);
 
             // Check each detection rule
@@ -214,15 +206,18 @@ namespace SurvivalTools
                 var rule = kvp.Value;
 
                 // Check if label matches any pattern
-                bool matches = rule.NamePatterns.Any(pattern => label.Contains(pattern));
+                bool matches = rule.NamePatterns.Any(pattern =>
+                    !string.IsNullOrEmpty(pattern) &&
+                    label.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0);
                 if (!matches) continue;
 
                 // Check if it should be excluded
-                bool excluded = rule.ExcludePatterns.Any(pattern => label.Contains(pattern));
+                bool excluded = rule.ExcludePatterns.Any(pattern =>
+                    !string.IsNullOrEmpty(pattern) &&
+                    label.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0);
                 if (excluded)
                 {
-                    if (IsDebugLoggingEnabled)
-                        logEntry = $"Excluded {rule.Description.ToLower()}: {thingDef.defName} ({thingDef.label}) from {modSource}";
+                    logEntry = $"Excluded {rule.Description.ToLower()}: {thingDef.defName} ({thingDef.label}) from {modSource}";
                     return false;
                 }
 
@@ -231,16 +226,14 @@ namespace SurvivalTools
 
                 if (!needsEnhancement)
                 {
-                    if (IsDebugLoggingEnabled)
-                        logEntry = $"Already enhanced {rule.Description.ToLower()}: {thingDef.defName} ({thingDef.label}) from {modSource}";
+                    logEntry = $"Already enhanced {rule.Description.ToLower()}: {thingDef.defName} ({thingDef.label}) from {modSource}";
                     return false;
                 }
 
                 // Skip if this is already a SurvivalTools item (don't modify our own tools)
                 if (IsSurvivalToolsItem(thingDef))
                 {
-                    if (IsDebugLoggingEnabled)
-                        logEntry = $"Skipped SurvivalTools item: {thingDef.defName} ({thingDef.label}) from {modSource}";
+                    logEntry = $"Skipped SurvivalTools item: {thingDef.defName} ({thingDef.label}) from {modSource}";
                     return false;
                 }
 
@@ -375,7 +368,7 @@ namespace SurvivalTools
         private static bool IsSurvivalToolsItem(ThingDef thingDef)
         {
             // Check if defName starts with SurvivalTools_
-            if (thingDef.defName?.StartsWith("SurvivalTools_") == true)
+            if (thingDef.defName?.StartsWith("SurvivalTools_", StringComparison.OrdinalIgnoreCase) == true)
                 return true;
 
             // Check if it has SurvivalToolProperties extension (strong indicator it's ours)
@@ -426,16 +419,13 @@ namespace SurvivalTools
             // Check for stats that aren't used in any detection rule
             var unusedStats = allModStats.Where(stat => stat != null && !usedStats.Contains(stat)).ToList();
 
-            if (IsDebugLoggingEnabled)
+            Log.Message($"[SurvivalTools] Stat coverage verification: {usedStats.Count}/{allModStats.Where(s => s != null).Count()} stats covered in detection rules");
+            if (unusedStats.Any())
             {
-                LogDebug($"[SurvivalTools] Stat coverage verification: {usedStats.Count}/{allModStats.Where(s => s != null).Count()} stats covered in detection rules", "StatCoverageVerification");
-                if (unusedStats.Any())
+                Log.Message("[SurvivalTools] The following stats are not covered by any detection rule:");
+                foreach (var stat in unusedStats)
                 {
-                    LogDebug($"[SurvivalTools] The following stats are not covered by any detection rule:", "StatsNotCoveredWarning");
-                    foreach (var stat in unusedStats)
-                    {
-                        LogDebug($"  - {stat.defName} ({stat.label})", $"StatNotCovered_{stat.defName}");
-                    }
+                    Log.Message($"[SurvivalTools]   - {stat.defName} ({stat.label})");
                 }
             }
         }
@@ -463,7 +453,8 @@ namespace SurvivalTools
                 string packageId = thingDef.modContentPack?.PackageId;
                 if (!string.IsNullOrEmpty(packageId))
                 {
-                    if (packageId.ToLower().Contains("core") || packageId.Equals("ludeon.rimworld"))
+                    if (packageId.IndexOf("core", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        packageId.Equals("ludeon.rimworld", StringComparison.OrdinalIgnoreCase))
                         return "Core";
                     return packageId;
                 }

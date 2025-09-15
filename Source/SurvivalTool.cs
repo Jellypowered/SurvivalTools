@@ -125,9 +125,9 @@ namespace SurvivalTools
         {
             get
             {
-                // Special-case: if this is a VirtualSurvivalTool, its physical SourceThing
+                // Special-case: if this is a VirtualTool, its physical SourceThing
                 // may be in a pawn's inventory/equipment. Prefer that holder when present.
-                var vtool = this as VirtualSurvivalTool;
+                var vtool = this as VirtualTool;
                 if (vtool != null && vtool.SourceThing != null)
                 {
                     if (vtool.SourceThing.ParentHolder is Pawn_EquipmentTracker eq2 && eq2?.pawn != null)
@@ -157,7 +157,7 @@ namespace SurvivalTools
                 // For virtual wrappers, the job will target the physical backing thing.
                 // Use a canonical comparison thing: the source physical thing for virtuals,
                 // otherwise the tool object itself.
-                Thing comparisonThing = (this is VirtualSurvivalTool v && v.SourceThing != null) ? (Thing)v.SourceThing : (Thing)this;
+                Thing comparisonThing = (this is VirtualTool v && v.SourceThing != null) ? (Thing)v.SourceThing : (Thing)this;
 
                 if (curJob.targetA.Thing == comparisonThing) return true;
                 if (curJob.targetB.Thing == comparisonThing) return true;

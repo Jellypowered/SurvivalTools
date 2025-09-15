@@ -103,6 +103,71 @@ namespace SurvivalTools
         #region Tool identification
 
         /// <summary>
+        /// Determines whether a Thing should be treated as a virtual survival tool.
+        /// Virtual tools are non-SurvivalTool Things (usually stuff/material stacks) that
+        /// provide survival tool work stats via SurvivalToolProperties or statBases.
+        /// Unlike real SurvivalTool instances they are transient wrappers at runtime.
+        /// </summary>
+        public static bool IsVirtualTool(Thing t)
+        {
+            if (t == null) return false;
+            // Already an actual SurvivalTool instance (includes VirtualSurvivalTool subclass) => not virtual by this predicate.
+            if (t is SurvivalTool) return t is VirtualTool; // Only treat the dedicated wrapper subclass as virtual.
+
+            var def = t.def;
+            if (def == null) return false;
+
+            // Must NOT be minified buildings, corpses, pawns, plants, filth, chunks, apparel, weapons, ingestibles etc.
+            // Fast negative filters to avoid misclassification in hauling / reservation systems.
+            // Fast negatives; avoid reflection or expensive checks. Exclude ingestibles (raw food, meals), apparel, weapons, corpses, plants, filth.
+            if (def.Minifiable || def.IsCorpse || def.plant != null || def.IsFilth || def.IsApparel || def.IsWeapon || def.IsIngestible)
+                return false;
+
+            // If def is explicitly a SurvivalTool (thingClass assignable) it's not a virtual tool.
+            if (typeof(SurvivalTool).IsAssignableFrom(def.thingClass)) return false;
+
+            // Require mod extension or statBases with survival tool stats.
+            var ext = def.GetModExtension<SurvivalToolProperties>();
+            bool hasExtFactors = ext?.baseWorkStatFactors != null && ext.baseWorkStatFactors.Any(m => m?.stat != null && m.value != 0f);
+
+            // Also consider statBases providing survival tool stats directly (e.g., WorkSpeedGlobal tool-stuff patches)
+            bool hasRelevantStatBase = false;
+            var statBases = def.statBases;
+            if (statBases != null)
+            {
+                for (int i = 0; i < statBases.Count; i++)
+                {
+                    var sb = statBases[i];
+                    if (sb?.stat == null) continue;
+                    // Heuristic: if stat requires a survival tool or is one of known survival tool stats.
+                    if (sb.stat.defName.StartsWith("ST_")) { hasRelevantStatBase = true; break; }
+                }
+            }
+
+            if (!hasExtFactors && !hasRelevantStatBase) return false;
+
+            // Material / stuff items: prefer IsToolStuff extension when available to narrow.
+            if (def.IsToolStuff()) return true;
+
+            // Fallback: ensure it's a small haulable resource (category Item) to avoid buildings.
+            if (def.category == ThingCategory.Item && (hasExtFactors || hasRelevantStatBase)) return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Attempt to wrap a qualifying Thing as a VirtualTool; returns null if not virtual.
+        /// Centralized to avoid scattered FromThing calls and repeated predicate logic.
+        /// </summary>
+        public static VirtualTool TryWrapVirtual(Thing thing)
+        {
+            if (thing == null) return null;
+            if (thing is VirtualTool vt) return vt;
+            if (!IsVirtualTool(thing)) return null;
+            return VirtualTool.FromThing(thing);
+        }
+
+        /// <summary>
         /// Determine tool kind by defName/label and, for tool-stuff, by its SurvivalToolProperties stats.
         /// </summary>
         public static STToolKind ToolKindOf(Thing t)

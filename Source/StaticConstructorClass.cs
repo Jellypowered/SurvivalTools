@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using Verse;
 using RimWorld;
-using SurvivalTools.Helpers;
+using static SurvivalTools.ToolResolver;
 using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools
@@ -37,7 +37,7 @@ namespace SurvivalTools
                 AddSurvivalToolTrackersToHumanlikes();
 
                 // 4) Auto-detect and enhance tools
-                ToolResolver.ResolveAllTools();
+                ResolveAllTools();
 
                 // 5) Warm settings cache (optional/perf)
                 SurvivalTools.InitializeSettings();

@@ -67,7 +67,7 @@ namespace SurvivalTools.HarmonyStuff
             private static bool VirtualInUse(Thing toolStuff)
             {
                 // Tool-stuff can be virtually wrapped; if that wrapper is "in use", treat this as in-use.
-                var v = VirtualSurvivalTool.FromThing(toolStuff);
+                var v = VirtualTool.FromThing(toolStuff);
                 return v != null && SurvivalToolUtility.IsToolInUse(v);
             }
         }
@@ -169,7 +169,7 @@ namespace SurvivalTools.HarmonyStuff
                     // Respect forced handler on the physical thing.
                     if (IsForced(pawn, PhysicalThingFor(t, pawn))) continue;
 
-                    var asTool = t as SurvivalTool; // includes VirtualSurvivalTool
+                    var asTool = t as SurvivalTool; // includes VirtualTool
                     if (asTool != null)
                     {
                         if (!SurvivalToolUtility.IsToolInUse(asTool))
@@ -222,81 +222,5 @@ namespace SurvivalTools.HarmonyStuff
                 }
             }
         }
-
-        // ------------------------------
-        // Append "(in use)" to tool-stuff items in gear tab if wrapped as a virtual tool
-        // ------------------------------
-        [HarmonyPatch(typeof(Thing), nameof(Thing.LabelCap), MethodType.Getter)]
-        public static class Thing_LabelCap_Postfix
-        {
-            public static void Postfix(Thing __instance, ref string __result)
-            {
-                if (__instance == null) return;
-
-                // Only applies to tool-stuff (cloth, etc.)
-                if (!__instance.def.IsToolStuff()) return;
-
-                var v = VirtualSurvivalTool.FromThing(__instance);
-                if (v != null && SurvivalToolUtility.IsToolInUse(v))
-                {
-                    if (!__result.EndsWith(" (in use)"))
-                        __result += " (in use)";
-                }
-            }
-        }
-
-        // Append "(in use)" to tool-stuff items in inventory/gear labels if wrapped as a virtual tool
-        [HarmonyPatch(typeof(Thing), nameof(Thing.Label), MethodType.Getter)]
-        public static class Thing_Label_Postfix
-        {
-            public static void Postfix(Thing __instance, ref string __result)
-            {
-                if (__instance == null) return;
-                if (!__instance.def.IsToolStuff()) return;
-
-                var v = VirtualSurvivalTool.FromThing(__instance);
-                if (v != null && SurvivalToolUtility.IsToolInUse(v))
-                {
-                    if (!__result.EndsWith(" (in use)"))
-                        __result += " (in use)";
-                }
-            }
-        }
-
-        [HarmonyPatch(typeof(Thing), nameof(Thing.LabelShort), MethodType.Getter)]
-        public static class Thing_LabelShort_Postfix
-        {
-            public static void Postfix(Thing __instance, ref string __result)
-            {
-                if (__instance == null) return;
-                if (!__instance.def.IsToolStuff()) return;
-
-                var v = VirtualSurvivalTool.FromThing(__instance);
-                if (v != null && SurvivalToolUtility.IsToolInUse(v))
-                {
-                    if (!__result.EndsWith(" (in use)"))
-                        __result += " (in use)";
-                }
-            }
-        }
-
-        [HarmonyPatch(typeof(Thing), nameof(Thing.LabelNoCount), MethodType.Getter)]
-        public static class Thing_LabelNoCount_Postfix
-        {
-            public static void Postfix(Thing __instance, ref string __result)
-            {
-                if (__instance == null) return;
-                if (!__instance.def.IsToolStuff()) return;
-
-                var v = VirtualSurvivalTool.FromThing(__instance);
-                if (v != null && SurvivalToolUtility.IsToolInUse(v))
-                {
-                    if (!__result.EndsWith(" (in use)"))
-                        __result += " (in use)";
-                }
-            }
-        }
-
-
     }
 }

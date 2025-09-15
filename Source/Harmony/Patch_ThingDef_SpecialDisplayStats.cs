@@ -29,46 +29,103 @@ namespace SurvivalTools.HarmonyStuff
                     existing.Add((e.LabelCap?.ToString() ?? "") + "|" + (e.ValueString ?? ""));
             }
 
-            // Case 1: Survival tool defs
-            SurvivalToolProperties tProps;
-            if (__instance.IsSurvivalTool(out tProps))
+            // Aggregated stat factors for the def (covers SurvivalTool defs, enhanced weapon defs, and tool-stuff defs)
+            var aggregatedDefFactors = AggregateDefToolFactors(__instance);
+            if (aggregatedDefFactors.Count > 0)
             {
-                var mods = tProps?.baseWorkStatFactors;
-                if (mods != null && mods.Count > 0)
-                    AddStatDrawEntries(list, existing, mods, ST_StatCategoryDefOf.SurvivalTool);
+                AddStatDrawEntries(list, existing, aggregatedDefFactors, ST_StatCategoryDefOf.SurvivalTool);
             }
 
-            // Case 1.5: Actual SurvivalTool instances (override with calculated WorkStatFactors)
-            if (req.Thing is SurvivalTool actualTool && actualTool.WorkStatFactors != null)
+            // Actual SurvivalTool / VirtualTool instance overrides (instance factors already include effectiveness, quality, stuff multipliers)
+            if (req.Thing is SurvivalTool actualTool)
             {
-                // Clear existing entries first to avoid duplicates
-                list.RemoveAll(entry => entry.category == ST_StatCategoryDefOf.SurvivalTool);
-                existing.RemoveWhere(key => key.Contains("Tool —"));
-
-                AddStatDrawEntries(list, existing, actualTool.WorkStatFactors, ST_StatCategoryDefOf.SurvivalTool);
-            }
-
-            // Case 2: Stuff materials that carry survival-tool stat factors (tool-stuff)
-            if (__instance.IsStuff)
-            {
-                // Check for SurvivalToolProperties first (for materials like cloth that can be tools)
-                var ext = __instance.GetModExtension<SurvivalToolProperties>();
-                var mods = ext?.baseWorkStatFactors;
-                if (mods != null && mods.Count > 0)
+                var instFactors = actualTool.WorkStatFactors?.Where(m => m != null && m.stat != null).ToList();
+                if (instFactors != null && instFactors.Count > 0)
                 {
-                    AddStatDrawEntries(list, existing, mods, ST_StatCategoryDefOf.SurvivalTool);
-                }
-                else
-                {
-                    // Check for StuffPropsTool (for materials like obsidian, etc.)
-                    var stuffExt = __instance.GetModExtension<StuffPropsTool>();
-                    var stuffMods = stuffExt?.toolStatFactors;
-                    if (stuffMods != null && stuffMods.Count > 0)
-                        AddStatDrawEntries(list, existing, stuffMods, ST_StatCategoryDefOf.SurvivalTool);
+                    // Remove any previously added entries for the same stats to prevent duplicate display rows showing base+instance
+                    var instStatDefs = new HashSet<StatDef>(instFactors.Select(m => m.stat));
+                    list.RemoveAll(entry => entry.category == ST_StatCategoryDefOf.SurvivalTool &&
+                        entry?.LabelCap != null && instStatDefs.Any(sd => entry.LabelCap.ToString().IndexOf(sd.label, System.StringComparison.OrdinalIgnoreCase) >= 0));
+                    existing.RemoveWhere(key => instStatDefs.Any(sd => key.IndexOf(sd.label, System.StringComparison.OrdinalIgnoreCase) >= 0));
+
+                    AddStatDrawEntries(list, existing, instFactors, ST_StatCategoryDefOf.SurvivalTool);
                 }
             }
 
             __result = list;
+        }
+
+        /// <summary>
+        /// Collects all survival tool related stat factors declared on a ThingDef either through
+        /// SurvivalToolProperties.baseWorkStatFactors or statBases (which may have been injected by ToolResolver).
+        /// Dedupe by StatDef keeping the maximum value. Returns an empty list if none found.
+        /// </summary>
+        private static List<StatModifier> AggregateDefToolFactors(ThingDef def)
+        {
+            var result = new List<StatModifier>();
+            if (def == null) return result;
+
+            try
+            {
+                // Extension factors (baseWorkStatFactors)
+                var ext = def.GetModExtension<SurvivalToolProperties>();
+                var extMods = ext?.baseWorkStatFactors;
+                if (extMods != null)
+                {
+                    for (int i = 0; i < extMods.Count; i++)
+                    {
+                        var m = extMods[i];
+                        if (m?.stat != null && m.value != 0f)
+                            result.Add(new StatModifier { stat = m.stat, value = m.value });
+                    }
+                }
+
+                // statBases (injected primary/secondary stats from ToolResolver or original defs)
+                var bases = def.statBases;
+                if (bases != null)
+                {
+                    for (int i = 0; i < bases.Count; i++)
+                    {
+                        var m = bases[i];
+                        if (m?.stat != null && m.value != 0f)
+                            result.Add(new StatModifier { stat = m.stat, value = m.value });
+                    }
+                }
+
+                // Stuff-based definitions (tool-stuff) don't expose material multipliers here; those apply at instance level.
+                // If it's stuff and has StuffPropsTool multipliers only (no ext), we still surface base factors so players see potential.*
+                if (def.IsStuff)
+                {
+                    var stuffExt = def.GetModExtension<StuffPropsTool>();
+                    if (stuffExt?.toolStatFactors != null && (extMods == null || extMods.Count == 0))
+                    {
+                        // Show only positive (>1) multipliers as factors; treat them as base factors to inform players.
+                        for (int i = 0; i < stuffExt.toolStatFactors.Count; i++)
+                        {
+                            var m = stuffExt.toolStatFactors[i];
+                            if (m?.stat != null && m.value > 1f)
+                                result.Add(new StatModifier { stat = m.stat, value = m.value });
+                        }
+                    }
+                }
+
+                // Dedupe by stat keep max
+                if (result.Count > 0)
+                {
+                    var dedup = new Dictionary<StatDef, float>();
+                    for (int i = 0; i < result.Count; i++)
+                    {
+                        var m = result[i];
+                        if (m?.stat == null) continue;
+                        if (!dedup.TryGetValue(m.stat, out var cur) || m.value > cur)
+                            dedup[m.stat] = m.value;
+                    }
+                    result = dedup.Select(kv => new StatModifier { stat = kv.Key, value = kv.Value }).ToList();
+                }
+            }
+            catch { /* swallow for safety */ }
+
+            return result;
         }
 
         private static void AddStatDrawEntries(

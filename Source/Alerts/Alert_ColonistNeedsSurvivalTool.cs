@@ -12,7 +12,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Linq; // retained for limited use; heavy hot-path LINQ replaced below
 using System.Text;
 using RimWorld;
 using Verse;
@@ -42,9 +42,16 @@ namespace SurvivalTools
                 if (_culprits == null || now - _lastCulpritCalcTick >= CulpritRecalcIntervalTicks)
                 {
                     _lastCulpritCalcTick = now;
-                    _culprits = PawnsFinder.AllMaps_FreeColonistsSpawned
-                        .Where(p => p.Spawned && PawnToolValidator.CanUseSurvivalTools(p) && IsWorkingToolless(p))
-                        .ToList();
+                    var list = new List<Pawn>(64);
+                    var all = PawnsFinder.AllMaps_FreeColonistsSpawned;
+                    for (int i = 0; i < all.Count; i++)
+                    {
+                        var p = all[i];
+                        if (p == null || !p.Spawned) continue;
+                        if (!PawnToolValidator.CanUseSurvivalTools(p)) continue;
+                        if (IsWorkingToolless(p)) list.Add(p);
+                    }
+                    _culprits = list;
                 }
                 return _culprits;
             }
@@ -63,29 +70,46 @@ namespace SurvivalTools
 
             if (stats != null)
             {
-                foreach (var stat in stats)
+                for (int i = 0; i < stats.Count; i++)
                 {
+                    var stat = stats[i];
                     if (stat == null) continue;
                     if (!settings.hardcoreMode && StatFilters.IsOptionalStat(stat)) continue;
                     if (!SurvivalToolUtility.ToolsExistForStat(stat)) continue;
                     if (!ShouldShowAlertForStat(pawn, stat, settings)) continue;
-
-                    if (!pawn.HasSurvivalToolFor(stat))
-                    {
-                        anyMissingRequired = true;
-                        break;
-                    }
+                    if (!HasToolImprovingStat(pawn, stat)) { anyMissingRequired = true; break; }
                 }
             }
 
             bool globalPenalty = false;
             if (Stat_WorkSpeedGlobal != null && ShouldShowAlertForStat(pawn, Stat_WorkSpeedGlobal, settings))
             {
-                if (!pawn.HasSurvivalToolFor(Stat_WorkSpeedGlobal))
-                    globalPenalty = true;
+                if (!HasToolImprovingStat(pawn, Stat_WorkSpeedGlobal)) globalPenalty = true;
             }
 
             return anyMissingRequired || globalPenalty;
+        }
+
+        private static bool HasToolImprovingStat(Pawn pawn, StatDef stat)
+        {
+            if (pawn == null || stat == null) return false;
+            var enumerable = pawn.GetAllUsableSurvivalTools();
+            if (enumerable == null) return false;
+            // Materialize once to list for indexed loop (GetAllUsableSurvivalTools returns IEnumerable)
+            var tools = enumerable as IList<Thing> ?? enumerable.ToList();
+            // Reuse unified helper: wrap single stat in temp list to avoid alloc reuse across calls
+            // For perf, avoid constructing list each iteration; simple direct factor comparison instead.
+            float baseline = SurvivalToolUtility.GetNoToolBaseline(stat);
+            for (int i = 0; i < tools.Count; i++)
+            {
+                var thing = tools[i]; if (thing == null) continue;
+                SurvivalTool st = thing as SurvivalTool;
+                if (st == null && thing.def != null && thing.def.IsToolStuff()) st = VirtualTool.FromThing(thing);
+                if (st == null) continue;
+                float factor = SurvivalToolUtility.GetToolProvidedFactor(st, stat);
+                if (factor > baseline + 0.001f) return true;
+            }
+            return false;
         }
 
         public override TaggedString GetExplanation()
@@ -117,7 +141,7 @@ namespace SurvivalTools
                         if (!settings.hardcoreMode && StatFilters.IsOptionalStat(stat)) continue;
                         if (!SurvivalToolUtility.ToolsExistForStat(stat)) continue;
                         if (!ShouldShowAlertForStat(pawn, stat, settings)) continue;
-                        if (pawn.HasSurvivalToolFor(stat)) continue;
+                        if (HasToolImprovingStat(pawn, stat)) continue;
 
                         string label = NormalizeStatLabel(stat);
                         if (!statToPawns.TryGetValue(label, out var list))
@@ -156,7 +180,7 @@ namespace SurvivalTools
                 {
                     if (!ShouldShowAlertForStat(pawn, Stat_WorkSpeedGlobal, settings))
                         continue;
-                    if (pawn.HasSurvivalToolFor(Stat_WorkSpeedGlobal))
+                    if (HasToolImprovingStat(pawn, Stat_WorkSpeedGlobal))
                         continue;
 
                     if (!statToPawns.TryGetValue(globalLabel, out var list))

@@ -1,4 +1,4 @@
-﻿// Rimworld 1.6 / C# 7.3
+﻿// RimWorld 1.6 / C# 7.3
 // Source/Harmony/Patch_ITab_Pawn_Gear_DrawThingRow.cs
 using System.Collections.Generic;
 using System.Linq;
@@ -58,8 +58,7 @@ namespace SurvivalTools.HarmonyStuff
             if (string.IsNullOrEmpty(originalLabel)) originalLabel = string.Empty;
             if (thing == null) return originalLabel;
 
-            var tool = thing as SurvivalTool;
-            bool isToolStuff = thing.def?.IsToolStuff() == true;
+            var tool = thing as SurvivalTool ?? (thing.def?.IsToolStuff() == true ? (SurvivalTool)VirtualTool.FromThing(thing) : null);
 
             // Forced handler suffix
             try
@@ -68,7 +67,7 @@ namespace SurvivalTools.HarmonyStuff
                 if (tracker != null)
                 {
                     Thing physicalForForced =
-                        (tool is VirtualSurvivalTool v && v.SourceThing != null) ? v.SourceThing : thing;
+                        (tool is VirtualTool v && v.SourceThing != null) ? v.SourceThing : thing;
 
                     if (tracker.forcedHandler?.IsForced(physicalForForced) == true)
                         originalLabel += $", {"ApparelForcedLower".Translate()}";
@@ -79,31 +78,7 @@ namespace SurvivalTools.HarmonyStuff
             bool inUse = false;
             try
             {
-                var job = pawn?.jobs?.curJob;
-                if (job != null)
-                {
-                    var required = SurvivalToolUtility.RelevantStatsFor(job.workGiverDef, job);
-                    if (!required.NullOrEmpty())
-                    {
-                        if (isToolStuff)
-                        {
-                            // Wrap the stack in a virtual tool and check if it’s marked as in-use
-                            var vtool = VirtualSurvivalTool.FromThing(thing);
-                            if (vtool != null && SurvivalToolUtility.IsToolInUse(vtool))
-                                inUse = true;
-                        }
-                        else
-                        {
-                            var best = pawn.GetBestSurvivalTool(required);
-                            if (best != null)
-                            {
-                                var bestBacking = SurvivalToolUtility.BackingThing(best, pawn);
-                                if (ReferenceEquals(bestBacking, thing) || ReferenceEquals(best, thing))
-                                    inUse = true;
-                            }
-                        }
-                    }
-                }
+                if (tool != null && SurvivalToolUtility.IsToolInUse(tool)) inUse = true;
             }
             catch
             {

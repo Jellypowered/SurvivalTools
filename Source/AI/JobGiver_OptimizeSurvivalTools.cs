@@ -4,7 +4,7 @@ using System;
 //
 // SurvivalTools — Optimizer
 // - Drops unneeded/duplicate tools
-// - Picks up better tools (incl. tool-stuff via VirtualSurvivalTool)
+// - Picks up better tools (incl. tool-stuff via VirtualTool)
 // - Reduced frequency when AutoTool is enabled
 // - Safe map/area checks to avoid OOB errors
 
@@ -209,7 +209,13 @@ namespace SurvivalTools
             // Baseline: best held tool
             foreach (var tool in heldTools)
             {
-                float score = SurvivalToolScore(tool, pawn, workRelevantStats);
+                var stTool = tool as SurvivalTool;
+                if (stTool == null)
+                {
+                    if (tool is Thing t && t.def.IsToolStuff()) stTool = VirtualTool.FromThing(t);
+                }
+                if (stTool == null) continue;
+                float score = SurvivalToolUtility.ScoreToolForStats(stTool, pawn, workRelevantStats);
                 if (score > bestScore) bestScore = score;
             }
             if (IsDebugLoggingEnabled && pawn != null && workRelevantStats != null)
@@ -233,13 +239,13 @@ namespace SurvivalTools
                     if (!ToolIsAcquirableByPolicySafe(pawn, sTool)) continue;
                     if (!pawn.CanReserveAndReach(sTool, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
 
-                    float sScore = SurvivalToolScore(sTool, pawn, workRelevantStats);
+                    float sScore = SurvivalToolUtility.ScoreToolForStats(sTool, pawn, workRelevantStats);
                     if (sScore <= 0f) continue; // irrelevant tool
 
                     var sameTypeHeld = FindSameTypeHeldTool(pawn, sTool, heldTools);
                     if (sameTypeHeld != null)
                     {
-                        float sameTypeScore = SurvivalToolScore(sameTypeHeld, pawn, workRelevantStats);
+                        float sameTypeScore = SurvivalToolUtility.ScoreToolForStats(sameTypeHeld, pawn, workRelevantStats);
                         if (sScore <= sameTypeScore)
                         {
                             LogDebug($"[SurvivalTools.Optimizer] {pawn.LabelShort} skipping {sTool.LabelShort} (score {sScore:F2}) - has better {sameTypeHeld.LabelShort} (score {sameTypeScore:F2})", $"Optimizer_Skip_{pawn.ThingID}_{sTool.LabelShort}");
@@ -260,7 +266,7 @@ namespace SurvivalTools
                     continue;
                 }
 
-                // B) Tool-stuff (cloth/wool/hyperweave) -> VirtualSurvivalTool
+                // B) Tool-stuff (cloth/wool/hyperweave) -> VirtualTool
                 if (candidate.def.IsToolStuff())
                 {
                     var item = candidate;
@@ -268,7 +274,7 @@ namespace SurvivalTools
                     if (curAssignment?.filter != null && !curAssignment.filter.Allows(item)) continue;
                     if (!pawn.CanReserveAndReach(item, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
 
-                    var vtool = VirtualSurvivalTool.FromThing(item);
+                    var vtool = VirtualTool.FromThing(item);
                     if (vtool == null) continue;
 
                     if (!ToolIsAcquirableByPolicySafe(pawn, vtool)) continue;
@@ -276,9 +282,7 @@ namespace SurvivalTools
                     bool hasRelevant = vtool.WorkStatFactors.Any(m => workRelevantStats.Contains(m.stat));
                     if (!hasRelevant) continue;
 
-                    float vScore = vtool.WorkStatFactors
-                        .Where(m => workRelevantStats.Contains(m.stat))
-                        .Sum(m => m.value);
+                    float vScore = SurvivalToolUtility.ScoreToolForStats(vtool, pawn, workRelevantStats);
 
                     // Distance tie-breaker
                     vScore -= 0.01f * item.Position.DistanceTo(pawn.Position);
@@ -325,12 +329,11 @@ namespace SurvivalTools
                     var backing = tool is SurvivalTool st ? SurvivalToolUtility.BackingThing(st, pawn) ?? tool : tool;
                     if (!AllowedToAutomaticallyDropSafe(tracker, backing)) continue;
 
-                    float score = SurvivalToolScore(tool, pawn, workRelevantStats);
-                    if (score < worstScore)
-                    {
-                        worstScore = score;
-                        worst = tool;
-                    }
+                    SurvivalTool stScoreTool = tool as SurvivalTool;
+                    if (stScoreTool == null && tool is Thing t && t.def.IsToolStuff()) stScoreTool = VirtualTool.FromThing(t);
+                    if (stScoreTool == null) continue;
+                    float score = SurvivalToolUtility.ScoreToolForStats(stScoreTool, pawn, workRelevantStats);
+                    if (score < worstScore) { worstScore = score; worst = tool; }
                 }
                 return worst;
             }
@@ -344,10 +347,7 @@ namespace SurvivalTools
                 .FirstOrDefault(held => AreSameToolType(held, targetTool));
         }
 
-        private static bool AreSameToolType(SurvivalTool a, SurvivalTool b)
-        {
-            return ToolScoring.AreSameToolType(a, b);
-        }
+        private static bool AreSameToolType(SurvivalTool a, SurvivalTool b) => SurvivalToolUtility.ToolImprovesAny(a, b?.WorkStatFactors?.Select(f => f.stat).Where(s => s != null).Distinct().ToList() ?? new List<StatDef>());
 
         #endregion
 
@@ -357,8 +357,9 @@ namespace SurvivalTools
         private static float SurvivalToolScore(Thing toolThing, Pawn pawn, List<StatDef> workRelevantStats)
         {
             var tool = toolThing as SurvivalTool;
+            if (tool == null && toolThing is Thing t && t.def.IsToolStuff()) tool = VirtualTool.FromThing(t);
             if (tool == null) return 0f;
-            return ToolScoring.CalculateToolScore(tool, pawn, workRelevantStats);
+            return SurvivalToolUtility.ScoreToolForStats(tool, pawn, workRelevantStats);
         }
 
         private static readonly SimpleCurve LifespanDaysToOptimalityMultiplierCurve = new SimpleCurve
@@ -385,7 +386,7 @@ namespace SurvivalTools
             return true;
         }
 
-        // Groups both real SurvivalTools and held tool-stuff (wrapped as VirtualSurvivalTool) by their functional stat set.
+        // Groups both real SurvivalTools and held tool-stuff (wrapped as VirtualTool) by their functional stat set.
         // Returns the physical Thing to drop: either a SurvivalTool to dequip/store, or a tool-stuff Thing to drop from inventory.
         private Thing FindDuplicateToolToDropIncludingVirtuals(Pawn pawn, List<Thing> heldThings)
         {
@@ -404,7 +405,7 @@ namespace SurvivalTools
                 // Wrap held tool-stuff into a virtual tool for grouping/scoring
                 if (ht?.def != null && ht.def.HasModExtension<SurvivalToolProperties>())
                 {
-                    var v = VirtualSurvivalTool.FromThing(ht);
+                    var v = VirtualTool.FromThing(ht);
                     if (v != null && v.WorkStatFactors.Any())
                         toolLikes.Add((ht, v));
                 }
