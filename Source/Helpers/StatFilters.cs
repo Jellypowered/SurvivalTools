@@ -31,11 +31,10 @@ namespace SurvivalTools.Helpers
         {
             if (stat == null) return true;
 
-            return stat == ST_StatDefOf.ResearchSpeed ||
-                   stat == ST_StatDefOf.CleaningSpeed ||
-                   stat == ST_StatDefOf.MedicalOperationSpeed ||
-                   stat == ST_StatDefOf.MedicalSurgerySuccessChance ||
-                   stat == ST_StatDefOf.ButcheryFleshEfficiency;
+            return stat == ST_StatDefOf.CleaningSpeed ||
+                      stat == ST_StatDefOf.MedicalOperationSpeed ||
+                      stat == ST_StatDefOf.MedicalSurgerySuccessChance ||
+                      stat == ST_StatDefOf.ButcheryFleshEfficiency;
         }
 
         /// <summary>
@@ -52,6 +51,7 @@ namespace SurvivalTools.Helpers
                 stat == StatDefOf.ConstructionSpeed ||
                 stat == ST_StatDefOf.MaintenanceSpeed ||
                 stat == ST_StatDefOf.DeconstructionSpeed ||
+                stat == ST_StatDefOf.ResearchSpeed ||
                 stat == ST_StatDefOf.ButcheryFleshSpeed;
         }
 

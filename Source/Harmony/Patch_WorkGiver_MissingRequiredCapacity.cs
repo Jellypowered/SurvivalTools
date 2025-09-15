@@ -1,5 +1,6 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Harmony/Patch_WorkGiver_MissingRequiredCapacity.cs
+using System.Linq;
 using HarmonyLib;
 using RimWorld;
 using Verse;
@@ -31,12 +32,19 @@ namespace SurvivalTools.HarmonyStuff
             {
                 __result = PawnCapacityDefOf.Manipulation;
 
-                // Cooldowned, low-noise debug (optional).
                 if (IsDebugLoggingEnabled)
                 {
                     var key = $"MissingToolCapacity_{pawn.ThingID}_{wgDef.defName}";
                     if (ShouldLogWithCooldown(key))
-                        Log.Message($"[SurvivalTools] Blocking {wgDef.defName} for {pawn.LabelShort}: missing required tool/stat → Manipulation capacity gate.");
+                    {
+                        var missingStats = string.Join(", ",
+                            required.Where(stat => stat != null)
+                                    .Where(stat => pawn.GetBestSurvivalTool(stat) == null)
+                                    .Select(stat => stat.defName));
+
+                        Log.Message($"[SurvivalTools] Blocking {wgDef.defName} for {pawn.LabelShort}: " +
+                                    $"missing required tool/stat(s) [{missingStats}] → Manipulation capacity gate.");
+                    }
                 }
             }
         }

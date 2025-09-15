@@ -145,4 +145,13 @@
     <JobTable_Status_Unknown>Unknown</JobTable_Status_Unknown>
     <JobTable_Blocked>Blocked</JobTable_Blocked>
 
+    <!-- Denial / Slowdown Motes -->
+    <SurvivalTools_Mote_Blocked>Blocked: Needs {0}</SurvivalTools_Mote_Blocked>
+    <SurvivalTools_Mote_Slowed>Slowed (x{0})</SurvivalTools_Mote_Slowed>
+    <SurvivalTools_Mote_NeedsAndSlowed>Needs {0}  Slowed (x{1})</SurvivalTools_Mote_NeedsAndSlowed>
+
+    <!-- Denial Mote Setting -->
+    <Settings_ShowDenialMotes>Show denial and slowdown motes</Settings_ShowDenialMotes>
+    <Settings_ShowDenialMotes_Tooltip>When enabled, pawns will display floating text motes when a job is blocked for lacking required tools (Hardcore/Extra Hardcore) or when continuing at a severe slowdown (Normal mode penalties / fallback cases). Includes per-pawn+stat cooldown to prevent spam. Disable for a cleaner screen or if using another feedback mod.</Settings_ShowDenialMotes_Tooltip>
+
 </LanguageData>

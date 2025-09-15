@@ -55,6 +55,9 @@ namespace SurvivalTools
         // QoL: upgrade suggestion toggle
         public bool showUpgradeSuggestions = true;
 
+        // Visual feedback: denial/slow motes toggle
+        public bool showDenialMotes = true; // When true, spawn text motes for blocked/slow tool-gated jobs
+
         // Job gating
         public Dictionary<string, bool> workSpeedGlobalJobGating = new Dictionary<string, bool>();
 
@@ -146,6 +149,7 @@ namespace SurvivalTools
             Scribe_Values.Look(ref rrResearchRequiredInExtraHardcore, nameof(rrResearchRequiredInExtraHardcore), false);
             Scribe_Values.Look(ref rrFieldResearchRequiredInExtraHardcore, nameof(rrFieldResearchRequiredInExtraHardcore), false);
             Scribe_Values.Look(ref showUpgradeSuggestions, nameof(showUpgradeSuggestions), true);
+            Scribe_Values.Look(ref showDenialMotes, nameof(showDenialMotes), true);
 
             Scribe_Collections.Look(ref workSpeedGlobalJobGating, nameof(workSpeedGlobalJobGating), LookMode.Value, LookMode.Value);
             if (workSpeedGlobalJobGating == null)
@@ -296,6 +300,7 @@ namespace SurvivalTools
             listing.CheckboxLabeled("Settings_PickupFromStorageOnly".Translate(), ref pickupFromStorageOnly, "Settings_PickupFromStorageOnly_Tooltip".Translate());
             listing.CheckboxLabeled("Settings_AllowPacifistEquip".Translate(), ref allowPacifistEquip, "Settings_AllowPacifistEquip_Tooltip".Translate());
             listing.CheckboxLabeled("Settings_ShowUpgradeSuggestions".Translate(), ref showUpgradeSuggestions, "Settings_ShowUpgradeSuggestions_Tooltip".Translate());
+            listing.CheckboxLabeled("Settings_ShowDenialMotes".Translate(), ref showDenialMotes, "Settings_ShowDenialMotes_Tooltip".Translate());
             listing.Gap();
 
             // Normal Mode Penalty Settings
