@@ -35,15 +35,13 @@
             </li>
         </operations>
     </Operation>
-    <!-- Add StatPart_SurvivalTool only if it isn't already present -->
+    <!-- Add StatPart_SurvivalTools only if it isn't already present -->
     <Operation Class="PatchOperationConditional">
-        <xpath>Defs/StatDef[defName="ConstructionSpeed"]/parts/li[@Class="SurvivalTools.StatPart_SurvivalTool"]</xpath>
+        <xpath>Defs/StatDef[defName="ConstructionSpeed"]/parts/li[@Class="SurvivalTools.Stats.StatPart_SurvivalTools"]</xpath>
         <nomatch Class="PatchOperationAdd">
             <xpath>Defs/StatDef[defName="ConstructionSpeed"]/parts</xpath>
             <value>
-                <li Class="SurvivalTools.StatPart_SurvivalTool">
-                    <noToolStatFactor>0.4</noToolStatFactor>
-                </li>
+                <li Class="SurvivalTools.Stats.StatPart_SurvivalTools" />
             </value>
         </nomatch>
     </Operation>

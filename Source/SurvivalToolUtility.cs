@@ -67,6 +67,7 @@ namespace SurvivalTools
             return false;
         }
 
+        [Obsolete("Internal Phase 3 migration - will be replaced by ToolScoring.Score() in Phase 4")]
         public static float ScoreToolForStats(SurvivalTool tool, Pawn pawn, List<StatDef> stats)
         {
             if (tool == null || pawn == null || stats == null || stats.Count == 0) return 0f;
@@ -117,7 +118,9 @@ namespace SurvivalTools
                 if (cand == null && thing.def.IsToolStuff()) cand = VirtualTool.FromThing(thing);
                 if (cand == null) continue;
                 if (!ToolImprovesAny(cand, requiredStats)) continue;
+#pragma warning disable CS0618 // Phase 3: Legacy method still used internally
                 float sc = ScoreToolForStats(cand, pawn, requiredStats);
+#pragma warning restore CS0618
                 if (sc > bestScore)
                 {
                     bestScore = sc; best = cand; backingThing = BackingThing(cand, pawn) ?? (cand as Thing);
@@ -133,7 +136,9 @@ namespace SurvivalTools
                 if (cand == null) continue; var bt = BackingThing(cand, pawn) ?? (cand as Thing);
                 if (bt == null || seen.Contains(bt.thingIDNumber) || bt.IsForbidden(pawn) || !pawn.CanReserveAndReach(bt, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
                 if (!ToolImprovesAny(cand, requiredStats)) continue; seen.Add(bt.thingIDNumber);
+#pragma warning disable CS0618 // Phase 3: Legacy method still used internally
                 float sc = ScoreToolForStats(cand, pawn, requiredStats) - ST_DistancePenaltyPerTile * bt.Position.DistanceTo(pawn.Position);
+#pragma warning restore CS0618
                 if (sc > bestScore) { bestScore = sc; best = cand; backingThing = bt; }
             }
             // Storage + haulables passes
@@ -151,7 +156,9 @@ namespace SurvivalTools
                     if (cand == null) continue; var bt = BackingThing(cand, pawn) ?? (cand as Thing);
                     if (bt == null || seen.Contains(bt.thingIDNumber) || bt.IsForbidden(pawn) || !pawn.CanReserveAndReach(bt, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
                     if (!ToolImprovesAny(cand, requiredStats)) continue; seen.Add(bt.thingIDNumber);
+#pragma warning disable CS0618 // Phase 3: Legacy method still used internally
                     float sc = ScoreToolForStats(cand, pawn, requiredStats) - ST_DistancePenaltyPerTile * dist;
+#pragma warning restore CS0618
                     if (sc > bestScore) { bestScore = sc; best = cand; backingThing = bt; }
                 }
             }
@@ -1126,7 +1133,7 @@ namespace SurvivalTools
         {
             if (stat?.parts.SafeAny() != true) return false;
             for (int i = 0; i < stat.parts.Count; i++)
-                if (stat.parts[i] is StatPart_SurvivalTool)
+                if (stat.parts[i] is Stats.StatPart_SurvivalTools)
                     return true;
             return false;
         }
@@ -1399,7 +1406,9 @@ namespace SurvivalTools
                 if (expectedKind != STToolKind.None && ToolUtility.ToolKindOf(thing) != expectedKind) continue;
                 if (!ToolImprovesAny(cand, stats)) continue;
 
+#pragma warning disable CS0618 // Phase 3: Legacy method still used internally
                 float score = ScoreToolForStats(cand, pawn, stats);
+#pragma warning restore CS0618
                 if (score > bestScore)
                 {
                     bestScore = score;
@@ -1426,7 +1435,9 @@ namespace SurvivalTools
                     }
                     if (cand == null) continue;
                     if (!ToolImprovesAny(cand, stats)) continue;
+#pragma warning disable CS0618 // Phase 3: Legacy method still used internally
                     float score = ScoreToolForStats(cand, pawn, stats);
+#pragma warning restore CS0618
                     if (score > bestScore)
                     {
                         bestScore = score;
@@ -1506,7 +1517,9 @@ namespace SurvivalTools
                     if (!pawn.CanReserveAndReach(backing, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
                     if (!ToolImprovesAny(candidate, requiredStats)) continue;
 
+#pragma warning disable CS0618 // Phase 3: Legacy method still used internally
                     float score = ScoreToolForStats(candidate, pawn, requiredStats);
+#pragma warning restore CS0618
                     score -= 0.01f * backing.Position.DistanceTo(pawn.Position);
 
                     if (score > bestScore)
@@ -1646,7 +1659,7 @@ namespace SurvivalTools
         public static SurvivalTool GetBestSurvivalTool(this Pawn pawn, StatDef stat)
         {
             if (!pawn.CanUseSurvivalTools() || stat == null || !stat.RequiresSurvivalTool()) return null;
-            var part = stat.GetStatPart<StatPart_SurvivalTool>();
+            var part = stat.GetStatPart<Stats.StatPart_SurvivalTools>();
             if (part == null) return null;
 
             // Unified baseline & scoring path using existing helpers so behavior matches multi-stat overload
@@ -1941,11 +1954,11 @@ namespace SurvivalTools
 
         public static bool BetterThanWorkingToollessFor(this SurvivalTool tool, StatDef stat)
         {
-            var part = stat.GetStatPart<StatPart_SurvivalTool>();
+            var part = stat.GetStatPart<Stats.StatPart_SurvivalTools>();
             if (part == null)
             {
                 if (IsDebugLoggingEnabled)
-                    Log.ErrorOnce($"Tried to check if {tool} is better than working toolless for {stat} which has no StatPart_SurvivalTool", 8120196);
+                    Log.ErrorOnce($"Tried to check if {tool} is better than working toolless for {stat} which has no StatPart_SurvivalTools", 8120196);
                 return false;
             }
             float toolFactor = tool.WorkStatFactors.ToList().GetStatFactorFromList(stat);

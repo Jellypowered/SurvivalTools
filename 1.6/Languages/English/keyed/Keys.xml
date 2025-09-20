@@ -154,4 +154,10 @@
     <Settings_ShowDenialMotes>Show denial and slowdown motes</Settings_ShowDenialMotes>
     <Settings_ShowDenialMotes_Tooltip>When enabled, pawns will display floating text motes when a job is blocked for lacking required tools (Hardcore/Extra Hardcore) or when continuing at a severe slowdown (Normal mode penalties / fallback cases). Includes per-pawn+stat cooldown to prevent spam. Disable for a cleaner screen or if using another feedback mod.</Settings_ShowDenialMotes_Tooltip>
 
+    <!-- StatPart Phase 4 Localization -->
+    <ST_StatPart_Header>Survival Tools</ST_StatPart_Header>
+    <ST_StatPart_NoToolPenalty>No appropriate tool: {0} baseline</ST_StatPart_NoToolPenalty>
+    <ST_StatPart_ToolApplied>Using {0}: {1}</ST_StatPart_ToolApplied>
+    <ST_StatPart_TopContrib>Top: {0} +{1}%</ST_StatPart_TopContrib>
+
 </LanguageData>

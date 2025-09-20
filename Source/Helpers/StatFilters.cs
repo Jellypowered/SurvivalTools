@@ -170,7 +170,7 @@ namespace SurvivalTools.Helpers
 
         public static bool IsValidSurvivalToolStat(StatDef stat)
         {
-            return stat?.parts?.Any(p => p is StatPart_SurvivalTool) == true;
+            return stat?.parts?.Any(p => p is Stats.StatPart_SurvivalTools) == true;
         }
 
         public static List<StatDef> GetAllSurvivalToolStats()

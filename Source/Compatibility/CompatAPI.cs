@@ -176,6 +176,9 @@ namespace SurvivalTools.Compat
 
             // Initialize the SurvivalToolRegistry (Phase 1)
             SurvivalToolRegistry.Initialize();
+
+            // Initialize the ToolStatResolver (Phase 2)
+            Helpers.ToolStatResolver.Initialize();
         }
 
         public static void RegisterModule(ICompatibilityModule module)
@@ -370,7 +373,21 @@ namespace SurvivalTools.Compat
         public static void RegisterJobRequirement(string jobDefName, string statDefName) => SurvivalToolRegistry.RegisterJobRequirement(jobDefName, statDefName);
         public static void RegisterStatAlias(StatDef stat, string alias) => SurvivalToolRegistry.RegisterStatAlias(stat, alias);
         public static void RegisterStatAlias(string statDefName, string alias) => SurvivalToolRegistry.RegisterStatAlias(statDefName, alias);
-        public static void RegisterToolQuirk(string toolDefName, string quirkDescription) => SurvivalToolRegistry.RegisterToolQuirk(toolDefName, quirkDescription);
+
+        /// <summary>
+        /// Register a tool quirk by defName match (legacy overload).
+        /// Forwarder to new quirk system.
+        /// </summary>
+        [System.Obsolete("Legacy overload. Use predicate-based RegisterToolQuirk for better control.", false)]
+        public static void RegisterToolQuirk(string toolDefName, string quirkDescription)
+        {
+            // Forward to new system with exact defName match
+            RegisterToolQuirk(
+                predicate: toolDef => string.Equals(toolDef.defName, toolDefName, StringComparison.OrdinalIgnoreCase),
+                action: applier => applier.AddDevNote(quirkDescription)
+            );
+        }
+
         public static void OnAfterDefsLoaded(Action callback) => SurvivalToolRegistry.OnAfterDefsLoaded(callback);
         public static bool IsModActive(string packageId) => SurvivalToolRegistry.IsModActive(packageId);
 
@@ -474,6 +491,40 @@ namespace SurvivalTools.Compat
             // Forward to existing StatGatingHelper during Phase 1
             var settings = SurvivalTools.Settings;
             return settings != null && StatGatingHelper.ShouldBlockJobForStat(stat, settings, pawn);
+        }
+
+        // Phase 2 forwarders for stat resolution
+        /// <summary>
+        /// Forwarder during refactor. Do not extend.
+        /// </summary>
+        [System.Obsolete("Forwarder during refactor. Do not extend.", false)]
+        public static float GetToolStatFactor(ThingDef toolDef, ThingDef stuffDef, StatDef stat)
+        {
+            // Forward to new centralized resolver (Phase 2)
+            return Helpers.ToolStatResolver.GetToolStatFactor(toolDef, stuffDef, stat);
+        }
+
+        /// <summary>
+        /// Forwarder during refactor. Do not extend.
+        /// </summary>
+        [System.Obsolete("Forwarder during refactor. Do not extend.", false)]
+        public static ToolStatResolver.ToolStatInfo GetToolStatInfo(ThingDef toolDef, ThingDef stuffDef, StatDef stat)
+        {
+            // Forward to new centralized resolver (Phase 2)
+            return Helpers.ToolStatResolver.GetToolStatInfo(toolDef, stuffDef, stat);
+        }
+
+        /// <summary>
+        /// Register a tool quirk with predicate and action.
+        /// Applied during stat resolution after inference but before clamping.
+        /// Quirks are processed in registration order.
+        /// </summary>
+        /// <param name="predicate">Test if this quirk applies to a tool def</param>
+        /// <param name="action">Apply quirk modifications</param>
+        public static void RegisterToolQuirk(Func<ThingDef, bool> predicate, Action<ToolQuirkApplier> action)
+        {
+            if (predicate == null || action == null) return;
+            Helpers.ToolStatResolver.RegisterQuirk(predicate, action);
         }
     }
 }
