@@ -21,125 +21,137 @@ namespace SurvivalTools
         /// <summary>
         /// Defines tool type detection rules with name patterns and corresponding stats
         /// </summary>
-        private static readonly Dictionary<STToolKind, ToolDetectionRule> DetectionRules = new Dictionary<STToolKind, ToolDetectionRule>
+        private static Dictionary<STToolKind, ToolDetectionRule> _detectionRules;
+
+        private static Dictionary<STToolKind, ToolDetectionRule> DetectionRules
         {
+            get
             {
-                STToolKind.Axe,
-                new ToolDetectionRule
+                if (_detectionRules == null)
                 {
-                    NamePatterns = new[] { "axe", "hatchet" },
-                    ExcludePatterns = new[] { "pickaxe", "pick axe", "mining", "quarry" },
-                    RequiredStats = new[] { ST_StatDefOf.TreeFellingSpeed },
-                    Description = "Tree felling tools"
-                }
-            },
-            {
-                STToolKind.Pick,
-                new ToolDetectionRule
-                {
-                    NamePatterns = new[] { "pickaxe", "pick", "mattock" },
-                    ExcludePatterns = new[] { "toothpick", "picket" },
-                    RequiredStats = new[] { ST_StatDefOf.DiggingSpeed, ST_StatDefOf.MiningYieldDigging },
-                    Description = "Mining and digging tools"
-                }
-            },
-            {
-                STToolKind.Knife,
-                new ToolDetectionRule
-                {
-                    NamePatterns = new[] { "knife", "blade", "dagger" },
-                    ExcludePatterns = new[] { "butterknife" },
-                    RequiredStats = new[] { ST_StatDefOf.ButcheryFleshSpeed, ST_StatDefOf.ButcheryFleshEfficiency },
-                    Description = "Cutting and butchering tools"
-                }
-            },
-            {
-                STToolKind.Sickle,
-                new ToolDetectionRule
-                {
-                    NamePatterns = new[] { "sickle", "scythe" },
-                    ExcludePatterns = new string[0],
-                    RequiredStats = new[] { ST_StatDefOf.PlantHarvestingSpeed },
-                    // Sickles also get reduced butchering capability (0.5x) since they're blades
-                    SecondaryStats = new Dictionary<StatDef, float>
+                    _detectionRules = new Dictionary<STToolKind, ToolDetectionRule>
                     {
-                        { ST_StatDefOf.ButcheryFleshSpeed, 0.5f },
-                        { ST_StatDefOf.ButcheryFleshEfficiency, 0.5f }
-                    },
-                    Description = "Plant harvesting tools with limited butchering capability"
+                        {
+                            STToolKind.Axe,
+                            new ToolDetectionRule
+                            {
+                                NamePatterns = new[] { "axe", "hatchet" },
+                                ExcludePatterns = new[] { "pickaxe", "pick axe", "mining", "quarry" },
+                                RequiredStats = new[] { ST_StatDefOf.TreeFellingSpeed },
+                                Description = "Tree felling tools"
+                            }
+                        },
+                        {
+                            STToolKind.Pick,
+                            new ToolDetectionRule
+                            {
+                                NamePatterns = new[] { "pickaxe", "pick", "mattock" },
+                                ExcludePatterns = new[] { "toothpick", "picket" },
+                                RequiredStats = new[] { ST_StatDefOf.DiggingSpeed, ST_StatDefOf.MiningYieldDigging },
+                                Description = "Mining and digging tools"
+                            }
+                        },
+                        {
+                            STToolKind.Knife,
+                            new ToolDetectionRule
+                            {
+                                NamePatterns = new[] { "knife", "blade", "dagger" },
+                                ExcludePatterns = new[] { "butterknife" },
+                                RequiredStats = new[] { ST_StatDefOf.ButcheryFleshSpeed, ST_StatDefOf.ButcheryFleshEfficiency },
+                                Description = "Cutting and butchering tools"
+                            }
+                        },
+                        {
+                            STToolKind.Sickle,
+                            new ToolDetectionRule
+                            {
+                                NamePatterns = new[] { "sickle", "scythe" },
+                                ExcludePatterns = new string[0],
+                                RequiredStats = new[] { ST_StatDefOf.PlantHarvestingSpeed },
+                                // Sickles also get reduced butchering capability (0.5x) since they're blades
+                                SecondaryStats = new Dictionary<StatDef, float>
+                                {
+                                    { ST_StatDefOf.ButcheryFleshSpeed, 0.5f },
+                                    { ST_StatDefOf.ButcheryFleshEfficiency, 0.5f }
+                                },
+                                Description = "Plant harvesting tools with limited butchering capability"
+                            }
+                        },
+                        {
+                            STToolKind.Hammer,
+                            new ToolDetectionRule
+                            {
+                                NamePatterns = new[] { "hammer", "mallet", "maul" },
+                                ExcludePatterns = new[] { "sledgehammer", "persona" }, // Sledgehammers might be mining tools
+                                RequiredStats = new[] { ST_StatDefOf.MaintenanceSpeed },
+                                Description = "Construction and maintenance tools"
+                            }
+                        },
+                        {
+                            STToolKind.Wrench,
+                            new ToolDetectionRule
+                            {
+                                NamePatterns = new[] { "wrench", "spanner", "screwdriver", "prybar", "crowbar", "lever" },
+                                ExcludePatterns = new string[0],
+                                RequiredStats = new[] { ST_StatDefOf.DeconstructionSpeed, ST_StatDefOf.MaintenanceSpeed },
+                                Description = "Mechanical repair and deconstruction tools"
+                            }
+                        },
+                        {
+                            STToolKind.Hoe,
+                            new ToolDetectionRule
+                            {
+                                NamePatterns = new[] { "hoe", "cultivator", "tiller" },
+                                ExcludePatterns = new[] { "armor" },
+                                RequiredStats = new[] { ST_StatDefOf.SowingSpeed },
+                                Description = "Soil preparation and planting tools"
+                            }
+                        },
+                        {
+                            STToolKind.Saw,
+                            new ToolDetectionRule
+                            {
+                                NamePatterns = new[] { "saw", "chainsaw" },
+                                ExcludePatterns = new[] { "seesaw" },
+                                RequiredStats = new[] { ST_StatDefOf.TreeFellingSpeed },
+                                Description = "Wood cutting tools"
+                            }
+                        },
+                        {
+                            STToolKind.Cleaning,
+                            new ToolDetectionRule
+                            {
+                                NamePatterns = new[] { "broom", "mop", "rags", "cloth", "towel", "sponge" },
+                                ExcludePatterns = new[] { "broomcorn", "broomstick", "tablecloth", "bedcloth" },
+                                RequiredStats = new[] { ST_StatDefOf.CleaningSpeed },
+                                Description = "Cleaning and maintenance tools"
+                            }
+                        },
+                        {
+                            STToolKind.Research,
+                            new ToolDetectionRule
+                            {
+                                NamePatterns = new[] { "microscope", "telescope", "sextant", "calculator", "computer", "instrument", "analyzer", "scanner", "spectrometer", "chromatograph", "oscilloscope", "multimeter", "datapad", "tablet", "laptop" },
+                                ExcludePatterns = new[] { "musical", "music", "guitar", "piano", "drum", "violin", "flute", "horn" },
+                                RequiredStats = new[] { ST_StatDefOf.ResearchSpeed },
+                                Description = "Research and analytical instruments"
+                            }
+                        },
+                        {
+                            STToolKind.Medical,
+                            new ToolDetectionRule
+                            {
+                                NamePatterns = new[] { "scalpel", "forceps", "stethoscope", "syringe", "needle", "suture", "bandage", "gauze", "medkit", "surgical", "medical" },
+                                ExcludePatterns = new[] { "herbal", "tribal", "gun", "skilltrainer", "needle gun", "needle launcher", "launcher" },
+                                RequiredStats = new[] { ST_StatDefOf.MedicalOperationSpeed, ST_StatDefOf.MedicalSurgerySuccessChance },
+                                Description = "Medical and surgical instruments"
+                            }
+                        }
+                    };
                 }
-            },
-            {
-                STToolKind.Hammer,
-                new ToolDetectionRule
-                {
-                    NamePatterns = new[] { "hammer", "mallet", "maul" },
-                    ExcludePatterns = new[] { "sledgehammer", "persona" }, // Sledgehammers might be mining tools
-                    RequiredStats = new[] { ST_StatDefOf.MaintenanceSpeed },
-                    Description = "Construction and maintenance tools"
-                }
-            },
-            {
-                STToolKind.Wrench,
-                new ToolDetectionRule
-                {
-                    NamePatterns = new[] { "wrench", "spanner", "screwdriver", "prybar", "crowbar", "lever" },
-                    ExcludePatterns = new string[0],
-                    RequiredStats = new[] { ST_StatDefOf.DeconstructionSpeed, ST_StatDefOf.MaintenanceSpeed },
-                    Description = "Mechanical repair and deconstruction tools"
-                }
-            },
-            {
-                STToolKind.Hoe,
-                new ToolDetectionRule
-                {
-                    NamePatterns = new[] { "hoe", "cultivator", "tiller" },
-                    ExcludePatterns = new[] { "armor" },
-                    RequiredStats = new[] { ST_StatDefOf.SowingSpeed },
-                    Description = "Soil preparation and planting tools"
-                }
-            },
-            {
-                STToolKind.Saw,
-                new ToolDetectionRule
-                {
-                    NamePatterns = new[] { "saw", "chainsaw" },
-                    ExcludePatterns = new[] { "seesaw" },
-                    RequiredStats = new[] { ST_StatDefOf.TreeFellingSpeed },
-                    Description = "Wood cutting tools"
-                }
-            },
-            {
-                STToolKind.Cleaning,
-                new ToolDetectionRule
-                {
-                    NamePatterns = new[] { "broom", "mop", "rags", "cloth", "towel", "sponge" },
-                    ExcludePatterns = new[] { "broomcorn", "broomstick", "tablecloth", "bedcloth" },
-                    RequiredStats = new[] { ST_StatDefOf.CleaningSpeed },
-                    Description = "Cleaning and maintenance tools"
-                }
-            },
-            {
-                STToolKind.Research,
-                new ToolDetectionRule
-                {
-                    NamePatterns = new[] { "microscope", "telescope", "sextant", "calculator", "computer", "instrument", "analyzer", "scanner", "spectrometer", "chromatograph", "oscilloscope", "multimeter", "datapad", "tablet", "laptop" },
-                    ExcludePatterns = new[] { "musical", "music", "guitar", "piano", "drum", "violin", "flute", "horn" },
-                    RequiredStats = new[] { ST_StatDefOf.ResearchSpeed },
-                    Description = "Research and analytical instruments"
-                }
-            },
-            {
-                STToolKind.Medical,
-                new ToolDetectionRule
-                {
-                    NamePatterns = new[] { "scalpel", "forceps", "stethoscope", "syringe", "needle", "suture", "bandage", "gauze", "medkit", "surgical", "medical" },
-                    ExcludePatterns = new[] { "herbal", "tribal", "gun", "skilltrainer", "needle gun", "needle launcher", "launcher" },
-                    RequiredStats = new[] { ST_StatDefOf.MedicalOperationSpeed, ST_StatDefOf.MedicalSurgerySuccessChance },
-                    Description = "Medical and surgical instruments"
-                }
+                return _detectionRules;
             }
-        };
+        }
 
         #endregion
 

@@ -35,17 +35,30 @@ namespace SurvivalTools
     {
         #region Kind <-> Stat mapping
 
-        private static readonly StatDef[] Stats_Pick = { ST_StatDefOf.DiggingSpeed };
-        private static readonly StatDef[] Stats_Axe = { ST_StatDefOf.TreeFellingSpeed };
-        private static readonly StatDef[] Stats_Hammer = { StatDefOf.ConstructionSpeed };
-        private static readonly StatDef[] Stats_Wrench = { ST_StatDefOf.MaintenanceSpeed, ST_StatDefOf.DeconstructionSpeed };
-        private static readonly StatDef[] Stats_Hoe = { ST_StatDefOf.SowingSpeed };
-        private static readonly StatDef[] Stats_Sickle = { ST_StatDefOf.PlantHarvestingSpeed };
-        private static readonly StatDef[] Stats_Cleaning = { ST_StatDefOf.CleaningSpeed };
-        private static readonly StatDef[] Stats_Research = { ST_StatDefOf.ResearchSpeed };
-        private static readonly StatDef[] Stats_Medical = { ST_StatDefOf.MedicalOperationSpeed, ST_StatDefOf.MedicalSurgerySuccessChance };
-        private static readonly StatDef[] Stats_Knife = { ST_StatDefOf.ButcheryFleshSpeed, ST_StatDefOf.ButcheryFleshEfficiency };
-        private static readonly StatDef[] Stats_Saw = { ST_StatDefOf.DeconstructionSpeed }; // optional alias for deconstruction
+        // Tool type to stat mappings (lazy initialized to avoid early DefOf access)
+        private static StatDef[] _stats_Pick;
+        private static StatDef[] _stats_Axe;
+        private static StatDef[] _stats_Hammer;
+        private static StatDef[] _stats_Wrench;
+        private static StatDef[] _stats_Hoe;
+        private static StatDef[] _stats_Sickle;
+        private static StatDef[] _stats_Cleaning;
+        private static StatDef[] _stats_Research;
+        private static StatDef[] _stats_Medical;
+        private static StatDef[] _stats_Knife;
+        private static StatDef[] _stats_Saw;
+
+        private static StatDef[] Stats_Pick => _stats_Pick ?? (_stats_Pick = new[] { ST_StatDefOf.DiggingSpeed });
+        private static StatDef[] Stats_Axe => _stats_Axe ?? (_stats_Axe = new[] { ST_StatDefOf.TreeFellingSpeed });
+        private static StatDef[] Stats_Hammer => _stats_Hammer ?? (_stats_Hammer = new[] { StatDefOf.ConstructionSpeed });
+        private static StatDef[] Stats_Wrench => _stats_Wrench ?? (_stats_Wrench = new[] { ST_StatDefOf.MaintenanceSpeed, ST_StatDefOf.DeconstructionSpeed });
+        private static StatDef[] Stats_Hoe => _stats_Hoe ?? (_stats_Hoe = new[] { ST_StatDefOf.SowingSpeed });
+        private static StatDef[] Stats_Sickle => _stats_Sickle ?? (_stats_Sickle = new[] { ST_StatDefOf.PlantHarvestingSpeed });
+        private static StatDef[] Stats_Cleaning => _stats_Cleaning ?? (_stats_Cleaning = new[] { ST_StatDefOf.CleaningSpeed });
+        private static StatDef[] Stats_Research => _stats_Research ?? (_stats_Research = new[] { ST_StatDefOf.ResearchSpeed });
+        private static StatDef[] Stats_Medical => _stats_Medical ?? (_stats_Medical = new[] { ST_StatDefOf.MedicalOperationSpeed, ST_StatDefOf.MedicalSurgerySuccessChance });
+        private static StatDef[] Stats_Knife => _stats_Knife ?? (_stats_Knife = new[] { ST_StatDefOf.ButcheryFleshSpeed, ST_StatDefOf.ButcheryFleshEfficiency });
+        private static StatDef[] Stats_Saw => _stats_Saw ?? (_stats_Saw = new[] { ST_StatDefOf.DeconstructionSpeed }); // optional alias for deconstruction
 
         private static IEnumerable<StatDef> StatsForKind(STToolKind kind)
         {

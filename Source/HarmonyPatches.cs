@@ -22,29 +22,39 @@ namespace SurvivalTools.HarmonyStuff
         // One Harmony instance for all manual patches
         private static readonly HarmonyLib.Harmony H = new HarmonyLib.Harmony("Jelly.SurvivalToolsReborn");
 
-        // Stat/Method lookups used in several transpilers
-        private static readonly FieldInfo ConstructionSpeed =
-            AccessTools.Field(typeof(StatDefOf), nameof(StatDefOf.ConstructionSpeed));
+        // Stat/Method lookups used in several transpilers (lazy initialized to avoid early DefOf access)
+        private static FieldInfo _constructionSpeed;
+        private static FieldInfo _maintenanceSpeedField;
+        private static FieldInfo _deconstructionSpeedField;
+        private static FieldInfo _sowingSpeedField;
+        private static FieldInfo _researchSpeedField;
+        private static MethodInfo _tryDegradeTool;
+        private static FieldInfo _pawnField;
+        private static FieldInfo _miningSpeedField;
+        private static FieldInfo _diggingSpeedField;
 
-        private static readonly FieldInfo MaintenanceSpeedField =
-            AccessTools.Field(typeof(ST_StatDefOf), nameof(ST_StatDefOf.MaintenanceSpeed));
+        private static FieldInfo ConstructionSpeed => _constructionSpeed ?? (_constructionSpeed =
+            AccessTools.Field(typeof(StatDefOf), nameof(StatDefOf.ConstructionSpeed)));
 
-        private static readonly FieldInfo DeconstructionSpeedField =
-            AccessTools.Field(typeof(ST_StatDefOf), nameof(ST_StatDefOf.DeconstructionSpeed));
+        private static FieldInfo MaintenanceSpeedField => _maintenanceSpeedField ?? (_maintenanceSpeedField =
+            AccessTools.Field(typeof(ST_StatDefOf), nameof(ST_StatDefOf.MaintenanceSpeed)));
 
-        private static readonly FieldInfo SowingSpeedField =
-            AccessTools.Field(typeof(ST_StatDefOf), nameof(ST_StatDefOf.SowingSpeed));
+        private static FieldInfo DeconstructionSpeedField => _deconstructionSpeedField ?? (_deconstructionSpeedField =
+            AccessTools.Field(typeof(ST_StatDefOf), nameof(ST_StatDefOf.DeconstructionSpeed)));
 
-        private static readonly FieldInfo ResearchSpeedField =
-            AccessTools.Field(typeof(ST_StatDefOf), nameof(ST_StatDefOf.ResearchSpeed));
+        private static FieldInfo SowingSpeedField => _sowingSpeedField ?? (_sowingSpeedField =
+            AccessTools.Field(typeof(ST_StatDefOf), nameof(ST_StatDefOf.SowingSpeed)));
 
-        private static readonly MethodInfo TryDegradeTool =
+        private static FieldInfo ResearchSpeedField => _researchSpeedField ?? (_researchSpeedField =
+            AccessTools.Field(typeof(ST_StatDefOf), nameof(ST_StatDefOf.ResearchSpeed)));
+
+        private static MethodInfo TryDegradeTool => _tryDegradeTool ?? (_tryDegradeTool =
             AccessTools.Method(typeof(SurvivalToolUtility), nameof(SurvivalToolUtility.TryDegradeTool),
-                new[] { typeof(Pawn), typeof(StatDef) });
+                new[] { typeof(Pawn), typeof(StatDef) }));
 
-        private static readonly FieldInfo PawnField = AccessTools.Field(typeof(JobDriver), nameof(JobDriver.pawn));
-        private static readonly FieldInfo MiningSpeedField = AccessTools.Field(typeof(StatDefOf), nameof(StatDefOf.MiningSpeed));
-        private static readonly FieldInfo DiggingSpeedField = AccessTools.Field(typeof(ST_StatDefOf), nameof(ST_StatDefOf.DiggingSpeed));
+        private static FieldInfo PawnField => _pawnField ?? (_pawnField = AccessTools.Field(typeof(JobDriver), nameof(JobDriver.pawn)));
+        private static FieldInfo MiningSpeedField => _miningSpeedField ?? (_miningSpeedField = AccessTools.Field(typeof(StatDefOf), nameof(StatDefOf.MiningSpeed)));
+        private static FieldInfo DiggingSpeedField => _diggingSpeedField ?? (_diggingSpeedField = AccessTools.Field(typeof(ST_StatDefOf), nameof(ST_StatDefOf.DiggingSpeed)));
 
         #region Helpers
 

@@ -29,45 +29,52 @@ namespace SurvivalTools.Stats
         // HP bucket tracking for cache invalidation (quantized to 10% steps)
         private static readonly Dictionary<int, int> _lastHpBuckets = new Dictionary<int, int>();
 
-        static StatPart_SurvivalTools()
-        {
-            InitializeSupportedStats();
-        }
+        // Lazy initialization flag
+        private static bool _statsInitialized = false;
 
         /// <summary>
-        /// Initialize the set of supported work stats
+        /// Ensure supported stats are initialized (lazy, thread-safe)
         /// </summary>
-        private static void InitializeSupportedStats()
+        private static void EnsureSupportedStatsInitialized()
         {
-            SupportedWorkStats.Clear();
+            if (_statsInitialized) return;
 
-            // Add vanilla work stats we support
-            if (StatDefOf.MiningSpeed != null) SupportedWorkStats.Add(StatDefOf.MiningSpeed);
-            if (StatDefOf.MiningYield != null) SupportedWorkStats.Add(StatDefOf.MiningYield);
-            if (StatDefOf.ConstructionSpeed != null) SupportedWorkStats.Add(StatDefOf.ConstructionSpeed);
-            if (StatDefOf.PlantWorkSpeed != null) SupportedWorkStats.Add(StatDefOf.PlantWorkSpeed);
-            if (StatDefOf.PlantHarvestYield != null) SupportedWorkStats.Add(StatDefOf.PlantHarvestYield);
+            lock (SupportedWorkStats)
+            {
+                if (_statsInitialized) return;
 
-            // Add ST custom stats if available
-            try
-            {
-                if (ST_StatDefOf.DiggingSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.DiggingSpeed);
-                if (ST_StatDefOf.TreeFellingSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.TreeFellingSpeed);
-                if (ST_StatDefOf.PlantHarvestingSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.PlantHarvestingSpeed);
-                if (ST_StatDefOf.SowingSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.SowingSpeed);
-                if (ST_StatDefOf.MaintenanceSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.MaintenanceSpeed);
-                if (ST_StatDefOf.DeconstructionSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.DeconstructionSpeed);
-                if (ST_StatDefOf.ResearchSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.ResearchSpeed);
-                if (ST_StatDefOf.CleaningSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.CleaningSpeed);
-                if (ST_StatDefOf.MedicalOperationSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.MedicalOperationSpeed);
-                if (ST_StatDefOf.MedicalSurgerySuccessChance != null) SupportedWorkStats.Add(ST_StatDefOf.MedicalSurgerySuccessChance);
-                if (ST_StatDefOf.ButcheryFleshSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.ButcheryFleshSpeed);
-                if (ST_StatDefOf.ButcheryFleshEfficiency != null) SupportedWorkStats.Add(ST_StatDefOf.ButcheryFleshEfficiency);
-                if (ST_StatDefOf.MiningYieldDigging != null) SupportedWorkStats.Add(ST_StatDefOf.MiningYieldDigging);
-            }
-            catch
-            {
-                // If ST stats are not available, continue with vanilla stats only
+                SupportedWorkStats.Clear();
+
+                // Add vanilla work stats we support
+                if (StatDefOf.MiningSpeed != null) SupportedWorkStats.Add(StatDefOf.MiningSpeed);
+                if (StatDefOf.MiningYield != null) SupportedWorkStats.Add(StatDefOf.MiningYield);
+                if (StatDefOf.ConstructionSpeed != null) SupportedWorkStats.Add(StatDefOf.ConstructionSpeed);
+                if (StatDefOf.PlantWorkSpeed != null) SupportedWorkStats.Add(StatDefOf.PlantWorkSpeed);
+                if (StatDefOf.PlantHarvestYield != null) SupportedWorkStats.Add(StatDefOf.PlantHarvestYield);
+
+                // Add ST custom stats if available
+                try
+                {
+                    if (ST_StatDefOf.DiggingSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.DiggingSpeed);
+                    if (ST_StatDefOf.TreeFellingSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.TreeFellingSpeed);
+                    if (ST_StatDefOf.PlantHarvestingSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.PlantHarvestingSpeed);
+                    if (ST_StatDefOf.SowingSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.SowingSpeed);
+                    if (ST_StatDefOf.MaintenanceSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.MaintenanceSpeed);
+                    if (ST_StatDefOf.DeconstructionSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.DeconstructionSpeed);
+                    if (ST_StatDefOf.ResearchSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.ResearchSpeed);
+                    if (ST_StatDefOf.CleaningSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.CleaningSpeed);
+                    if (ST_StatDefOf.MedicalOperationSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.MedicalOperationSpeed);
+                    if (ST_StatDefOf.MedicalSurgerySuccessChance != null) SupportedWorkStats.Add(ST_StatDefOf.MedicalSurgerySuccessChance);
+                    if (ST_StatDefOf.ButcheryFleshSpeed != null) SupportedWorkStats.Add(ST_StatDefOf.ButcheryFleshSpeed);
+                    if (ST_StatDefOf.ButcheryFleshEfficiency != null) SupportedWorkStats.Add(ST_StatDefOf.ButcheryFleshEfficiency);
+                    if (ST_StatDefOf.MiningYieldDigging != null) SupportedWorkStats.Add(ST_StatDefOf.MiningYieldDigging);
+                }
+                catch
+                {
+                    // If ST stats are not available, continue with vanilla stats only
+                }
+
+                _statsInitialized = true;
             }
         }
 
@@ -77,6 +84,8 @@ namespace SurvivalTools.Stats
         /// </summary>
         public override void TransformValue(StatRequest req, ref float val)
         {
+            EnsureSupportedStatsInitialized();
+
             if (parentStat == null || !SupportedWorkStats.Contains(parentStat))
                 return;
 
@@ -129,6 +138,8 @@ namespace SurvivalTools.Stats
         /// </summary>
         public override string ExplanationPart(StatRequest req)
         {
+            EnsureSupportedStatsInitialized();
+
             if (parentStat == null || !SupportedWorkStats.Contains(parentStat))
                 return null;
 

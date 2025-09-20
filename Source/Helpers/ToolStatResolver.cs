@@ -22,6 +22,41 @@ namespace SurvivalTools.Helpers
         private static HashSet<StatDef> _registeredWorkStats;
         private static bool _initialized = false;
 
+        /// <summary>
+        /// Get the set of registered work stats (lazy initialized)
+        /// </summary>
+        private static HashSet<StatDef> RegisteredWorkStats
+        {
+            get
+            {
+                if (_registeredWorkStats == null)
+                {
+                    _registeredWorkStats = new HashSet<StatDef>
+                    {
+                        ST_StatDefOf.DiggingSpeed,
+                        ST_StatDefOf.MiningYieldDigging,
+                        ST_StatDefOf.PlantHarvestingSpeed,
+                        ST_StatDefOf.SowingSpeed,
+                        ST_StatDefOf.TreeFellingSpeed,
+                        ST_StatDefOf.MaintenanceSpeed,
+                        ST_StatDefOf.DeconstructionSpeed,
+                        ST_StatDefOf.ResearchSpeed,
+                        ST_StatDefOf.CleaningSpeed,
+                        ST_StatDefOf.MedicalOperationSpeed,
+                        ST_StatDefOf.MedicalSurgerySuccessChance,
+                        ST_StatDefOf.ButcheryFleshSpeed,
+                        ST_StatDefOf.ButcheryFleshEfficiency,
+                        StatDefOf.ConstructionSpeed
+                    };
+
+                    // Add work speed global if available
+                    if (ST_StatDefOf.WorkSpeedGlobal != null)
+                        _registeredWorkStats.Add(ST_StatDefOf.WorkSpeedGlobal);
+                }
+                return _registeredWorkStats;
+            }
+        }
+
         // Tool quirks registry with deterministic ordering
         private static readonly List<ToolQuirk> _toolQuirks = new List<ToolQuirk>();
         private static int _quirkSequence = 0;
@@ -98,28 +133,8 @@ namespace SurvivalTools.Helpers
         {
             if (_initialized) return;
 
-            // Build set of registered work stats for intersection detection
-            _registeredWorkStats = new HashSet<StatDef>
-            {
-                ST_StatDefOf.DiggingSpeed,
-                ST_StatDefOf.MiningYieldDigging,
-                ST_StatDefOf.PlantHarvestingSpeed,
-                ST_StatDefOf.SowingSpeed,
-                ST_StatDefOf.TreeFellingSpeed,
-                ST_StatDefOf.MaintenanceSpeed,
-                ST_StatDefOf.DeconstructionSpeed,
-                ST_StatDefOf.ResearchSpeed,
-                ST_StatDefOf.CleaningSpeed,
-                ST_StatDefOf.MedicalOperationSpeed,
-                ST_StatDefOf.MedicalSurgerySuccessChance,
-                ST_StatDefOf.ButcheryFleshSpeed,
-                ST_StatDefOf.ButcheryFleshEfficiency,
-                StatDefOf.ConstructionSpeed
-            };
-
-            // Add work speed global if available
-            if (ST_StatDefOf.WorkSpeedGlobal != null)
-                _registeredWorkStats.Add(ST_StatDefOf.WorkSpeedGlobal);
+            // Build set of registered work stats for intersection detection (lazy init)
+            // _registeredWorkStats will be initialized on first access
 
             _initialized = true;
 
@@ -324,7 +339,7 @@ namespace SurvivalTools.Helpers
         /// </summary>
         private static float? TryGetStatBasesFactor(ThingDef toolDef, ThingDef stuffDef, StatDef stat)
         {
-            if (!_registeredWorkStats.Contains(stat))
+            if (!RegisteredWorkStats.Contains(stat))
                 return null;
 
             // Check tool's statBases
