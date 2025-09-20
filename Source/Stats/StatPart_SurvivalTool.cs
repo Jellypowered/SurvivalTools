@@ -30,7 +30,8 @@ namespace SurvivalTools
             if (req.Thing is SurvivalTool tool)
             {
                 // Tools should show their own stat modifiers for all relevant stats
-                float factor = CollectionExtensions.GetStatFactorFromList(tool.WorkStatFactors.ToList(), parentStat);
+                // HOT PATH – no LINQ
+                float factor = CollectionExtensions.GetStatFactorFromList(tool.WorkStatFactors, parentStat);
                 if (factor > 0f)
                     return $"{tool.LabelCapNoCount}: x{factor.ToStringPercent()}";
                 return null;
@@ -64,7 +65,8 @@ namespace SurvivalTools
                 var bestTool = pawn.GetBestSurvivalTool(parentStat);
                 if (bestTool != null)
                 {
-                    float factor = CollectionExtensions.GetStatFactorFromList(bestTool.WorkStatFactors.ToList(), parentStat);
+                    // HOT PATH – no LINQ
+                    float factor = CollectionExtensions.GetStatFactorFromList(bestTool.WorkStatFactors, parentStat);
                     return $"{bestTool.LabelCapNoCount}: x{factor.ToStringPercent()}";
                 }
 
@@ -107,7 +109,8 @@ namespace SurvivalTools
             // Handle tool showing its own stats
             if (req.Thing is SurvivalTool tool)
             {
-                float factor = CollectionExtensions.GetStatFactorFromList(tool.WorkStatFactors.ToList(), parentStat);
+                // HOT PATH – no LINQ
+                float factor = CollectionExtensions.GetStatFactorFromList(tool.WorkStatFactors, parentStat);
                 if (factor > 0f)
                     val *= factor;
                 return;
@@ -119,7 +122,8 @@ namespace SurvivalTools
             // Handle tool showing its own stats (duplicate check for other code paths)
             if (req.Thing is SurvivalTool toolInst)
             {
-                float factor = CollectionExtensions.GetStatFactorFromList(toolInst.WorkStatFactors.ToList(), parentStat);
+                // HOT PATH – no LINQ
+                float factor = CollectionExtensions.GetStatFactorFromList(toolInst.WorkStatFactors, parentStat);
                 if (factor > 0f)
                     val *= factor;
                 return;
@@ -160,7 +164,8 @@ namespace SurvivalTools
                     var bestTool = pawn.GetBestSurvivalTool(parentStat);
                     if (bestTool != null)
                     {
-                        float factor = CollectionExtensions.GetStatFactorFromList(bestTool.WorkStatFactors.ToList(), parentStat);
+                        // HOT PATH – no LINQ
+                        float factor = CollectionExtensions.GetStatFactorFromList(bestTool.WorkStatFactors, parentStat);
                         float valBefore = val;
                         float effectiveBase;
                         var partsForStat = parentStat?.parts;
@@ -182,9 +187,31 @@ namespace SurvivalTools
                         return;
                     }
 
-                    var toolStuff = pawn.GetAllUsableSurvivalTools()
-                        .FirstOrDefault(t => t.def.IsToolStuff() &&
-                            t.def.GetModExtension<SurvivalToolProperties>()?.baseWorkStatFactors?.Any(m => m.stat == parentStat) == true);
+                    // HOT PATH – no LINQ
+                    Thing toolStuff = null;
+                    var usableTools = pawn.GetAllUsableSurvivalTools();
+                    if (usableTools != null)
+                    {
+                        foreach (var t in usableTools)
+                        {
+                            if (t?.def?.IsToolStuff() == true)
+                            {
+                                var props = t.def.GetModExtension<SurvivalToolProperties>();
+                                if (props?.baseWorkStatFactors != null)
+                                {
+                                    foreach (var mod in props.baseWorkStatFactors)
+                                    {
+                                        if (mod?.stat == parentStat)
+                                        {
+                                            toolStuff = t;
+                                            break;
+                                        }
+                                    }
+                                    if (toolStuff != null) break;
+                                }
+                            }
+                        }
+                    }
                     if (toolStuff != null)
                     {
                         var props = toolStuff.def.GetModExtension<SurvivalToolProperties>();

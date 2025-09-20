@@ -20,6 +20,7 @@ using SurvivalTools.Compat.CommonSense;
 using SurvivalTools.Compat.SmarterConstruction;
 using SurvivalTools.Compat.SmarterDeconstruction;
 using SurvivalTools.Compat.TDEnhancementPack;
+using SurvivalTools.Helpers;
 
 using static SurvivalTools.ST_Logging;
 
@@ -172,6 +173,9 @@ namespace SurvivalTools.Compat
                 Log.Error($"[SurvivalTools Compat] Registry init failed: {e}");
             }
             _initialized = true;
+
+            // Initialize the SurvivalToolRegistry (Phase 1)
+            SurvivalToolRegistry.Initialize();
         }
 
         public static void RegisterModule(ICompatibilityModule module)
@@ -234,9 +238,142 @@ namespace SurvivalTools.Compat
 #endif
     }
 
+    // ---------- Registry (Phase 1) ----------
+    internal static class SurvivalToolRegistry
+    {
+        // O(1) lookups for WorkGiver/Job requirements
+        private static readonly Dictionary<WorkGiverDef, List<StatDef>> _workGiverRequirements = new Dictionary<WorkGiverDef, List<StatDef>>();
+        private static readonly Dictionary<JobDef, List<StatDef>> _jobRequirements = new Dictionary<JobDef, List<StatDef>>();
+        private static readonly Dictionary<StatDef, List<string>> _statAliases = new Dictionary<StatDef, List<string>>();
+        private static readonly Dictionary<string, string> _toolQuirks = new Dictionary<string, string>();
+
+        // Callback support
+        private static readonly List<Action> _afterDefsLoadedCallbacks = new List<Action>();
+        private static bool _initialized = false;
+
+        public static void RegisterWorkGiverRequirement(WorkGiverDef workGiver, StatDef stat)
+        {
+            if (workGiver == null || stat == null) return;
+            if (!_workGiverRequirements.ContainsKey(workGiver))
+                _workGiverRequirements[workGiver] = new List<StatDef>();
+            if (!_workGiverRequirements[workGiver].Contains(stat))
+                _workGiverRequirements[workGiver].Add(stat);
+        }
+
+        public static void RegisterJobRequirement(JobDef job, StatDef stat)
+        {
+            if (job == null || stat == null) return;
+            if (!_jobRequirements.ContainsKey(job))
+                _jobRequirements[job] = new List<StatDef>();
+            if (!_jobRequirements[job].Contains(stat))
+                _jobRequirements[job].Add(stat);
+        }
+
+        public static void RegisterStatAlias(StatDef stat, string alias)
+        {
+            if (stat == null || string.IsNullOrEmpty(alias)) return;
+            if (!_statAliases.ContainsKey(stat))
+                _statAliases[stat] = new List<string>();
+            if (!_statAliases[stat].Contains(alias))
+                _statAliases[stat].Add(alias);
+        }
+
+        public static void RegisterToolQuirk(string toolDefName, string quirkDescription)
+        {
+            if (string.IsNullOrEmpty(toolDefName) || string.IsNullOrEmpty(quirkDescription)) return;
+            _toolQuirks[toolDefName] = quirkDescription;
+        }
+
+        public static void OnAfterDefsLoaded(Action callback)
+        {
+            if (callback == null) return;
+            if (_initialized)
+            {
+                // Already initialized, run immediately
+                try { callback(); } catch (Exception e) { Log.Error($"[SurvivalTools Registry] Callback failed: {e}"); }
+            }
+            else
+            {
+                _afterDefsLoadedCallbacks.Add(callback);
+            }
+        }
+
+        // O(1) lookups
+        public static List<StatDef> GetWorkGiverRequirements(WorkGiverDef workGiver)
+        {
+            return _workGiverRequirements.TryGetValue(workGiver, out var stats) ? stats : new List<StatDef>();
+        }
+
+        public static List<StatDef> GetJobRequirements(JobDef job)
+        {
+            return _jobRequirements.TryGetValue(job, out var stats) ? stats : new List<StatDef>();
+        }
+
+        public static List<string> GetStatAliases(StatDef stat)
+        {
+            return _statAliases.TryGetValue(stat, out var aliases) ? aliases : new List<string>();
+        }
+
+        public static string GetToolQuirk(string toolDefName)
+        {
+            return _toolQuirks.TryGetValue(toolDefName, out var quirk) ? quirk : null;
+        }
+
+        public static bool IsModActive(string packageId)
+        {
+            if (string.IsNullOrEmpty(packageId)) return false;
+            return ModsConfig.ActiveModsInLoadOrder.Any(m =>
+                m.PackageId.Equals(packageId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        internal static void Initialize()
+        {
+            if (_initialized) return;
+            _initialized = true;
+
+            // Run all deferred callbacks
+            foreach (var callback in _afterDefsLoadedCallbacks)
+            {
+                try { callback(); } catch (Exception e) { Log.Error($"[SurvivalTools Registry] Callback failed: {e}"); }
+            }
+        }
+
+        // No-op overloads for existing call sites (Phase 1 compatibility)
+        public static void RegisterWorkGiverRequirement(string workGiverDefName, string statDefName)
+        {
+            var workGiver = DefDatabase<WorkGiverDef>.GetNamedSilentFail(workGiverDefName);
+            var stat = DefDatabase<StatDef>.GetNamedSilentFail(statDefName);
+            RegisterWorkGiverRequirement(workGiver, stat);
+        }
+
+        public static void RegisterJobRequirement(string jobDefName, string statDefName)
+        {
+            var job = DefDatabase<JobDef>.GetNamedSilentFail(jobDefName);
+            var stat = DefDatabase<StatDef>.GetNamedSilentFail(statDefName);
+            RegisterJobRequirement(job, stat);
+        }
+
+        public static void RegisterStatAlias(string statDefName, string alias)
+        {
+            var stat = DefDatabase<StatDef>.GetNamedSilentFail(statDefName);
+            RegisterStatAlias(stat, alias);
+        }
+    }
+
     // ---------- Public API ----------
     public static class CompatAPI
     {
+        // Registry entry points (Phase 1)
+        public static void RegisterWorkGiverRequirement(WorkGiverDef workGiver, StatDef stat) => SurvivalToolRegistry.RegisterWorkGiverRequirement(workGiver, stat);
+        public static void RegisterWorkGiverRequirement(string workGiverDefName, string statDefName) => SurvivalToolRegistry.RegisterWorkGiverRequirement(workGiverDefName, statDefName);
+        public static void RegisterJobRequirement(JobDef job, StatDef stat) => SurvivalToolRegistry.RegisterJobRequirement(job, stat);
+        public static void RegisterJobRequirement(string jobDefName, string statDefName) => SurvivalToolRegistry.RegisterJobRequirement(jobDefName, statDefName);
+        public static void RegisterStatAlias(StatDef stat, string alias) => SurvivalToolRegistry.RegisterStatAlias(stat, alias);
+        public static void RegisterStatAlias(string statDefName, string alias) => SurvivalToolRegistry.RegisterStatAlias(statDefName, alias);
+        public static void RegisterToolQuirk(string toolDefName, string quirkDescription) => SurvivalToolRegistry.RegisterToolQuirk(toolDefName, quirkDescription);
+        public static void OnAfterDefsLoaded(Action callback) => SurvivalToolRegistry.OnAfterDefsLoaded(callback);
+        public static bool IsModActive(string packageId) => SurvivalToolRegistry.IsModActive(packageId);
+
         // — Research Reinvented (kept for backward compatibility with your call sites) —
         public static bool IsResearchReinventedActive => RRHelpers.IsRRActive;
 
@@ -315,6 +452,28 @@ namespace SurvivalTools.Compat
 #if DEBUG
             Log.Message("[SurvivalTools Compat] ReinitializeRegistryForDebug() called (dev only).");
 #endif
+        }
+
+        // Forwarders for compatibility (Phase 1 - add during refactor)
+        /// <summary>
+        /// Forwarder during refactor. Do not extend.
+        /// </summary>
+        [System.Obsolete("Forwarder during refactor. Do not extend.", false)]
+        public static List<StatDef> GetStatsForWorkGiver(WorkGiverDef workGiver)
+        {
+            // Forward to existing StatGatingHelper during Phase 1
+            return StatGatingHelper.GetStatsForWorkGiver(workGiver);
+        }
+
+        /// <summary>
+        /// Forwarder during refactor. Do not extend.
+        /// </summary>
+        [System.Obsolete("Forwarder during refactor. Do not extend.", false)]
+        public static bool ShouldBlockJobForStat(StatDef stat, Pawn pawn = null)
+        {
+            // Forward to existing StatGatingHelper during Phase 1
+            var settings = SurvivalTools.Settings;
+            return settings != null && StatGatingHelper.ShouldBlockJobForStat(stat, settings, pawn);
         }
     }
 }
