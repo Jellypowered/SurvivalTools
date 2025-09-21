@@ -450,6 +450,77 @@ namespace SurvivalTools
                 sb.AppendLine($"Settings: hardcore={settings?.hardcoreMode == true}, extraHardcore={settings?.extraHardcoreMode == true}, showGatingAlert={settings?.showGatingAlert == true}");
                 sb.AppendLine();
 
+                // Show pawn's current tools
+                sb.AppendLine("Pawn Tool Inventory:");
+                var allTools = selected.GetAllUsableSurvivalTools().ToList();
+                var equippedTool = selected.equipment?.Primary;
+
+                // Clear tool stat resolver cache for accurate results
+                Helpers.ToolStatResolver.ClearCaches();
+
+                if (allTools.Any())
+                {
+                    foreach (var tool in allTools)
+                    {
+                        bool isEquipped = tool == equippedTool;
+                        string location = isEquipped ? "[EQUIPPED]" : "[INVENTORY]";
+                        string stuffInfo = tool.Stuff != null ? $" (stuff: {tool.Stuff.defName})" : "";
+                        string qualityInfo = "";
+
+                        // Get quality if available
+                        if (tool.TryGetQuality(out QualityCategory quality))
+                        {
+                            qualityInfo = $" (quality: {quality})";
+                        }
+
+                        // Get condition
+                        string conditionInfo = "";
+                        if (tool.HitPoints < tool.MaxHitPoints)
+                        {
+                            float condition = (float)tool.HitPoints / tool.MaxHitPoints;
+                            conditionInfo = $" (condition: {condition:P0})";
+                        }
+
+                        sb.AppendLine($"  {location} {tool.LabelCap}{stuffInfo}{qualityInfo}{conditionInfo}");
+
+                        // Show tool stats for key work types
+                        var keyStats = new[] { ST_StatDefOf.DiggingSpeed, ST_StatDefOf.TreeFellingSpeed, ST_StatDefOf.PlantHarvestingSpeed, StatDefOf.ConstructionSpeed }
+                            .Where(s => s != null).ToList();
+
+                        foreach (var stat in keyStats)
+                        {
+                            var info = Helpers.ToolStatResolver.GetToolStatInfo(tool.def, tool.Stuff, stat);
+                            if (Math.Abs(info.Factor - 1f) > 0.001f) // Only show if meaningfully different from 1.0
+                            {
+                                sb.AppendLine($"    - {stat.defName}: {info.Factor:F3}x (Source: {info.Source})");
+
+                                // Debug: Show why this factor was applied
+                                if (info.Source == "Explicit")
+                                {
+                                    sb.AppendLine($"      -> Explicit mod extension or tool properties");
+                                }
+                                else if (info.Source == "StatBases")
+                                {
+                                    sb.AppendLine($"      -> Found in tool's statBases");
+                                }
+                                else if (info.Source == "NameHint")
+                                {
+                                    sb.AppendLine($"      -> Name hint: '{tool.def.label}' matched pattern");
+                                }
+                                else if (info.Source == "Default")
+                                {
+                                    sb.AppendLine($"      -> Default fallback (should be 1.0x)");
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    sb.AppendLine("  No survival tools found in inventory or equipped");
+                }
+                sb.AppendLine();
+
                 // Test representative WorkGivers with null guards (exact same pattern as live)
                 var testWorkGivers = new[]
                 {

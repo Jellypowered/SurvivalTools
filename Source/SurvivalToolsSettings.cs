@@ -90,6 +90,13 @@ namespace SurvivalTools
         // Gating enforcer settings
         public bool enforceOnModeChange = true; // Cancel now-invalid jobs when difficulty changes
 
+        // Phase 6: Assignment system settings
+        public bool enableAssignments = true; // Enable pre-work auto-equip for better tools
+        public float assignMinGainPct = 0.1f; // Minimum gain percentage to trigger assignment (10%)
+        public float assignSearchRadius = 25f; // Maximum search radius for tool assignment
+        public int assignPathCostBudget = 500; // Maximum path cost budget for tool retrieval
+        public bool assignRescueOnGate = true; // Auto-assign any better tool when gated (rescue mode)
+
         // Job gating
         public Dictionary<string, bool> workSpeedGlobalJobGating = new Dictionary<string, bool>();
 

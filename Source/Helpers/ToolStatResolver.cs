@@ -295,7 +295,7 @@ namespace SurvivalTools.Helpers
         /// </summary>
         private static float? TryGetExplicitFactor(ThingDef toolDef, ThingDef stuffDef, StatDef stat)
         {
-            // Check tool's SurvivalToolProperties
+            // Check tool's SurvivalToolProperties first (highest priority)
             var toolProps = toolDef.GetModExtension<SurvivalToolProperties>();
             if (toolProps?.baseWorkStatFactors != null)
             {
@@ -306,8 +306,11 @@ namespace SurvivalTools.Helpers
                 }
             }
 
-            // Check stuff's StuffPropsTool
-            if (stuffDef != null)
+            // Check if tool naturally affects this stat through tool properties or name hints
+            bool toolNaturallyAffectsStat = DoesToolNaturallyAffectStat(toolDef, stat);
+
+            // Check stuff's StuffPropsTool - only apply if tool naturally affects this stat
+            if (stuffDef != null && toolNaturallyAffectsStat)
             {
                 var stuffProps = stuffDef.GetModExtension<StuffPropsTool>();
                 if (stuffProps?.toolStatFactors != null)
@@ -315,7 +318,11 @@ namespace SurvivalTools.Helpers
                     foreach (var modifier in stuffProps.toolStatFactors)
                     {
                         if (modifier?.stat == stat)
-                            return modifier.value;
+                        {
+                            // Apply stuff factor as multiplier to tool's natural capability
+                            var baseFactor = GetToolNaturalFactor(toolDef, stat) ?? 1.0f;
+                            return baseFactor * modifier.value;
+                        }
                     }
                 }
 
@@ -326,12 +333,75 @@ namespace SurvivalTools.Helpers
                     foreach (var modifier in stuffToolProps.baseWorkStatFactors)
                     {
                         if (modifier?.stat == stat)
-                            return modifier.value;
+                        {
+                            var baseFactor = GetToolNaturalFactor(toolDef, stat) ?? 1.0f;
+                            return baseFactor * modifier.value;
+                        }
                     }
                 }
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Check if a tool naturally affects a stat (through tool properties or name hints)
+        /// </summary>
+        private static bool DoesToolNaturallyAffectStat(ThingDef toolDef, StatDef stat)
+        {
+            // Check tool's explicit properties
+            var toolProps = toolDef.GetModExtension<SurvivalToolProperties>();
+            if (toolProps?.baseWorkStatFactors != null)
+            {
+                foreach (var modifier in toolProps.baseWorkStatFactors)
+                {
+                    if (modifier?.stat == stat)
+                        return true;
+                }
+            }
+
+            // Check statBases
+            if (toolDef.statBases != null)
+            {
+                foreach (var modifier in toolDef.statBases)
+                {
+                    if (modifier?.stat == stat)
+                        return true;
+                }
+            }
+
+            // Check name hints
+            return TryGetNameHintFactor(toolDef, stat).HasValue;
+        }
+
+        /// <summary>
+        /// Get the tool's natural factor for a stat (before stuff multipliers)
+        /// </summary>
+        private static float? GetToolNaturalFactor(ThingDef toolDef, StatDef stat)
+        {
+            // Check tool's explicit properties
+            var toolProps = toolDef.GetModExtension<SurvivalToolProperties>();
+            if (toolProps?.baseWorkStatFactors != null)
+            {
+                foreach (var modifier in toolProps.baseWorkStatFactors)
+                {
+                    if (modifier?.stat == stat)
+                        return modifier.value;
+                }
+            }
+
+            // Check statBases
+            if (toolDef.statBases != null)
+            {
+                foreach (var modifier in toolDef.statBases)
+                {
+                    if (modifier?.stat == stat)
+                        return modifier.value;
+                }
+            }
+
+            // Check name hints
+            return TryGetNameHintFactor(toolDef, stat);
         }
 
         /// <summary>
@@ -453,7 +523,9 @@ namespace SurvivalTools.Helpers
         }
 
         /// <summary>
-        /// Create default info when no other resolution works
+        /// Create default info when no other resolution works.
+        /// Tools that don't explicitly affect a stat should be neutral (1.0f), not penalized.
+        /// The "no tool baseline" only applies when there's literally no tool equipped.
         /// </summary>
         private static ToolStatInfo CreateDefaultInfo(ThingDef toolDef, ThingDef stuffDef, StatDef stat)
         {
@@ -462,7 +534,7 @@ namespace SurvivalTools.Helpers
                 ToolDef = toolDef,
                 StuffDef = stuffDef,
                 Stat = stat,
-                Factor = GetNoToolBaseline(),
+                Factor = 1.0f, // Neutral - tool doesn't affect this stat
                 Source = "Default",
                 IsClamped = false
             };
