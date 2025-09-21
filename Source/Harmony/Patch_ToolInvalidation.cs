@@ -91,7 +91,11 @@ namespace SurvivalTools.HarmonyStuff
             try
             {
                 if (__instance == null) return;
-                if (SurvivalTools.Settings?.debugLogging == true)
+
+                // Skip logging for virtual tools created by UI (they have no map and no parent holder)
+                bool isVirtualTool = __instance.Map == null && __instance.ParentHolder == null;
+
+                if (SurvivalTools.Settings?.debugLogging == true && !isVirtualTool)
                 {
                     try
                     {
@@ -155,7 +159,13 @@ namespace SurvivalTools.HarmonyStuff
             try
             {
                 if (__result == null) return;
-                if (SurvivalTools.Settings?.debugLogging == true)
+
+                // Don't log creation of virtual tools (they'll be destroyed shortly for UI display)
+                // Virtual tools have no map and no parent holder initially
+                bool isLikelyVirtualTool = __result.Map == null && __result.ParentHolder == null &&
+                                          (__result.def?.IsWeapon == true || __result.def?.IsMeleeWeapon == true);
+
+                if (SurvivalTools.Settings?.debugLogging == true && !isLikelyVirtualTool)
                 {
                     try
                     {

@@ -17,7 +17,7 @@ namespace SurvivalTools.HarmonyStuff
     [HarmonyPatch]
     public static class ITab_Gear_ST
     {
-        private static readonly string LegacyUIHarmonyId = "pjellyowered.survivaltools.legacyui";
+        private static readonly string LegacyUIHarmonyId = "jellyowered.survivaltools.legacyui";
         private static FieldInfo _sizeField;
         private static PropertyInfo _selPawnProperty;
 

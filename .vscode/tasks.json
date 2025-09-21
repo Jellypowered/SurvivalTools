@@ -1,4 +1,4 @@
-{
+/*{
     "version": "2.0.0",
     "tasks": [
         {
@@ -26,4 +26,18 @@
             "default": "Debug"
         }
     ]
+}*/
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "BuildWindowsDLL: Debug",
+      "type": "shell",
+      "command": "${workspaceFolder}/.vscode/build.bat",
+      "args": ["Debug"],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    }
+  ]
 }
+
