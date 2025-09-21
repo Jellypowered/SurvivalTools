@@ -1,5 +1,7 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Helpers/WorkSpeedGlobalHelper.cs
+// Legacy Code: needs review and evaluation. 
+// May be still required but likely needs refactor to fit with new architecture.
 using System;
 using System.Linq;
 using System.Collections.Generic;

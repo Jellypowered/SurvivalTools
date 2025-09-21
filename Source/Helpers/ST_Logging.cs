@@ -1,5 +1,8 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Helpers/ST_Logging.cs
+// The central logging utility for SurvivalTools.
+// Provides debug logging toggles, deduplication, cooldowns,
+// buffered aggregation, and specialized loggers for key systems. This should be used EVERYWHERE logging is needed.
 
 using System;
 using System.Collections.Generic;

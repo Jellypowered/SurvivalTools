@@ -1,5 +1,7 @@
 ﻿//Rimworld 1.6 / C# 7.3
 // Source/ToolAssignments/SurvivalToolAssignmentDatabase.cs
+
+// Legacy code: needs review and evaluation for deletion without breaking saves. 
 using System.Linq;
 using Verse;
 using RimWorld;

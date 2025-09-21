@@ -1,5 +1,10 @@
 // RimWorld 1.6 / C# 7.3
 // Source/Harmony/Patch_ToolInvalidation.cs
+// Legacy Invalidation Patches for Tool Stat Cache.
+// Ensures that when tools are damaged, destroyed, created, or moved,
+// any cached tool stat entries are invalidated so they will be recomputed on next use.
+// Is this still needed with the new centralized ToolStatResolver and its hardened caching?
+// Possibly yes, as a safety net to ensure no stale entries linger.
 using System;
 using HarmonyLib;
 using RimWorld;

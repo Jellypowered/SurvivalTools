@@ -1,6 +1,10 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Harmony/Patch_EquipmentUtility_CanEquip_PacifistTools.cs
 // Patch_EquipmentUtility_CanEquip_PacifistTools.cs
+// Legacy code: KEEP
+// Core feature. Allows pacifists to equip Survival Tools that are marked as IsWeapon.
+// Also adds float menu options for drafted and undrafted pacifists to equip or take to inventory.
+// evaluate for integration into refactor.
 using System;
 using System.Collections.Generic;
 using System.Linq;

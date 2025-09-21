@@ -1,5 +1,8 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Helpers/ToolClassification.cs
+
+// Evaluate if this is needed or useful, otherwise remove it. Is it used by the refactor? 
+// Should it be integrated? 
 using System;
 using System.Collections.Generic;
 using System.Linq;

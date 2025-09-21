@@ -1,5 +1,6 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/SurvivalTool.cs
+// is this integrated with our refactor? Legacy code: needs review and evaluation. 
 //
 // SurvivalTool
 // - Caches work stat factors from: tool def (mod ext + statBases) and stuff def (mod ext)

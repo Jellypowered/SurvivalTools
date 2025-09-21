@@ -76,7 +76,7 @@ namespace SurvivalTools.DebugTools
                     float searchRadius = settings.assignSearchRadius;
                     int pathCostBudget = settings.assignPathCostBudget;
 
-                    bool wouldAssign = AssignmentSearch.TryUpgradeFor(selectedPawn, workStat, minGainPct, searchRadius, pathCostBudget);
+                    bool wouldAssign = AssignmentSearch.TryUpgradeFor(selectedPawn, workStat, minGainPct, searchRadius, pathCostBudget, AssignmentSearch.QueuePriority.Append);
                     report.Add($"Would assign: {(wouldAssign ? "YES" : "no")}");
 
                     if (wouldAssign)
@@ -143,7 +143,7 @@ namespace SurvivalTools.DebugTools
             for (int i = 0; i < 10; i++)
             {
                 AssignmentSearch.TryUpgradeFor(selectedPawn, workStat, settings.assignMinGainPct,
-                                             settings.assignSearchRadius, settings.assignPathCostBudget);
+                                             settings.assignSearchRadius, settings.assignPathCostBudget, AssignmentSearch.QueuePriority.Append);
             }
 
             // Measure GC before
@@ -159,7 +159,7 @@ namespace SurvivalTools.DebugTools
             for (int i = 0; i < iterations; i++)
             {
                 if (AssignmentSearch.TryUpgradeFor(selectedPawn, workStat, settings.assignMinGainPct,
-                                                 settings.assignSearchRadius, settings.assignPathCostBudget))
+                                                 settings.assignSearchRadius, settings.assignPathCostBudget, AssignmentSearch.QueuePriority.Append))
                 {
                     successCount++;
                 }

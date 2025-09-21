@@ -1,5 +1,10 @@
 // RimWorld 1.6 / C# 7.3
 // Source/Game/ST_GameComponent.cs
+// WorldComponent_DelayedValidation.cs needs merged into this. All the Game Components can be one file. This should be where they all live. 
+// TODO: Merge WorldComponent_DelayedValidation.cs into this file and delete WorldComponent_DelayedValidation.cs
+// TODO: Rename this file to ST_GameComponents.cs
+// TODO: Rename class to ST_GameComponents
+// TODO: Add other game components here as needed and remove their separate files
 //
 // Game component for enforcing tool gating on save loads
 // - Schedules enforcement after map/pawn initialization

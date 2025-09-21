@@ -1,5 +1,7 @@
 // RimWorld 1.6 / C# 7.3
 // Source/Helpers/ST_FileIO.cs
+// Refactor Code: KEEP
+// Purpose: Helper methods for file I/O operations.
 using System;
 using System.IO;
 using System.Text;

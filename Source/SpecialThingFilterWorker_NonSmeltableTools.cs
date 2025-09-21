@@ -1,5 +1,8 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/SpecialThingFilterWorker_NonSmeltableTools.cs
+
+// Stockpile filter that matches SurvivalTools which cannot be smelted.
+// Legacy but keep this code. Might be useful for custom filters.
 using RimWorld;
 using Verse;
 

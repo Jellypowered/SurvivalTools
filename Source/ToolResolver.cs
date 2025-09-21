@@ -1,5 +1,9 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/ToolResolver.cs
+
+// Legacy Code: Do we need to integrate this logic into the main mod?
+// or can we remove it entirely?
+
 using System;
 using System.Linq;
 using System.Collections.Generic;

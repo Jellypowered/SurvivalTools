@@ -1,5 +1,8 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Helpers/JobDefToWorkGiverDefHelper.cs
+
+// TODO: Is this duplicate of other functionality in our mod? 
+// evaluate and consolidate if so.
 using System;
 using System.Collections.Generic;
 using System.Linq;

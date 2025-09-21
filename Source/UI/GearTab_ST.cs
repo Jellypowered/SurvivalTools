@@ -1,6 +1,6 @@
 // RimWorld 1.6 / C# 7.3
 // Source/UI/GearTab_ST.cs
-//
+// From our refactor branch, keep.
 // Phase 7: Gear iTab implementation
 // - Readable panel inside vanilla Gear tab
 // - Tool scoring display with alloc-free loops

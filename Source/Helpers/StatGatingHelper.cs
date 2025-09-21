@@ -1,5 +1,7 @@
 // RimWorld 1.6 / C# 7.3
 // Source/Helpers/StatGatingHelper.cs
+// Legacy Code: But needs kept. Used by multiple other files.
+// TODO: Evaluate if this can be merged into StatPart_SurvivalTool or SurvivalToolUtility.
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;

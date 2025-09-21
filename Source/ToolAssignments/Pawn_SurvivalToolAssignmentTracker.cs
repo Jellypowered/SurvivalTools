@@ -1,5 +1,9 @@
 ﻿// Rimworld 1.6 / C# 7.3
 // Source/ToolAssignments/Pawn_SurvivalToolAssignmentTracker.cs
+// Legacy code: Will be phased out as we use AssignmentSearch.cs instead. 
+// Needs review and evaluation. A safe way to delete it without breaking users saves is needed. 
+
+
 using Verse;
 using RimWorld;
 using static SurvivalTools.ST_Logging;

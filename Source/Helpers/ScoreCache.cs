@@ -1,6 +1,6 @@
 // RimWorld 1.6 / C# 7.3
 // Source/Helpers/ScoreCache.cs
-//
+// Refactor Code Phase 3: KEEP
 // Phase 3: Fast tool scoring cache with struct keys and invalidation hooks.
 // Provides deterministic, zero-allocation caching for ToolScoring APIs.
 

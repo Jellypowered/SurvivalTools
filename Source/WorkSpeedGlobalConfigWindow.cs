@@ -1,5 +1,12 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/WorkSpeedGlobalConfigWindow.cs
+
+// This is Legacy code and we want to get rid of this file and it's functionality. 
+// TODO: Remove this file and all references to it. This includes removing the menu option to open this window,
+// as well as any related settings or configurations.
+// we have to be careful as eventually we will still want to gate crafting/production jobs,
+// but we want to do it in a more automatic way without user configuration.
+
 using System;
 using System.Collections.Generic;
 using System.IO;

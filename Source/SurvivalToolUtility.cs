@@ -37,7 +37,9 @@ namespace SurvivalTools
 
         public static float GetToolProvidedFactor(SurvivalTool tool, StatDef stat)
         {
-            if (tool == null || stat == null) return 1f;
+            // If there is no tool instance or stat, return the baseline no-tool factor.
+            // This prevents non-tools (or null wrappers) from appearing to improve stats.
+            if (tool == null || stat == null) return GetNoToolBaseline(stat);
             try
             {
                 foreach (var m in tool.WorkStatFactors)
@@ -1552,8 +1554,9 @@ namespace SurvivalTools
                     if (!ToolImprovesAny(candidate, requiredStats)) continue;
                     if (backing.IsForbidden(pawn)) continue;
                     if (!pawn.CanReserveAndReach(backing, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
-
+#pragma warning disable CS0618 // Phase 3: Legacy method still used internally
                     float score = ScoreToolForStats(candidate, pawn, requiredStats);
+#pragma warning restore CS0618
                     score -= 0.01f * backing.Position.DistanceTo(pawn.Position);
                     if (score > bestScore)
                     {
@@ -1580,8 +1583,9 @@ namespace SurvivalTools
                     if (!ToolImprovesAny(candidate, requiredStats)) continue;
                     if (backing.IsForbidden(pawn)) continue;
                     if (!pawn.CanReserveAndReach(backing, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
-
+#pragma warning disable CS0618 // Phase 3: Legacy method still used internally
                     float score = ScoreToolForStats(candidate, pawn, requiredStats);
+#pragma warning restore CS0618
                     score -= 0.01f * backing.Position.DistanceTo(pawn.Position);
                     if (score > bestScore)
                     {
@@ -1607,8 +1611,9 @@ namespace SurvivalTools
                     if (!ToolImprovesAny(candidate, requiredStats)) continue;
                     if (backing.IsForbidden(pawn)) continue;
                     if (!pawn.CanReserveAndReach(backing, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
-
+#pragma warning disable CS0618 // Phase 3: Legacy method still used internally
                     float score = ScoreToolForStats(candidate, pawn, requiredStats);
+#pragma warning restore CS0618
                     score -= 0.01f * backing.Position.DistanceTo(pawn.Position);
                     if (score > bestScore)
                     {

@@ -1,5 +1,8 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Harmony/Patch_WorkGiver_GrowerSow_JobOnCell.cs
+// Legacy patch to block vanilla tree cutting when tree-felling tools are required.
+// TODO: evaluate removal after full tool integration is complete.
+
 using HarmonyLib;
 using RimWorld;
 using Verse;

@@ -1,5 +1,7 @@
 // RimWorld 1.6 / C# 7.3
 // Source/Helpers/ToolStatResolver.cs
+// Phase 2: Centralized tool stat resolver with hardened cataloging and caching.
+// Replaces scattered stat inference logic with a single source of truth. Refactor code, KEEP. 
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -529,12 +531,14 @@ namespace SurvivalTools.Helpers
         /// </summary>
         private static ToolStatInfo CreateDefaultInfo(ThingDef toolDef, ThingDef stuffDef, StatDef stat)
         {
+            // Default to the no-tool baseline so unrelated items do not appear
+            // to improve penalized stats (e.g., silver vs DiggingSpeed).
             return new ToolStatInfo
             {
                 ToolDef = toolDef,
                 StuffDef = stuffDef,
                 Stat = stat,
-                Factor = 1.0f, // Neutral - tool doesn't affect this stat
+                Factor = GetNoToolBaseline(),
                 Source = "Default",
                 IsClamped = false
             };

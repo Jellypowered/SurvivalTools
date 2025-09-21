@@ -5,6 +5,8 @@
 // Fix: moved from Prefix → Postfix so tools are placed AFTER
 // vanilla pushes the "emptyRoom" symbol, otherwise they get wiped.
 
+// Legacy code: Keep. Required for generating tools in ancient ruins.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -1,5 +1,7 @@
 // RimWorld 1.6 / C# 7.3
 // Source/Helpers/PawnToolValidator.cs
+
+// Legacy Code: KEEP, but evaluate merging into a better file. 
 using RimWorld;
 using Verse;
 using Verse.AI;

@@ -1,5 +1,8 @@
 ﻿// Rimworld 1.6 / C# 7.3
 // Source/ToolAssignments/PawnColumnWorker_SurvivalToolAssignment.cs
+
+// Legacy code: needs review and evaluation for deletion. 
+
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;

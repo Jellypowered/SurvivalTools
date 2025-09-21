@@ -1,5 +1,9 @@
 ﻿//RimWorld 1.6 / C# 7.3
 // Source/Harmony/Patch_Toils_Haul_TakeToInventory.cs
+// Legacy Code: Is supposed to be handled by JobGiver_PickUpSurvivalTool,
+// is this integrated into our refactored job giver now? If so, consider removing this patch.
+// Keep for now, may still be useful for edge cases or future features.
+
 using System;
 using HarmonyLib;
 using Verse;

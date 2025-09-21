@@ -1,5 +1,7 @@
 ﻿//Rimworld 1.6 / C# 7.3
 // Source/Harmony/Patch_MassUtility.cs
+
+// Legacy Code: KEEP, but likely needs integration into our refactor.
 using HarmonyLib;
 using RimWorld;
 using Verse;

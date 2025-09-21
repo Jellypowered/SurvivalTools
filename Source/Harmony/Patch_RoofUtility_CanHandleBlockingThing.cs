@@ -1,5 +1,7 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Harmony/Patch_RoofUtility_CanHandleBlockingThing.cs
+
+// Legacy code: Needs refactoring to use centralized tool stat resolver/gating systems. 
 //
 // Purpose:
 //   Prevents pawns from handling roof-blocking trees unless they meet tree-felling requirements.

@@ -1,3 +1,7 @@
+// RimWorld 1.6 / C# 7.3
+// Source/Harmony/ST_PatchGuard.cs
+// Phase 6-7: Patch guard to clean up legacy patches from older SurvivalTools versions.
+// Removes old patches that are no longer needed or have been replaced by new systems.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,6 +10,7 @@ using HarmonyLib;
 using RimWorld;
 using Verse;
 using Verse.AI;
+using UnityEngine;
 using SurvivalTools.Assign;
 
 namespace SurvivalTools.HarmonyStuff
@@ -36,10 +41,13 @@ namespace SurvivalTools.HarmonyStuff
             Sweep<ITab_Pawn_Gear>("FillTab", Type.EmptyTypes,
                 allowedTypes: new[] { typeof(ITab_Gear_ST) });
 
-            // TODO: Add other collision points as they arise during refactor
-            // Example pattern:
-            // Sweep<SomeClass>("SomeMethod", new[] { typeof(SomeParam) },
-            //     allowedTypes: new[] { typeof(NewPhaseImplementation) });
+            // Phase 7: Clean up legacy gear tab DrawThingRow transpilers
+            Sweep<ITab_Pawn_Gear>("DrawThingRow", new[] { typeof(Rect), typeof(Thing), typeof(bool) },
+                allowedTypes: new Type[0]); // No allowed types - remove all legacy transpilers
+
+            // Phase 5-6: Clean up legacy JobGiver_Work auto-tool patches
+            Sweep<JobGiver_Work>("TryIssueJobPackage", new[] { typeof(Pawn), typeof(JobIssueParams) },
+                allowedTypes: new Type[0]); // No allowed types - remove all legacy patches
 
             Log.Message("[SurvivalTools.PatchGuard] Patch cleanup complete.");
         }

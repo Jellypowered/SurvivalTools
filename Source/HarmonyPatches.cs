@@ -122,6 +122,42 @@ namespace SurvivalTools.HarmonyStuff
             // Attribute patches (if any)
             H.PatchAll(Assembly.GetExecutingAssembly());
 
+            // IMMEDIATE VERIFICATION - Check if our PreWork patch was applied
+            try
+            {
+                var targetMethod = typeof(Verse.AI.Pawn_JobTracker).GetMethod("TryTakeOrderedJob");
+                var patchInfo = HarmonyLib.Harmony.GetPatchInfo(targetMethod);
+                if (patchInfo != null)
+                {
+                    var ourPatch = patchInfo.Prefixes.FirstOrDefault(p =>
+                        p.owner == "Jelly.SurvivalToolsReborn" &&
+                        (p.PatchMethod.DeclaringType?.Name?.Contains("PreWork") == true));
+
+                    if (ourPatch != null)
+                    {
+                        Log.Warning($"[SurvivalTools.Harmony] PreWork_AutoEquip patch SUCCESSFULLY applied with priority {ourPatch.priority}");
+                    }
+                    else
+                    {
+                        Log.Error("[SurvivalTools.Harmony] PreWork_AutoEquip patch NOT FOUND after PatchAll!");
+                    }
+
+                    Log.Warning($"[SurvivalTools.Harmony] TryTakeOrderedJob has {patchInfo.Prefixes.Count} total prefixes:");
+                    foreach (var prefix in patchInfo.Prefixes)
+                    {
+                        Log.Warning($"[SurvivalTools.Harmony] - {prefix.owner}: {prefix.PatchMethod.DeclaringType?.Name}.{prefix.PatchMethod.Name} (Priority: {prefix.priority})");
+                    }
+                }
+                else
+                {
+                    Log.Error("[SurvivalTools.Harmony] No patches found on TryTakeOrderedJob at all!");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[SurvivalTools.Harmony] Failed to verify PreWork patch: {ex}");
+            }
+
             // -------- Vanilla --------
             // Mining: reset pick hit uses DiggingSpeed instead of MiningSpeed + degrade on entry
             TryPatch("JobDriver_Mine.ResetTicksToPickHit*",

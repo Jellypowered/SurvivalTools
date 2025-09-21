@@ -1,6 +1,6 @@
 // RimWorld 1.6 / C# 7.3
 // Source/Harmony/ITab_Gear_ST.cs
-//
+// From our Phase 7 refactor branch: KEEP. 
 // Phase 7: Harmony patches for ITab_Pawn_Gear integration
 // - Draw our panel alongside vanilla gear list
 // - Input isolation to prevent interference

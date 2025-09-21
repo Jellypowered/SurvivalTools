@@ -1,6 +1,6 @@
 // RimWorld 1.6 / C# 7.3
 // Source/Harmony/HarmonyPatches_CacheInvalidation.cs
-//
+// From Refactor Phase 4: KEEP
 // Phase 4: Cache invalidation hooks for inventory and equipment changes.
 // Provides minimal, safe hooks to maintain ScoreCache freshness.
 

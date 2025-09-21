@@ -1,6 +1,6 @@
 // RimWorld 1.6 / C# 7.3
 // Source/Scoring/ToolScoring.cs
-//
+// Refactor for Phase 3 Keep this code/functionality. 
 // Phase 3: Deterministic tool scoring system using ToolStatResolver.
 // Provides unified scoring APIs with zero allocations in hot path and
 // consistent results for cache-friendly performance.

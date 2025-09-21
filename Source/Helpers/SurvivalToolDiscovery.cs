@@ -1,6 +1,7 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Helpers/SurvivalToolDiscovery.cs
-//
+// Evaluate if this is should be integrated into our refactored codebase. 
+// Legacy code: Needs review.
 // Central helper for discovering survival tools, valid replacements, and
 // research-gated tool availability. Used by alerts and optimizers.
 

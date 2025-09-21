@@ -1,5 +1,8 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Harmony/Patch_WorkGiver_PlantsCut_JobOnThing.cs
+// Legacy Code: Patch to block WorkGiver_PlantsCut from assigning CutPlant jobs on trees, so that specialized felling logic can be used instead.
+// Retain for compatibility with existing saves and to avoid regressions.
+
 using HarmonyLib;
 using RimWorld;
 using Verse;

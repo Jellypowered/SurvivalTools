@@ -1,5 +1,8 @@
 // RimWorld 1.6 / C# 7.3
 // Source/Harmony/WorkGiver_Gates.cs
+// Phase 5: Authoritative WorkGiver-level gating via Harmony patches.
+// Centralizes gating logic, eliminates scattered job checks, and provides clear failure reasons.
+// Refactor code, KEEP.
 using HarmonyLib;
 using RimWorld;
 using Verse;

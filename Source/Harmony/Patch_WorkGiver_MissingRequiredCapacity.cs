@@ -1,5 +1,10 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Harmony/Patch_WorkGiver_MissingRequiredCapacity.cs
+// Legacy patch to gate work givers based on required tool stats.
+// Replaced by integrated tool stat checks in WorkGiver_Scanner.CanWorkOnThing.
+// Retained for compatibility with mods that patch or replace CanWorkOnThing.
+// KEEP for now, may be useful for debugging or future features.
+// Note: This patch runs after vanilla checks, so it only adds additional gating.
 using System.Linq;
 using HarmonyLib;
 using RimWorld;

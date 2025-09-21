@@ -1,5 +1,6 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Helpers/CollectionExtensions.cs
+// LEGACY CODE: KEEP.
 //
 // Centralized extension methods for collections and common data patterns.
 // These reduce boilerplate across SurvivalTools and keep code maintainable.

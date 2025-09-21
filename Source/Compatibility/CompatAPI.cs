@@ -1,5 +1,6 @@
 // RimWorld 1.6 / C# 7.3
 // Source/Compatibility/CompatAPI.cs
+// Keep! Needed for compatibility integrations, registry, and public API.
 //
 // SurvivalTools Generic Compatibility API + Registry (single file)
 //

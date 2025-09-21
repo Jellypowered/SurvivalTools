@@ -1,5 +1,7 @@
 ﻿// Rimworld 1.6 / C# 7.3
 // Source/ToolAssignments/SurvivalToolAssignment.cs
+
+// Legacy code: needs review and evaluation for deletion without breaking saves. 
 using Verse;
 
 namespace SurvivalTools

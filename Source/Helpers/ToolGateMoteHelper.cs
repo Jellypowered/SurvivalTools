@@ -1,5 +1,9 @@
 // RimWorld 1.6 / C# 7.3
 // Source/Helpers/ToolGateMoteHelper.cs
+
+// TODO: Remove this file and all references to it if motes are not desired in the mod.
+//       (Settings.showDenialMotes = false is sufficient to disable all mote spawning.)
+//
 // Provides unified, rate-limited spawning of denial / slowdown motes for tool-gated work.
 // Edge considerations:
 //  - Per pawn+stat cooldown (default 3s) to avoid spam when WorkGiver queries repeat.

@@ -1,5 +1,10 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Helpers/JobUtils.cs
+// A centralized helper methods for Job management:
+// - cloning (shallow vs deep)
+// - type checks (inventory/tool jobs)
+// - validation & logging utilities
+// KEEP
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -158,9 +163,16 @@ namespace SurvivalTools.Helpers
             // Check primary target
             if (job.targetA.IsValid)
             {
-                if (job.targetA.HasThing &&
-                    (job.targetA.Thing?.Destroyed != false || job.targetA.Thing.Map != pawn.Map))
-                    return false;
+                if (job.targetA.HasThing)
+                {
+                    var targetThing = job.targetA.Thing;
+                    if (targetThing?.Destroyed != false)
+                        return false;
+
+                    // Allow null map for carried items (inventory/equipment)
+                    if (targetThing.Map != null && targetThing.Map != pawn.Map)
+                        return false;
+                }
 
                 if (job.targetA.Cell != IntVec3.Invalid &&
                     !job.targetA.Cell.InBounds(pawn.Map))

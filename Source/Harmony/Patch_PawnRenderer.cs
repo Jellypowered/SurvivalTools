@@ -1,5 +1,6 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Harmony/Patch_PawnRenderer.cs
+// Legacy Code: Keep. Draws tools in-hand while working. (no animations yet)
 //
 // Purpose:
 //   Ensures pawns visibly "use" survival tools while working by drawing the tool

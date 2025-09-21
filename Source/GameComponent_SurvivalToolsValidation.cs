@@ -1,5 +1,8 @@
 // RimWorld 1.6 / C# 7.3
 // Source/GameComponent_SurvivalToolsValidation.cs
+// Game component to trigger job validation after loading a game
+// - Ensures all survival tools have up-to-date stat factors
+// - Legacy code, Keep functionality. 
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;

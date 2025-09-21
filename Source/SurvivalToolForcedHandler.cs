@@ -1,5 +1,9 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/SurvivalToolForcedHandler.cs
+
+// Legacy code: is this used by our new refactored tool management system?
+// If not, we should remove it to reduce complexity and maintenance burden
+// or integrate its functionality into the new system.
 using System.Collections.Generic;
 using Verse;
 

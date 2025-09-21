@@ -1,5 +1,9 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Helpers/ConditionalRegistration.cs
+// Needed for conditional registration/deregistration of features
+// (currently only tree felling) based on settings and compat checks.
+// KEEP but update to match refactored code base if needed. 
+
 using RimWorld;
 using Verse;
 using SurvivalTools.Helpers;

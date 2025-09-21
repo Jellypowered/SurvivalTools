@@ -1,5 +1,7 @@
 ﻿// Rimworld 1.6 / C# 7.3
 // Source/Harmony/Patch_ThingFilter_SetFromPreset.cs
+// Legacy Keep - Patch to enable SurvivalTools category in Default stockpile preset.
+// Core feature. Do not remove.
 using System;
 using HarmonyLib;
 using RimWorld;

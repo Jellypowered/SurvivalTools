@@ -1,5 +1,7 @@
 ﻿// Rimworld 1.6 / C# 7.3
 // Source/Harmony/Patch_Mineable_Notify_TookMiningDamage.cs
+// Legacy Code: KEEP, but likely needs integration into our refactor. 
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;

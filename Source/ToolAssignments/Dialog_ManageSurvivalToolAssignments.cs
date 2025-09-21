@@ -1,5 +1,7 @@
 ﻿//RimWorld 1.6 / C# 7.3
 // Source/ToolAssignments/Dialog_ManageSurvivalToolAssignments.cs
+
+// Legacy code, we want to phase this out. Everything should be handled automatically by AssignmentSearch.cs
 using System;
 using System.Collections.Generic;
 using UnityEngine;

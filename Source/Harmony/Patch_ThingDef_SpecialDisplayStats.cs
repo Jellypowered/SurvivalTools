@@ -1,5 +1,9 @@
 ﻿// Rimworld 1.6 / C# 7.3
 // Source/Harmony/Patch_ThingDef_SpecialDisplayStats.cs
+// Shows tool-related stat factors in the info card for SurvivalTool defs and tool-stuff.
+// Also shows aggregated base factors for ThingDefs that have them (via SurvivalToolProperties or ToolResolver).
+// Legacy code, KEEP.
+
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;

@@ -1,5 +1,8 @@
 // RimWorld 1.6 / C# 7.3
 // Source/Helpers/StatFilters.cs
+
+// Todo: Evaluate if this file should be kept, refactored, or removed.
+// It contains various stat-related utilities, but some may be redundant or unused.
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;

@@ -1,5 +1,9 @@
 ﻿// Rimworld 1.6 / C# 7.3
 // Source/Harmony/Patch_Pawn_InventoryTracker.cs
+// Legacy Code but likely needs to be kept. Handles inventory unloading and idle tool trimming.
+// Prevents unloading in-use tools, and respects forced+in-use during idle auto-trimming.
+// Refactor with new tool tracking system, KEEP.
+
 using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
@@ -7,6 +11,7 @@ using RimWorld;
 using Verse;
 using Verse.AI;
 using static SurvivalTools.ST_Logging;
+using SurvivalTools.Assign;
 
 namespace SurvivalTools.HarmonyStuff
 {
@@ -131,6 +136,14 @@ namespace SurvivalTools.HarmonyStuff
                     }
                 }
 
+                // Respect recent-acquisition protection: avoid dropping just-acquired tool
+                if (toolToDrop != null && AssignmentSearch.IsRecentlyAcquired(pawn, PhysicalThingFor(toolToDrop, pawn)))
+                {
+                    if (IsDebugLoggingEnabled)
+                        LogInfoOnce($"[SurvivalTools.InventoryTick] {pawn.LabelShort} over limit but protecting recently-acquired {toolToDrop.LabelShort}.", $"InvOverCap_ProtectRecent_{pawn.ThingID}");
+                    toolToDrop = null;
+                }
+
                 if (toolToDrop == null)
                 {
                     if (IsDebugLoggingEnabled)
@@ -143,6 +156,14 @@ namespace SurvivalTools.HarmonyStuff
                 if (IsDebugLoggingEnabled)
                 {
                     LogDecision($"InvOverCap_Drop_{pawn.ThingID}", $"[SurvivalTools.InventoryTick] {pawn.LabelShort} idle & over limit. Dropping {toolToDrop.LabelShort}.");
+                }
+
+                // Final safety: re-check recent-acquisition protection before issuing the drop
+                if (AssignmentSearch.IsRecentlyAcquired(pawn, PhysicalThingFor(toolToDrop, pawn)))
+                {
+                    if (IsDebugLoggingEnabled)
+                        LogDecision($"InvOverCap_SkipDropRecent_{pawn.ThingID}", $"[SurvivalTools.InventoryTick] {pawn.LabelShort} skipping drop of recently-acquired {toolToDrop.LabelShort}.");
+                    return;
                 }
 
                 var dropJob = pawn.DequipAndTryStoreSurvivalTool(toolToDrop, enqueueCurrent: false);
