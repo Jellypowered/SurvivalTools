@@ -300,8 +300,8 @@ namespace SurvivalTools
             height += 35f; // Section header
             height += 50f; // Debug content area
 
-            // Add some extra padding for safety
-            height += 100f;
+            // Add much more padding to ensure all content is accessible
+            height += 300f; // Increased from 100f to 300f for better scrolling
 
             return height;
         }
@@ -1055,8 +1055,8 @@ namespace SurvivalTools
 
             // Set window size and position
             windowRect = new Rect(
-                (UI.screenWidth - windowSize.x) / 2f,
-                (UI.screenHeight - windowSize.y) / 2f,
+                (Verse.UI.screenWidth - windowSize.x) / 2f,
+                (Verse.UI.screenHeight - windowSize.y) / 2f,
                 windowSize.x,
                 windowSize.y
             );

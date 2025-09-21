@@ -27,7 +27,7 @@ namespace SurvivalTools.Assign
         /// Checks if job requires tools and attempts auto-equip if beneficial.
         /// </summary>
         [HarmonyPriority(Priority.First)]
-        //[HarmonyAfter(new[] { "jellypowered.survivaltools.legacy" })] // if you used an ID for legacy patches
+        //[HarmonyAfter(new[] { "Jelly.SurvivalToolsReborn" })] // if you used an ID for legacy patches
         [HarmonyPatch(typeof(Pawn_JobTracker), nameof(Pawn_JobTracker.TryTakeOrderedJob))]
         [HarmonyPrefix]
         public static bool TryTakeOrderedJob_Prefix(Pawn_JobTracker __instance, Job job, ref bool __result)

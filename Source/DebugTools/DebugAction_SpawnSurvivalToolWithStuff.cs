@@ -179,7 +179,7 @@ namespace SurvivalTools.DebugTools
                     return;
                 }
 
-                IntVec3 pos = UI.MouseCell();
+                IntVec3 pos = Verse.UI.MouseCell();
                 if (pos.InBounds(map))
                 {
                     GenSpawn.Spawn(tool, pos, map);
