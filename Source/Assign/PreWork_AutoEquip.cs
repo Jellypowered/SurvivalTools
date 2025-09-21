@@ -171,7 +171,7 @@ namespace SurvivalTools.Assign
         [HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(Pawn_JobTracker), nameof(Pawn_JobTracker.StartJob))]
         [HarmonyPrefix]
-    public static bool StartJob_Prefix(Pawn_JobTracker __instance, Job newJob)
+        public static bool StartJob_Prefix(Pawn_JobTracker __instance, Job newJob)
         {
             try
             {
@@ -416,7 +416,7 @@ namespace SurvivalTools.Assign
         /// Try to upgrade pawn's tool for the given work stat.
         /// Returns true if upgrade was queued (original job should be blocked).
         /// </summary>
-    private static bool TryUpgradeForWork(Pawn pawn, StatDef workStat, Job originalJob, SurvivalToolsSettings settings, AssignmentSearch.QueuePriority priority)
+        private static bool TryUpgradeForWork(Pawn pawn, StatDef workStat, Job originalJob, SurvivalToolsSettings settings, AssignmentSearch.QueuePriority priority)
         {
             LogDebug($"[SurvivalTools.PreWork] TryUpgradeForWork called for {pawn.LabelShort}, stat: {workStat.defName}", $"PreWork.TryUpgradeForWork|{pawn.ThingID}|{workStat.defName}");
 

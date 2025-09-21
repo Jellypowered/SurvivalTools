@@ -44,7 +44,7 @@ namespace SurvivalTools.Assign
         private const int HysteresisTicksNormal = 5000;
         private const float HysteresisExtraGainPct = 0.05f; // +5% for re-upgrade
         private const float GatingEpsilon = 0.001f;
-    private const int FocusTicksWindow = 600; // 10 seconds: prefer current work stat, avoid thrash
+        private const int FocusTicksWindow = 600; // 10 seconds: prefer current work stat, avoid thrash
 
         // Cooldown for repeatedly failing candidates (forbidden, unreachable, reserved by others)
         // Key: ThingIDNumber -> nextAllowedTick
@@ -55,8 +55,8 @@ namespace SurvivalTools.Assign
         // pawnID -> (untilTick, statDefName)
         private static readonly Dictionary<int, FocusData> _statFocus = new Dictionary<int, FocusData>(64);
 
-    // Recently acquired protection: pawnID -> (untilTick, lastAcquiredThingID)
-    private static readonly Dictionary<int, RecentAcqData> _recentAcquisitions = new Dictionary<int, RecentAcqData>(64);
+        // Recently acquired protection: pawnID -> (untilTick, lastAcquiredThingID)
+        private static readonly Dictionary<int, RecentAcqData> _recentAcquisitions = new Dictionary<int, RecentAcqData>(64);
 
         private struct FocusData
         {
@@ -184,90 +184,90 @@ namespace SurvivalTools.Assign
             try
             {
                 _processingPawns[pawnID] = true;
-            if (workStat == null)
-            {
-                LogDebug($"workStat is null for {pawn?.LabelShort}", "AssignmentSearch.NullWorkStat");
-                return false;
-            }
-
-            // Get current score and tool
-            var currentTool = ToolScoring.GetBestTool(pawn, workStat, out float currentScore);
-            string currentDefName = currentTool?.def?.defName ?? "none";
-            LogDebug($"Current tool for {pawn.LabelShort} / {workStat.defName}: {currentDefName} (score: {currentScore:F3})", "AssignmentSearch.CurrentTool");
-
-            // If a drop or acquisition is already being performed as the CURRENT job, defer any new work this pass
-            // Note: we intentionally IGNORE queued items here because queued ordered jobs do not auto-start.
-            bool pendingDrop = HasPendingDropJob(pawn);
-            bool pendingAcquire = HasPendingAcquisitionJob(pawn);
-            if (pendingDrop || pendingAcquire)
-            {
-                LogDebug($"Pending tool-management job detected for {pawn.LabelShort} — deferring (drop={pendingDrop}, acquire={pendingAcquire})", "AssignmentSearch.DeferForPendingQueue");
-                LogJobQueue(pawn, "TryUpgradeFor:pendingQueue");
-                return true; // signal that we're handling tool management
-            }
-
-            // Find best candidate
-            var candidate = FindBestCandidate(pawn, workStat, currentScore, minGainPct, radius, pathCostBudget);
-            if (candidate.tool == null)
-            {
-                LogDebug($"No candidate tool found for {pawn.LabelShort}", "AssignmentSearch.NoCandidate");
-                return false;
-            }
-
-            LogDebug($"Found candidate tool for {pawn.LabelShort}: {candidate.tool.LabelShort} (score: {candidate.score:F3}, gain: {candidate.gainPct:P1}, location: {candidate.location})", "AssignmentSearch.FoundCandidate");
-            LogJobQueue(pawn, caller != null ? $"TryUpgradeFor:preQueueCandidate:{caller}" : "TryUpgradeFor:preQueueCandidate");
-
-            // Apply hysteresis AFTER selecting a concrete candidate so we can use its gain and def
-            int currentTick = Find.TickManager?.TicksGame ?? 0;
-            var candDefName = candidate.tool.def?.defName ?? string.Empty;
-            if (IsInHysteresis(pawn.thingIDNumber, currentTick, candDefName, candidate.gainPct, minGainPct))
-            {
-                LogDebug($"Hysteresis check failed for {pawn.LabelShort}", "AssignmentSearch.Hysteresis");
-                return false;
-            }
-
-            // Queue the job to acquire/equip the tool
-            bool acquisitionEnqueued;
-            if (QueueAcquisitionJob(pawn, candidate, workStat, priority, out acquisitionEnqueued))
-            {
-                if (acquisitionEnqueued)
+                if (workStat == null)
                 {
-                    LogDebug($"Successfully queued acquisition job for {pawn.LabelShort}: {candidate.tool.LabelShort}", "AssignmentSearch.QueueSuccess");
+                    LogDebug($"workStat is null for {pawn?.LabelShort}", "AssignmentSearch.NullWorkStat");
+                    return false;
+                }
 
-                    // Update hysteresis only when we actually enqueued an acquisition
-                    _hysteresisData[pawn.thingIDNumber] = new HysteresisData
+                // Get current score and tool
+                var currentTool = ToolScoring.GetBestTool(pawn, workStat, out float currentScore);
+                string currentDefName = currentTool?.def?.defName ?? "none";
+                LogDebug($"Current tool for {pawn.LabelShort} / {workStat.defName}: {currentDefName} (score: {currentScore:F3})", "AssignmentSearch.CurrentTool");
+
+                // If a drop or acquisition is already being performed as the CURRENT job, defer any new work this pass
+                // Note: we intentionally IGNORE queued items here because queued ordered jobs do not auto-start.
+                bool pendingDrop = HasPendingDropJob(pawn);
+                bool pendingAcquire = HasPendingAcquisitionJob(pawn);
+                if (pendingDrop || pendingAcquire)
+                {
+                    LogDebug($"Pending tool-management job detected for {pawn.LabelShort} — deferring (drop={pendingDrop}, acquire={pendingAcquire})", "AssignmentSearch.DeferForPendingQueue");
+                    LogJobQueue(pawn, "TryUpgradeFor:pendingQueue");
+                    return true; // signal that we're handling tool management
+                }
+
+                // Find best candidate
+                var candidate = FindBestCandidate(pawn, workStat, currentScore, minGainPct, radius, pathCostBudget);
+                if (candidate.tool == null)
+                {
+                    LogDebug($"No candidate tool found for {pawn.LabelShort}", "AssignmentSearch.NoCandidate");
+                    return false;
+                }
+
+                LogDebug($"Found candidate tool for {pawn.LabelShort}: {candidate.tool.LabelShort} (score: {candidate.score:F3}, gain: {candidate.gainPct:P1}, location: {candidate.location})", "AssignmentSearch.FoundCandidate");
+                LogJobQueue(pawn, caller != null ? $"TryUpgradeFor:preQueueCandidate:{caller}" : "TryUpgradeFor:preQueueCandidate");
+
+                // Apply hysteresis AFTER selecting a concrete candidate so we can use its gain and def
+                int currentTick = Find.TickManager?.TicksGame ?? 0;
+                var candDefName = candidate.tool.def?.defName ?? string.Empty;
+                if (IsInHysteresis(pawn.thingIDNumber, currentTick, candDefName, candidate.gainPct, minGainPct))
+                {
+                    LogDebug($"Hysteresis check failed for {pawn.LabelShort}", "AssignmentSearch.Hysteresis");
+                    return false;
+                }
+
+                // Queue the job to acquire/equip the tool
+                bool acquisitionEnqueued;
+                if (QueueAcquisitionJob(pawn, candidate, workStat, priority, out acquisitionEnqueued))
+                {
+                    if (acquisitionEnqueued)
                     {
-                        lastUpgradeTick = currentTick,
-                        lastEquippedDefName = candidate.tool.def.defName
-                    };
+                        LogDebug($"Successfully queued acquisition job for {pawn.LabelShort}: {candidate.tool.LabelShort}", "AssignmentSearch.QueueSuccess");
 
-                    // Set a short focus window on this stat to prevent other stats from thrashing
-                    SetFocus(pawn, workStat);
+                        // Update hysteresis only when we actually enqueued an acquisition
+                        _hysteresisData[pawn.thingIDNumber] = new HysteresisData
+                        {
+                            lastUpgradeTick = currentTick,
+                            lastEquippedDefName = candidate.tool.def.defName
+                        };
 
-                    // Notify score cache
-                    ScoreCache.NotifyInventoryChanged(pawn);
-                    if (candidate.tool != null)
-                        ScoreCache.NotifyToolChanged(candidate.tool);
-                    LogJobQueue(pawn, caller != null ? $"TryUpgradeFor:afterEnqueueAcquisition:{caller}" : "TryUpgradeFor:afterEnqueueAcquisition");
+                        // Set a short focus window on this stat to prevent other stats from thrashing
+                        SetFocus(pawn, workStat);
 
-                    return true;
+                        // Notify score cache
+                        ScoreCache.NotifyInventoryChanged(pawn);
+                        if (candidate.tool != null)
+                            ScoreCache.NotifyToolChanged(candidate.tool);
+                        LogJobQueue(pawn, caller != null ? $"TryUpgradeFor:afterEnqueueAcquisition:{caller}" : "TryUpgradeFor:afterEnqueueAcquisition");
+
+                        return true;
+                    }
+                    else
+                    {
+                        // We queued a drop and deferred acquisition; report handled but don't update hysteresis yet
+                        LogDebug($"Queued drop for {pawn.LabelShort} and deferred acquisition of {candidate.tool.LabelShort}", "AssignmentSearch.DeferredAfterDrop");
+                        // Set a short focus window to prioritize this stat; this avoids cross-stat thrashing.
+                        SetFocus(pawn, workStat);
+                        LogJobQueue(pawn, caller != null ? $"TryUpgradeFor:afterEnqueueDrop:{caller}" : "TryUpgradeFor:afterEnqueueDrop");
+                        return true;
+                    }
                 }
                 else
                 {
-                    // We queued a drop and deferred acquisition; report handled but don't update hysteresis yet
-                    LogDebug($"Queued drop for {pawn.LabelShort} and deferred acquisition of {candidate.tool.LabelShort}", "AssignmentSearch.DeferredAfterDrop");
-                    // Set a short focus window to prioritize this stat; this avoids cross-stat thrashing.
-                    SetFocus(pawn, workStat);
-                    LogJobQueue(pawn, caller != null ? $"TryUpgradeFor:afterEnqueueDrop:{caller}" : "TryUpgradeFor:afterEnqueueDrop");
-                    return true;
+                    LogDebug($"Failed to queue acquisition job for {pawn.LabelShort}: {candidate.tool.LabelShort}", "AssignmentSearch.QueueFailed");
                 }
-            }
-            else
-            {
-                LogDebug($"Failed to queue acquisition job for {pawn.LabelShort}: {candidate.tool.LabelShort}", "AssignmentSearch.QueueFailed");
-            }
 
-            return false;
+                return false;
             }
             finally
             {
