@@ -21,10 +21,18 @@ namespace SurvivalTools.HarmonyStuff
 
             // Phase 6: Job assignment system (replaces legacy auto-equip patches)
             // Signature discovered: TryTakeOrderedJob(Job job, JobTag? tag, bool fromQueue)
-            Sweep<Pawn_JobTracker>("TryTakeOrderedJob", new[] { typeof(Job), typeof(JobTag?), typeof(bool) },
+            SweepWithFallback<Pawn_JobTracker>("TryTakeOrderedJob",
+                new[] { typeof(Job), typeof(JobTag?), typeof(bool) },
+                new[] { typeof(Job), typeof(bool) }, // Fallback for non-nullable
                 allowedTypes: new[] { typeof(PreWork_AutoEquip) });
 
-            // Phase 7: Gear tab integration (replaces legacy gear UI patches)
+            // Phase 6: Job start system (add TryStartJob coverage)
+            SweepWithFallback<Pawn_JobTracker>("TryStartJob",
+                new[] { typeof(Job), typeof(JobTag?), typeof(bool) },
+                new[] { typeof(Job), typeof(bool) }, // Fallback for non-nullable
+                allowedTypes: new[] { typeof(PreWork_AutoEquip) });
+
+            // Phase 7: Gear tab integration (replaces legacy gear UI patches)  
             Sweep<ITab_Pawn_Gear>("FillTab", Type.EmptyTypes,
                 allowedTypes: new[] { typeof(ITab_Gear_ST) });
 
@@ -34,6 +42,21 @@ namespace SurvivalTools.HarmonyStuff
             //     allowedTypes: new[] { typeof(NewPhaseImplementation) });
 
             Log.Message("[SurvivalTools.PatchGuard] Patch cleanup complete.");
+        }
+
+        static void SweepWithFallback<TDecl>(string name, Type[] primarySig, Type[] fallbackSig, Type[] allowedTypes)
+        {
+            // Try primary signature first
+            var orig = AccessTools.Method(typeof(TDecl), name, primarySig);
+            if (orig != null)
+            {
+                Sweep<TDecl>(name, primarySig, allowedTypes);
+                return;
+            }
+
+            // Fall back to alternate signature
+            Log.Message($"[SurvivalTools.PatchGuard] Primary signature not found for {typeof(TDecl).Name}.{name}, trying fallback");
+            Sweep<TDecl>(name, fallbackSig, allowedTypes);
         }
 
         static void Sweep<TDecl>(string name, Type[] sig, Type[] allowedTypes)
@@ -85,9 +108,12 @@ namespace SurvivalTools.HarmonyStuff
             var dt = m.DeclaringType;
             if (dt == null) return false;
 
-            // Heuristic: any patch from our mod namespace but not in the allowlist = legacy
-            bool ours = dt.Namespace != null && dt.Namespace.StartsWith("SurvivalTools", StringComparison.Ordinal);
+            // BULLETPROOF: Assembly validation + namespace check  
+            var ourAssembly = typeof(ST_PatchGuard).Assembly;
+            bool ours = (dt.Assembly == ourAssembly) &&
+                       (dt.Namespace != null && dt.Namespace.StartsWith("SurvivalTools", StringComparison.Ordinal));
             bool allowed = Array.IndexOf(allowedTypes, dt) >= 0;
+
             if (ours && !allowed)
             {
                 Log.Message($"[SurvivalTools.PatchGuard] Removing legacy patch: {dt.FullName}.{m.Name} (owner: {patch.owner})");
