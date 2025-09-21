@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <ST_Gate_MissingToolStat>Requires a tool for {0} to do {1}.</ST_Gate_MissingToolStat>
+</LanguageData>

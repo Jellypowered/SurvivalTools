@@ -421,6 +421,72 @@ namespace SurvivalTools
                 Messages.Message("StatPart comparison failed - check log for errors", MessageTypeDefOf.RejectInput);
             }
         }
+
+        [LudeonTK.DebugAction("ST", "Test gating (selected pawn)", false, false)]
+        private static void TestGating()
+        {
+            if (!Prefs.DevMode)
+            {
+                Messages.Message("Debug actions require dev mode enabled", MessageTypeDefOf.RejectInput);
+                return;
+            }
+
+            try
+            {
+                var selected = Find.Selector.SelectedPawns.FirstOrDefault();
+                if (selected == null)
+                {
+                    Messages.Message("No pawn selected", MessageTypeDefOf.RejectInput);
+                    return;
+                }
+
+                var sb = new StringBuilder(2048);
+                sb.AppendLine($"[SurvivalTools] Gating test for {selected.LabelCap}");
+                sb.AppendLine("===============================================");
+                sb.AppendLine();
+
+                var settings = SurvivalTools.Settings;
+                sb.AppendLine($"Settings: hardcore={settings?.hardcoreMode == true}, extraHardcore={settings?.extraHardcoreMode == true}");
+                sb.AppendLine();
+
+                // Test key WorkGivers
+                var testWorkGivers = new[]
+                {
+                    DefDatabase<WorkGiverDef>.GetNamedSilentFail("Mine"),
+                    DefDatabase<WorkGiverDef>.GetNamedSilentFail("ConstructFinishFrames"),
+                    DefDatabase<WorkGiverDef>.GetNamedSilentFail("PlantsCut"),
+                    DefDatabase<WorkGiverDef>.GetNamedSilentFail("Repair")
+                };
+
+                sb.AppendLine("WorkGiver\tResult\tReason");
+                sb.AppendLine("--------\t------\t------");
+
+                foreach (var wg in testWorkGivers)
+                {
+                    if (wg == null) continue;
+
+                    bool blocked = Gating.JobGate.ShouldBlock(selected, wg, null, false, out var reasonKey, out var a1, out var a2);
+                    string result = blocked ? "BLOCK" : "ALLOW";
+                    string reason = blocked ? $"{reasonKey}: {a1} -> {a2}" : "n/a";
+
+                    sb.AppendLine($"{wg.label ?? wg.defName}\t{result}\t{reason}");
+                }
+
+                sb.AppendLine();
+                sb.AppendLine("Note: JobDef-specific gating tested during actual job creation");
+
+                string fileName = $"ST_GatingTest_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+                var path = ST_FileIO.WriteUtf8Atomic(fileName, sb.ToString());
+
+                Messages.Message($"Gating test completed - results saved to {path}", MessageTypeDefOf.TaskCompletion);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[SurvivalTools] Gating test failed: {ex}");
+                Messages.Message("Gating test failed - check log for errors", MessageTypeDefOf.RejectInput);
+            }
+        }
+
         private static string CompatLine()
         {
             try { return string.Join(", ", Helpers.WorkSpeedGlobalHelper.GetWorkSpeedGlobalJobs().Select(wg => wg.defName)); } catch { return "(n/a)"; }

@@ -322,6 +322,21 @@ namespace SurvivalTools.Compat
             return _toolQuirks.TryGetValue(toolDefName, out var quirk) ? quirk : null;
         }
 
+        // Array versions for JobGate (LINQ-free)
+        public static StatDef[] GetRequiredStatsFor(WorkGiverDef wg)
+        {
+            if (wg == null) return new StatDef[0];
+            var list = GetWorkGiverRequirements(wg);
+            return list.Count > 0 ? list.ToArray() : new StatDef[0];
+        }
+
+        public static StatDef[] GetRequiredStatsFor(JobDef job)
+        {
+            if (job == null) return new StatDef[0];
+            var list = GetJobRequirements(job);
+            return list.Count > 0 ? list.ToArray() : new StatDef[0];
+        }
+
         public static bool IsModActive(string packageId)
         {
             if (string.IsNullOrEmpty(packageId)) return false;
@@ -470,6 +485,10 @@ namespace SurvivalTools.Compat
             Log.Message("[SurvivalTools Compat] ReinitializeRegistryForDebug() called (dev only).");
 #endif
         }
+
+        // Array getters for JobGate (Phase 5)
+        public static StatDef[] GetRequiredStatsFor(WorkGiverDef wg) => SurvivalToolRegistry.GetRequiredStatsFor(wg);
+        public static StatDef[] GetRequiredStatsFor(JobDef job) => SurvivalToolRegistry.GetRequiredStatsFor(job);
 
         // Forwarders for compatibility (Phase 1 - add during refactor)
         /// <summary>

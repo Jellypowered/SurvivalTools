@@ -16,6 +16,7 @@ namespace SurvivalTools.HarmonyStuff
     /// <summary>
     /// Blocks jobs that bypass WorkGiver gating when tools are missing in Hardcore / Extra Hardcore.
     /// </summary>
+    [Obsolete("Phase 5 Strangler: Remove after WorkGiver_Gates proven stable", false)]
     [HarmonyPatch(typeof(Pawn_JobTracker))]
     public static class Patch_Pawn_JobTracker_ExtraHardcore
     {
