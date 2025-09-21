@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using Verse;
 using RimWorld;
+using SurvivalTools.Compat;
 using static SurvivalTools.ToolResolver;
 using static SurvivalTools.ST_Logging;
 
@@ -45,7 +46,10 @@ namespace SurvivalTools
                 // 6) Apply conditional feature registration
                 ConditionalRegistration.ApplyTreeFellingConditionals();
 
-                // 7) Schedule delayed job validation (after game fully loads)
+                // 7) Initialize gating system with WorkGiver → StatDef mappings
+                InitializeJobGatingMappings();
+
+                // 8) Schedule delayed job validation (after game fully loads)
                 LongEventHandler.QueueLongEvent(ValidateExistingJobsOnModLoad, "SurvivalTools: Validating existing jobs...", false, null);
 
                 if (IsDebugLoggingEnabled)
@@ -234,6 +238,60 @@ namespace SurvivalTools
             }
 
             return (withProps, withoutProps);
+        }
+
+        #endregion
+
+        #region Job gating initialization
+
+        private static void InitializeJobGatingMappings()
+        {
+            // Register core vanilla WorkGivers with their required stats
+            // This populates the registry for JobGate.ShouldBlock() lookups
+
+            // Mining/digging work
+            RegisterWorkGiverForStat("DeepDrill", ST_StatDefOf.DiggingSpeed);
+            RegisterWorkGiverForStat("GroundPenetratingScannerScan", ST_StatDefOf.DiggingSpeed);
+            RegisterWorkGiverForStat("Mine", ST_StatDefOf.DiggingSpeed);
+            RegisterWorkGiverForStat("MineQuarry", ST_StatDefOf.DiggingSpeed); // mod compat
+
+            // Tree cutting
+            RegisterWorkGiverForStat("Grower_ChopWood", ST_StatDefOf.TreeFellingSpeed);
+            RegisterWorkGiverForStat("FellTrees", ST_StatDefOf.TreeFellingSpeed);
+
+            // Plant work
+            RegisterWorkGiverForStat("Grower_Harvest", ST_StatDefOf.PlantHarvestingSpeed);
+            RegisterWorkGiverForStat("PlantsCut", ST_StatDefOf.PlantHarvestingSpeed);
+            RegisterWorkGiverForStat("Grower_Sow", ST_StatDefOf.SowingSpeed);
+
+            // Construction
+            RegisterWorkGiverForStat("ConstructDeliverResourcesToBluePrints", StatDefOf.ConstructionSpeed);
+            RegisterWorkGiverForStat("ConstructDeliverResourcesToFrames", StatDefOf.ConstructionSpeed);
+            RegisterWorkGiverForStat("ConstructFinishFrames", StatDefOf.ConstructionSpeed);
+            RegisterWorkGiverForStat("ConstructSmoothWall", StatDefOf.ConstructionSpeed);
+            RegisterWorkGiverForStat("ConstructSmoothFloor", StatDefOf.ConstructionSpeed);
+
+            // Repair/maintenance
+            RegisterWorkGiverForStat("Repair", ST_StatDefOf.MaintenanceSpeed);
+
+            // Deconstruction
+            RegisterWorkGiverForStat("Deconstruct", ST_StatDefOf.DeconstructionSpeed);
+
+            if (IsDebugLoggingEnabled)
+                Log.Message("[SurvivalTools] Initialized job gating mappings for core WorkGivers");
+        }
+
+        private static void RegisterWorkGiverForStat(string workGiverDefName, StatDef stat)
+        {
+            var workGiver = DefDatabase<WorkGiverDef>.GetNamedSilentFail(workGiverDefName);
+            if (workGiver != null && stat != null)
+            {
+                Compat.CompatAPI.RegisterWorkGiverRequirement(workGiver, stat);
+            }
+            else if (IsDebugLoggingEnabled)
+            {
+                Log.Warning($"[SurvivalTools] Failed to register {workGiverDefName} for stat {stat?.defName ?? "null"} - workGiver: {workGiver != null}, stat: {stat != null}");
+            }
         }
 
         #endregion

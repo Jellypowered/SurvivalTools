@@ -32,7 +32,6 @@ namespace SurvivalTools
         private static WorkGiverDef _constructWG;
         private static WorkGiverDef _plantCutWG;
         private static WorkGiverDef _plantHarvestWG;
-        private static WorkGiverDef _smithingWG;
 
         static Alert_ToolGatedWork()
         {
@@ -44,8 +43,6 @@ namespace SurvivalTools
                          ?? DefDatabase<WorkGiverDef>.GetNamedSilentFail("PlantsCut");
             _plantHarvestWG = DefDatabase<WorkGiverDef>.GetNamedSilentFail("PlantHarvest")
                              ?? DefDatabase<WorkGiverDef>.GetNamedSilentFail("GrowerHarvest");
-            _smithingWG = DefDatabase<WorkGiverDef>.GetNamedSilentFail("SmithWeapons")
-                         ?? DefDatabase<WorkGiverDef>.GetNamedSilentFail("Smith");
         }
 
         public override AlertPriority Priority => AlertPriority.Medium;
@@ -173,16 +170,6 @@ namespace SurvivalTools
             if (_plantHarvestWG != null && pawn.workSettings != null && pawn.workSettings.GetPriority(WorkTypeDefOf.PlantCutting) > 0)
             {
                 if (HasPlantHarvestWork(map) && IsBlockedForWork(pawn, _plantHarvestWG, "ST_Alert_WorkType_PlantHarvest".Translate()))
-                {
-                    _lastShownTick[pawn] = currentTick;
-                    return;
-                }
-            }
-
-            // Check Smithing (if enabled and we gate smithing work)
-            if (_smithingWG != null && pawn.workSettings != null && pawn.workSettings.GetPriority(WorkTypeDefOf.Smithing) > 0)
-            {
-                if (IsBlockedForWork(pawn, _smithingWG, "ST_Alert_WorkType_Smithing".Translate()))
                 {
                     _lastShownTick[pawn] = currentTick;
                     return;

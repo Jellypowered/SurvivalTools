@@ -13,10 +13,36 @@ using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools
 {
+    public enum DifficultyMode
+    {
+        Normal,
+        Hardcore,
+        Nightmare
+    }
+
     public class SurvivalToolsSettings : ModSettings
     {
         // UI Layout constants
         private const float JOB_LABEL_WIDTH = 140f;
+
+        // Difficulty mode change event
+        public static event System.Action DifficultyModeChanged;
+
+        internal static void RaiseDifficultyChanged()
+        {
+            var h = DifficultyModeChanged;
+            if (h != null) h();
+        }
+
+        public DifficultyMode CurrentMode
+        {
+            get
+            {
+                if (extraHardcoreMode) return DifficultyMode.Nightmare;
+                if (hardcoreMode) return DifficultyMode.Hardcore;
+                return DifficultyMode.Normal;
+            }
+        }
 
         public bool hardcoreMode;
         public bool toolMapGen = true;
@@ -60,6 +86,9 @@ namespace SurvivalTools
 
         // Gating alert settings  
         public bool showGatingAlert = true; // Show alert when pawns are blocked by tool gating
+
+        // Gating enforcer settings
+        public bool enforceOnModeChange = true; // Cancel now-invalid jobs when difficulty changes
 
         // Job gating
         public Dictionary<string, bool> workSpeedGlobalJobGating = new Dictionary<string, bool>();
@@ -154,6 +183,7 @@ namespace SurvivalTools
             Scribe_Values.Look(ref showUpgradeSuggestions, nameof(showUpgradeSuggestions), true);
             Scribe_Values.Look(ref showDenialMotes, nameof(showDenialMotes), true);
             Scribe_Values.Look(ref showGatingAlert, nameof(showGatingAlert), true);
+            Scribe_Values.Look(ref enforceOnModeChange, nameof(enforceOnModeChange), true);
 
             Scribe_Collections.Look(ref workSpeedGlobalJobGating, nameof(workSpeedGlobalJobGating), LookMode.Value, LookMode.Value);
             if (workSpeedGlobalJobGating == null)
@@ -289,12 +319,33 @@ namespace SurvivalTools
             // Hardcore Mode section
             GUI.color = new Color(1f, 0.2f, 0.2f);
             var prevHardcoreMode = hardcoreMode;
+            var prevExtraHardcoreMode = extraHardcoreMode;
             listing.CheckboxLabeled("Settings_HardcoreMode".Translate(), ref hardcoreMode, "Settings_HardcoreMode_Tooltip".Translate());
 
             // Auto-disable Extra Hardcore Mode when Hardcore Mode is disabled
             if (prevHardcoreMode && !hardcoreMode && extraHardcoreMode)
             {
                 extraHardcoreMode = false;
+            }
+
+            // Detect mode changes and fire event + enforcer
+            var oldMode = prevExtraHardcoreMode ? DifficultyMode.Nightmare : prevHardcoreMode ? DifficultyMode.Hardcore : DifficultyMode.Normal;
+            var newMode = CurrentMode;
+            if (oldMode != newMode)
+            {
+                SurvivalToolsSettings.RaiseDifficultyChanged();
+                if (enforceOnModeChange && newMode != DifficultyMode.Normal)
+                {
+                    try
+                    {
+                        var cancelled = Gating.GatingEnforcer.EnforceAllRunningJobs(true);
+                        // Optional quiet enforcement - no messages by default
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Log.Warning($"[SurvivalTools] Gating enforcer failed on mode change: {ex.Message}");
+                    }
+                }
             }
 
             // Validate existing jobs when hardcore mode is enabled or changed
@@ -316,6 +367,7 @@ namespace SurvivalTools
             listing.CheckboxLabeled("Settings_ShowUpgradeSuggestions".Translate(), ref showUpgradeSuggestions, "Settings_ShowUpgradeSuggestions_Tooltip".Translate());
             listing.CheckboxLabeled("Settings_ShowDenialMotes".Translate(), ref showDenialMotes, "Settings_ShowDenialMotes_Tooltip".Translate());
             listing.CheckboxLabeled("Settings_ShowGatingAlert".Translate(), ref showGatingAlert, "Settings_ShowGatingAlert_Tooltip".Translate());
+            listing.CheckboxLabeled("Settings_EnforceOnModeChange".Translate(), ref enforceOnModeChange, "Settings_EnforceOnModeChange_Tooltip".Translate());
             listing.Gap();
 
             // Normal Mode Penalty Settings
@@ -1111,6 +1163,25 @@ namespace SurvivalTools
                     settings.requireButcheryTools = settings.HasButcheryTools;
                     settings.requireMedicalTools = settings.HasMedicalTools;
                     Helpers.SurvivalToolValidation.ValidateExistingJobs("Extra hardcore mode enabled");
+                }
+
+                // Detect extra hardcore mode changes and fire enforcer
+                if (prevExtraHardcore != settings.extraHardcoreMode)
+                {
+                    var newMode = settings.CurrentMode;
+                    SurvivalToolsSettings.RaiseDifficultyChanged();
+                    if (settings.enforceOnModeChange && newMode != DifficultyMode.Normal)
+                    {
+                        try
+                        {
+                            var cancelled = Gating.GatingEnforcer.EnforceAllRunningJobs(true);
+                            // Optional quiet enforcement - no messages by default
+                        }
+                        catch (System.Exception ex)
+                        {
+                            Log.Warning($"[SurvivalTools] Gating enforcer failed on extra hardcore mode change: {ex.Message}");
+                        }
+                    }
                 }
 
                 // Individual optional tool requirement checkboxes (only if extra hardcore is enabled)

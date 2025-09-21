@@ -17,4 +17,9 @@
     <!-- Settings UI -->
     <Settings_ShowGatingAlert>Show 'Tool gating' alert</Settings_ShowGatingAlert>
     <Settings_ShowGatingAlert_Tooltip>When enabled, shows an alert when pawns are unable to work due to missing required tools in Hardcore/Nightmare modes.</Settings_ShowGatingAlert_Tooltip>
+    <Settings_EnforceOnModeChange>Cancel now-invalid jobs when difficulty changes</Settings_EnforceOnModeChange>
+    <Settings_EnforceOnModeChange_Tooltip>When enabled, automatically cancels running jobs that would be blocked by tool gating when switching to Hardcore or Nightmare mode.</Settings_EnforceOnModeChange_Tooltip>
+
+    <!-- Gating enforcer messages -->
+    <ST_Gate_ModeChanged>Difficulty mode changed</ST_Gate_ModeChanged>
 </LanguageData>
