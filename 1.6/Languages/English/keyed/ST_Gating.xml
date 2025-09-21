@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
+    <!-- Job gating failure message -->
     <ST_Gate_MissingToolStat>Requires a tool for {0} to do {1}.</ST_Gate_MissingToolStat>
+
+    <!-- Tool gating alert -->
+    <ST_Alert_ToolGating_Label>Tool gating</ST_Alert_ToolGating_Label>
+    <ST_Alert_ToolGating_AndMore>and {0} more</ST_Alert_ToolGating_AndMore>
+
+    <!-- Work type labels for alert -->
+    <ST_Alert_WorkType_Mining>Mining</ST_Alert_WorkType_Mining>
+    <ST_Alert_WorkType_Construction>Construction</ST_Alert_WorkType_Construction>
+    <ST_Alert_WorkType_PlantCutting>Plant Cutting</ST_Alert_WorkType_PlantCutting>
+    <ST_Alert_WorkType_PlantHarvest>Plant Harvest</ST_Alert_WorkType_PlantHarvest>
+    <ST_Alert_WorkType_Smithing>Smithing</ST_Alert_WorkType_Smithing>
+
+    <!-- Settings UI -->
+    <Settings_ShowGatingAlert>Show 'Tool gating' alert</Settings_ShowGatingAlert>
+    <Settings_ShowGatingAlert_Tooltip>When enabled, shows an alert when pawns are unable to work due to missing required tools in Hardcore/Nightmare modes.</Settings_ShowGatingAlert_Tooltip>
 </LanguageData>

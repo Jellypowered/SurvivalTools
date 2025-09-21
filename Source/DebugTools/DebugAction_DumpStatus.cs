@@ -441,44 +441,57 @@ namespace SurvivalTools
                 }
 
                 var sb = new StringBuilder(2048);
-                sb.AppendLine($"[SurvivalTools] Gating test for {selected.LabelCap}");
-                sb.AppendLine("===============================================");
+                sb.AppendLine($"[SurvivalTools] Tool Gating Test for {selected.LabelCap}");
+                sb.AppendLine("=======================================================");
+                sb.AppendLine($"Test time: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
                 sb.AppendLine();
 
                 var settings = SurvivalTools.Settings;
-                sb.AppendLine($"Settings: hardcore={settings?.hardcoreMode == true}, extraHardcore={settings?.extraHardcoreMode == true}");
+                sb.AppendLine($"Settings: hardcore={settings?.hardcoreMode == true}, extraHardcore={settings?.extraHardcoreMode == true}, showGatingAlert={settings?.showGatingAlert == true}");
                 sb.AppendLine();
 
-                // Test key WorkGivers
+                // Test representative WorkGivers with null guards (exact same pattern as live)
                 var testWorkGivers = new[]
                 {
                     DefDatabase<WorkGiverDef>.GetNamedSilentFail("Mine"),
+                    DefDatabase<WorkGiverDef>.GetNamedSilentFail("ConstructDeliverResourcesToBlueprints"),
                     DefDatabase<WorkGiverDef>.GetNamedSilentFail("ConstructFinishFrames"),
+                    DefDatabase<WorkGiverDef>.GetNamedSilentFail("CutPlants"),
                     DefDatabase<WorkGiverDef>.GetNamedSilentFail("PlantsCut"),
+                    DefDatabase<WorkGiverDef>.GetNamedSilentFail("PlantHarvest"),
+                    DefDatabase<WorkGiverDef>.GetNamedSilentFail("GrowerHarvest"),
+                    DefDatabase<WorkGiverDef>.GetNamedSilentFail("SmithWeapons"),
+                    DefDatabase<WorkGiverDef>.GetNamedSilentFail("Smith"),
                     DefDatabase<WorkGiverDef>.GetNamedSilentFail("Repair")
-                };
+                }.Where(wg => wg != null).ToArray();
 
-                sb.AppendLine("WorkGiver\tResult\tReason");
-                sb.AppendLine("--------\t------\t------");
+                sb.AppendLine($"Testing {testWorkGivers.Length} representative WorkGivers:");
+                sb.AppendLine();
+                sb.AppendLine("WorkGiver\t\t\tResult\tTranslated Reason");
+                sb.AppendLine("--------\t\t\t------\t-----------------");
 
                 foreach (var wg in testWorkGivers)
                 {
-                    if (wg == null) continue;
-
+                    // Use exact JobGate.ShouldBlock call matching live logic
                     bool blocked = Gating.JobGate.ShouldBlock(selected, wg, null, false, out var reasonKey, out var a1, out var a2);
                     string result = blocked ? "BLOCK" : "ALLOW";
-                    string reason = blocked ? $"{reasonKey}: {a1} -> {a2}" : "n/a";
+                    string reason = blocked ? reasonKey.Translate(a1, a2).ToString() : "No blocking";
 
-                    sb.AppendLine($"{wg.label ?? wg.defName}\t{result}\t{reason}");
+                    string wgName = (wg.label ?? wg.defName).PadRight(24);
+                    sb.AppendLine($"{wgName}\t{result}\t{reason}");
                 }
 
                 sb.AppendLine();
-                sb.AppendLine("Note: JobDef-specific gating tested during actual job creation");
+                sb.AppendLine("Notes:");
+                sb.AppendLine("- This uses exact JobGate.ShouldBlock() logic matching live behavior");
+                sb.AppendLine("- JobDef-specific gating tested during actual job creation (WorkGiver → Job)");
+                sb.AppendLine("- 'forced=false' simulates normal work assignment (not player-forced)");
+                sb.AppendLine($"- Current mode: {(settings?.hardcoreMode == true ? "Hardcore" : settings?.extraHardcoreMode == true ? "Nightmare" : "Normal")}");
 
                 string fileName = $"ST_GatingTest_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
                 var path = ST_FileIO.WriteUtf8Atomic(fileName, sb.ToString());
 
-                Messages.Message($"Gating test completed - results saved to {path}", MessageTypeDefOf.TaskCompletion);
+                Messages.Message($"Tool gating test completed - results saved to {path}", MessageTypeDefOf.TaskCompletion);
             }
             catch (Exception ex)
             {

@@ -58,6 +58,9 @@ namespace SurvivalTools
         // Visual feedback: denial/slow motes toggle
         public bool showDenialMotes = true; // When true, spawn text motes for blocked/slow tool-gated jobs
 
+        // Gating alert settings  
+        public bool showGatingAlert = true; // Show alert when pawns are blocked by tool gating
+
         // Job gating
         public Dictionary<string, bool> workSpeedGlobalJobGating = new Dictionary<string, bool>();
 
@@ -150,10 +153,21 @@ namespace SurvivalTools
             Scribe_Values.Look(ref rrFieldResearchRequiredInExtraHardcore, nameof(rrFieldResearchRequiredInExtraHardcore), false);
             Scribe_Values.Look(ref showUpgradeSuggestions, nameof(showUpgradeSuggestions), true);
             Scribe_Values.Look(ref showDenialMotes, nameof(showDenialMotes), true);
+            Scribe_Values.Look(ref showGatingAlert, nameof(showGatingAlert), true);
 
             Scribe_Collections.Look(ref workSpeedGlobalJobGating, nameof(workSpeedGlobalJobGating), LookMode.Value, LookMode.Value);
             if (workSpeedGlobalJobGating == null)
                 workSpeedGlobalJobGating = new Dictionary<string, bool>();
+
+            // Initialize showGatingAlert based on mode if not set (first run or reset)
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                // Set default based on current mode - on for Hardcore/Nightmare, off for Normal
+                if (!hardcoreMode && !extraHardcoreMode)
+                {
+                    showGatingAlert = false; // Default off in Normal mode
+                }
+            }
 
             base.ExposeData();
         }
@@ -301,6 +315,7 @@ namespace SurvivalTools
             listing.CheckboxLabeled("Settings_AllowPacifistEquip".Translate(), ref allowPacifistEquip, "Settings_AllowPacifistEquip_Tooltip".Translate());
             listing.CheckboxLabeled("Settings_ShowUpgradeSuggestions".Translate(), ref showUpgradeSuggestions, "Settings_ShowUpgradeSuggestions_Tooltip".Translate());
             listing.CheckboxLabeled("Settings_ShowDenialMotes".Translate(), ref showDenialMotes, "Settings_ShowDenialMotes_Tooltip".Translate());
+            listing.CheckboxLabeled("Settings_ShowGatingAlert".Translate(), ref showGatingAlert, "Settings_ShowGatingAlert_Tooltip".Translate());
             listing.Gap();
 
             // Normal Mode Penalty Settings
