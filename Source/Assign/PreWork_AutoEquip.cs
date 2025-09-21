@@ -26,8 +26,7 @@ namespace SurvivalTools.Assign
         // Track pending WorkGiver tool checks between prefix and postfix
         private static readonly System.Collections.Generic.Dictionary<int, StatDef> _wgPendingStat = new System.Collections.Generic.Dictionary<int, StatDef>(64);
 
-        // Add a flag to track if patch was applied
-        private static bool _patchApplied = false;
+        // (removed unused _patchApplied flag)
 
         /// <summary>
         /// Static constructor to verify patch application
@@ -37,7 +36,6 @@ namespace SurvivalTools.Assign
             try
             {
                 Log.Warning("[SurvivalTools.PreWork] PreWork_AutoEquip static constructor called - class is being loaded");
-                _patchApplied = true;
             }
             catch (Exception ex)
             {
@@ -255,6 +253,15 @@ namespace SurvivalTools.Assign
                 var workTypeDef = __instance.def?.workType;
                 if (workTypeDef == null)
                     return true;
+
+                // If the pawn cannot perform this work type OR it's not active for this pawn, and this isn't a forced job, skip rescue entirely
+                bool isForced = pawn.CurJob != null && pawn.CurJob.playerForced;
+                var ws = pawn.workSettings;
+                if (!isForced && (pawn.WorkTypeIsDisabled(workTypeDef) || (ws != null && !ws.WorkIsActive(workTypeDef))))
+                {
+                    LogDebug($"[SurvivalTools.PreWork] Skipping WG rescue: {pawn.LabelShort} inactive/disabled work type {workTypeDef.defName}", $"PreWork.WG.SkipInactive|{pawn.ThingID}|{workTypeDef.defName}");
+                    return true;
+                }
 
                 StatDef relevantStat = null;
                 if (workTypeDef == WorkTypeDefOf.Mining)

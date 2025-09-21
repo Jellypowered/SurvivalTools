@@ -6,8 +6,9 @@ using System.Linq;
 using Verse;
 using RimWorld;
 using SurvivalTools.Assign;
-using SurvivalTools.Helpers;
+// using SurvivalTools.Helpers; // already included above
 using SurvivalTools.Compat;
+using SurvivalTools.Helpers;
 using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.Gating
@@ -32,6 +33,21 @@ namespace SurvivalTools.Gating
 
             var settings = SurvivalTools.Settings;
             if (settings == null || (!settings.hardcoreMode && !settings.extraHardcoreMode)) return false; // Normal never blocks here
+
+            // If this WorkGiver's work type is disabled or not active for the pawn and this is not a forced action,
+            // do not attempt rescue or gating. Avoids churn for work the pawn wouldn't do anyway.
+            if (wg?.workType != null && !forced)
+            {
+                var ws = pawn.workSettings;
+                if (pawn.WorkTypeIsDisabled(wg.workType) || (ws != null && !ws.WorkIsActive(wg.workType)))
+                {
+                    if (IsDebugLoggingEnabled)
+                    {
+                        LogDebug($"[JobGate] Skipping gate/rescue for disabled or inactive work type {wg.workType.defName} on {pawn.LabelShort}", $"JobGate_SkipInactive_{pawn.ThingID}|{wg.workType.defName}");
+                    }
+                    return false;
+                }
+            }
             // Resolve required stats once
             var requiredStatsPre = ResolveRequiredStats(wg, job);
             // If no stats, do not gate
@@ -98,14 +114,14 @@ namespace SurvivalTools.Gating
                 StatDef[] arr;
                 if (_wgReq.TryGetValue(wg, out arr)) return arr;
 
-                // Use our own CompatAPI registry that's populated in StaticConstructorClass
-                var statsList = CompatAPI.GetStatsForWorkGiver(wg);
+                // Use helper directly (CompatAPI forwarder is obsolete)
+                var statsList = StatGatingHelper.GetStatsForWorkGiver(wg);
                 arr = statsList?.ToArray() ?? new StatDef[0];
 
                 // DEBUG: Log what stats we found for this WorkGiver
                 if (IsDebugLoggingEnabled)
                 {
-                    LogDebug($"[JobGate.ResolveStats] WorkGiver {wg.defName}: found {arr.Length} stats via CompatAPI: {string.Join(", ", arr.Select(s => s.defName))}", $"JobGate_ResolveStats_{wg.defName}");
+                    LogDebug($"[JobGate.ResolveStats] WorkGiver {wg.defName}: found {arr.Length} stats via resolver: {string.Join(", ", arr.Select(s => s.defName))}", $"JobGate_ResolveStats_{wg.defName}");
                 }
 
                 _wgReq[wg] = arr;

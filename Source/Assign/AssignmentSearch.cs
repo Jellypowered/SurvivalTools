@@ -168,8 +168,12 @@ namespace SurvivalTools.Assign
             // If we recently focused a different work stat, skip to avoid tool thrashing
             if (IsBlockedByFocus(pawn.thingIDNumber, workStat?.defName))
             {
-                LogDebug($"Blocked by focus window: {pawn.LabelShort} focus is different than {workStat?.defName}", "AssignmentSearch.FocusBlock");
-                LogJobQueue(pawn, caller != null ? $"TryUpgradeFor:blockedByFocus:{caller}" : "TryUpgradeFor:blockedByFocus");
+                string fbKey = $"Assign.FocusBlock|{pawn.ThingID}|{workStat?.defName}";
+                if (ShouldLogWithCooldown(fbKey))
+                {
+                    LogDebug($"Blocked by focus window: {pawn.LabelShort} focus is different than {workStat?.defName}", "AssignmentSearch.FocusBlock");
+                    LogJobQueue(pawn, caller != null ? $"TryUpgradeFor:blockedByFocus:{caller}" : "TryUpgradeFor:blockedByFocus");
+                }
                 return false;
             }
 
@@ -347,21 +351,23 @@ namespace SurvivalTools.Assign
             try
             {
                 var jq = pawn?.jobs?.jobQueue;
+                string key = $"Assign.JobQueue.{pawn?.ThingID}|{tag}";
                 if (jq == null)
                 {
-                    LogDebug($"[SurvivalTools.Assignment][{tag}] jobQueue=null", $"Assign.JobQueue.{pawn?.ThingID}|{tag}");
+                    LogDebug($"[SurvivalTools.Assignment][{tag}] jobQueue=null", key);
                     return;
                 }
                 int count = jq.Count;
-                // Build a compact single-line queue summary to avoid multi-line spam
                 if (count == 0)
                 {
-                    LogDebug($"[SurvivalTools.Assignment][{tag}] jobQueue count=0", $"Assign.JobQueue.{pawn.ThingID}|{tag}");
+                    LogDebug($"[SurvivalTools.Assignment][{tag}] jobQueue count=0", key);
                     return;
                 }
-                System.Text.StringBuilder sb = new System.Text.StringBuilder(64 + count * 24);
+                int maxEntries = 20;
+                int shown = Math.Min(count, maxEntries);
+                var sb = new System.Text.StringBuilder(64 + shown * 24);
                 sb.Append($"[SurvivalTools.Assignment][{tag}] jobQueue count={count} :: ");
-                for (int i = 0; i < count; i++)
+                for (int i = 0; i < shown; i++)
                 {
                     var item = jq[i];
                     var def = item?.job?.def?.defName ?? "(null)";
@@ -382,7 +388,8 @@ namespace SurvivalTools.Assign
                     if (i > 0) sb.Append(" | ");
                     sb.Append('[').Append(i).Append("] ").Append(def).Append(" -> ").Append(target);
                 }
-                LogDebug(sb.ToString(), $"Assign.JobQueue.{pawn.ThingID}|{tag}");
+                if (count > shown) sb.Append($" | … +{count - shown} more");
+                LogDebug(sb.ToString(), key);
             }
             catch (Exception ex)
             {
@@ -535,10 +542,11 @@ namespace SurvivalTools.Assign
                 if (pawn.jobs.curJob != null) return false; // only start when idle
 
                 var jq = pawn.jobs.jobQueue;
+                // Take a snapshot of relevant queued jobs to avoid collection mutation surprises
+                var matches = new List<Job>(4);
                 for (int i = 0; i < jq.Count; i++)
                 {
-                    var q = jq[i];
-                    var j = q?.job;
+                    var j = jq[i]?.job;
                     if (j == null || j.def == null) continue;
                     bool defMatch = false;
                     for (int d = 0; d < jobDefs.Length; d++)
@@ -546,47 +554,60 @@ namespace SurvivalTools.Assign
                         if (j.def == jobDefs[d]) { defMatch = true; break; }
                     }
                     if (!defMatch) continue;
-                    var targetThing = j.targetA.Thing;
+                    Thing targetThing = null;
+                    try { if (j.targetA.HasThing) targetThing = j.targetA.Thing; } catch { targetThing = null; }
                     if (targetThing != null && TargetsSameTool(pawn, targetThing, tool))
-                    {
-                        // Start a cloned job to avoid state attached to the queued instance
-                        var cloned = JobUtils.CloneJobForQueue(j);
-                        if (cloned == null || cloned.def == null)
-                            return false;
-                        cloned.playerForced = true;
-                        bool started = false;
-                        try
-                        {
-                            started = pawn.jobs.TryTakeOrderedJob(cloned);
-                        }
-                        catch (Exception ex)
-                        {
-                            LogError($"[SurvivalTools.Assignment] Exception starting cloned queued job: {ex}");
-                            started = false;
-                        }
-                        if (started)
-                        {
-                            LogDebug($"[SurvivalTools.Assignment] Started queued {cloned.def.defName} immediately for {pawn.LabelShort} targeting {tool.LabelShort}", $"Assign.StartQueued|{pawn.ThingID}|{tool.thingIDNumber}|{cloned.def?.defName}");
-                            // Safely remove the original queued entry by index if still present
-                            var queueList = jq as System.Collections.IList;
-                            if (queueList != null && i >= 0 && i < jq.Count && jq[i]?.job == j)
-                            {
-                                queueList.RemoveAt(i);
-                            }
-                            return true;
-                        }
-                        else
-                        {
-                            // Could not start; leave original queued job in place
-                            return false;
-                        }
-                    }
+                        matches.Add(j);
+                }
+
+                if (matches.Count == 0) return false;
+
+                // Try the first match
+                var jobToClone = matches[0];
+                var cloned = JobUtils.CloneJobForQueue(jobToClone);
+                if (cloned == null || cloned.def == null) return false;
+                cloned.playerForced = true;
+
+                bool started = false;
+                try { started = pawn.jobs.TryTakeOrderedJob(cloned); }
+                catch (Exception ex)
+                {
+                    LogError($"[SurvivalTools.Assignment] Exception starting cloned queued job: {ex}");
+                    started = false;
+                }
+                if (started)
+                {
+                    LogDebug($"[SurvivalTools.Assignment] Started queued {cloned.def.defName} immediately for {pawn.LabelShort} targeting {tool.LabelShort}", $"Assign.StartQueued|{pawn.ThingID}|{tool.thingIDNumber}|{cloned.def?.defName}");
+                    // Purge any queued duplicates for safety
+                    RemoveQueuedToolJobsFor(pawn, tool, JobDefOf.Equip, JobDefOf.TakeInventory);
+                    return true;
                 }
             }
             catch (Exception ex)
             {
                 LogError($"[SurvivalTools.Assignment] Exception in TryStartQueuedToolJobFor: {ex}");
             }
+            return false;
+        }
+
+        private static bool HasQueuedAcquisitionFor(Pawn pawn, Thing tool)
+        {
+            try
+            {
+                var jq = pawn?.jobs?.jobQueue;
+                if (jq == null || tool == null) return false;
+                for (int i = 0; i < jq.Count; i++)
+                {
+                    var j = jq[i]?.job;
+                    if (j == null || j.def == null) continue;
+                    if (j.def != JobDefOf.Equip && j.def != JobDefOf.TakeInventory) continue;
+                    Thing targetThing = null;
+                    try { if (j.targetA.HasThing) targetThing = j.targetA.Thing; } catch { targetThing = null; }
+                    if (targetThing != null && TargetsSameTool(pawn, targetThing, tool))
+                        return true;
+                }
+            }
+            catch { }
             return false;
         }
 
@@ -1113,14 +1134,15 @@ namespace SurvivalTools.Assign
                 if (priority == QueuePriority.Front)
                 {
                     // Avoid enqueueing duplicates
-                    if (!TryStartQueuedToolJobFor(pawn, candidate.tool, JobDefOf.Equip, JobDefOf.TakeInventory))
+                    if (!TryStartQueuedToolJobFor(pawn, candidate.tool, JobDefOf.Equip, JobDefOf.TakeInventory) && !HasQueuedAcquisitionFor(pawn, candidate.tool))
                         pawn.jobs?.jobQueue?.EnqueueFirst(clonedJob, JobTag.Misc);
                 }
                 else
                 {
                     // For Append and idle=false case we should never reach here due to early return.
                     // Still avoid enqueueing duplicates in case of future changes
-                    pawn.jobs?.jobQueue?.EnqueueLast(clonedJob, JobTag.Misc);
+                    if (!HasQueuedAcquisitionFor(pawn, candidate.tool))
+                        pawn.jobs?.jobQueue?.EnqueueLast(clonedJob, JobTag.Misc);
                 }
                 LogDebug($"[SurvivalTools.Assignment] Successfully enqueued {clonedJob.def.defName} job for {pawn.LabelShort} targeting {candidate.tool.LabelShort}", $"Assign.Enqueued|{pawn.ThingID}|{candidate.tool.thingIDNumber}|{clonedJob.def?.defName}");
                 // Protect the just-enqueued acquisition target as "recently acquired" to avoid immediate drop
