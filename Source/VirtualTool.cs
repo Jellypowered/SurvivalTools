@@ -63,7 +63,7 @@ namespace SurvivalTools
         public static VirtualTool FromThing(Thing thing)
         {
             if (thing?.def == null) return null;
-            if (!LooksLikeToolStuff(thing.def)) return null;
+            if (!EligibleTextile(thing.def)) return null;
             return new VirtualTool(thing);
         }
 
@@ -79,8 +79,44 @@ namespace SurvivalTools
 
         #region Helpers
 
-        private static bool LooksLikeToolStuff(ThingDef def)
-            => def?.GetModExtension<SurvivalToolProperties>() != null;
+        // Phase 8: tighten to textiles only (fabric/wool). Exclude wood, apparel, weapons.
+        private static bool EligibleTextile(ThingDef def)
+        {
+            if (def == null) return false;
+            if (def.IsApparel || def.IsWeapon) return false;
+            // Must be a stuff item whose stuff categories overlap Fabric or its textile tags
+            if (!def.stuffProps?.categories.NullOrEmpty() == true)
+            {
+                bool textile = false;
+                var cats = def.stuffProps.categories;
+                for (int i = 0; i < cats.Count; i++)
+                {
+                    var c = cats[i];
+                    if (c?.defName != null && (c.defName.Contains("Fabric") || c.defName.Contains("Textile")))
+                    {
+                        textile = true; break;
+                    }
+                }
+                if (!textile) return false;
+            }
+            else return false;
+            // Exclude wood (common defNames) explicitly
+            var dn = def.defName.ToLowerInvariant();
+            if (dn == "woodlog" || dn.Contains("wood")) return false;
+            // Must declare SurvivalToolProperties with cleaning stat to be useful as virtual tool
+            var ext = def.GetModExtension<SurvivalToolProperties>();
+            if (ext?.baseWorkStatFactors == null) return false;
+            bool hasCleaning = false;
+            for (int i = 0; i < ext.baseWorkStatFactors.Count; i++)
+            {
+                var sm = ext.baseWorkStatFactors[i];
+                if (sm?.stat == ST_StatDefOf.CleaningSpeed)
+                {
+                    hasCleaning = true; break;
+                }
+            }
+            return hasCleaning;
+        }
 
         #endregion
     }

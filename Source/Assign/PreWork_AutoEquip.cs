@@ -275,6 +275,11 @@ namespace SurvivalTools.Assign
 
                 if (relevantStat != null)
                 {
+                    // Exempt pure delivery WorkGivers (resource hauling only) from rescue/upgrade churn.
+                    if (JobGate.IsPureDeliveryWorkGiver(__instance.def))
+                    {
+                        return true; // do not attempt upgrades for pure deliveries
+                    }
                     _wgPendingStat[pawn.thingIDNumber] = relevantStat;
                 }
 
@@ -313,6 +318,13 @@ namespace SurvivalTools.Assign
 
                 if (!_wgPendingStat.TryGetValue(pawn.thingIDNumber, out var relevantStat) || relevantStat == null)
                 {
+                    return;
+                }
+
+                // Skip upgrade attempts for pure delivery WorkGivers (resource hauling only)
+                if (JobGate.IsPureDeliveryWorkGiver(__instance.def))
+                {
+                    _wgPendingStat.Remove(pawn.thingIDNumber);
                     return;
                 }
 

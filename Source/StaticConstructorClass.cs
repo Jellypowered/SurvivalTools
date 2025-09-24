@@ -265,8 +265,6 @@ namespace SurvivalTools
             RegisterWorkGiverForStat("Grower_Sow", ST_StatDefOf.SowingSpeed);
 
             // Construction
-            RegisterWorkGiverForStat("ConstructDeliverResourcesToBluePrints", StatDefOf.ConstructionSpeed);
-            RegisterWorkGiverForStat("ConstructDeliverResourcesToFrames", StatDefOf.ConstructionSpeed);
             RegisterWorkGiverForStat("ConstructFinishFrames", StatDefOf.ConstructionSpeed);
             RegisterWorkGiverForStat("ConstructSmoothWall", StatDefOf.ConstructionSpeed);
             RegisterWorkGiverForStat("ConstructSmoothFloor", StatDefOf.ConstructionSpeed);

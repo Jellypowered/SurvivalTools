@@ -86,6 +86,7 @@ namespace SurvivalTools
 
         // Gating alert settings  
         public bool showGatingAlert = true; // Show alert when pawns are blocked by tool gating
+        public int toolGateAlertMinTicks = 1500; // Phase 8: minimum visibility duration for gating alert
 
         // Gating enforcer settings
         public bool enforceOnModeChange = true; // Cancel now-invalid jobs when difficulty changes
@@ -190,6 +191,7 @@ namespace SurvivalTools
             Scribe_Values.Look(ref showUpgradeSuggestions, nameof(showUpgradeSuggestions), true);
             Scribe_Values.Look(ref showDenialMotes, nameof(showDenialMotes), true);
             Scribe_Values.Look(ref showGatingAlert, nameof(showGatingAlert), true);
+            Scribe_Values.Look(ref toolGateAlertMinTicks, nameof(toolGateAlertMinTicks), 1500);
             Scribe_Values.Look(ref enforceOnModeChange, nameof(enforceOnModeChange), true);
 
             Scribe_Collections.Look(ref workSpeedGlobalJobGating, nameof(workSpeedGlobalJobGating), LookMode.Value, LookMode.Value);
@@ -374,6 +376,23 @@ namespace SurvivalTools
             listing.CheckboxLabeled("Settings_ShowUpgradeSuggestions".Translate(), ref showUpgradeSuggestions, "Settings_ShowUpgradeSuggestions_Tooltip".Translate());
             listing.CheckboxLabeled("Settings_ShowDenialMotes".Translate(), ref showDenialMotes, "Settings_ShowDenialMotes_Tooltip".Translate());
             listing.CheckboxLabeled("Settings_ShowGatingAlert".Translate(), ref showGatingAlert, "Settings_ShowGatingAlert_Tooltip".Translate());
+            if (showGatingAlert)
+            {
+                // Sticky alert minimum visibility slider (0–5000 ticks)
+                int prev = toolGateAlertMinTicks;
+                var label = "Settings_ToolGateAlertMinTicks".Translate();
+                listing.Label($"{label}: {toolGateAlertMinTicks} ticks (~{(toolGateAlertMinTicks / 60f):F1}s)");
+                float sliderVal = listing.Slider(toolGateAlertMinTicks, 0f, 5000f);
+                toolGateAlertMinTicks = Mathf.Clamp(Mathf.RoundToInt(sliderVal / 50f) * 50, 0, 5000); // snap to 50‑tick increments for stability
+                if (toolGateAlertMinTicks != prev && IsDebugLoggingEnabled)
+                {
+                    LogDebug($"[SurvivalTools.Settings] toolGateAlertMinTicks changed -> {toolGateAlertMinTicks}", "Settings.Change.AlertMinTicks");
+                }
+                // Helper/tooltip style small text
+                GUI.color = Color.gray; Text.Font = GameFont.Tiny;
+                listing.Label("Settings_ToolGateAlertMinTicks_Tooltip".Translate());
+                GUI.color = prevColor; Text.Font = GameFont.Small;
+            }
             listing.CheckboxLabeled("Settings_EnforceOnModeChange".Translate(), ref enforceOnModeChange, "Settings_EnforceOnModeChange_Tooltip".Translate());
             listing.Gap();
 

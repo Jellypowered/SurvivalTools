@@ -126,46 +126,9 @@ namespace SurvivalTools
             if (t == null) return false;
             // Already an actual SurvivalTool instance (includes VirtualSurvivalTool subclass) => not virtual by this predicate.
             if (t is SurvivalTool) return t is VirtualTool; // Only treat the dedicated wrapper subclass as virtual.
-
-            var def = t.def;
-            if (def == null) return false;
-
-            // Must NOT be minified buildings, corpses, pawns, plants, filth, chunks, apparel, weapons, ingestibles etc.
-            // Fast negative filters to avoid misclassification in hauling / reservation systems.
-            // Fast negatives; avoid reflection or expensive checks. Exclude ingestibles (raw food, meals), apparel, weapons, corpses, plants, filth.
-            if (def.Minifiable || def.IsCorpse || def.plant != null || def.IsFilth || def.IsApparel || def.IsWeapon || def.IsIngestible)
-                return false;
-
-            // If def is explicitly a SurvivalTool (thingClass assignable) it's not a virtual tool.
-            if (typeof(SurvivalTool).IsAssignableFrom(def.thingClass)) return false;
-
-            // Require mod extension or statBases with survival tool stats.
-            var ext = def.GetModExtension<SurvivalToolProperties>();
-            bool hasExtFactors = ext?.baseWorkStatFactors != null && ext.baseWorkStatFactors.Any(m => m?.stat != null && m.value != 0f);
-
-            // Also consider statBases providing survival tool stats directly (e.g., WorkSpeedGlobal tool-stuff patches)
-            bool hasRelevantStatBase = false;
-            var statBases = def.statBases;
-            if (statBases != null)
-            {
-                for (int i = 0; i < statBases.Count; i++)
-                {
-                    var sb = statBases[i];
-                    if (sb?.stat == null) continue;
-                    // Heuristic: if stat requires a survival tool or is one of known survival tool stats.
-                    if (sb.stat.defName.StartsWith("ST_")) { hasRelevantStatBase = true; break; }
-                }
-            }
-
-            if (!hasExtFactors && !hasRelevantStatBase) return false;
-
-            // Material / stuff items: prefer IsToolStuff extension when available to narrow.
-            if (def.IsToolStuff()) return true;
-
-            // Fallback: ensure it's a small haulable resource (category Item) to avoid buildings.
-            if (def.category == ThingCategory.Item && (hasExtFactors || hasRelevantStatBase)) return true;
-
-            return false;
+            // Delegate to tightened textile-only factory eligibility
+            // Use factory predicate without retaining wrapper (avoids transient allocation in classification paths)
+            return VirtualTool.FromThing(t) != null;
         }
 
         /// <summary>

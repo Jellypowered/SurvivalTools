@@ -22,6 +22,8 @@ namespace SurvivalTools
         private List<PawnGatingIssue> _gatedPawns;
         private int _lastUpdateTick = -9999;
         private readonly Dictionary<Pawn, int> _lastShownTick = new Dictionary<Pawn, int>();
+        // Phase 8: stickiness map (pawn -> hideAfterTick)
+        private static readonly Dictionary<int, int> _stickyUntil = new Dictionary<int, int>(64);
 
         private const int UpdateIntervalTicks = 600; // Update rarely
         private const int PawnThrottleTicks = 3000; // Don't repeat same pawn too often
@@ -64,9 +66,36 @@ namespace SurvivalTools
                 UpdateGatedPawns(now);
             }
 
-            return (_gatedPawns != null && _gatedPawns.Count > 0)
-                ? AlertReport.Active
-                : AlertReport.Inactive;
+            // If any new gated pawns -> active
+            bool active = _gatedPawns != null && _gatedPawns.Count > 0;
+
+            // Stickiness: keep alert active while any pawn still within sticky window
+            if (!active)
+            {
+                if (_stickyUntil.Count > 0)
+                {
+                    // Prune & check
+                    var toRemove = (List<int>)null;
+                    foreach (var kv in _stickyUntil)
+                    {
+                        if (now < kv.Value)
+                        {
+                            active = true; // still sticky
+                        }
+                        else
+                        {
+                            if (toRemove == null) toRemove = new List<int>(4);
+                            toRemove.Add(kv.Key);
+                        }
+                    }
+                    if (toRemove != null)
+                    {
+                        for (int i = 0; i < toRemove.Count; i++) _stickyUntil.Remove(toRemove[i]);
+                    }
+                }
+            }
+
+            return active ? AlertReport.Active : AlertReport.Inactive;
         }
 
         public override string GetLabel()
@@ -142,6 +171,7 @@ namespace SurvivalTools
                 if (HasMiningWork(map) && IsBlockedForWork(pawn, _miningWG, "ST_Alert_WorkType_Mining".Translate()))
                 {
                     _lastShownTick[pawn] = currentTick;
+                    RegisterSticky(pawn, currentTick);
                     return; // One issue per pawn per update
                 }
             }
@@ -152,6 +182,7 @@ namespace SurvivalTools
                 if (HasConstructionWork(map) && IsBlockedForWork(pawn, _constructWG, "ST_Alert_WorkType_Construction".Translate()))
                 {
                     _lastShownTick[pawn] = currentTick;
+                    RegisterSticky(pawn, currentTick);
                     return;
                 }
             }
@@ -162,6 +193,7 @@ namespace SurvivalTools
                 if (HasPlantCuttingWork(map) && IsBlockedForWork(pawn, _plantCutWG, "ST_Alert_WorkType_PlantCutting".Translate()))
                 {
                     _lastShownTick[pawn] = currentTick;
+                    RegisterSticky(pawn, currentTick);
                     return;
                 }
             }
@@ -172,6 +204,7 @@ namespace SurvivalTools
                 if (HasPlantHarvestWork(map) && IsBlockedForWork(pawn, _plantHarvestWG, "ST_Alert_WorkType_PlantHarvest".Translate()))
                 {
                     _lastShownTick[pawn] = currentTick;
+                    RegisterSticky(pawn, currentTick);
                     return;
                 }
             }
@@ -255,6 +288,16 @@ namespace SurvivalTools
             public Pawn pawn;
             public string workType;
             public string reason;
+        }
+
+        private static void RegisterSticky(Pawn pawn, int now)
+        {
+            var settings = SurvivalTools.Settings;
+            if (pawn == null || settings == null) return;
+            int minTicks = settings.toolGateAlertMinTicks;
+            if (minTicks <= 0) return; // disabled
+            int hideAfter = now + minTicks;
+            _stickyUntil[pawn.thingIDNumber] = hideAfter;
         }
     }
 }

@@ -23,11 +23,13 @@ namespace SurvivalTools
 
         public override void StartedNewGame()
         {
+            Helpers.ST_WearService.Clear();
             Schedule();
         }
 
         public override void LoadedGame()
         {
+            Helpers.ST_WearService.Clear();
             Schedule();
         }
 

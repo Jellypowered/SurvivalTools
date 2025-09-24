@@ -311,6 +311,11 @@ namespace SurvivalTools.HarmonyStuff
             }
 
             // NOTE: In 1.6 there is no FloatMenuMakerMap.AddHumanlikeOrders — we intentionally do NOT patch it.
+
+            // Dev gizmo for wear simulation
+            TryPatch("Pawn.GetGizmos",
+                AccessTools.Method(typeof(Pawn), nameof(Pawn.GetGizmos)),
+                postfix: new HarmonyMethod(patchType, nameof(Postfix_Pawn_GetGizmos)));
         }
 
         // ---------------- Vanilla postfixes/transpilers ----------------
@@ -327,6 +332,25 @@ namespace SurvivalTools.HarmonyStuff
                 else
                     __result = null;
             }
+        }
+
+        // Postfix to add Simulate Wear gizmo (DevMode only, selected pawn)
+        public static void Postfix_Pawn_GetGizmos(Pawn __instance, ref IEnumerable<Gizmo> __result)
+        {
+            try
+            {
+                if (!Prefs.DevMode || __instance == null || !Find.Selector.IsSelected(__instance)) return;
+                var list = __result != null ? __result.ToList() : new List<Gizmo>();
+                list.Add(new Command_Action
+                {
+                    defaultLabel = "ST: Sim Wear 30s",
+                    defaultDesc = "Simulate 30 seconds of survival tool wear pulses on this pawn's current best tools.",
+                    icon = TexCommand.DesirePower, // generic icon
+                    action = () => global::SurvivalTools.DebugTools.DebugAction_SimulateWearPulses.SimulateWear()
+                });
+                __result = list;
+            }
+            catch { }
         }
 
         public static IEnumerable<CodeInstruction> Transpile_JobDriver_PlantWork_MakeNewToils(IEnumerable<CodeInstruction> instructions)

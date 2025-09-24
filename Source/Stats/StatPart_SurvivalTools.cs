@@ -130,6 +130,26 @@ namespace SurvivalTools.Stats
             // Apply tool factor using resolver (exactly matching current behavior)
             float toolFactor = ToolStatResolver.GetToolStatFactor(effectiveTool.def, effectiveTool.Stuff, parentStat);
             val *= toolFactor;
+
+            // Phase 8: Wear pulse (only if factor actually modifies value and pawn currently has a job using this stat)
+            try
+            {
+                // Pulse wear only if this tool provided an improvement over the toolless baseline.
+                float baseline = SurvivalToolUtility.GetNoToolBaseline(parentStat);
+                if (toolFactor > baseline + 0.001f)
+                {
+                    // Basic heuristic: if pawn has a current job and this stat is relevant, pulse wear.
+                    // (Deep job->stat validation already happens earlier in scoring/gating; keep hot path cheap.)
+                    if (pawn?.CurJob != null)
+                    {
+                        if (effectiveTool is SurvivalTool stTool)
+                        {
+                            Helpers.ST_WearService.TryPulseWear(pawn, stTool, parentStat);
+                        }
+                    }
+                }
+            }
+            catch { /* swallow to avoid destabilizing stat math */ }
         }
 
         /// <summary>

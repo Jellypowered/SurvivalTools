@@ -538,47 +538,49 @@ namespace SurvivalTools.Assign
         {
             try
             {
-                if (pawn?.jobs?.jobQueue == null || tool == null) return false;
-                if (pawn.jobs.curJob != null) return false; // only start when idle
+                if (pawn == null || tool == null) return false;
+                var jobTracker = pawn.jobs; if (jobTracker == null) return false;
+                var queue = jobTracker.jobQueue; if (queue == null) return false;
+                if (jobTracker.curJob != null) return false; // only auto-start when idle
 
-                var jq = pawn.jobs.jobQueue;
-                // Take a snapshot of relevant queued jobs to avoid collection mutation surprises
-                var matches = new List<Job>(4);
-                for (int i = 0; i < jq.Count; i++)
+                // Snapshot queued jobs defensively (avoid mutation mid-iteration)
+                var snapshot = new List<Job>(queue.Count);
+                for (int i = 0; i < queue.Count; i++)
                 {
-                    var j = jq[i]?.job;
-                    if (j == null || j.def == null) continue;
+                    var qi = queue[i];
+                    var j = qi?.job;
+                    if (j?.def == null) continue;
+                    // Only consider requested job defs
                     bool defMatch = false;
-                    for (int d = 0; d < jobDefs.Length; d++)
-                    {
-                        if (j.def == jobDefs[d]) { defMatch = true; break; }
-                    }
+                    for (int d = 0; d < jobDefs.Length; d++) { if (j.def == jobDefs[d]) { defMatch = true; break; } }
                     if (!defMatch) continue;
+                    // Extract target safely
                     Thing targetThing = null;
                     try { if (j.targetA.HasThing) targetThing = j.targetA.Thing; } catch { targetThing = null; }
-                    if (targetThing != null && TargetsSameTool(pawn, targetThing, tool))
-                        matches.Add(j);
+                    if (targetThing == null) continue;
+                    if (targetThing.DestroyedOrNull()) continue; // stale
+                    if (!TargetsSameTool(pawn, targetThing, tool)) continue;
+                    snapshot.Add(j);
                 }
 
-                if (matches.Count == 0) return false;
+                if (snapshot.Count == 0) return false;
 
-                // Try the first match
-                var jobToClone = matches[0];
-                var cloned = JobUtils.CloneJobForQueue(jobToClone);
-                if (cloned == null || cloned.def == null) return false;
-                cloned.playerForced = true;
-
-                bool started = false;
-                try { started = pawn.jobs.TryTakeOrderedJob(cloned); }
-                catch (Exception ex)
+                // Select first non-stale job; clone + start
+                for (int s = 0; s < snapshot.Count; s++)
                 {
-                    LogError($"[SurvivalTools.Assignment] Exception starting cloned queued job: {ex}");
-                    started = false;
-                }
-                if (started)
-                {
+                    var jobToClone = snapshot[s];
+                    if (jobToClone == null || jobToClone.def == null) continue;
+                    Job cloned = null;
+                    try { cloned = JobUtils.CloneJobForQueue(jobToClone); } catch { cloned = null; }
+                    if (cloned == null || cloned.def == null) continue;
+                    cloned.playerForced = true;
+                    bool started = false;
+                    try { started = jobTracker.TryTakeOrderedJob(cloned); }
+                    catch (Exception ex)
+                    { LogError($"[SurvivalTools.Assignment] Exception starting cloned queued job: {ex}"); started = false; }
+                    if (!started) continue;
                     LogDebug($"[SurvivalTools.Assignment] Started queued {cloned.def.defName} immediately for {pawn.LabelShort} targeting {tool.LabelShort}", $"Assign.StartQueued|{pawn.ThingID}|{tool.thingIDNumber}|{cloned.def?.defName}");
-                    // Purge any queued duplicates for safety
+                    // Remove stale/duplicate queued jobs now that one started
                     RemoveQueuedToolJobsFor(pawn, tool, JobDefOf.Equip, JobDefOf.TakeInventory);
                     return true;
                 }
@@ -617,6 +619,21 @@ namespace SurvivalTools.Assign
             {
                 var jq = pawn?.jobs?.jobQueue;
                 if (jq == null || tool == null) return;
+                // First pass: remove entries with destroyed/null targets for these jobDefs (stale cleanup)
+                for (int i = jq.Count - 1; i >= 0; i--)
+                {
+                    var q = jq[i];
+                    var jj = q?.job;
+                    if (jj?.def == null) continue;
+                    bool matches = false; for (int d = 0; d < jobDefs.Length; d++) { if (jj.def == jobDefs[d]) { matches = true; break; } }
+                    if (!matches) continue;
+                    Thing t = null; try { if (jj.targetA.HasThing) t = jj.targetA.Thing; } catch { t = null; }
+                    if (t == null || t.DestroyedOrNull())
+                    {
+                        var list = jq as System.Collections.IList; list?.RemoveAt(i);
+                        LogDebug($"[SurvivalTools.Assignment] Removed stale queued {jj.def.defName} (null/destroyed target)", "AssignmentSearch.Cleanup.Stale");
+                    }
+                }
                 for (int i = jq.Count - 1; i >= 0; i--)
                 {
                     var j = jq[i]?.job;

@@ -48,6 +48,10 @@ namespace SurvivalTools.Gating
                     return false;
                 }
             }
+
+            // Phase 8+: Exempt pure delivery WorkGivers (resource hauling to blueprints/frames/variants) from gating & rescue.
+            if (wg != null && IsPureDeliveryWorkGiver(wg))
+                return false;
             // Resolve required stats once
             var requiredStatsPre = ResolveRequiredStats(wg, job);
             // If no stats, do not gate
@@ -147,6 +151,28 @@ namespace SurvivalTools.Gating
         {
             _wgReq.Clear();
             _jobReq.Clear();
+        }
+
+        /// <summary>
+        /// Returns true if this WorkGiver is ONLY about delivering construction resources (no actual building work).
+        /// Covers vanilla + typo variants + modded prefixes (DeliverResources* / ConstructDeliverResources*).
+        /// Safe to call hot path (string checks only).
+        /// </summary>
+        public static bool IsPureDeliveryWorkGiver(WorkGiverDef wg)
+        {
+            if (wg == null) return false;
+            var dn = wg.defName;
+            if (string.IsNullOrEmpty(dn)) return false;
+            // Normalize once
+            dn = dn.ToLowerInvariant();
+            // Common vanilla / mod variants
+            // "constructdeliverresources...", including frames / blueprints / typo blueprints
+            if (dn.StartsWith("constructdeliverresources")) return true;
+            // Generic mod pattern: DeliverResourcesToFrames / DeliverResourcesToBlueprints
+            if (dn.StartsWith("deliverresources")) return true;
+            // Defensive: explicit contains checks (cheap) for mid-string naming styles
+            if (dn.Contains("deliverresources") && (dn.Contains("frame") || dn.Contains("blueprint"))) return true;
+            return false;
         }
     }
 }

@@ -174,6 +174,7 @@ namespace SurvivalTools
         /// instead of probabilistic per-call damage. This prevents variance across runs
         /// and makes debugging easier.
         /// </summary>
+        // Phase 8+: Legacy virtual tool degrade counters retained only for save compatibility (no longer used).
         private static readonly Dictionary<int, int> _virtualToolDegradeCounters = new Dictionary<int, int>();
 
         /// <summary>
@@ -1756,70 +1757,22 @@ namespace SurvivalTools
 
         public static void TryDegradeTool(Pawn pawn, StatDef stat)
         {
+            // Phase 8+: Legacy adapter redirected to pulsed wear service.
             if (pawn == null || stat == null) return;
-
-            var tool = pawn.GetBestSurvivalTool(stat);
-            float toolFactor = tool != null ? tool.WorkStatFactors.ToList().GetStatFactorFromList(stat) : -1f;
-            LogDebug($"TryDegradeTool: pawn={pawn?.LabelShort ?? "null"} stat={stat.defName} bestTool={(tool != null ? tool.LabelCapNoCount : "null")} bestFactor={toolFactor}", $"TryDegrade_{pawn?.ThingID ?? "null"}_{stat.defName}");
-            if (tool == null || !IsToolDegradationEnabled) return;
-
+            if (!IsToolDegradationEnabled) return;
             try
             {
-                var backing = BackingThing(tool, pawn) ?? (tool as Thing);
-                if (tool is VirtualTool vt && vt.SourceThing != null)
-                    backing = vt.SourceThing;
-
-                LessonAutoActivator.TeachOpportunity(ST_ConceptDefOf.SurvivalToolDegradation, OpportunityType.GoodToKnow);
-
-                if (backing is SurvivalTool realTool && realTool.def.useHitPoints)
-                {
-                    realTool.workTicksDone++;
-                    if (realTool.workTicksDone >= realTool.WorkTicksToDegrade)
-                    {
-                        realTool.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, 1));
-                        realTool.workTicksDone = 0;
-                    }
-                    return;
-                }
-
-                if (backing is ThingWithComps twc && backing.def.useHitPoints)
-                {
-                    int key = backing.thingIDNumber;
-                    if (!_virtualToolDegradeCounters.TryGetValue(key, out var counter)) counter = 0;
-                    counter++;
-                    _virtualToolDegradeCounters[key] = counter;
-                    float lifespanDays = tool.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan);
-                    int hp = Math.Max(1, twc.MaxHitPoints);
-                    int threshold = Math.Max(1, (int)Math.Floor((lifespanDays * GenDate.TicksPerDay) / hp));
-                    if (counter >= threshold)
-                    {
-                        twc.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, 1));
-                        _virtualToolDegradeCounters[key] = 0;
-                    }
-                    return;
-                }
-
-                if (backing != null && backing.stackCount > 0)
-                {
-                    int key = backing.thingIDNumber;
-                    if (!_virtualToolDegradeCounters.TryGetValue(key, out var counter)) counter = 0;
-                    counter++;
-                    float factor = SurvivalTools.Settings?.EffectiveToolDegradationFactor ?? 1f;
-                    int threshold = Math.Max(1, (int)Math.Floor(100f / Math.Max(0.001f, factor)));
-                    _virtualToolDegradeCounters[key] = counter;
-                    if (counter >= threshold)
-                    {
-                        var one = backing.SplitOff(1);
-                        one.Destroy(DestroyMode.Vanish);
-                        _virtualToolDegradeCounters[key] = 0;
-                    }
-                }
+                var tool = pawn.GetBestSurvivalTool(stat);
+                if (tool == null) return;
+                // Teach concept once when adapter first used (best-effort)
+                try { LessonAutoActivator.TeachOpportunity(ST_ConceptDefOf.SurvivalToolDegradation, OpportunityType.GoodToKnow); } catch { }
+                Helpers.ST_WearService.TryPulseWearThrottled(pawn, tool, stat);
             }
             catch (Exception ex)
             {
                 if (IsDebugLoggingEnabled)
                 {
-                    try { LogDebug($"TryDegradeTool exception: {ex}", $"TryDegrade_{pawn?.ThingID ?? "null"}_{stat?.defName ?? "null"}"); } catch { }
+                    try { LogDebug($"TryDegradeTool adapter exception: {ex}", $"TryDegrade_{pawn?.ThingID ?? "null"}_{stat?.defName ?? "null"}"); } catch { }
                 }
             }
         }
