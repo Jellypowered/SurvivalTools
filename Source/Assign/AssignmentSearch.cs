@@ -45,6 +45,9 @@ namespace SurvivalTools.Assign
         private const float HysteresisExtraGainPct = 0.05f; // +5% for re-upgrade
         private const float GatingEpsilon = 0.001f;
         private const int FocusTicksWindow = 600; // 10 seconds: prefer current work stat, avoid thrash
+                                                  // Cooldown after performing tool management so we don't immediately re-enter assignment logic
+        private const int ManagementCooldownTicks = 180; // 3 seconds @ 60 TPS
+        private static readonly Dictionary<int, int> _managementCooldownUntil = new Dictionary<int, int>(64);
 
         // Cooldown for repeatedly failing candidates (forbidden, unreachable, reserved by others)
         // Key: ThingIDNumber -> nextAllowedTick
@@ -177,6 +180,27 @@ namespace SurvivalTools.Assign
                 return false;
             }
 
+            // Management cooldown: if we just managed tools and we're no longer at baseline, allow work instead of more churn
+            int nowTickCooldown = Find.TickManager?.TicksGame ?? 0;
+            if (_managementCooldownUntil.TryGetValue(pawn.thingIDNumber, out int cooldownUntil) && nowTickCooldown < cooldownUntil)
+            {
+                if (workStat != null)
+                {
+                    float baselineCooldown = SurvivalToolUtility.GetNoToolBaseline(workStat);
+                    ToolScoring.GetBestTool(pawn, workStat, out float curScoreCooldown);
+                    if (curScoreCooldown > baselineCooldown + GatingEpsilon)
+                    {
+                        LogDebug($"Cooldown active for {pawn.LabelShort}; skipping upgrade attempts until {cooldownUntil}", "AssignmentSearch.ManagementCooldown");
+                        return false;
+                    }
+                }
+                else
+                {
+                    LogDebug($"Cooldown active for {pawn.LabelShort}; skipping upgrade attempts until {cooldownUntil}", "AssignmentSearch.ManagementCooldown");
+                    return false;
+                }
+            }
+
             // Anti-recursion check
             int pawnID = pawn.thingIDNumber;
             if (_processingPawns.TryGetValue(pawnID, out bool processing) && processing)
@@ -254,6 +278,7 @@ namespace SurvivalTools.Assign
                             ScoreCache.NotifyToolChanged(candidate.tool);
                         LogJobQueue(pawn, caller != null ? $"TryUpgradeFor:afterEnqueueAcquisition:{caller}" : "TryUpgradeFor:afterEnqueueAcquisition");
 
+                        _managementCooldownUntil[pawn.thingIDNumber] = (Find.TickManager?.TicksGame ?? 0) + ManagementCooldownTicks;
                         return true;
                     }
                     else
@@ -263,6 +288,7 @@ namespace SurvivalTools.Assign
                         // Set a short focus window to prioritize this stat; this avoids cross-stat thrashing.
                         SetFocus(pawn, workStat);
                         LogJobQueue(pawn, caller != null ? $"TryUpgradeFor:afterEnqueueDrop:{caller}" : "TryUpgradeFor:afterEnqueueDrop");
+                        _managementCooldownUntil[pawn.thingIDNumber] = (Find.TickManager?.TicksGame ?? 0) + ManagementCooldownTicks;
                         return true;
                     }
                 }
@@ -686,24 +712,6 @@ namespace SurvivalTools.Assign
             return true;
         }
 
-        private static bool IsInHysteresis(int pawnID, int currentTick, string currentDefName, float minGainPct)
-        {
-            if (!_hysteresisData.TryGetValue(pawnID, out var data))
-                return false;
-
-            int ticksSinceUpgrade = currentTick - data.lastUpgradeTick;
-            if (ticksSinceUpgrade < HysteresisTicksNormal)
-            {
-                // Still in hysteresis period - require extra gain to re-upgrade
-                if (data.lastEquippedDefName == currentDefName)
-                {
-                    // Same tool, need extra gain
-                    return minGainPct < (minGainPct + HysteresisExtraGainPct);
-                }
-            }
-
-            return false;
-        }
 
         private static ToolCandidate FindBestCandidate(Pawn pawn, StatDef workStat, float currentScore, float minGainPct, float radius, int pathCostBudget)
         {
@@ -1239,7 +1247,7 @@ namespace SurvivalTools.Assign
                 for (int i = 0; i < inventory.Count; i++)
                 {
                     var thing = inventory[i];
-                    if (thing != null && IsSurvivalTool(thing))
+                    if (thing != null && IsRealTool(thing))
                     {
                         count++;
                         LogDebug($"[SurvivalTools.Assignment] Counted inventory tool for {pawn.LabelShort}: {thing.LabelShort}", $"Assign.Count.Inv|{pawn.ThingID}|{thing.thingIDNumber}");
@@ -1254,7 +1262,7 @@ namespace SurvivalTools.Assign
                 for (int i = 0; i < equipment.Count; i++)
                 {
                     var thing = equipment[i];
-                    if (thing != null && IsSurvivalTool(thing))
+                    if (thing != null && IsRealTool(thing))
                     {
                         count++;
                         LogDebug($"[SurvivalTools.Assignment] Counted equipped tool for {pawn.LabelShort}: {thing.LabelShort}", $"Assign.Count.Eqp|{pawn.ThingID}|{thing.thingIDNumber}");
@@ -1423,7 +1431,7 @@ namespace SurvivalTools.Assign
                 for (int i = 0; i < inventory.Count; i++)
                 {
                     var thing = inventory[i];
-                    if (thing != null && IsSurvivalTool(thing))
+                    if (thing != null && IsRealTool(thing))
                     {
                         if (protectedThingId == thing.thingIDNumber) continue; // don't drop just-acquired
                         float score = GetOverallToolScore(pawn, thing);
@@ -1444,7 +1452,7 @@ namespace SurvivalTools.Assign
                 for (int i = 0; i < equipment.Count; i++)
                 {
                     var thing = equipment[i];
-                    if (thing != null && IsSurvivalTool(thing))
+                    if (thing != null && IsRealTool(thing))
                     {
                         if (protectedThingId == thing.thingIDNumber) continue; // don't drop just-acquired
                         float score = GetOverallToolScore(pawn, thing);
@@ -1497,7 +1505,7 @@ namespace SurvivalTools.Assign
                 for (int i = 0; i < inventory.Count; i++)
                 {
                     var thing = inventory[i];
-                    if (thing != null && IsSurvivalTool(thing))
+                    if (thing != null && IsRealTool(thing))
                     {
                         // Protect best-for-focus tool from being selected as worst
                         if (bestForFocus != null && TargetsSameTool(pawn, thing, bestForFocus))
@@ -1520,7 +1528,7 @@ namespace SurvivalTools.Assign
                 for (int i = 0; i < equipment.Count; i++)
                 {
                     var thing = equipment[i];
-                    if (thing != null && IsSurvivalTool(thing))
+                    if (thing != null && IsRealTool(thing))
                     {
                         if (bestForFocus != null && TargetsSameTool(pawn, thing, bestForFocus))
                             continue;
@@ -1597,6 +1605,14 @@ namespace SurvivalTools.Assign
         private static bool IsSurvivalTool(Thing thing)
         {
             return thing is SurvivalTool || (thing?.def?.IsSurvivalTool() == true);
+        }
+
+        // Real tool excludes raw tool-stuff (materials) so carry limit & drop logic only count tangible tools
+        private static bool IsRealTool(Thing thing)
+        {
+            if (thing == null) return false;
+            if (thing.def?.IsToolStuff() == true) return false;
+            return IsSurvivalTool(thing);
         }
 
         private static bool CanPawnReserveAndReach(Pawn pawn, Thing thing)
