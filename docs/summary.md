@@ -1,6 +1,7 @@
 # Survival Tools Reborn — Session Summary (Refactor branch)
 
 Date: 2025-09-22
+Last updated: 2025-09-25
 
 ## Overview
 
@@ -156,19 +157,23 @@ This summary captures the intent, attempts, and concrete fixes from this session
 Recent targeted stability/QoL improvements:
 
 - Textiles-only virtual tools
+
   - VirtualTool eligibility tightened to Fabric-only; leather/wood/apparel/weapons excluded.
   - Gear tab shows a single virtual entry (e.g., Cloth) only if present in inventory; no duplicate stuff rows.
   - Wear service pulses HP on the underlying textile stack; no comps required; idempotent 60-tick throttle.
 
 - Pure-delivery WorkGivers are never gated
+
   - Central predicate `JobGate.IsPureDeliveryWorkGiver` exempts resource delivery (blueprints/frames) from rescue/gating.
   - PreWork auto-equip also respects this exemption to avoid churn.
 
 - Optional stat handling to prevent hard blocks
+
   - MiningYieldDigging and other “bonus” stats treated as optional during gating.
   - JobGate filters declared stats through `StatGatingHelper` before deciding to block.
 
 - Unified decision logging
+
   - Every JobGate exit logs a single compact line: `Decision: ALLOW|BLOCK | pawn=… | ctx=WG:…/Job:… | forced=… | reason=…`.
   - Queue summaries available on cooldown for fast diagnostics.
 
@@ -177,6 +182,28 @@ Recent targeted stability/QoL improvements:
   - Prefer storage cell; otherwise home-area cell; enqueue HaulToCell when needed.
 
 Quality gates: Build PASS, artifacts mirrored and zipped; no Harmony target churn from these changes.
+
+Commit refs
+
+- Start: 886d91acdf953b11aeecd03ab698cf1253a6ab04
+- Acceptance: b7d76f9
+
+Files touched (Phase 8)
+
+- Source/AI/JobDriver_DropSurvivalTool.cs — controlled drops (storage/home-first, unforbid, haul enqueue)
+- Source/Assign/AssignmentSearch.cs — rescue semantics, requeue logic, cooldowned queue summaries
+- Source/Gating/GatingEnforcer.cs — cancel/prune invalid jobs on mode changes; compact queue snapshots
+- Source/Gating/JobGate.cs — optional-stat filtering, pure-delivery exemption, acquisition-in-motion allowance, unified decision logging
+- Source/Helpers/ST_Logging.cs — queue summary helper with cooldown/dedup
+- Source/Helpers/StatFilters.cs — marks MiningYieldDigging as optional
+- Source/Helpers/ToolStatResolver.cs — textiles-only virtual candidates
+- Source/UI/GearTab_ST.cs — dedup virtuals; hide raw tool-stuff rows
+- docs/summary.md — this addendum
+
+Artifacts
+
+- 1.6/Assemblies/SurvivalTools.dll updated
+- Survival Tools Reborn_1.6-Debug.zip generated
 
 ### Also in Phase 8
 
