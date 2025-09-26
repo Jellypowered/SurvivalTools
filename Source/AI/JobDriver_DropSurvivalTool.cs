@@ -13,6 +13,7 @@ namespace SurvivalTools
     public class JobDriver_DropSurvivalTool : JobDriver
     {
         private const int DurationTicks = 15;
+        private IntVec3 _preferredDropCell = IntVec3.Invalid;
 
         private Thing ToolToDrop => job?.targetA.Thing;
 
@@ -21,6 +22,15 @@ namespace SurvivalTools
         protected override IEnumerable<Toil> MakeNewToils()
         {
             this.FailOnDestroyedOrNull(TargetIndex.A);
+
+            // Determine where to drop: storage → stockpile → home area → current position
+            ComputePreferredDropCell();
+
+            // Move to preferred drop cell if needed
+            if (_preferredDropCell.IsValid && _preferredDropCell != pawn.Position)
+            {
+                yield return Toils_Goto.GotoCell(_preferredDropCell, PathEndMode.OnCell);
+            }
 
             yield return Toils_General.Wait(DurationTicks, TargetIndex.None);
 
@@ -44,85 +54,122 @@ namespace SurvivalTools
 
                 var inv = pawn.inventory.innerContainer;
 
-                // Prefer exact reference match, fallback to def match
-                Thing inventoryInstance = null;
-                if (backing != null)
-                    inventoryInstance = inv.FirstOrDefault(t => t == backing);
-
-                if (inventoryInstance == null && backing != null)
-                    inventoryInstance = inv.FirstOrDefault(t => t.def == backing.def && t.stackCount > 0);
-
-                if (inventoryInstance == null && ToolToDrop != null)
-                    inventoryInstance = inv.FirstOrDefault(t => t == ToolToDrop || t.def == ToolToDrop.def);
-
-                if (inventoryInstance == null)
+                // Handle drop from equipment if applicable
+                var eqList = pawn.equipment?.AllEquipmentListForReading;
+                ThingWithComps eqTool = null;
+                if (eqList != null)
                 {
-                    LogDebug($"[SurvivalTools.DropTool] {pawn.LabelShort} attempted to drop {backing?.LabelShort ?? "tool"} but no matching item found in inventory.", $"DropTool_NotInInventory_{pawn.ThingID}");
-                    EndJobWith(JobCondition.Incompletable);
-                    return;
+                    for (int i = 0; i < eqList.Count; i++)
+                    {
+                        var e = eqList[i];
+                        if (e == null) continue;
+                        if (e == backing || e == ToolToDrop || e.def == ToolToDrop?.def)
+                        {
+                            eqTool = e; break;
+                        }
+                    }
                 }
 
-                // If the found stack has more than 1, split off 1. Otherwise operate on the instance directly.
-                Thing toDrop = inventoryInstance.stackCount > 1
-                    ? inventoryInstance.SplitOff(1)
-                    : inventoryInstance;
-
-                // Try dropping via the ThingOwner API
+                // If the tool is equipped, drop it via equipment tracker at our current cell
                 Thing droppedTool = null;
-                bool dropOk = false;
-                try
+                if (eqTool != null)
                 {
-                    if (pawn.Map != null)
-                        dropOk = inv.TryDrop(toDrop, pawn.Position, pawn.Map, ThingPlaceMode.Near, out droppedTool);
+                    try
+                    {
+                        if (pawn.equipment?.TryDropEquipment(eqTool, out ThingWithComps droppedEq, pawn.Position) == true)
+                        {
+                            droppedTool = droppedEq;
+                        }
+                    }
+                    catch { droppedTool = null; }
                 }
-                catch
+                else
                 {
-                    dropOk = false;
-                    droppedTool = null;
-                }
+                    // Otherwise, drop from inventory
+                    // Prefer exact reference match, fallback to def match
+                    Thing inventoryInstance = null;
+                    if (backing != null)
+                        inventoryInstance = inv.FirstOrDefault(t => t == backing);
 
-                if (!dropOk || droppedTool == null)
-                {
-                    // Fallback: attempt to place on the map directly
-                    bool placed = false;
+                    if (inventoryInstance == null && backing != null)
+                        inventoryInstance = inv.FirstOrDefault(t => t.def == backing.def && t.stackCount > 0);
+
+                    if (inventoryInstance == null && ToolToDrop != null)
+                        inventoryInstance = inv.FirstOrDefault(t => t == ToolToDrop || t.def == ToolToDrop.def);
+
+                    if (inventoryInstance == null)
+                    {
+                        LogDebug($"[SurvivalTools.DropTool] {pawn.LabelShort} attempted to drop {backing?.LabelShort ?? "tool"} but no matching item found in inventory.", $"DropTool_NotInInventory_{pawn.ThingID}");
+                        EndJobWith(JobCondition.Incompletable);
+                        return;
+                    }
+
+                    // If the found stack has more than 1, split off 1. Otherwise operate on the instance directly.
+                    Thing toDrop = inventoryInstance.stackCount > 1
+                        ? inventoryInstance.SplitOff(1)
+                        : inventoryInstance;
+
+                    // Try dropping via the ThingOwner API at our current (preferred) cell
+                    bool dropOk = false;
                     try
                     {
                         if (pawn.Map != null)
-                            placed = GenPlace.TryPlaceThing(toDrop, pawn.Position, pawn.Map, ThingPlaceMode.Near);
+                            dropOk = inv.TryDrop(toDrop, pawn.Position, pawn.Map, ThingPlaceMode.Near, out droppedTool);
                     }
                     catch
                     {
-                        placed = false;
+                        dropOk = false;
+                        droppedTool = null;
                     }
 
-                    if (!placed)
+                    if (!dropOk || droppedTool == null)
                     {
-                        if (IsDebugLoggingEnabled)
+                        // Fallback: attempt to place on the map directly
+                        bool placed = false;
+                        try
                         {
-                            var k = $"DropTool_PlaceFailed_{pawn.ThingID}";
-                            if (ShouldLogWithCooldown(k))
-                                LogWarning($"[SurvivalTools.DropTool] {pawn.LabelShort} failed to drop/place {toDrop.Label}.");
+                            if (pawn.Map != null)
+                                placed = GenPlace.TryPlaceThing(toDrop, pawn.Position, pawn.Map, ThingPlaceMode.Near);
+                        }
+                        catch
+                        {
+                            placed = false;
                         }
 
-                        // Attempt to restore split-off items safely
-                        if (toDrop != inventoryInstance)
+                        if (!placed)
                         {
-                            try
+                            if (IsDebugLoggingEnabled)
                             {
-                                var sameStack = inv.FirstOrDefault(t => t.def == toDrop.def && t.stackCount < t.def.stackLimit);
-                                if (sameStack != null)
-                                {
-                                    int freeSpace = sameStack.def.stackLimit - sameStack.stackCount;
-                                    int moveAmount = Math.Min(freeSpace, toDrop.stackCount);
-                                    if (moveAmount > 0)
-                                    {
-                                        sameStack.stackCount += moveAmount;
-                                        toDrop.stackCount -= moveAmount;
-                                    }
+                                var k = $"DropTool_PlaceFailed_{pawn.ThingID}";
+                                if (ShouldLogWithCooldown(k))
+                                    LogWarning($"[SurvivalTools.DropTool] {pawn.LabelShort} failed to drop/place {toDrop.Label}.");
+                            }
 
-                                    if (toDrop.stackCount <= 0)
+                            // Attempt to restore split-off items safely
+                            if (toDrop != inventoryInstance)
+                            {
+                                try
+                                {
+                                    var sameStack = inv.FirstOrDefault(t => t.def == toDrop.def && t.stackCount < t.def.stackLimit);
+                                    if (sameStack != null)
                                     {
-                                        try { toDrop.Destroy(); } catch { }
+                                        int freeSpace = sameStack.def.stackLimit - sameStack.stackCount;
+                                        int moveAmount = Math.Min(freeSpace, toDrop.stackCount);
+                                        if (moveAmount > 0)
+                                        {
+                                            sameStack.stackCount += moveAmount;
+                                            toDrop.stackCount -= moveAmount;
+                                        }
+
+                                        if (toDrop.stackCount <= 0)
+                                        {
+                                            try { toDrop.Destroy(); } catch { }
+                                        }
+                                        else
+                                        {
+                                            try { inv.TryAdd(toDrop); }
+                                            catch { try { toDrop.Destroy(); } catch { } }
+                                        }
                                     }
                                     else
                                     {
@@ -130,31 +177,28 @@ namespace SurvivalTools
                                         catch { try { toDrop.Destroy(); } catch { } }
                                     }
                                 }
-                                else
+                                catch
                                 {
-                                    try { inv.TryAdd(toDrop); }
-                                    catch { try { toDrop.Destroy(); } catch { } }
+                                    try { toDrop.Destroy(); } catch { }
                                 }
                             }
-                            catch
-                            {
-                                try { toDrop.Destroy(); } catch { }
-                            }
+
+                            EndJobWith(JobCondition.Incompletable);
+                            return;
                         }
 
-                        EndJobWith(JobCondition.Incompletable);
-                        return;
+                        droppedTool = toDrop;
                     }
-
-                    droppedTool = toDrop;
                 }
 
+                // Ensure the dropped tool is not forbidden so pawns can interact with it immediately
+                try { droppedTool.SetForbidden(false, false); } catch { }
+
                 // Clear forced-handler references
-                pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>()?.forcedHandler?.SetForced(inventoryInstance, false);
                 pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>()?.forcedHandler?.SetForced(droppedTool, false);
 
-                // Try to find storage cell and enqueue haul job if appropriate
-                if (TryFindStorageForTool(droppedTool, out IntVec3 storageCell))
+                // Try to find storage cell and enqueue haul job if appropriate (only if we didn't drop into storage already)
+                if (TryFindStorageForTool(droppedTool, out IntVec3 storageCell) && (!_preferredDropCell.IsValid || storageCell != _preferredDropCell))
                 {
                     var haulJob = JobMaker.MakeJob(JobDefOf.HaulToCell, droppedTool, storageCell);
                     haulJob.count = 1;
@@ -162,6 +206,50 @@ namespace SurvivalTools
                         pawn.jobs.jobQueue.EnqueueFirst(haulJob);
                 }
             });
+        }
+
+        private void ComputePreferredDropCell()
+        {
+            _preferredDropCell = pawn.Position;
+            if (pawn?.Map == null) return;
+
+            var tool = ToolToDrop ?? (job?.targetA.Thing);
+            // 1) Storage
+            if (TryFindStorageForTool(tool, out var storageCell))
+            {
+                _preferredDropCell = storageCell; return;
+            }
+            // 2) Home area near pawn
+            if (TryFindNearbyHomeCell(out var homeCell))
+            {
+                _preferredDropCell = homeCell; return;
+            }
+            // 3) Fallback: current position
+            _preferredDropCell = pawn.Position;
+        }
+
+        private bool TryFindNearbyHomeCell(out IntVec3 cell)
+        {
+            cell = IntVec3.Invalid;
+            var map = pawn.Map;
+            var home = map?.areaManager?.Home;
+            if (home == null) return false;
+
+            // Search a small radius for a standable, reachable home cell
+            int maxRadius = 12;
+            for (int r = 0; r <= maxRadius; r++)
+            {
+                var ring = GenRadial.RadialCellsAround(pawn.Position, r, true);
+                foreach (var c in ring)
+                {
+                    if (!c.InBounds(map)) continue;
+                    if (!home[c]) continue;
+                    if (!c.Standable(map)) continue;
+                    if (!pawn.CanReserveAndReach(c, PathEndMode.OnCell, Danger.Deadly)) continue;
+                    cell = c; return true;
+                }
+            }
+            return false;
         }
 
         private bool TryFindStorageForTool(Thing tool, out IntVec3 storageCell)

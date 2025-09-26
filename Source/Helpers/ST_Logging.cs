@@ -458,6 +458,64 @@ namespace SurvivalTools
             EnqueueBuffered(message, LogLevel.Message);
         }
 
+        /// <summary>
+        /// Emit a compact summary of a pawn's job queue for diagnostics.
+        /// Uses a cooldown keyed by pawn and tag to avoid spam. Max 20 entries.
+        /// </summary>
+        internal static void LogJobQueueSummary(Pawn pawn, string tag)
+        {
+            if (!IsDebugLoggingEnabled) return;
+            try
+            {
+                var jq = pawn?.jobs?.jobQueue;
+                string key = $"ST.JobQueueSummary|{pawn?.ThingID}|{tag}";
+                if (!ShouldLog(key, respectCooldown: true)) return;
+
+                if (jq == null)
+                {
+                    LogDebug($"[SurvivalTools.JobQueue][{tag}] jobQueue=null", key);
+                    return;
+                }
+                int count = jq.Count;
+                if (count == 0)
+                {
+                    LogDebug($"[SurvivalTools.JobQueue][{tag}] jobQueue count=0", key);
+                    return;
+                }
+                int maxEntries = 20;
+                int shown = Math.Min(count, maxEntries);
+                var sb = new System.Text.StringBuilder(64 + shown * 24);
+                sb.Append($"[SurvivalTools.JobQueue][{tag}] jobQueue count={count} :: ");
+                for (int i = 0; i < shown; i++)
+                {
+                    var item = jq[i];
+                    var def = item?.job?.def?.defName ?? "(null)";
+                    var j = item?.job;
+                    string target = "(n/a)";
+                    if (j != null)
+                    {
+                        if (j.targetA.HasThing)
+                        {
+                            var t = j.targetA.Thing;
+                            target = $"{t.LabelShort}#{t.thingIDNumber}";
+                        }
+                        else if (j.targetA.Cell.IsValid)
+                        {
+                            target = j.targetA.Cell.ToString();
+                        }
+                    }
+                    if (i > 0) sb.Append(" | ");
+                    sb.Append('[').Append(i).Append("] ").Append(def).Append(" -> ").Append(target);
+                }
+                if (count > shown) sb.Append($" | … +{count - shown} more");
+                LogDebug(sb.ToString(), key);
+            }
+            catch (Exception ex)
+            {
+                LogWarning($"[SurvivalTools.JobQueue] Failed to log summary: {ex}");
+            }
+        }
+
         internal static void LogCompat(string message, string logKey = null, bool respectCooldown = true)
         {
             if (!IsDebugLoggingEnabled || !IsCompatLogging()) return;

@@ -582,13 +582,13 @@ namespace SurvivalTools.Helpers
         }
 
         /// <summary>
-        /// Get filtered tool candidates (real tools + virtual textiles/wood).
+        /// Get filtered tool candidates (real tools + virtual textiles only).
         /// Excludes buildings/turrets/mortars that were incorrectly evaluated as tools.
         /// Used for debug dumps and future Phase 3 scoring enumeration.
         /// 
         /// Includes:
         /// - Real tools: equipment, weapons, anything with tools/CompEquippable
-        /// - Virtual materials: textiles/leather/wood that can become virtual tools
+        /// - Virtual materials: textiles that can become virtual tools
         /// 
         /// Excludes:
         /// - Buildings: turrets, mortars, workbenches, etc.
@@ -617,13 +617,11 @@ namespace SurvivalTools.Helpers
                     continue;
                 }
 
-                // Include virtual-only resources (textiles, wood)
+                // Include virtual-only resources (textiles)
                 // These can be crafted into virtual tools via SurvivalToolUtility
                 if (def.stuffProps?.categories != null)
                 {
-                    bool isVirtualCandidate = def.stuffProps.categories.Contains(StuffCategoryDefOf.Fabric) ||
-                                              def.stuffProps.categories.Contains(StuffCategoryDefOf.Leathery) ||
-                                              def.stuffProps.categories.Contains(StuffCategoryDefOf.Woody);
+                    bool isVirtualCandidate = def.stuffProps.categories.Contains(StuffCategoryDefOf.Fabric);
 
                     if (isVirtualCandidate)
                     {

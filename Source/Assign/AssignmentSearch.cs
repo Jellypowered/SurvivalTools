@@ -231,7 +231,8 @@ namespace SurvivalTools.Assign
                 {
                     LogDebug($"Pending tool-management job detected for {pawn.LabelShort} — deferring (drop={pendingDrop}, acquire={pendingAcquire})", "AssignmentSearch.DeferForPendingQueue");
                     LogJobQueue(pawn, "TryUpgradeFor:pendingQueue");
-                    return true; // signal that we're handling tool management
+                    // Do NOT signal success when nothing new was enqueued; this avoids repeated requeue loops in PreWork
+                    return false;
                 }
 
                 // Find best candidate
@@ -615,6 +616,36 @@ namespace SurvivalTools.Assign
             {
                 LogError($"[SurvivalTools.Assignment] Exception in TryStartQueuedToolJobFor: {ex}");
             }
+            return false;
+        }
+
+        /// <summary>
+        /// Public helper: returns true if the pawn is currently performing or has queued
+        /// an acquisition job (Equip or TakeInventory). Used by gating to decide whether
+        /// to allow a work job to proceed or block until acquisition is in motion.
+        /// </summary>
+        public static bool HasAcquisitionPendingOrQueued(Pawn pawn)
+        {
+            try
+            {
+                if (pawn?.jobs == null) return false;
+                // Current job check
+                var curDef = pawn.jobs.curJob?.def;
+                if (curDef == JobDefOf.Equip || curDef == JobDefOf.TakeInventory)
+                    return true;
+
+                // Queue scan
+                var jq = pawn.jobs.jobQueue;
+                if (jq == null) return false;
+                for (int i = 0; i < jq.Count; i++)
+                {
+                    var j = jq[i]?.job;
+                    if (j == null || j.def == null) continue;
+                    if (j.def == JobDefOf.Equip || j.def == JobDefOf.TakeInventory)
+                        return true;
+                }
+            }
+            catch { }
             return false;
         }
 
@@ -1002,7 +1033,7 @@ namespace SurvivalTools.Assign
                 LogDebug($"QueueAcquisitionJob: tool-management pending for {pawn.LabelShort} — deferring acquisition", "AssignmentSearch.DeferAcquireForPendingQueue");
                 // handled this pass by deferring; no acquisition enqueued
                 acquisitionEnqueued = false;
-                return true;
+                return false;
             }
 
             // ENHANCED VALIDATION: Real-time tool state check before any job creation
@@ -1321,16 +1352,17 @@ namespace SurvivalTools.Assign
             Job dropJob = null;
             if (isEquipped)
             {
-                // Equipped tools use vanilla DropEquipment which handles equipment trackers correctly
-                dropJob = JobMaker.MakeJob(JobDefOf.DropEquipment, toolToDrop);
-                LogDebug($"Created DropEquipment job for {pawn.LabelShort}", "AssignmentSearch.DropEquipment");
+                // Use our unified drop driver so we can choose a preferred drop location and enqueue hauling if needed
+                dropJob = JobMaker.MakeJob(ST_JobDefOf.DropSurvivalTool, toolToDrop);
+                dropJob.count = 1;
+                LogDebug($"Created unified DropSurvivalTool job (equipped) for {pawn.LabelShort}", "AssignmentSearch.DropSurvivalTool.Unified");
             }
             else if (isInInventory)
             {
-                // Inventory-held tools should use our legacy driver that safely removes from ThingOwner
+                // Inventory-held tools also use our unified drop driver
                 dropJob = JobMaker.MakeJob(ST_JobDefOf.DropSurvivalTool, toolToDrop);
                 dropJob.count = 1;
-                LogDebug($"Created DropSurvivalTool job for {pawn.LabelShort}", "AssignmentSearch.DropSurvivalTool");
+                LogDebug($"Created DropSurvivalTool job (inventory) for {pawn.LabelShort}", "AssignmentSearch.DropSurvivalTool");
             }
             else
             {
@@ -1590,7 +1622,7 @@ namespace SurvivalTools.Assign
             if (thing is SurvivalTool || (thing.def?.IsSurvivalTool() == true))
                 return true;
 
-            // For virtual tool-stuff (e.g., cloth/wood/leather), only accept if it actually
+            // For virtual tool-stuff (e.g., cloth and other textiles), only accept if it actually
             // improves the requested workStat according to ToolStatResolver.
             if (thing.def?.IsToolStuff() == true)
             {
@@ -1879,19 +1911,51 @@ namespace SurvivalTools.Assign
                 if (isEquipped && tool is ThingWithComps equipmentTool)
                 {
                     // Drop from equipment
-                    if (pawn.equipment?.TryDropEquipment(equipmentTool, out ThingWithComps droppedTool, pawn.Position) == true)
+                    ThingWithComps droppedEq = null;
+                    if (pawn.equipment?.TryDropEquipment(equipmentTool, out droppedEq, pawn.Position) == true)
                     {
                         Log.Message($"[SurvivalTools.Assignment] Directly dropped equipment: {tool.LabelShort}");
+                        try { droppedEq?.SetForbidden(false, false); } catch { }
+                        // Enqueue haul to storage if available
+                        try
+                        {
+                            IntVec3 storeCell;
+                            var map = pawn.Map; var faction = pawn.Faction;
+                            if (map != null && droppedEq != null && (StoreUtility.TryFindBestBetterStoreCellFor(droppedEq, pawn, map, StoreUtility.CurrentStoragePriorityOf(droppedEq), faction, out storeCell)
+                                || StoreUtility.TryFindBestBetterStoreCellFor(droppedEq, pawn, map, StoragePriority.Unstored, faction, out storeCell)))
+                            {
+                                var haulJob = JobMaker.MakeJob(JobDefOf.HaulToCell, droppedEq, storeCell);
+                                haulJob.count = 1;
+                                pawn.jobs?.jobQueue?.EnqueueFirst(haulJob);
+                            }
+                        }
+                        catch { }
                         return true;
                     }
                 }
                 else if (isInInventory)
                 {
                     // Drop from inventory
-                    var dropped = pawn.inventory?.innerContainer?.TryDrop(tool, pawn.Position, pawn.Map, ThingPlaceMode.Near, out Thing droppedTool);
+                    Thing droppedInv = null;
+                    var dropped = pawn.inventory?.innerContainer?.TryDrop(tool, pawn.Position, pawn.Map, ThingPlaceMode.Near, out droppedInv);
                     if (dropped == true)
                     {
                         Log.Message($"[SurvivalTools.Assignment] Directly dropped from inventory: {tool.LabelShort}");
+                        try { droppedInv?.SetForbidden(false, false); } catch { }
+                        // Enqueue haul to storage if available
+                        try
+                        {
+                            IntVec3 storeCell;
+                            var map = pawn.Map; var faction = pawn.Faction;
+                            if (map != null && droppedInv != null && (StoreUtility.TryFindBestBetterStoreCellFor(droppedInv, pawn, map, StoreUtility.CurrentStoragePriorityOf(droppedInv), faction, out storeCell)
+                                || StoreUtility.TryFindBestBetterStoreCellFor(droppedInv, pawn, map, StoragePriority.Unstored, faction, out storeCell)))
+                            {
+                                var haulJob = JobMaker.MakeJob(JobDefOf.HaulToCell, droppedInv, storeCell);
+                                haulJob.count = 1;
+                                pawn.jobs?.jobQueue?.EnqueueFirst(haulJob);
+                            }
+                        }
+                        catch { }
                         return true;
                     }
                 }

@@ -225,13 +225,13 @@ namespace SurvivalTools.UI
                 tools.Add(pawn.equipment.Primary);
             }
 
-            // Add inventory tools
+            // Add inventory tools (skip raw tool-stuff; we'll show them as a single virtual entry)
             if (pawn.inventory?.innerContainer != null)
             {
                 for (int i = 0; i < pawn.inventory.innerContainer.Count; i++)
                 {
                     var item = pawn.inventory.innerContainer[i];
-                    if (ToolUtility.IsSurvivalTool(item))
+                    if (ToolUtility.IsSurvivalTool(item) && !(item.def?.IsToolStuff() == true))
                     {
                         tools.Add(item);
                     }
@@ -241,11 +241,16 @@ namespace SurvivalTools.UI
             // Only add virtual tools if the pawn actually has them in inventory
             if (pawn.inventory?.innerContainer != null)
             {
-                var virtualCandidates = new[]
+                // Only include textile-based virtual tool (Cloth). Wood is no longer treated as a virtual tool.
+                var virtualCandidates = new[] { ThingDefOf.Cloth };
+
+                // Track which defs we've already represented to avoid duplicates when multiple stacks exist
+                var representedDefs = new HashSet<ThingDef>();
+                for (int i = 0; i < tools.Count; i++)
                 {
-                    ThingDefOf.Cloth,
-                    ThingDefOf.WoodLog
-                };
+                    var t = tools[i];
+                    if (t?.def != null) representedDefs.Add(t.def);
+                }
 
                 foreach (var candidate in virtualCandidates)
                 {
@@ -262,12 +267,13 @@ namespace SurvivalTools.UI
                     }
 
                     // Only create virtual tool if pawn has the material AND it can be used as a tool
-                    if (hasInInventory && Helpers.ToolStatResolver.GetToolCandidates().Contains(candidate))
+                    if (hasInInventory && !representedDefs.Contains(candidate) && Helpers.ToolStatResolver.GetToolCandidates().Contains(candidate))
                     {
                         // Create virtual representation
                         var virtualTool = ThingMaker.MakeThing(candidate);
                         virtualTool.stackCount = 1;
                         tools.Add(virtualTool);
+                        representedDefs.Add(candidate);
                     }
                 }
             }
@@ -408,15 +414,6 @@ namespace SurvivalTools.UI
                     relevantStats.Add(ST_StatDefOf.PlantHarvestingSpeed);
                 }
 
-                // Virtual tools (cloth/wood) - show what they can substitute for
-                if (tool.def == ThingDefOf.Cloth)
-                {
-                    relevantStats.Add(ST_StatDefOf.PlantHarvestingSpeed); // Cloth can substitute for plant harvesting
-                }
-                else if (tool.def == ThingDefOf.WoodLog)
-                {
-                    relevantStats.Add(StatDefOf.ConstructionSpeed); // Wood can substitute for construction
-                }
             }
 
             return relevantStats;

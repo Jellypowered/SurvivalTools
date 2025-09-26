@@ -148,3 +148,45 @@ Files:
 ---
 
 This summary captures the intent, attempts, and concrete fixes from this session to improve determinism, preserve jobs, avoid inappropriate rescues, and keep logs readable while retaining visibility into the upgrade pipeline.
+
+---
+
+## Phase 8 addendum (Sep 2025)
+
+Recent targeted stability/QoL improvements:
+
+- Textiles-only virtual tools
+  - VirtualTool eligibility tightened to Fabric-only; leather/wood/apparel/weapons excluded.
+  - Gear tab shows a single virtual entry (e.g., Cloth) only if present in inventory; no duplicate stuff rows.
+  - Wear service pulses HP on the underlying textile stack; no comps required; idempotent 60-tick throttle.
+
+- Pure-delivery WorkGivers are never gated
+  - Central predicate `JobGate.IsPureDeliveryWorkGiver` exempts resource delivery (blueprints/frames) from rescue/gating.
+  - PreWork auto-equip also respects this exemption to avoid churn.
+
+- Optional stat handling to prevent hard blocks
+  - MiningYieldDigging and other “bonus” stats treated as optional during gating.
+  - JobGate filters declared stats through `StatGatingHelper` before deciding to block.
+
+- Unified decision logging
+  - Every JobGate exit logs a single compact line: `Decision: ALLOW|BLOCK | pawn=… | ctx=WG:…/Job:… | forced=… | reason=…`.
+  - Queue summaries available on cooldown for fast diagnostics.
+
+- Drops prefer storage/home and enqueue hauling
+  - All tool drops are unforbidden.
+  - Prefer storage cell; otherwise home-area cell; enqueue HaulToCell when needed.
+
+Quality gates: Build PASS, artifacts mirrored and zipped; no Harmony target churn from these changes.
+
+### Also in Phase 8
+
+- Rescue-first gating behavior
+  - If acquisition is already pending/queued, JobGate allows immediately; otherwise, after rescue is queued it blocks until acquisition starts.
+- PreWork ping-pong suppression
+  - Management cooldown after tool actions; requeue only when a new acquisition was actually enqueued; avoids repeated rescues and job churn.
+- Carry-limit and “real tool” handling
+  - Treat tool-stuff as a single virtual tool for carry checks; prefer keeping best-for-focus tool when limit is effectively one.
+- Centralized wear/degrade
+  - All degrade calls route through `ST_WearService` (including virtuals) with deterministic, throttled pulses.
+- Mode-change enforcement
+  - `GatingEnforcer` can cancel/prune now-invalid jobs when switching difficulty modes or on load; logs compact queue snapshots on cooldown.

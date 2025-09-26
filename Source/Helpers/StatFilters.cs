@@ -37,7 +37,9 @@ namespace SurvivalTools.Helpers
             return stat == ST_StatDefOf.CleaningSpeed ||
                       stat == ST_StatDefOf.MedicalOperationSpeed ||
                       stat == ST_StatDefOf.MedicalSurgerySuccessChance ||
-                      stat == ST_StatDefOf.ButcheryFleshEfficiency;
+                      stat == ST_StatDefOf.ButcheryFleshEfficiency ||
+                      // Mining yield should be a bonus, not a gate
+                      stat == ST_StatDefOf.MiningYieldDigging;
         }
 
         /// <summary>
