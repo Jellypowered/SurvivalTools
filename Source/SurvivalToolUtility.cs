@@ -1185,7 +1185,7 @@ namespace SurvivalTools
 
             // Tool-stuffs => wrap into virtual tool objects (still Things)
             var virtualTools = pawn.inventory.innerContainer
-                .Where(t => t.def.IsToolStuff())
+                .Where(t => t.def.IsToolStuff() && !Helpers.ST_BoundConsumables.ShouldHide(pawn, t))
                 .Select(t => (Thing)VirtualTool.FromThing(t))
                 .Where(vt => vt != null);
 

@@ -215,5 +215,8 @@ Artifacts
   - Treat tool-stuff as a single virtual tool for carry checks; prefer keeping best-for-focus tool when limit is effectively one.
 - Centralized wear/degrade
   - All degrade calls route through `ST_WearService` (including virtuals) with deterministic, throttled pulses.
+  - Hotfix: Virtual textile wear now binds a single-unit consumable per (pawn,stat). A 1-count "rag" is split off and degraded; parent stack never deleted wholesale. Registry: `ST_BoundConsumables`.
+  - Gear tab shows only the degrading bound unit (parent stack hidden while bound) preventing duplicate virtual entries.
+  - Debug pulses for DiggingSpeed produce one cooldowned line per (pawn,tool) bucket.
 - Mode-change enforcement
   - `GatingEnforcer` can cancel/prune now-invalid jobs when switching difficulty modes or on load; logs compact queue snapshots on cooldown.

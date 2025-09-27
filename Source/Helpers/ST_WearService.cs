@@ -85,8 +85,27 @@ namespace SurvivalTools.Helpers
             // Skip if degradation disabled
             var settings = SurvivalTools.Settings;
             if (settings == null || settings.toolDegradationFactor <= 0f) return;
-
-            Thing actualThing = GetUnderlyingThing(toolWrapper);
+            Thing actualThing = null;
+            if (toolWrapper is VirtualTool)
+            {
+                // Bind or obtain per-(pawn,stat) single unit so we don't delete whole stacks
+                if (!ST_BoundConsumables.TryGetOrBind(pawn, stat, out actualThing))
+                    actualThing = GetUnderlyingThing(toolWrapper); // fallback
+                else
+                {
+                    // Guard: if the bound unit is no longer in this pawn's inventory (merged, hauled, dropped), unbind and retry next pulse.
+                    var owner = actualThing.ParentHolder as ThingOwner;
+                    if (owner != pawn.inventory?.innerContainer)
+                    {
+                        ST_BoundConsumables.UnbindByThingId(actualThing.thingIDNumber);
+                        return; // rebind next pulse
+                    }
+                }
+            }
+            else
+            {
+                actualThing = GetUnderlyingThing(toolWrapper);
+            }
             if (actualThing == null || actualThing.DestroyedOrNull()) return;
             if (!actualThing.def.useHitPoints || actualThing.MaxHitPoints <= 0) return;
 
@@ -128,7 +147,7 @@ namespace SurvivalTools.Helpers
                 return;
             }
 
-            ApplyHpLoss(pawn, actualThing, whole);
+            ApplyHpLoss(pawn, actualThing, whole, stat);
 
             _states[key] = state;
         }
@@ -157,7 +176,7 @@ namespace SurvivalTools.Helpers
             return toolWrapper; // real tool instance
         }
 
-        private static void ApplyHpLoss(Pawn pawn, Thing thing, int amount)
+        private static void ApplyHpLoss(Pawn pawn, Thing thing, int amount, StatDef stat)
         {
             if (thing == null || thing.DestroyedOrNull()) return;
             int before = thing.HitPoints;
@@ -165,21 +184,16 @@ namespace SurvivalTools.Helpers
             if (after > 0)
             {
                 thing.HitPoints = after;
+                if (IsDebugLoggingEnabled && stat == ST_StatDefOf.DiggingSpeed && ShouldLogWithCooldown($"WearPulse_Dig_{pawn.thingIDNumber}_{thing.thingIDNumber}"))
+                {
+                    LogDebug($"[SurvivalTools.Wear] DiggingSpeed pulse {pawn.LabelShort} -{amount} HP ({after}/{thing.MaxHitPoints}) on {thing.LabelNoCount}", $"WearPulse_Dig_{pawn.thingIDNumber}_{thing.thingIDNumber}");
+                }
                 return;
             }
 
-            // Destroy / consume path
-            if (thing.stackCount > 1 && !(thing is SurvivalTool))
-            {
-                // Virtual textile stack consumption: remove one item, and treat remaining stack as fresh
-                var split = thing.SplitOff(1); // obtains one item to destroy
-                try { split.Destroy(DestroyMode.Vanish); } catch { }
-                // Remaining stack stays at its current HP (since others weren't worn). No extra adjustments.
-            }
-            else
-            {
-                try { thing.Destroy(DestroyMode.Vanish); } catch { }
-            }
+            // Destroy bound consumable (or tool) directly; bound registry will be cleared.
+            try { thing.Destroy(DestroyMode.Vanish); } catch { }
+            ST_BoundConsumables.UnbindByThingId(thing.thingIDNumber);
 
             // Invalidate scoring so next selection re-evaluates
             ScoreCache.NotifyToolChanged(thing);
