@@ -67,6 +67,7 @@ namespace SurvivalTools.Helpers
 
         private const int PulseInterval = 60; // once per in‑game second
         private const float BaseHpPerPulse = 0.1f; // before multipliers
+        private static int _lastGlobalPulseTick = 0; // last successful HP application (any tool)
 
         // Per-stat additional multiplier (only cleaning different right now)
         private static float StatMultiplier(StatDef stat)
@@ -83,7 +84,7 @@ namespace SurvivalTools.Helpers
         {
             if (pawn == null || toolWrapper == null || stat == null) return;
             // Skip if degradation disabled
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings == null || settings.toolDegradationFactor <= 0f) return;
             Thing actualThing = null;
             if (toolWrapper is VirtualTool)
@@ -149,6 +150,9 @@ namespace SurvivalTools.Helpers
 
             ApplyHpLoss(pawn, actualThing, whole, stat);
 
+            // Record global pulse tick (successful application only)
+            _lastGlobalPulseTick = now;
+
             _states[key] = state;
         }
 
@@ -159,7 +163,7 @@ namespace SurvivalTools.Helpers
         internal static void TryPulseWearThrottled(Pawn pawn, SurvivalTool toolWrapper, StatDef stat)
         {
             if (pawn == null || toolWrapper == null || stat == null) return;
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings == null || settings.toolDegradationFactor <= 0f) return;
             int now = Find.TickManager?.TicksGame ?? 0;
             var sKey = new StatThrottleKey { pawnId = pawn.thingIDNumber, statIndex = stat.index };
@@ -210,5 +214,8 @@ namespace SurvivalTools.Helpers
             _states.Clear();
             _statThrottle.Clear();
         }
+
+        /// <summary>Last tick any wear HP was actually applied (0 if never).</summary>
+        public static int GetGlobalLastPulseTickUnsafe() => _lastGlobalPulseTick;
     }
 }

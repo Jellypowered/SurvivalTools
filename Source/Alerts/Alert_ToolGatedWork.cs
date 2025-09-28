@@ -51,7 +51,7 @@ namespace SurvivalTools
 
         public override AlertReport GetReport()
         {
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings == null) return AlertReport.Inactive;
 
             // Only show in Hardcore/Nightmare with alert enabled
@@ -292,7 +292,7 @@ namespace SurvivalTools
 
         private static void RegisterSticky(Pawn pawn, int now)
         {
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (pawn == null || settings == null) return;
             int minTicks = settings.toolGateAlertMinTicks;
             if (minTicks <= 0) return; // disabled

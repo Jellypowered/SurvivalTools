@@ -1,0 +1,18 @@
+Phase 9 Pre-flight Legacy References
+
+Legacy classes / patterns discovered:
+- Source/AI/JobGiver_OptimizeSurvivalTools.cs
+- Source/AI/AutoToolPickup_UtilityIntegrated.cs (Patch_JobGiver_Work_TryIssueJobPackage_AutoTool)
+- Patch_Pawn_JobTracker_ExtraHardcore (only referenced in comments / removed already)
+- Legacy gear tab patches: superseded by Harmony/ITab_Gear_ST.cs (no separate legacy injector classes found beyond ST patch guard)
+- Harmony legacy gating patches (PlantCut/ Sower / MissingRequiredCapacity / Scanner etc.) still present: Patch_WorkGiver_* files
+
+XML thinkRoot references:
+- 1.6/Defs/ThinkTreeDefs/SubTrees_Misc.xml -> <thinkRoot Class="SurvivalTools.JobGiver_OptimizeSurvivalTools" />
+
+Actions pending:
+- Replace JobGiver_OptimizeSurvivalTools implementation with stub or remove Harmony usage (already stubbed but duplicate now after LegacyForwarders.cs).
+- Remove HarmonyPatch attribute from AutoToolPickup legacy patch or guard with symbol.
+- Introduce PatchGuard allowlist & sweeping (existing ST_PatchGuard present; will extend later).
+
+(Generated automatically)

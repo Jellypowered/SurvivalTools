@@ -111,7 +111,7 @@ namespace SurvivalTools.Compat.SmarterConstruction
                 // Additionally, gate roofing early if settings/hardcore require construction tools
                 try
                 {
-                    var settings = SurvivalTools.Settings;
+                    var settings = SurvivalToolsMod.Settings;
                     if (settings != null && settings.extraHardcoreMode == true)
                     {
                         WorkGiverDef wgDef = null;

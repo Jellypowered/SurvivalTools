@@ -60,7 +60,7 @@ namespace SurvivalTools
                 else
                 {
                     // ~24 in-game hours with AutoTool, ~1 hour otherwise
-                    optimizeInterval = (SurvivalTools.Settings?.autoTool == true)
+                    optimizeInterval = (SurvivalToolsMod.Settings?.autoTool == true)
                         ? 60000
                         : GenDate.TicksPerHour;
                 }

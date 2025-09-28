@@ -148,7 +148,17 @@ REM Copy assets into Mod folder
 REM ================================
 for %%V in (1.0 1.1 1.2 1.3 1.4 1.5 1.6) do if exist "%%V" (
     echo Copying version folder %%V...
+    if exist "!MODROOT!\%%V" (
+        echo Cleaning existing version folder %%V in mod root...
+        rmdir /s /q "!MODROOT!\%%V"
+    )
     xcopy "%%V" "!MODROOT!\%%V" /E /I /Y >nul
+)
+
+REM Remove any quarantined XML files that should not load (keep .xml.off only)
+if exist "!MODROOT!\%CURRENTVER%\Patches\_removed\*.xml" (
+    echo Removing quarantined XML files from _removed directory...
+    del /q "!MODROOT!\%CURRENTVER%\Patches\_removed\*.xml" >nul 2>&1
 )
 
 if exist "About" (

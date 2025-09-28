@@ -1,48 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LanguageData>
-    <!-- Phase 7: Gear tab localization -->
+  <!-- Phase 7: Gear tab localization -->
 
-    <!-- Header -->
-    <ST_GearTab_Header>Tool Efficiency</ST_GearTab_Header>
+  <!-- Header -->
+  <ST_GearTab_Header>Tool Efficiency</ST_GearTab_Header>
 
-    <!-- Tool categories -->
-    <ST_GearTab_Mining>Mining</ST_GearTab_Mining>
-    <ST_GearTab_Chopping>Chopping</ST_GearTab_Chopping>
-    <ST_GearTab_Construction>Construction</ST_GearTab_Construction>
-    <ST_GearTab_Cooking>Cooking</ST_GearTab_Cooking>
-    <ST_GearTab_Medical>Medical</ST_GearTab_Medical>
-    <ST_GearTab_Crafting>Crafting</ST_GearTab_Crafting>
-    <ST_GearTab_Social>Social</ST_GearTab_Social>
+  <!-- Tool categories -->
+  <ST_GearTab_Mining>Mining</ST_GearTab_Mining>
+  <ST_GearTab_Chopping>Chopping</ST_GearTab_Chopping>
+  <ST_GearTab_Construction>Construction</ST_GearTab_Construction>
+  <ST_GearTab_Cooking>Cooking</ST_GearTab_Cooking>
+  <ST_GearTab_Medical>Medical</ST_GearTab_Medical>
+  <ST_GearTab_Crafting>Crafting</ST_GearTab_Crafting>
+  <ST_GearTab_Social>Social</ST_GearTab_Social>
 
-    <!-- No tools message -->
-    <ST_GearTab_NoTools>No suitable tools carried</ST_GearTab_NoTools>
+  <!-- No tools message -->
+  <ST_GearTab_NoTools>No suitable tools carried</ST_GearTab_NoTools>
 
-    <!-- Tool tooltips -->
-    <ST_GearTab_ToolTooltip_Base>Current efficiency: {0}</ST_GearTab_ToolTooltip_Base>
-    <ST_GearTab_ToolTooltip_Quality>Quality: {0}</ST_GearTab_ToolTooltip_Quality>
-    <ST_GearTab_ToolTooltip_Material>Material: {0}</ST_GearTab_ToolTooltip_Material>
-    <ST_GearTab_ToolTooltip_Condition>Condition: {0}%</ST_GearTab_ToolTooltip_Condition>
-    <ST_GearTab_ToolTooltip_StatDetail>
+  <!-- Tool tooltips -->
+  <ST_GearTab_ToolTooltip_Base>Current efficiency: {0}</ST_GearTab_ToolTooltip_Base>
+  <ST_GearTab_ToolTooltip_Quality>Quality: {0}</ST_GearTab_ToolTooltip_Quality>
+  <ST_GearTab_ToolTooltip_Material>Material: {0}</ST_GearTab_ToolTooltip_Material>
+  <ST_GearTab_ToolTooltip_Condition>Condition: {0}%</ST_GearTab_ToolTooltip_Condition>
+  <ST_GearTab_ToolTooltip_StatDetail>
 {0}:
   Base: {1}
   Quality: {2}
   Material: {3}
   Total: {4}
-    </ST_GearTab_ToolTooltip_StatDetail>
+  </ST_GearTab_ToolTooltip_StatDetail>
 
-    <!-- Score display -->
-    <ST_GearTab_Score>Score: {0}</ST_GearTab_Score>
-    <ST_GearTab_ScoreExcellent>Excellent</ST_GearTab_ScoreExcellent>
-    <ST_GearTab_ScoreGood>Good</ST_GearTab_ScoreGood>
-    <ST_GearTab_ScoreFair>Fair</ST_GearTab_ScoreFair>
-    <ST_GearTab_ScorePoor>Poor</ST_GearTab_ScorePoor>
-    <ST_GearTab_ScoreAwful>Awful</ST_GearTab_ScoreAwful>
+  <!-- Score display -->
+  <ST_GearTab_Score>Score: {0}</ST_GearTab_Score>
+  <ST_GearTab_ScoreExcellent>Excellent</ST_GearTab_ScoreExcellent>
+  <ST_GearTab_ScoreGood>Good</ST_GearTab_ScoreGood>
+  <ST_GearTab_ScoreFair>Fair</ST_GearTab_ScoreFair>
+  <ST_GearTab_ScorePoor>Poor</ST_GearTab_ScorePoor>
+  <ST_GearTab_ScoreAwful>Awful</ST_GearTab_ScoreAwful>
 
-    <!-- Why text for tool explanations -->
-    <ST_GearTab_Why>{0} +{1}%</ST_GearTab_Why>
+  <!-- Why text for tool explanations -->
+  <ST_GearTab_Why>{0} +{1}%</ST_GearTab_Why>
 
-    <!-- Error states -->
-    <ST_GearTab_Error>Tool panel error</ST_GearTab_Error>
-    <ST_GearTab_Unavailable>Panel unavailable</ST_GearTab_Unavailable>
+  <!-- Error states -->
+  <ST_GearTab_Error>Tool panel error</ST_GearTab_Error>
+  <ST_GearTab_Unavailable>Panel unavailable</ST_GearTab_Unavailable>
+
+  <!-- Additional status / formatting (added during translation audit) -->
+  <ST_Gear_ModeCarry>Mode: {0} | Carry: {1}</ST_Gear_ModeCarry>
+  <ST_Gear_Gated>Gated</ST_Gear_Gated>
+  <ST_GearTab_BaseValues>Base values</ST_GearTab_BaseValues>
 
 </LanguageData>

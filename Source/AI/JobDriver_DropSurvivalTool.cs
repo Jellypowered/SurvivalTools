@@ -197,6 +197,19 @@ namespace SurvivalTools
                 // Clear forced-handler references
                 pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>()?.forcedHandler?.SetForced(droppedTool, false);
 
+                // After dropping, if we're still over the immediate effective limit (e.g. Nightmare 1) enforce again
+                try
+                {
+                    try
+                    {
+                        var settings = SurvivalToolsMod.Settings;
+                        if (settings != null)
+                            SurvivalTools.Assign.NightmareCarryEnforcer.EnforceNow(pawn, null, SurvivalTools.Assign.AssignmentSearch.GetEffectiveCarryLimit(pawn, settings), "post-drop");
+                    }
+                    catch { }
+                }
+                catch { }
+
                 // Try to find storage cell and enqueue haul job if appropriate (only if we didn't drop into storage already)
                 if (TryFindStorageForTool(droppedTool, out IntVec3 storageCell) && (!_preferredDropCell.IsValid || storageCell != _preferredDropCell))
                 {

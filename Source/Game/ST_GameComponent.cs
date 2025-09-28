@@ -35,16 +35,22 @@ namespace SurvivalTools
 
         public override void GameComponentTick()
         {
-            if (enforceAtTick < 0) return;
-
             int now = Find.TickManager?.TicksGame ?? 0;
+
+            // Low-frequency maintenance (every ~5000 ticks ≈ 83s @ 60 TPS) for bound consumable drift cleanup.
+            if ((now % 5000) == 0)
+            {
+                try { Helpers.ST_BoundConsumables.PruneDrifted(); } catch { /* defensive */ }
+            }
+
+            if (enforceAtTick < 0) return;
             if (now >= enforceAtTick)
             {
                 enforceAtTick = -1;
 
                 try
                 {
-                    var settings = SurvivalTools.Settings;
+                    var settings = SurvivalToolsMod.Settings;
                     if (settings != null && settings.CurrentMode != DifficultyMode.Normal)
                     {
                         Gating.GatingEnforcer.EnforceAllRunningJobs(false);

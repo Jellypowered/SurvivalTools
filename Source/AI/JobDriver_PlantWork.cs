@@ -85,7 +85,7 @@ namespace SurvivalTools
                         }
 
                         // ✅ Unified stat gating
-                        var settings = SurvivalTools.Settings;
+                        var settings = SurvivalToolsMod.Settings;
                         if (settings?.hardcoreMode == true &&
                             StatGatingHelper.ShouldBlockJobForStat(ST_StatDefOf.TreeFellingSpeed, settings, actor))
                         {

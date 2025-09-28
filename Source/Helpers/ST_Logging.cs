@@ -29,7 +29,7 @@ namespace SurvivalTools
                 {
                     try
                     {
-                        _debugLoggingCache = SurvivalTools.Settings?.debugLogging ?? false;
+                        _debugLoggingCache = SurvivalToolsMod.Settings?.debugLogging ?? false;
                     }
                     catch
                     {
@@ -46,7 +46,7 @@ namespace SurvivalTools
         internal static bool IsCompatLogging()
         {
 #if DEBUG
-            return SurvivalTools.Settings?.compatLogging ?? false;
+            return SurvivalToolsMod.Settings?.compatLogging ?? false;
 #else
             return false;
 #endif
@@ -93,7 +93,7 @@ namespace SurvivalTools
             }
 
             // Developer override: if debug logging flag is true, bypass suppression
-            if (SurvivalTools.Settings != null && SurvivalTools.Settings.debugLogging)
+            if (SurvivalToolsMod.Settings != null && SurvivalToolsMod.Settings.debugLogging)
             {
                 try { Log.Message($"[SurvivalTools.ToolGate] {pawn.LabelShort} denied {jobDef.defName} ({statDef.defName}) - {reason}"); } catch { }
                 return;

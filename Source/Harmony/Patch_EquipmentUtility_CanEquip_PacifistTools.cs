@@ -45,7 +45,7 @@ namespace SurvivalTools.HarmonyStuff
         static void Postfix(ref bool __result, object __0, object __1)
         {
             // Fast exits
-            if (!SurvivalTools.Settings?.allowPacifistEquip == true) return;
+            if (!SurvivalToolsMod.Settings?.allowPacifistEquip == true) return;
             if (__result) return;
 
             var thing = __0 as Thing;
@@ -121,7 +121,7 @@ namespace SurvivalTools.HarmonyStuff
 
         public override bool Applies(FloatMenuContext context)
         {
-            if (!SurvivalTools.Settings?.allowPacifistEquip == true) return false;
+            if (!SurvivalToolsMod.Settings?.allowPacifistEquip == true) return false;
 
             // At least one humanlike pacifist in this drafted state
             return context.ValidSelectedPawns.Any(p =>

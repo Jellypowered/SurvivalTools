@@ -84,6 +84,7 @@
     <SurvivalToolAssignmentInUse>Tool assignment is in use by {0}</SurvivalToolAssignmentInUse>
     <NoSurvivalToolAssignmentSelected>No tool assignment selected</NoSurvivalToolAssignmentSelected>
     <ForcedSurvivalTools>Forced tools</ForcedSurvivalTools>
+    <NoSurvivalToolDatabase>Tool assignment database not initialized.</NoSurvivalToolDatabase>
 
     <!-- Job Requirements Table -->
     <JobTable_JobTypes>Job Types</JobTable_JobTypes>
@@ -154,10 +155,39 @@
     <Settings_ShowDenialMotes>Show denial and slowdown motes</Settings_ShowDenialMotes>
     <Settings_ShowDenialMotes_Tooltip>When enabled, pawns will display floating text motes when a job is blocked for lacking required tools (Hardcore/Extra Hardcore) or when continuing at a severe slowdown (Normal mode penalties / fallback cases). Includes per-pawn+stat cooldown to prevent spam. Disable for a cleaner screen or if using another feedback mod.</Settings_ShowDenialMotes_Tooltip>
 
+    <!-- Mode change enforcement timing -->
+    <Settings_ToolGateAlertMinTicks>Min ticks after mode change to show gating alert</Settings_ToolGateAlertMinTicks>
+    <Settings_ToolGateAlertMinTicks_Tooltip>Prevents immediate alert spam when switching modes. The gating alert won't appear until this many ticks have passed since the last mode change.</Settings_ToolGateAlertMinTicks_Tooltip>
+
     <!-- StatPart Phase 4 Localization -->
     <ST_StatPart_Header>Survival Tools</ST_StatPart_Header>
     <ST_StatPart_NoToolPenalty>No appropriate tool: {0} baseline</ST_StatPart_NoToolPenalty>
     <ST_StatPart_ToolApplied>Using {0}: {1}</ST_StatPart_ToolApplied>
     <ST_StatPart_TopContrib>Top: {0} +{1}%</ST_StatPart_TopContrib>
+
+    <!-- Right-click Rescue (Hardcore/Nightmare) -->
+    <Settings_EnableRightClickRescue>Enable right-click tool rescue</Settings_EnableRightClickRescue>
+    <Settings_EnableRightClickRescue_Tooltip>Adds an enabled float-menu option for blocked prioritized jobs in Hardcore/Nightmare: "Prioritize ... (will fetch tool)". The pawn first queues an upgrade/pickup for an appropriate tool, enforces carry limits (Nightmare), then performs the forced job. Disable if you prefer the vanilla disabled entry only.</Settings_EnableRightClickRescue_Tooltip>
+    <ST_WillFetchTool>will fetch {0}</ST_WillFetchTool>
+    <ST_NoSuitableToolFound>No suitable tool found nearby for {0}.</ST_NoSuitableToolFound>
+    <ST_DropExtraToolsFirst>Drop extra tools first.</ST_DropExtraToolsFirst>
+    <ST_CouldNotCreateJob>Could not create the job.</ST_CouldNotCreateJob>
+    <ST_GenericToolSuffix>tool</ST_GenericToolSuffix>
+    <!-- Option B: Full phrase per action for right-click rescue labels -->
+    <ST_Prioritize_Mine>Prioritize mining</ST_Prioritize_Mine>
+    <ST_Prioritize_Deconstruct>Prioritize deconstructing</ST_Prioritize_Deconstruct>
+    <ST_Prioritize_SmoothWall>Prioritize smoothing wall</ST_Prioritize_SmoothWall>
+    <ST_Prioritize_SmoothFloor>Prioritize smoothing floor</ST_Prioritize_SmoothFloor>
+    <ST_Prioritize_FinishFrame>Prioritize finishing frame</ST_Prioritize_FinishFrame>
+    <ST_Prioritize_CutPlant>Prioritize cutting plant</ST_Prioritize_CutPlant>
+    <ST_Prioritize_Harvest>Prioritize harvesting</ST_Prioritize_Harvest>
+    <ST_Prioritize_ChopWood>Prioritize chopping wood</ST_Prioritize_ChopWood>
+    <ST_Prioritize_Sow>Prioritize sowing</ST_Prioritize_Sow>
+    <ST_Prioritize_Repair>Prioritize repairing</ST_Prioritize_Repair>
+    <ST_Prioritize_Clean>Prioritize cleaning</ST_Prioritize_Clean>
+
+    <!-- Unified auto-assignment system toggle (replacing legacy toolOptimization/autoTool) -->
+    <Settings_EnableAssignments>Enable smart pre-work tool pickup</Settings_EnableAssignments>
+    <Settings_EnableAssignments_Tooltip>When enabled, colonists automatically search for, pick up, and upgrade to better tools before starting jobs (respecting gain thresholds, search radius, and path cost limits). Disable for fully manual tool management or to reduce pathing overhead in very large colonies.</Settings_EnableAssignments_Tooltip>
 
 </LanguageData>

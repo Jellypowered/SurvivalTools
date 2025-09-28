@@ -23,7 +23,7 @@ namespace SurvivalTools.Gating
 
         public static int EnforceAllRunningJobs(bool fromSettingsChange, string reasonKey = "ST_Gate_ModeChanged")
         {
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings == null) return 0;
 
             var mode = settings.CurrentMode;

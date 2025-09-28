@@ -55,7 +55,7 @@ namespace SurvivalTools.Gating
                 return false;
             }
 
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings == null || (!settings.hardcoreMode && !settings.extraHardcoreMode))
             {
                 LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: "Mode=Normal");
@@ -134,16 +134,36 @@ namespace SurvivalTools.Gating
 
             if (!hasAllToolsPre)
             {
-                // If acquisition is already in motion (current or queued), allow immediately to avoid churn
-                if (AssignmentSearch.HasAcquisitionPendingOrQueued(pawn))
+                // NIGHTMARE STRICT: Do not allow rescue bypass if still over carry limit
+                try
                 {
-                    if (IsDebugLoggingEnabled)
+                    if (SurvivalToolsMod.Settings?.extraHardcoreMode == true)
                     {
-                        LogDebug($"[JobGate] Acquisition already pending/queued for {pawn.LabelShort}; not blocking.", $"JobGate_AcqInMotion_{pawn.ThingID}");
-                        LogJobQueueSummary(pawn, "JobGate.AcqInMotion");
+                        int allowedNm = AssignmentSearch.GetEffectiveCarryLimit(pawn, SurvivalToolsMod.Settings);
+                        if (!NightmareCarryEnforcer.IsCompliant(pawn, null, allowedNm))
+                        {
+                            reasonKey = "ST_Gate_MissingToolStat"; // reuse generic gating key
+                            a1 = requiredStatsPre[0]?.label ?? "work";
+                            a2 = wg?.label ?? job?.label ?? "this job";
+                            LogDecisionLine(pawn, wg, job, forced, blocked: true, reason: "NightmareCarryExceeded");
+                            return true;
+                        }
                     }
-                    LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: "AcquisitionInMotion");
-                    return false;
+                }
+                catch { }
+                // Nightmare: do NOT auto-allow merely because acquisition is queued; physical carry compliance must hold
+                if (SurvivalToolsMod.Settings?.extraHardcoreMode != true)
+                {
+                    if (AssignmentSearch.HasAcquisitionPendingOrQueued(pawn))
+                    {
+                        if (IsDebugLoggingEnabled)
+                        {
+                            LogDebug($"[JobGate] Acquisition already pending/queued for {pawn.LabelShort}; not blocking.", $"JobGate_AcqInMotion_{pawn.ThingID}");
+                            LogJobQueueSummary(pawn, "JobGate.AcqInMotion");
+                        }
+                        LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: "AcquisitionInMotion");
+                        return false;
+                    }
                 }
                 bool anyQueued = false;
                 for (int i = 0; i < requiredStatsPre.Length; i++)
@@ -157,13 +177,29 @@ namespace SurvivalTools.Gating
                     // If acquisition is already pending or queued, allow; otherwise block so drops happen before work
                     if (AssignmentSearch.HasAcquisitionPendingOrQueued(pawn))
                     {
-                        if (IsDebugLoggingEnabled)
+                        if (SurvivalToolsMod.Settings?.extraHardcoreMode == true)
                         {
-                            LogDebug($"[JobGate.Phase6] Rescue queued and acquisition in motion for {pawn.LabelShort}; allowing job.", $"JobGate_RescueAllow_{pawn.ThingID}");
-                            LogJobQueueSummary(pawn, "JobGate.RescueAllow");
+                            // Nightmare: still require compliance, do not allow just because acquisition is queued
+                            int allowedNm2 = AssignmentSearch.GetEffectiveCarryLimit(pawn, SurvivalToolsMod.Settings);
+                            if (!NightmareCarryEnforcer.IsCompliant(pawn, null, allowedNm2))
+                            {
+                                reasonKey = "ST_Gate_MissingToolStat";
+                                a1 = requiredStatsPre[0]?.label ?? "work";
+                                a2 = wg?.label ?? job?.label ?? "this job";
+                                LogDecisionLine(pawn, wg, job, forced, blocked: true, reason: "NightmareCarryExceeded_PostQueue");
+                                return true;
+                            }
                         }
-                        LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: "RescueQueued_AcqInMotion");
-                        return false;
+                        else
+                        {
+                            if (IsDebugLoggingEnabled)
+                            {
+                                LogDebug($"[JobGate.Phase6] Rescue queued and acquisition in motion for {pawn.LabelShort}; allowing job.", $"JobGate_RescueAllow_{pawn.ThingID}");
+                                LogJobQueueSummary(pawn, "JobGate.RescueAllow");
+                            }
+                            LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: "RescueQueued_AcqInMotion");
+                            return false;
+                        }
                     }
                     else
                     {

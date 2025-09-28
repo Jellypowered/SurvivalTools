@@ -105,7 +105,7 @@ namespace SurvivalTools.Compat.ResearchReinvented
                 if (wgDef == null || pawn == null || pawn.RaceProps == null || !pawn.RaceProps.Humanlike)
                     return true;
 
-                var s = SurvivalTools.Settings;
+                var s = SurvivalToolsMod.Settings;
                 bool enforce = SurvivalToolUtility.IsHardcoreModeEnabled || (s != null && s.extraHardcoreMode);
                 if (!enforce) return true;
 
@@ -147,7 +147,7 @@ namespace SurvivalTools.Compat.ResearchReinvented
                 if (required == null || required.Count == 0) return true;
 
                 // If in extra-hardcore RR mode and pawn lacks research tools, block
-                if (SurvivalTools.Settings?.extraHardcoreMode == true && RRHelpers.Settings.IsRRCompatibilityEnabled)
+                if (SurvivalToolsMod.Settings?.extraHardcoreMode == true && RRHelpers.Settings.IsRRCompatibilityEnabled)
                 {
                     foreach (var st in required)
                     {
@@ -185,7 +185,7 @@ namespace SurvivalTools.Compat.ResearchReinvented
                 var required = RRHelpers.GetRequiredStatsForWorkGiverCached(wgd, job);
                 if (required == null || required.Count == 0) return true;
 
-                if (SurvivalTools.Settings?.extraHardcoreMode == true && RRHelpers.Settings.IsRRCompatibilityEnabled)
+                if (SurvivalToolsMod.Settings?.extraHardcoreMode == true && RRHelpers.Settings.IsRRCompatibilityEnabled)
                 {
                     foreach (var st in required)
                     {

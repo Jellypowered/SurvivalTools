@@ -97,7 +97,7 @@ namespace SurvivalTools.UI
             Text.Anchor = TextAnchor.MiddleCenter;
             if (Widgets.ButtonText(settingsButtonRect, "Settings"))
             {
-                Find.WindowStack.Add(new Dialog_ModSettings(LoadedModManager.GetMod<SurvivalTools>()));
+                Find.WindowStack.Add(new Dialog_ModSettings(LoadedModManager.GetMod<SurvivalToolsMod>()));
             }
 
             Text.Anchor = TextAnchor.UpperLeft;
@@ -193,7 +193,7 @@ namespace SurvivalTools.UI
             _cachedToolInfo.Clear();
 
             // Update mode/carry text
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             string mode = settings?.hardcoreMode == true ? (settings.extraHardcoreMode ? "Nightmare" : "Hardcore") : "Normal";
             string carry = "Auto"; // Simplified for now
             _cachedModeCarryText = "ST_Gear_ModeCarry".Translate(mode, carry);
@@ -338,7 +338,7 @@ namespace SurvivalTools.UI
             }
 
             info.ScoreText = scoreBuilder.ToString();
-            info.WhyText = whyBuilder.Length > 0 ? whyBuilder.ToString() : "Base values";
+            info.WhyText = whyBuilder.Length > 0 ? whyBuilder.ToString() : "ST_GearTab_BaseValues".Translate().ToString();
             info.TooltipText = _tooltipBuilder.ToString();
 
             return info;

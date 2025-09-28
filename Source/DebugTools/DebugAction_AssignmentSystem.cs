@@ -35,7 +35,7 @@ namespace SurvivalTools.DebugTools
                 return;
             }
 
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings?.enableAssignments != true)
             {
                 Messages.Message("Assignment system is disabled in settings", MessageTypeDefOf.RejectInput);
@@ -117,7 +117,7 @@ namespace SurvivalTools.DebugTools
                 return;
             }
 
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings?.enableAssignments != true)
             {
                 Messages.Message("Assignment system is disabled in settings", MessageTypeDefOf.RejectInput);
@@ -292,7 +292,7 @@ namespace SurvivalTools.DebugTools
         [DebugAction("SurvivalTools", "Test Assignment Settings", false, false)]
         public static void TestAssignmentSettings()
         {
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings == null)
             {
                 Messages.Message("Settings not available", MessageTypeDefOf.RejectInput);

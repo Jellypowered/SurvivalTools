@@ -280,7 +280,7 @@ namespace SurvivalTools.Compat.PrimitiveTools
 
         public static bool ShouldOptimizeForPrimitiveTools()
         {
-            return IsPrimitiveToolsActive() && SurvivalTools.Settings?.toolOptimization == true;
+            return IsPrimitiveToolsActive() && SurvivalToolsMod.Settings?.toolOptimization == true;
         }
 
         /// <summary>

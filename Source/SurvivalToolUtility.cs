@@ -84,7 +84,7 @@ namespace SurvivalTools
             // Quality weighting if enabled
             try
             {
-                if (SurvivalTools.Settings?.useQualityToolScaling ?? false)
+                if (SurvivalToolsMod.Settings?.useQualityToolScaling ?? false)
                 {
                     if (tool is ThingWithComps twc)
                     {
@@ -382,10 +382,10 @@ namespace SurvivalTools
                     return cached;
 
                 // Compute
-                float baseNormal = SurvivalTools.Settings?.noToolStatFactorNormal ?? 0.4f; // default fallback
+                float baseNormal = SurvivalToolsMod.Settings?.noToolStatFactorNormal ?? 0.4f; // default fallback
 
                 // If stat is optional in normal mode, treat as 1
-                if (!SurvivalTools.Settings?.enableNormalModePenalties ?? false)
+                if (!SurvivalToolsMod.Settings?.enableNormalModePenalties ?? false)
                 {
                     // Normal mode penalties globally disabled
                     baseNormal = 1f;
@@ -394,7 +394,7 @@ namespace SurvivalTools
                 // For WorkSpeedGlobal: if no gating jobs enabled, don't penalize
                 if (stat == ST_StatDefOf.WorkSpeedGlobal)
                 {
-                    var settings = SurvivalTools.Settings;
+                    var settings = SurvivalToolsMod.Settings;
                     if (settings != null)
                     {
                         var jobDict = settings.workSpeedGlobalJobGating;
@@ -417,7 +417,7 @@ namespace SurvivalTools
                 }
 
                 float result;
-                var settingsRef = SurvivalTools.Settings;
+                var settingsRef = SurvivalToolsMod.Settings;
                 // Start with normal base
                 result = baseNormal;
 
@@ -535,7 +535,7 @@ namespace SurvivalTools
                         float qualityFactor = 1f;
                         try
                         {
-                            if (SurvivalTools.Settings?.useQualityToolScaling ?? false)
+                            if (SurvivalToolsMod.Settings?.useQualityToolScaling ?? false)
                             {
                                 var comp = (instance as ThingWithComps)?.TryGetComp<CompQuality>();
                                 QualityCategory qc = comp != null ? comp.Quality : QualityCategory.Normal;
@@ -596,12 +596,12 @@ namespace SurvivalTools
 
         #region Settings toggles (fast access)
 
-        public static bool IsHardcoreModeEnabled => SurvivalTools.Settings?.hardcoreMode ?? false;
+        public static bool IsHardcoreModeEnabled => SurvivalToolsMod.Settings?.hardcoreMode ?? false;
 
         public static bool IsToolDegradationEnabled =>
-            (SurvivalTools.Settings?.EffectiveToolDegradationFactor ?? 0f) > 0.001f;
+            (SurvivalToolsMod.Settings?.EffectiveToolDegradationFactor ?? 0f) > 0.001f;
 
-        public static bool IsToolMapGenEnabled => SurvivalTools.Settings?.toolMapGen ?? false;
+        public static bool IsToolMapGenEnabled => SurvivalToolsMod.Settings?.toolMapGen ?? false;
 
         #endregion
 
@@ -1173,7 +1173,7 @@ namespace SurvivalTools
             pawn.TraderKind == null;
 
         public static bool IsUnderSurvivalToolCarryLimitFor(this int count, Pawn pawn) =>
-            !SurvivalTools.Settings.toolLimit || count < pawn.GetStatValue(ST_StatDefOf.SurvivalToolCarryCapacity);
+            !SurvivalToolsMod.Settings.toolLimit || count < pawn.GetStatValue(ST_StatDefOf.SurvivalToolCarryCapacity);
 
         public static IEnumerable<Thing> GetHeldSurvivalTools(this Pawn pawn)
         {
@@ -1320,7 +1320,7 @@ namespace SurvivalTools
             var sProps = StuffPropsTool.For(tool.Stuff);
             float effectiveness = tool.GetStatValue(ST_StatDefOf.ToolEffectivenessFactor);
             // Apply quality-based multiplier if enabled in settings. We read CompQuality from the physical tool.
-            if (SurvivalTools.Settings?.useQualityToolScaling ?? false)
+            if (SurvivalToolsMod.Settings?.useQualityToolScaling ?? false)
             {
                 try
                 {
@@ -1486,7 +1486,7 @@ namespace SurvivalTools
             try
             {
                 if (pawn == null || requiredStats == null || requiredStats.Count == 0) return false;
-                if (!(SurvivalTools.Settings?.autoTool ?? false)) return false;
+                if (!(SurvivalToolsMod.Settings?.autoTool ?? false)) return false;
                 if (!pawn.CanUseSurvivalTools()) return false;
 
                 // If pawn already has a helpful tool, nothing to do
@@ -1627,6 +1627,25 @@ namespace SurvivalTools
 
                 var backingThing = BackingThing(bestTool, pawn) ?? (bestTool as Thing);
                 if (backingThing == null || !backingThing.Spawned) return false;
+
+                // NIGHTMARE MODE: purge all carried tools before enqueuing pickup so we cannot cheese carry limit.
+                try
+                {
+                    if (SurvivalToolsMod.Settings?.extraHardcoreMode == true)
+                    {
+                        if (Assign.AssignmentSearch.NightmarePurgeAllTools(pawn, backingThing))
+                        {
+                            if (IsDebugLoggingEnabled)
+                                LogDebug($"[Nightmare] Purged carried tools (auto-pickup) for {pawn.LabelShort}; deferring pickup of {backingThing.LabelShort}", $"Nightmare.AutoPickupPurge_{pawn.ThingID}");
+                            return true; // we did work; pickup deferred until next pass (so return true to avoid re-scan spam)
+                        }
+                    }
+                }
+                catch (Exception exNM)
+                {
+                    if (IsDebugLoggingEnabled)
+                        LogDebug($"Nightmare auto-pickup purge exception: {exNM}", $"Nightmare.AutoPickupPurgeEx_{pawn.ThingID}");
+                }
 
                 var pickupJob = JobMaker.MakeJob(JobDefOf.TakeInventory, backingThing);
                 pickupJob.count = 1;
@@ -1788,7 +1807,7 @@ namespace SurvivalTools
         {
             if (requiredStats.NullOrEmpty()) return true;
 
-            var s = SurvivalTools.Settings;
+            var s = SurvivalToolsMod.Settings;
             if (s != null && s.hardcoreMode)
             {
                 var toolStats = requiredStats.Where(st => st != null && st.RequiresSurvivalTool()).ToList();
@@ -1868,7 +1887,7 @@ namespace SurvivalTools
             // and the per-job gating setting is enabled, include WorkSpeedGlobal in the relevant stats.
             try
             {
-                var settings = SurvivalTools.Settings;
+                var settings = SurvivalToolsMod.Settings;
                 if (settings != null && pawn?.workSettings != null)
                 {
                     foreach (var wg in WorkSpeedGlobalHelper.GetWorkSpeedGlobalJobs())

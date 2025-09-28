@@ -170,17 +170,17 @@ namespace SurvivalTools.Compat.ResearchReinvented
                 get
                 {
                     if (!IsRRActive) return false;
-                    return SurvivalTools.Settings?.enableRRCompatibility ?? true;
+                    return SurvivalToolsMod.Settings?.enableRRCompatibility ?? true;
                 }
             }
 
-            public static bool TreatResearchAsRequiredInExtraHardcore => SurvivalTools.Settings?.rrResearchRequiredInExtraHardcore ?? false;
-            public static bool TreatFieldResearchAsRequiredInExtraHardcore => SurvivalTools.Settings?.rrFieldResearchRequiredInExtraHardcore ?? false;
+            public static bool TreatResearchAsRequiredInExtraHardcore => SurvivalToolsMod.Settings?.rrResearchRequiredInExtraHardcore ?? false;
+            public static bool TreatFieldResearchAsRequiredInExtraHardcore => SurvivalToolsMod.Settings?.rrFieldResearchRequiredInExtraHardcore ?? false;
 
             public static bool IsRRStatRequiredInExtraHardcore(StatDef stat)
             {
                 if (!IsRRCompatibilityEnabled || stat == null) return false;
-                if (SurvivalTools.Settings?.extraHardcoreMode != true) return false;
+                if (SurvivalToolsMod.Settings?.extraHardcoreMode != true) return false;
                 if (stat == CompatAPI.GetResearchSpeedStat()) return TreatResearchAsRequiredInExtraHardcore;
                 if (stat == CompatAPI.GetFieldResearchSpeedStat()) return TreatFieldResearchAsRequiredInExtraHardcore;
                 return false;
@@ -253,6 +253,6 @@ namespace SurvivalTools.Compat.ResearchReinvented
             }
         }
 
-        internal static bool ShouldRRReturnFalseWhenNoTool() => SurvivalTools.Settings?.extraHardcoreMode == true;
+        internal static bool ShouldRRReturnFalseWhenNoTool() => SurvivalToolsMod.Settings?.extraHardcoreMode == true;
     }
 }

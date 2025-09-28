@@ -1028,7 +1028,9 @@ namespace SurvivalTools.Assign
             }
 
             // If a drop/acquisition is already pending in the queue, do not enqueue acquisition this pass
-            if (HasPendingDropJob(pawn) || HasPendingAcquisitionJob(pawn))
+            // Nightmare exception: we still need to purge everything before acquiring.
+            bool nightmare = SurvivalToolsMod.Settings?.extraHardcoreMode == true;
+            if (!nightmare && (HasPendingDropJob(pawn) || HasPendingAcquisitionJob(pawn)))
             {
                 LogDebug($"QueueAcquisitionJob: tool-management pending for {pawn.LabelShort} — deferring acquisition", "AssignmentSearch.DeferAcquireForPendingQueue");
                 // handled this pass by deferring; no acquisition enqueued
@@ -1043,6 +1045,24 @@ namespace SurvivalTools.Assign
                 return false;
             }
 
+            // NIGHTMARE MODE: Must purge ALL carried tools (except the target if already held) BEFORE any acquisition/equip job.
+            if (nightmare)
+            {
+                try
+                {
+                    if (NightmarePurgeBeforeAcquire(pawn, candidate.tool))
+                    {
+                        LogDebug($"[Nightmare] Full purge queued for {pawn.LabelShort}; deferring acquisition of {candidate.tool.LabelShort}", "Nightmare.PurgeBeforeAcquire");
+                        acquisitionEnqueued = false;
+                        return true; // handled (we *did* something: queued drops)
+                    }
+                }
+                catch (Exception nmEx)
+                {
+                    LogDebug($"Nightmare purge exception: {nmEx}", "Nightmare.Purge.Exception");
+                }
+            }
+
             // Check carry limits BEFORE creating jobs and try to make room
             if (!CanCarryAdditionalTool(pawn))
             {
@@ -1053,7 +1073,7 @@ namespace SurvivalTools.Assign
                 try
                 {
                     // If carry-limit is effectively 1, protect the best tool for the requested stat to avoid ping-pong
-                    var settings = SurvivalTools.Settings;
+                    var settings = SurvivalToolsMod.Settings;
                     int carryLimit = GetCarryLimit(settings);
                     if (HasToolbelt(pawn)) carryLimit = Math.Max(carryLimit, 3);
                     if (carryLimit <= 1 && requestedStat != null)
@@ -1234,19 +1254,87 @@ namespace SurvivalTools.Assign
             }
         }
 
+        /// <summary>
+        /// Nightmare rule: drop ALL currently carried real tools BEFORE attempting to acquire/equip a new tool.
+        /// Returns true if at least one drop job was queued (so acquisition should be deferred this pass).
+        /// </summary>
+        // External callers (e.g., passive pickup rescues) can invoke this to enforce Nightmare rule before any acquisition.
+        internal static bool NightmarePurgeAllTools(Pawn pawn, Thing excludeTool) => NightmarePurgeBeforeAcquire(pawn, excludeTool);
+
+        private static bool NightmarePurgeBeforeAcquire(Pawn pawn, Thing targetTool)
+        {
+            if (pawn == null) return false;
+            // Gather all real carried tools (inventory + equipment). We do not count tool-stuff stacks here; focus on tangible tools.
+            var toDrop = new List<Thing>();
+            var inv = pawn.inventory?.innerContainer;
+            if (inv != null)
+            {
+                for (int i = 0; i < inv.Count; i++)
+                {
+                    var t = inv[i]; if (t != null && IsRealTool(t) && t != targetTool) toDrop.Add(t);
+                }
+            }
+            var eq = pawn.equipment?.AllEquipmentListForReading;
+            if (eq != null)
+            {
+                for (int i = 0; i < eq.Count; i++)
+                {
+                    var t = eq[i]; if (t != null && IsRealTool(t) && t != targetTool) toDrop.Add(t);
+                }
+            }
+            if (toDrop.Count == 0)
+                return false;
+
+            bool any = false;
+            // Queue drop jobs for every carried tool so pawn ends up with zero before acquisition.
+            // Order: drop lowest-score tools first, though in Nightmare we expect few.
+            toDrop.Sort((a, b) => GetOverallToolScore(pawn, a).CompareTo(GetOverallToolScore(pawn, b)));
+            for (int i = 0; i < toDrop.Count; i++)
+            {
+                var tool = toDrop[i];
+                if (!ValidateToolStateForDrop(pawn, tool)) continue;
+                if (!QueueDropJob(pawn, tool)) continue;
+                any = true;
+            }
+            if (any)
+            {
+                LogDebug($"[Nightmare] Queued {toDrop.Count} drop jobs before acquisition attempt (target={(targetTool != null ? targetTool.LabelShort : "null")}) for {pawn.LabelShort}", "Nightmare.PurgeQueued");
+            }
+            return any;
+        }
+
+        // Compute the effective carry limit combining difficulty mode cap (1/2/3) and stat-based capacity.
+        // We take the MIN of (difficulty cap, stat cap) unless toolLimit setting is off (then unlimited).
+        public static int GetEffectiveCarryLimit(Pawn pawn, SurvivalToolsSettings settings)
+        {
+            if (pawn == null || settings == null) return 9999; // fail-open
+            int diffCap = GetCarryLimit(settings); // 1/2/3 based on hardcore modes
+            int statCap = 9999;
+            if (settings.toolLimit)
+            {
+                try
+                {
+                    // Floor to int; stat typically small (e.g. 1-3) but future scaling safe
+                    statCap = (int)Math.Floor(pawn.GetStatValue(ST_StatDefOf.SurvivalToolCarryCapacity) + 0.001f);
+                }
+                catch { statCap = diffCap; }
+            }
+            int cap = Math.Min(diffCap, statCap);
+            if (HasToolbelt(pawn)) cap = Math.Max(cap, 3); // toolbelt exception
+            if (cap < 0) cap = 0; if (cap > 9999) cap = 9999;
+            return cap;
+        }
+
         private static bool CanCarryAdditionalTool(Pawn pawn)
         {
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings == null)
                 return true;
 
-            int carryLimit = GetCarryLimit(settings);
-            if (HasToolbelt(pawn))
-                carryLimit = Math.Max(carryLimit, 3); // Toolbelt exception
-
+            int carryLimit = GetEffectiveCarryLimit(pawn, settings);
             int currentTools = CountCarriedTools(pawn);
 
-            LogDebug($"CanCarryAdditionalTool for {pawn.LabelShort}: current={currentTools}, limit={carryLimit}, canCarry={currentTools < carryLimit}", "AssignmentSearch.CarryCheck");
+            LogDebug($"CanCarryAdditionalTool for {pawn.LabelShort}: current={currentTools}, effectiveLimit={carryLimit} (toolLimit={settings.toolLimit} diffCap={GetCarryLimit(settings)} statCap={(settings.toolLimit ? pawn.GetStatValue(ST_StatDefOf.SurvivalToolCarryCapacity).ToString("F2") : "∞")}), canCarry={currentTools < carryLimit}", "AssignmentSearch.CarryCheck");
 
             return currentTools < carryLimit;
         }
@@ -1267,7 +1355,7 @@ namespace SurvivalTools.Assign
             return false;
         }
 
-        private static int CountCarriedTools(Pawn pawn)
+        internal static int CountCarriedTools(Pawn pawn)
         {
             int count = 0;
 
@@ -1755,7 +1843,7 @@ namespace SurvivalTools.Assign
 
             return false;
         }
-        private static float GetOverallToolScore(Pawn pawn, Thing tool)
+        internal static float GetOverallToolScore(Pawn pawn, Thing tool)
         {
             // Simple heuristic: average score across common work stats
             float totalScore = 0f;
@@ -1781,6 +1869,7 @@ namespace SurvivalTools.Assign
 
             return statCount > 0 ? totalScore / statCount : 0f;
         }
+
 
         private static List<ThingDef> GetRelevantToolDefs(StatDef workStat)
         {
@@ -1817,6 +1906,19 @@ namespace SurvivalTools.Assign
 
             try
             {
+                // Nightmare rule: must purge all existing tools first (except target if already possessed)
+                try
+                {
+                    if (SurvivalToolsMod.Settings?.extraHardcoreMode == true)
+                    {
+                        if (NightmarePurgeBeforeAcquire(pawn, candidate.tool))
+                        {
+                            Log.Warning($"[SurvivalTools.Assignment][Nightmare] Direct swap deferred pending purge for {pawn.LabelShort}");
+                            return true; // we queued drops; treat as handled this pass
+                        }
+                    }
+                }
+                catch { }
                 // Validate tool state once more
                 if (!ValidateToolStateForAcquisition(pawn, candidate.tool))
                 {

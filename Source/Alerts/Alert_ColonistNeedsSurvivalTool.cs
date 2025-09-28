@@ -59,7 +59,7 @@ namespace SurvivalTools
 
         private static bool IsWorkingToolless(Pawn pawn)
         {
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings == null || pawn == null) return false;
 
             var stats = settings.hardcoreMode
@@ -117,7 +117,7 @@ namespace SurvivalTools
             var culprits = Culprits;
             if (culprits.NullOrEmpty()) return TaggedString.Empty;
 
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             var sb = new StringBuilder(256);
             sb.AppendLine("ColonistNeedsSurvivalToolDesc".Translate());
 

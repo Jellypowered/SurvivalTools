@@ -1,5 +1,5 @@
-﻿// Rimworld 1.6 / C# 7.3
-// Source/SurvivalToolsSettings.cs
+﻿// RimWorld 1.6 / C# 7.3
+// Source/SurvivalToolsMod.cs (was SurvivalToolsSettings.cs before Mod class rename to avoid namespace collision)
 using System;
 using UnityEngine;
 using Verse;
@@ -48,8 +48,9 @@ namespace SurvivalTools
         public bool toolMapGen = true;
         public bool toolLimit = true;
         public float toolDegradationFactor = 1f;
-        public bool toolOptimization = true;
-        public bool autoTool = true;
+        // Legacy (Phase <=5) flags kept for save/backward compatibility; folded into enableAssignments.
+        public bool toolOptimization = true; // legacy serialized field (do not remove)
+        public bool autoTool = true; // legacy serialized field (do not remove)
 
         // Logging toggles (only effective in DEBUG builds)
         public bool debugLogging = false;
@@ -97,6 +98,8 @@ namespace SurvivalTools
         public float assignSearchRadius = 25f; // Maximum search radius for tool assignment
         public int assignPathCostBudget = 500; // Maximum path cost budget for tool retrieval
         public bool assignRescueOnGate = true; // Auto-assign any better tool when gated (rescue mode)
+                                               // Right-click rescue float menu (Hardcore/Nightmare) toggle
+        public bool enableRightClickRescue = true;
 
         // Job gating
         public Dictionary<string, bool> workSpeedGlobalJobGating = new Dictionary<string, bool>();
@@ -133,7 +136,7 @@ namespace SurvivalTools
             _cacheInitialized = true;
 
             if (IsDebugLoggingEnabled)
-                LogDebug($"[SurvivalTools.Settings] Optional tool cache initialized: Cleaning={_hasCleaningToolsCache}, Butchery={_hasButcheryToolsCache}, Medical={_hasMedicalToolsCache}", "Settings_OptionalToolCacheInitialized");
+                LogDebug($"[SurvivalTools] Optional tool cache initialized: Cleaning={_hasCleaningToolsCache}, Butchery={_hasButcheryToolsCache}, Medical={_hasMedicalToolsCache}", "Settings_OptionalToolCacheInitialized");
         }
 
         public void ResetOptionalToolCache()
@@ -171,12 +174,14 @@ namespace SurvivalTools
             Scribe_Values.Look(ref toolMapGen, nameof(toolMapGen), true);
             Scribe_Values.Look(ref toolLimit, nameof(toolLimit), true);
             Scribe_Values.Look(ref toolDegradationFactor, nameof(toolDegradationFactor), 1f);
-            Scribe_Values.Look(ref toolOptimization, nameof(toolOptimization), true);
+#pragma warning disable CS0612 // obsolete legacy fields (migration support)
+            Scribe_Values.Look(ref toolOptimization, nameof(toolOptimization), true); // legacy
             Scribe_Values.Look(ref debugLogging, nameof(debugLogging), false);
             Scribe_Values.Look(ref compatLogging, nameof(compatLogging), false);
             Scribe_Values.Look(ref pickupFromStorageOnly, nameof(pickupFromStorageOnly), false);
             Scribe_Values.Look(ref allowPacifistEquip, nameof(allowPacifistEquip), true);
-            Scribe_Values.Look(ref autoTool, nameof(autoTool), true);
+            Scribe_Values.Look(ref autoTool, nameof(autoTool), true); // legacy
+#pragma warning restore CS0612
             Scribe_Values.Look(ref enableSurvivalToolTreeFelling, nameof(enableSurvivalToolTreeFelling), true);
             Scribe_Values.Look(ref extraHardcoreMode, nameof(extraHardcoreMode), false);
             Scribe_Values.Look(ref requireCleaningTools, nameof(requireCleaningTools), true);
@@ -193,6 +198,7 @@ namespace SurvivalTools
             Scribe_Values.Look(ref showGatingAlert, nameof(showGatingAlert), true);
             Scribe_Values.Look(ref toolGateAlertMinTicks, nameof(toolGateAlertMinTicks), 1500);
             Scribe_Values.Look(ref enforceOnModeChange, nameof(enforceOnModeChange), true);
+            Scribe_Values.Look(ref enableRightClickRescue, nameof(enableRightClickRescue), true);
 
             Scribe_Collections.Look(ref workSpeedGlobalJobGating, nameof(workSpeedGlobalJobGating), LookMode.Value, LookMode.Value);
             if (workSpeedGlobalJobGating == null)
@@ -206,6 +212,20 @@ namespace SurvivalTools
                 {
                     showGatingAlert = false; // Default off in Normal mode
                 }
+
+                // Legacy migration: if enableAssignments not explicitly disabled but any legacy flags true, keep it enabled.
+#pragma warning disable CS0612
+                if (enableAssignments && (toolOptimization == false && autoTool == false))
+                {
+                    // Both legacy flags disabled -> treat as an opt-out request pre-refactor
+                    enableAssignments = false;
+                }
+                else if (!enableAssignments && (toolOptimization || autoTool))
+                {
+                    // Legacy user had feature on; modern flag somehow off -> enable to honor intent
+                    enableAssignments = true;
+                }
+#pragma warning restore CS0612
             }
 
             base.ExposeData();
@@ -368,8 +388,23 @@ namespace SurvivalTools
             // General settings
             listing.CheckboxLabeled("Settings_ToolMapGen".Translate(), ref toolMapGen, "Settings_ToolMapGen_Tooltip".Translate());
             listing.CheckboxLabeled("Settings_ToolLimit".Translate(), ref toolLimit, "Settings_ToolLimit_Tooltip".Translate());
-            listing.CheckboxLabeled("Settings_AutoTool".Translate(), ref autoTool, "Settings_AutoTool_Tooltip".Translate());
-            listing.CheckboxLabeled("Settings_ToolOptimization".Translate(), ref toolOptimization, "Settings_ToolOptimization_Tooltip".Translate());
+            // Unified modern toggle: enableAssignments (legacy flags displayed read-only if differing)
+            bool assignToggle = enableAssignments;
+            listing.CheckboxLabeled("Settings_EnableAssignments".Translate(), ref assignToggle, "Settings_EnableAssignments_Tooltip".Translate());
+            if (assignToggle != enableAssignments)
+            {
+                enableAssignments = assignToggle;
+#pragma warning disable CS0612
+                toolOptimization = assignToggle;
+                autoTool = assignToggle;
+#pragma warning restore CS0612
+            }
+#pragma warning disable CS0612
+            if (toolOptimization != enableAssignments || autoTool != enableAssignments)
+            {
+                listing.Label("(Legacy flags: toolOptimization=" + toolOptimization + ", autoTool=" + autoTool + ")");
+            }
+#pragma warning restore CS0612
             listing.CheckboxLabeled("Settings_EnableTreeFelling".Translate(), ref enableSurvivalToolTreeFelling, "Settings_EnableTreeFelling_Tooltip".Translate());
             listing.CheckboxLabeled("Settings_PickupFromStorageOnly".Translate(), ref pickupFromStorageOnly, "Settings_PickupFromStorageOnly_Tooltip".Translate());
             listing.CheckboxLabeled("Settings_AllowPacifistEquip".Translate(), ref allowPacifistEquip, "Settings_AllowPacifistEquip_Tooltip".Translate());
@@ -386,7 +421,7 @@ namespace SurvivalTools
                 toolGateAlertMinTicks = Mathf.Clamp(Mathf.RoundToInt(sliderVal / 50f) * 50, 0, 5000); // snap to 50‑tick increments for stability
                 if (toolGateAlertMinTicks != prev && IsDebugLoggingEnabled)
                 {
-                    LogDebug($"[SurvivalTools.Settings] toolGateAlertMinTicks changed -> {toolGateAlertMinTicks}", "Settings.Change.AlertMinTicks");
+                    LogDebug($"[SurvivalTools] toolGateAlertMinTicks changed -> {toolGateAlertMinTicks}", "Settings.Change.AlertMinTicks");
                 }
                 // Helper/tooltip style small text
                 GUI.color = Color.gray; Text.Font = GameFont.Tiny;
@@ -394,6 +429,11 @@ namespace SurvivalTools
                 GUI.color = prevColor; Text.Font = GameFont.Small;
             }
             listing.CheckboxLabeled("Settings_EnforceOnModeChange".Translate(), ref enforceOnModeChange, "Settings_EnforceOnModeChange_Tooltip".Translate());
+            // Right-click rescue toggle (only relevant / shown during Hardcore or Nightmare)
+            if (hardcoreMode || extraHardcoreMode)
+            {
+                listing.CheckboxLabeled("Settings_EnableRightClickRescue".Translate(), ref enableRightClickRescue, "Settings_EnableRightClickRescue_Tooltip".Translate());
+            }
             listing.Gap();
 
             // Normal Mode Penalty Settings
@@ -999,8 +1039,10 @@ namespace SurvivalTools
             toolMapGen = true;
             toolLimit = true;
             toolDegradationFactor = 1f;
+#pragma warning disable CS0612
             toolOptimization = true;
             autoTool = true;
+#pragma warning restore CS0612
             debugLogging = false;
 
             // Extra hardcore settings
@@ -1013,13 +1055,16 @@ namespace SurvivalTools
 
     }
     #region Settings Handler
-    public class SurvivalTools : Mod
+    public class SurvivalToolsMod : Mod
     {
-        public static SurvivalToolsSettings Settings;
+        public static SurvivalToolsMod Instance { get; private set; }
+        public static SurvivalToolsSettings Settings => Instance?._settings;
+        private readonly SurvivalToolsSettings _settings;
 
-        public SurvivalTools(ModContentPack content) : base(content)
+        public SurvivalToolsMod(ModContentPack content) : base(content)
         {
-            Settings = GetSettings<SurvivalToolsSettings>();
+            Instance = this;
+            _settings = GetSettings<SurvivalToolsSettings>();
         }
 
         public override string SettingsCategory() => "SurvivalToolsSettingsCategory".Translate();
@@ -1027,26 +1072,22 @@ namespace SurvivalTools
         public override void DoSettingsWindowContents(Rect inRect)
         {
             // Ensure we have an instance (paranoia)
-            if (Settings == null)
-                Settings = GetSettings<SurvivalToolsSettings>();
+            if (Instance == null)
+            {
+                Instance = this; // Paranoia safeguard
+            }
 
             // If your basic/enhanced UI needs the caches, prime them here
-            Settings.InitializeOptionalToolCache();
+            _settings.InitializeOptionalToolCache();
 
             // Draw the real settings UI (the one with checkboxes + “Open Enhanced Settings” button)
-            Settings.DoSettingsWindowContents(inRect);
+            _settings.DoSettingsWindowContents(inRect);
         }
 
         /// <summary>
         /// Initialize settings cache (called from StaticConstructorClass)
         /// </summary>
-        public static void InitializeSettings()
-        {
-            if (Settings != null)
-            {
-                Settings.InitializeOptionalToolCache();
-            }
-        }
+        public static void InitializeSettings() => Settings?.InitializeOptionalToolCache();
     }
     #endregion
 

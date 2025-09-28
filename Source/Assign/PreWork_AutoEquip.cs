@@ -15,6 +15,7 @@ using Verse.AI;
 using SurvivalTools.Gating;
 using SurvivalTools.Scoring;
 using SurvivalTools.Helpers;
+using SurvivalTools.Assign; // NightmareCarryEnforcer
 using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.Assign
@@ -25,6 +26,8 @@ namespace SurvivalTools.Assign
         private static readonly FieldInfo PawnField = AccessTools.Field(typeof(Pawn_JobTracker), "pawn");
         // Track pending WorkGiver tool checks between prefix and postfix
         private static readonly System.Collections.Generic.Dictionary<int, StatDef> _wgPendingStat = new System.Collections.Generic.Dictionary<int, StatDef>(64);
+        private static readonly System.Collections.Generic.Dictionary<int, int> _nmToken = new System.Collections.Generic.Dictionary<int, int>(64); // pawnId -> cooldown tick
+        private static readonly System.Collections.Generic.Dictionary<int, int> _nmLogCooldown = new System.Collections.Generic.Dictionary<int, int>(128); // pawnId -> nextTick for instrumentation
 
         // (removed unused _patchApplied flag)
 
@@ -47,189 +50,282 @@ namespace SurvivalTools.Assign
         /// Harmony prefix for Pawn_JobTracker.TryTakeOrderedJob.
         /// Checks if job requires tools and attempts auto-equip if beneficial.
         /// </summary>
-        [HarmonyPriority(Priority.First)]
-        [HarmonyPatch(typeof(Pawn_JobTracker), nameof(Pawn_JobTracker.TryTakeOrderedJob))]
-        [HarmonyPrefix]
-        public static bool TryTakeOrderedJob_Prefix(Pawn_JobTracker __instance, Job job, ref bool __result)
+        // Single real method in 1.6: TryTakeOrderedJob(Job, JobTag?, bool requestQueueing)
+        [HarmonyPatch(typeof(Pawn_JobTracker), nameof(Pawn_JobTracker.TryTakeOrderedJob), new[] { typeof(Job), typeof(JobTag?), typeof(bool) })]
+        [HarmonyPriority(Priority.High)]
+        private static class TryTakeOrderedJob_Prefix_3
         {
-            try
+            static bool Prefix(Pawn_JobTracker __instance, Job job, JobTag? tag, bool requestQueueing)
             {
-                // IMMEDIATE LOGGING - This should ALWAYS show up to verify patch is working
-                LogDebug("[SurvivalTools.PreWork] TryTakeOrderedJob_Prefix CALLED - patch is working!", "PreWork.TryTakeOrderedJob_Prefix");
-
-                // Early-out checks
-                if (__instance == null || job?.def == null)
-                    return true; // Continue with original
-
-                var pawn = (Pawn)PawnField.GetValue(__instance);
-                if (pawn == null)
-                    return true;
-
-                // VALIDATION: Use JobUtils to validate job before processing
-                if (!JobUtils.IsJobStillValid(job, pawn))
-                {
-                    LogWarning($"[SurvivalTools.PreWork] Job {job?.def?.defName} is invalid for {pawn.LabelShort}, blocking");
-                    __result = false;
-                    return false;
-                }
-
-                // IMMEDIATE LOGGING for ALL ordered jobs to see what's happening
-                LogDebug($"[SurvivalTools.PreWork] ORDERED JOB: {pawn.LabelShort} ordered to do {job.def.defName}", $"PreWork.OrderedJob|{pawn.ThingID}|{job.def.defName}");
-
-                // Only process colonists
-                if (!pawn.IsColonist || !pawn.Awake())
-                {
-                    LogDebug($"[SurvivalTools.PreWork] Skipping non-colonist or sleeping pawn: {pawn.LabelShort}", $"PreWork.SkipPawn|{pawn.ThingID}");
-                    return true;
-                }
-
-                // ANTI-CONFLICT: Skip tool management jobs to avoid loops
-                if (JobUtils.IsToolManagementJob(job))
-                {
-                    LogDebug($"[SurvivalTools.PreWork] Skipping tool management job {job.def.defName} for {pawn.LabelShort}", $"PreWork.SkipToolJob|{pawn.ThingID}|{job.def.defName}");
-                    return true;
-                }
-
-                // Check if this job requires tools
-                var workStat = GetRelevantWorkStat(job);
-                if (workStat == null)
-                {
-                    LogDebug($"[SurvivalTools.PreWork] Job {job.def.defName} doesn't require tools, allowing", $"PreWork.NoToolJob|{pawn.ThingID}|{job.def.defName}");
-                    return true; // No relevant work stat, continue normally
-                }
-
-                LogDebug($"[SurvivalTools.PreWork] TOOL-REQUIRING ORDERED JOB: {pawn.LabelShort} ordered {job.def.defName} (needs {workStat.defName})", $"PreWork.ToolJob|{pawn.ThingID}|{job.def.defName}|{workStat.defName}");
-
-                var settings = SurvivalTools.Settings;
-
-                // Skip if assignment disabled
-                if (!GetEnableAssignments(settings))
-                {
-                    LogDebug($"[SurvivalTools.PreWork] Assignments disabled in settings", $"PreWork.AssignDisabled|{pawn.ThingID}");
-                    return true;
-                }
-
-                // SAFETY: Don't interfere if pawn is already doing something critical
-                if (pawn.jobs?.curJob != null && !pawn.jobs.curJob.def.casualInterruptible)
-                {
-                    LogDebug($"[SurvivalTools.PreWork] Pawn {pawn.LabelShort} has non-interruptible job {pawn.jobs.curJob.def.defName}, skipping assignment", $"PreWork.NonInterruptible|{pawn.ThingID}|{pawn.jobs.curJob.def.defName}");
-                    return true;
-                }
-
-                // SAFETY: Don't interfere with job queue manipulation during job execution
-                if (pawn.jobs?.IsCurrentJobPlayerInterruptible() == false)
-                {
-                    LogDebug($"[SurvivalTools.PreWork] Pawn {pawn.LabelShort} current job is not player-interruptible, skipping assignment", $"PreWork.NotPlayerInterruptible|{pawn.ThingID}");
-                    return true;
-                }
-
-                LogDebug($"[SurvivalTools.PreWork] Attempting tool upgrade for ordered job...", $"PreWork.AttemptUpgrade|{pawn.ThingID}|{job.def.defName}");
-
-                // Try to upgrade tool for this work
-                bool upgradedTool = TryUpgradeForWork(pawn, workStat, job, settings, AssignmentSearch.QueuePriority.Front);
-
-                if (upgradedTool)
-                {
-                    LogDebug($"[SurvivalTools.PreWork] Tool upgrade was queued for {pawn.LabelShort}, blocking original job {job.def.defName}", $"PreWork.UpgradeQueued|{pawn.ThingID}|{job.def.defName}");
-                    // Tool upgrade was queued. Requeue the original job at the front so it will retry after equip.
-                    try
-                    {
-                        if (job != null && JobUtils.IsJobStillValid(job, pawn))
-                        {
-                            var cloned = JobUtils.CloneJobForQueue(job);
-                            pawn.jobs?.jobQueue?.EnqueueFirst(cloned, JobTag.Misc);
-                            LogDebug($"[SurvivalTools.PreWork] Re-queued original job {job.def.defName} for {pawn.LabelShort} at front of queue", $"PreWork.Requeued|{pawn.ThingID}|{job.def.defName}");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error($"[SurvivalTools.PreWork] Exception while re-queuing original job {job?.def?.defName}: {ex}");
-                    }
-
-                    // Block now; job will be retried from queue after tool job(s)
-                    __result = false;
-                    return false;
-                }
-
-                LogDebug($"[SurvivalTools.PreWork] No tool upgrade needed for {pawn.LabelShort}, continuing with job {job.def.defName}", $"PreWork.NoUpgrade|{pawn.ThingID}|{job.def.defName}");
-                // No upgrade needed/possible, continue with original job
-                return true;
+                try { return TryPreWorkAutoEquip(__instance, job, tag, requestQueueing); }
+                catch (Exception ex) { LogError($"Exception in PreWork_AutoEquip.TryTakeOrderedJob Prefix: {ex}"); return true; }
             }
-            catch (Exception ex)
+        }
+
+        [HarmonyPriority(800)]
+        private static bool StartJob_Prefix(
+            Pawn_JobTracker __instance,
+            Job newJob,
+            JobCondition lastJobEndCondition,
+            ThinkNode jobGiver,
+            bool resumeCurJobAfterwards,
+            bool cancelBusyStances,
+            ThinkTreeDef thinkTree,
+            JobTag? tag,
+            bool fromQueue,
+            bool canReturnCurJobToPool,
+            bool? keepCarryingThingOverride,
+            bool continueSleeping,
+            bool addToJobsThisTick,
+            bool preToilReservationsCanFail)
+        {
+            try { return TryPreWorkAutoEquip(__instance, newJob, aiPath: true); }
+            catch (Exception e)
             {
-                LogError($"Exception in PreWork_AutoEquip.TryTakeOrderedJob_Prefix: {ex}");
-                return true; // Always continue on error to avoid breaking gameplay
+                ST_Logging.LogWarning($"[SurvivalTools.PreWork] StartJob prefix error: {e}");
+                return true;
             }
         }
 
         /// <summary>
-        /// Alternative patch for StartJob - another common job creation path
-        /// NOTE: StartJob returns void, so we cannot block it or return a result
+        /// Reflection based hook installer for AI job start path. Called once from central Harmony bootstrap.
+        /// Tries both method name variants (TryStartJob / StartJob) and multiple signatures. First hit wins.
+        /// Safe no‑op on failure (dev log only) so a signature drift never hard breaks game start.
         /// </summary>
-        [HarmonyPriority(Priority.First)]
-        [HarmonyPatch(typeof(Pawn_JobTracker), nameof(Pawn_JobTracker.StartJob))]
-        [HarmonyPrefix]
-        public static bool StartJob_Prefix(Pawn_JobTracker __instance, Job newJob)
+        private static MethodInfo GetStartJobExact()
         {
+            var t = typeof(Pawn_JobTracker);
+            var types = new Type[] {
+                typeof(Job),
+                typeof(JobCondition),
+                typeof(ThinkNode),
+                typeof(bool),
+                typeof(bool),
+                typeof(ThinkTreeDef),
+                typeof(JobTag?),
+                typeof(bool),
+                typeof(bool),
+                typeof(bool?),
+                typeof(bool),
+                typeof(bool),
+                typeof(bool)
+            };
+            return AccessTools.Method(t, "StartJob", types);
+        }
+
+        public static void ApplyStartJobHook(HarmonyLib.Harmony h)
+        {
+            if (h == null) return;
             try
             {
-                if (__instance == null || newJob?.def == null)
-                    return true;
-
-                var pawn = (Pawn)PawnField.GetValue(__instance);
-                if (pawn == null)
-                    return true;
-
-                // EARLY FILTER: Only log and process colonists to reduce spam
-                if (!pawn.IsColonist || !pawn.Awake())
-                    return true;
-
-                // Check if this job requires tools FIRST to reduce logging spam
-                var workStat = GetRelevantWorkStat(newJob);
-                if (workStat == null)
-                    return true; // No tool needed, exit quietly
-
-                // NOW log since this is a tool-requiring job
-                LogDebug($"[SurvivalTools.PreWork] TOOL JOB: {pawn.LabelShort} starting {newJob.def.defName} (requires {workStat.defName})", $"StartJob.ToolJob|{pawn.ThingID}|{newJob.def.defName}|{workStat.defName}");
-
-                var settings = SurvivalTools.Settings;
-                if (!GetEnableAssignments(settings))
+                var exact = GetStartJobExact();
+                var prefix = new HarmonyMethod(typeof(PreWork_AutoEquip).GetMethod("StartJob_Prefix", BindingFlags.Static | BindingFlags.NonPublic));
+                if (exact != null)
                 {
-                    LogDebug($"[SurvivalTools.PreWork] Assignments disabled, skipping tool check", $"StartJob.AssignDisabled|{pawn.ThingID}");
-                    return true;
+                    h.Patch(exact, prefix: prefix);
+                    ST_Logging.LogInfo("[SurvivalTools.Harmony] PreWork_AutoEquip AI StartJob prefix applied (exact).");
+                    return;
                 }
 
-                // Try to upgrade tool for this work using FRONT priority (rescue style)
-                LogDebug($"[SurvivalTools.PreWork] Attempting tool upgrade for {pawn.LabelShort}...", $"StartJob.AttemptUpgrade|{pawn.ThingID}|{newJob.def.defName}");
-                bool upgraded = TryUpgradeForWork(pawn, workStat, newJob, settings, AssignmentSearch.QueuePriority.Front);
-                LogDebug($"[SurvivalTools.PreWork] Tool upgrade result: {upgraded}", $"StartJob.UpgradeResult|{pawn.ThingID}|{newJob.def.defName}");
-
-                if (upgraded)
+                // Fallback: scan for any StartJob-like method whose first arg is Job
+                var t = typeof(Pawn_JobTracker);
+                var mis = t.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                MethodInfo candidate = null;
+                for (int i = 0; i < mis.Length; i++)
                 {
-                    // Requeue the original job at the front, then SKIP starting it now.
-                    try
-                    {
-                        if (newJob != null && JobUtils.IsJobStillValid(newJob, pawn))
-                        {
-                            var cloned = JobUtils.CloneJobForQueue(newJob);
-                            pawn.jobs?.jobQueue?.EnqueueFirst(cloned, JobTag.Misc);
-                            LogDebug($"[SurvivalTools.PreWork] Re-queued StartJob job {newJob.def.defName} for {pawn.LabelShort} at front of queue", $"StartJob.Requeued|{pawn.ThingID}|{newJob.def.defName}");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LogError($"Exception requeuing StartJob job {newJob?.def?.defName}: {ex}");
-                    }
-                    return false; // Skip StartJob now; equip job(s) will run first
+                    var m = mis[i];
+                    if (!m.Name.Contains("StartJob")) continue;
+                    var ps = m.GetParameters();
+                    if (ps.Length == 0) continue;
+                    if (ps[0].ParameterType != typeof(Job)) continue;
+                    candidate = m; break;
                 }
-
-                return true; // Continue when no upgrade queued
+                if (candidate != null)
+                {
+                    h.Patch(candidate, prefix: prefix);
+                    ST_Logging.LogInfo("[SurvivalTools.Harmony] PreWork_AutoEquip AI StartJob prefix applied (fallback).");
+                }
+                else
+                {
+                    ST_Logging.LogDebug("[SurvivalTools.PreWork] StartJob hook not applied — no suitable StartJob found.", "StartJobHook.Missing");
+                }
             }
             catch (Exception ex)
             {
-                LogError($"Exception in PreWork_AutoEquip.StartJob_Prefix: {ex}");
+                ST_Logging.LogWarning("[SurvivalTools.PreWork] StartJob hook application failed: " + ex);
+            }
+        }
+
+        // Central unified logic for both ordered & AI job starts
+        // Ordered central handler (real signature path)
+        internal static bool TryPreWorkAutoEquip(Pawn_JobTracker tracker, Job job, JobTag? tag, bool requestQueueing)
+        {
+            if (tracker == null || job == null) return true;
+            Pawn pawn = null; try { pawn = (Pawn)PawnField.GetValue(tracker); } catch { }
+            try { Log.Message($"[PreWork.Enter] pawn={pawn?.LabelShort ?? "?"} job={job?.def?.defName ?? "?"} forced={job?.playerForced} queuedReq={requestQueueing}"); } catch { }
+            // EARLY ORDERED FENCE (Nightmare) – run before any upgrade logic to avoid temporary dual-carry window.
+            try
+            {
+                var settings = SurvivalToolsMod.Settings;
+                if (settings?.extraHardcoreMode == true && pawn != null && job.playerForced)
+                {
+                    int allowed = AssignmentSearch.GetEffectiveCarryLimit(pawn, settings);
+                    int carried = NightmareCarryEnforcer.CountCarried(pawn);
+                    if (carried > allowed)
+                    {
+                        // Enforce immediately (no keeper hint – we'll re-evaluate after drops before upgrade)
+                        int enq = NightmareCarryEnforcer.EnforceNow(pawn, keeperOrNull: null, allowed: allowed, reason: "ordered-early");
+                        bool ok = NightmareCarryEnforcer.IsCompliant(pawn, null, allowed);
+                        ST_Logging.LogDebug($"[NightmareCarry][ordered-early] pawn={pawn.LabelShort} job={job.def?.defName} carried={carried} allowed={allowed} enq={enq} ok={ok}",
+                            $"NightmareOrderedEarly|{pawn.thingIDNumber}");
+                        if (!ok)
+                        {
+                            // Requeue original job so it resumes after drops resolve
+                            try { var clone = JobUtils.CloneJobForQueue(job); tracker.jobQueue?.EnqueueFirst(clone, JobTag.Misc); } catch { }
+                            return false; // block until compliant
+                        }
+                    }
+                }
+            }
+            catch (Exception eoEx) { ST_Logging.LogWarning("[SurvivalTools.PreWork] Early ordered fence exception: " + eoEx.Message); }
+            return TryPreWorkAutoEquip(tracker, job, aiPath: false);
+        }
+
+        internal static bool TryPreWorkAutoEquip(Pawn_JobTracker tracker, Job job, bool aiPath, JobTag? tag = null, bool draftForced = false, bool hasDraftForced = false)
+        {
+            if (tracker == null || job?.def == null) return true;
+            var pawn = (Pawn)PawnField.GetValue(tracker);
+            if (pawn == null) return true;
+            // AI path logging already covered elsewhere; ordered overloads log before delegating
+            // Unified path: determine relevant stat (may be null – still enforce carry), attempt upgrade, then strict carry enforcement.
+            var workStat = GetRelevantWorkStat(job); // may be null for non‑supported jobs (still enforce carry limit)
+
+            // Attempt upgrade only if job has a relevant stat and assignments enabled
+            Thing pendingEquip = null;
+            bool upgraded = false;
+            var settings = SurvivalToolsMod.Settings;
+            if (workStat != null && GetEnableAssignments(settings) && pawn.IsColonist && pawn.Awake() && !JobUtils.IsToolManagementJob(job))
+            {
+                upgraded = TryUpgradeForWork(pawn, workStat, job, settings, AssignmentSearch.QueuePriority.Front);
+                if (upgraded)
+                {
+                    // the queued equip job's TargetA will be the tool; we resolve keeper below after equip completes, for now treat none
+                    try { pendingEquip = job.targetA.Thing; } catch { pendingEquip = null; }
+                }
+            }
+
+            // Nightmare strict carry enforcement (blocks work until physically compliant)
+            if (!EnforceCarryOrBlock(tracker, job, pawn, workStat, pendingEquip)) return false;
+
+            // If we queued an upgrade, we requeue original job and exit so equip executes first
+            if (upgraded)
+            {
+                try
+                {
+                    if (JobUtils.IsJobStillValid(job, pawn))
+                    {
+                        var cloned = JobUtils.CloneJobForQueue(job);
+                        pawn.jobs?.jobQueue?.EnqueueFirst(cloned, JobTag.Misc);
+                    }
+                }
+                catch (Exception e) { LogError($"[SurvivalTools.PreWork] Requeue exception: {e}"); }
+                return false;
+            }
+
+            return true;
+        }
+
+        // Single consolidated Nightmare enforcement helper (strict) used by both ordered and AI job starts
+        private static bool EnforceCarryOrBlock(Pawn_JobTracker jt, Job newJob, Pawn pawn, StatDef focusStat, Thing pendingEquipOrNull)
+        {
+            try
+            {
+                var st = SurvivalToolsMod.Settings;
+                if (st == null) return true;
+                if (!st.extraHardcoreMode) return true; // not in Nightmare
+                // Toolbelt exemption placeholder intentionally omitted (stub returns false elsewhere)
+                if (JobUtils.IsToolManagementJob(newJob)) return true; // don't block management jobs
+
+                int allowed = AssignmentSearch.GetEffectiveCarryLimit(pawn, st);
+                // Unified keeper selection via enforcer helper (resolver-aligned)
+                Thing keeper = pendingEquipOrNull ?? NightmareCarryEnforcer.SelectKeeperForJob(pawn, focusStat);
+                int enq = NightmareCarryEnforcer.EnforceNow(pawn, keeper, allowed, "pre-work");
+                bool ok = NightmareCarryEnforcer.IsCompliant(pawn, keeper, allowed);
+                int carriedNow = NightmareCarryEnforcer.CountCarried(pawn);
+                // Local 200‑tick instrumentation cooldown
+                int nowTick = Find.TickManager?.TicksGame ?? 0;
+                int pid = pawn.thingIDNumber;
+                if (!_nmLogCooldown.TryGetValue(pid, out var until) || nowTick >= until)
+                {
+                    _nmLogCooldown[pid] = nowTick + 200;
+                    LogInfo($"[PreWork] pawn={pawn.LabelShort} job={newJob?.def?.defName} carried={carriedNow} allowed={allowed} enq={enq} compliant={ok} keeper={(keeper != null ? keeper.LabelShort : "(auto)")} (playerForced={newJob?.playerForced == true})");
+                }
+                if (!ok)
+                {
+                    RequeueOriginalJobFirst(jt, newJob);
+                    // Extra one-off log when blocking a forced job (no cooldown); still cheap
+                    if (newJob?.playerForced == true)
+                    {
+                        LogInfo($"[PreWork] BLOCK (Nightmare) forced job for {pawn.LabelShort} until drops resolve");
+                    }
+                    return false;
+                }
                 return true;
             }
+            catch (Exception ex)
+            {
+                LogWarning($"[SurvivalTools.Nightmare] EnforceCarryOrBlock exception: {ex}");
+                return true; // fail open
+            }
+        }
+
+        private static void RequeueOriginalJobFirst(Pawn_JobTracker jt, Job job)
+        {
+            try
+            {
+                if (jt == null || job == null) return;
+                var pawn = (Pawn)PawnField.GetValue(jt);
+                if (pawn == null) return;
+                if (!JobUtils.IsJobStillValid(job, pawn)) return;
+                var cloned = JobUtils.CloneJobForQueue(job);
+                jt.jobQueue?.EnqueueFirst(cloned, JobTag.Misc);
+            }
+            catch { }
+        }
+
+        // Postfix on successfully completed Equip jobs to enforce Nightmare (and general) carry limit immediately
+        [HarmonyPatch(typeof(JobDriver), nameof(JobDriver.EndJobWith))]
+        [HarmonyPostfix]
+        private static void JobDriver_EndJobWith_Postfix(JobDriver __instance, JobCondition condition)
+        {
+            try
+            {
+                if (condition != JobCondition.Succeeded) return;
+                var job = __instance?.job; var pawn = __instance?.pawn;
+                if (job == null || pawn == null) return;
+                if (job.def == JobDefOf.Equip || job.def == JobDefOf.TakeInventory)
+                {
+                    // Protect the just equipped thing (targetA) from immediate drop; pass backing thing
+                    var tool = job.targetA.Thing; // may be null
+                    // Nightmare re-enforcement: ensure invariant immediately after an equip/take inventory completes
+                    try
+                    {
+                        var settings = SurvivalToolsMod.Settings;
+                        if (settings != null)
+                        {
+                            int allowed = AssignmentSearch.GetEffectiveCarryLimit(pawn, settings);
+                            NightmareCarryEnforcer.EnforceNow(pawn, tool, allowed);
+                        }
+                        else
+                        {
+                            // Fallback path still routes through enforcer with default allowed
+                            NightmareCarryEnforcer.EnforceNow(pawn, tool, AssignmentSearch.GetEffectiveCarryLimit(pawn, SurvivalToolsMod.Settings));
+                        }
+                    }
+                    catch { /* defensive */ }
+                }
+            }
+            catch { /* best-effort */ }
         }
 
         /// <summary>
@@ -328,7 +424,7 @@ namespace SurvivalTools.Assign
                     return;
                 }
 
-                var settings = SurvivalTools.Settings;
+                var settings = SurvivalToolsMod.Settings;
                 if (!GetEnableAssignments(settings))
                 {
                     _wgPendingStat.Remove(pawn.thingIDNumber);

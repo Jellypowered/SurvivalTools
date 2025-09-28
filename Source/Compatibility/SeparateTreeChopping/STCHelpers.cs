@@ -68,7 +68,7 @@ namespace SurvivalTools.Compat.SeparateTreeChopping
         #region Conflict Detection and Resolution
 
         private static bool SurvivalToolsTreeFellingEnabled =>
-            SurvivalTools.Settings != null && SurvivalTools.Settings.enableSurvivalToolTreeFelling;
+            SurvivalToolsMod.Settings != null && SurvivalToolsMod.Settings.enableSurvivalToolTreeFelling;
 
         /// <summary>
         /// Check if there are conflicts between SurvivalTools tree felling and Separate Tree Chopping.
@@ -99,9 +99,9 @@ namespace SurvivalTools.Compat.SeparateTreeChopping
                     return true;
 
                 case TreeFellingConflictResolution.DisableSurvivalToolsTreeFelling:
-                    if (SurvivalTools.Settings != null)
+                    if (SurvivalToolsMod.Settings != null)
                     {
-                        SurvivalTools.Settings.enableSurvivalToolTreeFelling = false;
+                        SurvivalToolsMod.Settings.enableSurvivalToolTreeFelling = false;
                         ST_Logging.LogCompatMessage("Auto-disabled SurvivalTools tree felling due to Separate Tree Chopping conflict");
                         return true;
                     }

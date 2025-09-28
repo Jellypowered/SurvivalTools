@@ -1,0 +1,6 @@
+<!-- Quarantined (Phase 9). Not loaded due to .off extension. Historical reference only. -->
+<Patch>
+  <Operation Class="PatchOperationComment">
+    <comment>Original MiningYieldDigging requiredStats injection removed; stat is optional now.</comment>
+  </Operation>
+</Patch>

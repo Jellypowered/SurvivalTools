@@ -62,7 +62,7 @@ namespace SurvivalTools.HarmonyStuff
         static void Post_JobOnThing(WorkGiver_Scanner __instance, Pawn pawn, Thing t, bool forced, ref Job __result)
         {
             if (__result == null) return;
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings == null || (!settings.hardcoreMode && !settings.extraHardcoreMode)) return;
             if (JobGate.ShouldBlock(pawn, __instance.def, __result.def, forced, out var key, out var a1, out var a2))
             {
@@ -74,7 +74,7 @@ namespace SurvivalTools.HarmonyStuff
         static void Post_JobOnCell(WorkGiver_Scanner __instance, Pawn pawn, IntVec3 c, bool forced, ref Job __result)
         {
             if (__result == null) return;
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings == null || (!settings.hardcoreMode && !settings.extraHardcoreMode)) return;
             if (JobGate.ShouldBlock(pawn, __instance.def, __result.def, forced, out var key, out var a1, out var a2))
             {
@@ -86,7 +86,7 @@ namespace SurvivalTools.HarmonyStuff
         // Prefix early-out for perf; we can only pass WG here (no JobDef yet)
         static bool Pre_HasJobOnThing(WorkGiver_Scanner __instance, Pawn pawn, Thing t, bool forced, ref bool __result)
         {
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings == null || (!settings.hardcoreMode && !settings.extraHardcoreMode)) return true;
             if (JobGate.ShouldBlock(pawn, __instance.def, null, forced, out var key, out var a1, out var a2))
             {
@@ -99,7 +99,7 @@ namespace SurvivalTools.HarmonyStuff
 
         static bool Pre_HasJobOnCell(WorkGiver_Scanner __instance, Pawn pawn, IntVec3 c, bool forced, ref bool __result)
         {
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings == null || (!settings.hardcoreMode && !settings.extraHardcoreMode)) return true;
             if (JobGate.ShouldBlock(pawn, __instance.def, null, forced, out var key, out var a1, out var a2))
             {

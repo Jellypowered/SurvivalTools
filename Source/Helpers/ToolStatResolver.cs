@@ -164,7 +164,7 @@ namespace SurvivalTools.Helpers
             float factor = info.Factor;
 
             // Clamp: material beats "no tool" baseline on Normal
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings != null && !settings.hardcoreMode && !settings.extraHardcoreMode)
             {
                 float baseline = GetNoToolBaseline();
@@ -520,7 +520,7 @@ namespace SurvivalTools.Helpers
         /// </summary>
         private static float GetNoToolBaseline()
         {
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             return settings?.noToolStatFactorNormal ?? 0.4f;
         }
 
@@ -629,6 +629,31 @@ namespace SurvivalTools.Helpers
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Unified predicate: returns true if this def meaningfully affects ANY registered work stat.
+        /// Used by NightmareCarryEnforcer (carry-limit) so that counting logic matches scoring logic.
+        /// Virtual tools (tool-stuff wrappers) are excluded at call sites; this operates on raw defs.
+        /// </summary>
+        public static bool AffectsAnyRegisteredWorkStat(ThingDef toolDef)
+        {
+            try
+            {
+                if (toolDef == null) return false;
+                // Fast path: if no intersection with RegisteredWorkStats via statBases AND no explicit props, try name hints
+                // We still fall back to full factor evaluation to stay consistent with scoring (quirks, stuff multipliers ignored here).
+                foreach (var stat in RegisteredWorkStats)
+                {
+                    if (stat == null) continue;
+                    float factor = GetToolStatFactor(toolDef, null, stat);
+                    float baseline = SurvivalToolUtility.GetNoToolBaseline(stat);
+                    if (factor > baseline + 0.0001f)
+                        return true;
+                }
+            }
+            catch { }
+            return false;
         }
     }
 

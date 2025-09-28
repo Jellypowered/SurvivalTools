@@ -17,7 +17,7 @@ namespace SurvivalTools
             var sb = new StringBuilder(4096);
             sb.AppendLine("[SurvivalTools] Status dump");
             sb.AppendLine("----------------------------");
-            try { sb.AppendLine($"Settings: hardcore={(SurvivalTools.Settings?.hardcoreMode == true)} extraHardcore={(SurvivalTools.Settings?.extraHardcoreMode == true)}"); } catch { }
+            try { sb.AppendLine($"Settings: hardcore={(SurvivalToolsMod.Settings?.hardcoreMode == true)} extraHardcore={(SurvivalToolsMod.Settings?.extraHardcoreMode == true)}"); } catch { }
             try
             {
                 sb.AppendLine($"Resolver version: {Helpers.ToolStatResolver.Version}");
@@ -381,7 +381,7 @@ namespace SurvivalTools
                 else
                 {
                     // No tool case
-                    var settings = SurvivalTools.Settings;
+                    var settings = SurvivalToolsMod.Settings;
                     if (settings != null && !settings.hardcoreMode && !settings.extraHardcoreMode && settings.enableNormalModePenalties)
                     {
                         expectedFactor = settings.noToolStatFactorNormal;
@@ -446,7 +446,7 @@ namespace SurvivalTools
                 sb.AppendLine($"Test time: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
                 sb.AppendLine();
 
-                var settings = SurvivalTools.Settings;
+                var settings = SurvivalToolsMod.Settings;
                 sb.AppendLine($"Settings: hardcore={settings?.hardcoreMode == true}, extraHardcore={settings?.extraHardcoreMode == true}, showGatingAlert={settings?.showGatingAlert == true}");
                 sb.AppendLine();
 

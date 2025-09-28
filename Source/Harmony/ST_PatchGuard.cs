@@ -12,6 +12,7 @@ using Verse;
 using Verse.AI;
 using UnityEngine;
 using SurvivalTools.Assign;
+using SurvivalTools.HarmonyStuff;
 
 namespace SurvivalTools.HarmonyStuff
 {
@@ -19,37 +20,72 @@ namespace SurvivalTools.HarmonyStuff
     static class ST_PatchGuard
     {
         private static readonly HarmonyLib.Harmony _harmony = new HarmonyLib.Harmony("survivaltools.patchguard");
+        // Central allowlist of ST patch container types permitted to remain on hotspots.
+        private static readonly Type[] _allowlistedTypes = new Type[]
+        {
+            typeof(PreWork_AutoEquip),
+            typeof(ITab_Gear_ST),
+            typeof(SurvivalTools.Assign.PostAddHooks),
+            typeof(SurvivalTools.Assign.PostEquipHooks_AddEquipment),
+            typeof(SurvivalTools.Assign.PostEquipHooks_AddEquipment.PostEquipHooks_NotifyAdded),
+            typeof(SurvivalTools.UI.RightClickRescue.FloatMenu_PrioritizeWithRescue),
+            typeof(SurvivalTools.UI.RightClickRescue.Patch_FloatMenuMakerMap_GetOptions)
+        };
 
         static ST_PatchGuard()
         {
             Log.Message("[SurvivalTools.PatchGuard] Starting patch cleanup...");
 
-            // Phase 6: Job assignment system (replaces legacy auto-equip patches)
-            // Signature discovered: TryTakeOrderedJob(Job job, JobTag? tag, bool fromQueue)
+            // Job start / ordered job hotspots (nullable + fallback signatures)
             SweepWithFallback<Pawn_JobTracker>("TryTakeOrderedJob",
                 new[] { typeof(Job), typeof(JobTag?), typeof(bool) },
-                new[] { typeof(Job), typeof(bool) }, // Fallback for non-nullable
-                allowedTypes: new[] { typeof(PreWork_AutoEquip) });
+                new[] { typeof(Job), typeof(bool) },
+                allowedTypes: _allowlistedTypes);
 
-            // Phase 6: Job start system (add TryStartJob coverage)
             SweepWithFallback<Pawn_JobTracker>("TryStartJob",
                 new[] { typeof(Job), typeof(JobTag?), typeof(bool) },
-                new[] { typeof(Job), typeof(bool) }, // Fallback for non-nullable
-                allowedTypes: new[] { typeof(PreWork_AutoEquip) });
+                new[] { typeof(Job), typeof(bool) },
+                allowedTypes: _allowlistedTypes);
 
-            // Phase 7: Gear tab integration (replaces legacy gear UI patches)  
+            // RimWorld 1.6 uses StartJob (long signature) – add explicit sweep (non-fatal if absent)
+            var startJobExactSig = new Type[]
+            {
+                typeof(Job),            // newJob
+                typeof(JobCondition),    // lastJobEndCondition
+                typeof(ThinkNode),       // jobGiver
+                typeof(bool),            // resumeCurJobAfterwards
+                typeof(bool),            // cancelBusyStances
+                typeof(ThinkTreeDef),    // thinkTree
+                typeof(JobTag?),         // tag
+                typeof(bool),            // fromQueue
+                typeof(bool),            // canReturnCurJobToPool
+                typeof(bool?),           // keepCarryingThingOverride
+                typeof(bool),            // continueSleeping
+                typeof(bool),            // addToJobsThisTick
+                typeof(bool)             // preToilReservationsCanFail
+            };
+            Sweep<Pawn_JobTracker>("StartJob", startJobExactSig, allowedTypes: _allowlistedTypes);
+
+            // Gear tab primary patch point (FillTab) – only allow ITab_Gear_ST
             Sweep<ITab_Pawn_Gear>("FillTab", Type.EmptyTypes,
-                allowedTypes: new[] { typeof(ITab_Gear_ST) });
+                allowedTypes: _allowlistedTypes);
 
-            // Phase 7: Clean up legacy gear tab DrawThingRow transpilers
+            // DrawThingRow transpiler(s) should all be removed (legacy clutter)
             Sweep<ITab_Pawn_Gear>("DrawThingRow", new[] { typeof(Rect), typeof(Thing), typeof(bool) },
-                allowedTypes: new Type[0]); // No allowed types - remove all legacy transpilers
+                allowedTypes: Array.Empty<Type>());
 
-            // Phase 5-6: Clean up legacy JobGiver_Work auto-tool patches
+            // Work giver scanning – remove any lingering legacy auto-tool patches
             Sweep<JobGiver_Work>("TryIssueJobPackage", new[] { typeof(Pawn), typeof(JobIssueParams) },
-                allowedTypes: new Type[0]); // No allowed types - remove all legacy patches
+                allowedTypes: Array.Empty<Type>());
+
+            // Additional defensive sweeps (Phase 9): ensure no survivaltools legacy patches remain on generic hotspots
+            // These are broader & only act on ST-owned patches not on the allowlist.
+            TrySweepOptional<Pawn_EquipmentTracker>("TryDropEquipment", new[] { typeof(ThingWithComps), typeof(ThingWithComps).MakeByRefType(), typeof(IntVec3), typeof(bool) });
+            TrySweepOptional<Thing>("Destroy", new[] { typeof(DestroyMode) });
+            TrySweepOptionalStatic(typeof(ThingMaker), "MakeThing", new[] { typeof(ThingDef), typeof(ThingDef) });
 
             Log.Message("[SurvivalTools.PatchGuard] Patch cleanup complete.");
+            LogAllowlistSummary();
         }
 
         static void SweepWithFallback<TDecl>(string name, Type[] primarySig, Type[] fallbackSig, Type[] allowedTypes)
@@ -63,7 +99,8 @@ namespace SurvivalTools.HarmonyStuff
             }
 
             // Fall back to alternate signature
-            Log.Message($"[SurvivalTools.PatchGuard] Primary signature not found for {typeof(TDecl).Name}.{name}, trying fallback");
+            if (Prefs.DevMode)
+                Log.Message($"[SurvivalTools.PatchGuard] (Dev) Primary signature not found for {typeof(TDecl).Name}.{name}, trying fallback");
             Sweep<TDecl>(name, fallbackSig, allowedTypes);
         }
 
@@ -72,7 +109,8 @@ namespace SurvivalTools.HarmonyStuff
             var orig = AccessTools.Method(typeof(TDecl), name, sig);
             if (orig == null)
             {
-                Log.Warning($"[SurvivalTools.PatchGuard] Method {typeof(TDecl).Name}.{name} not found");
+                if (Prefs.DevMode)
+                    Log.Message($"[SurvivalTools.PatchGuard] (Dev) Method {typeof(TDecl).Name}.{name} not present (expected on this version?)");
                 return;
             }
 
@@ -135,6 +173,46 @@ namespace SurvivalTools.HarmonyStuff
             }
 
             return false;
+        }
+
+        // Optional sweep that silently returns if method not found; used for broad defensive cleanup.
+        static void TrySweepOptional<TDecl>(string name, Type[] sig)
+        {
+            var orig = AccessTools.Method(typeof(TDecl), name, sig);
+            if (orig == null) return; // signature absent in this RimWorld build
+            var info = Harmony.GetPatchInfo(orig);
+            if (info == null) return;
+            int removed = 0;
+            foreach (var p in info.Prefixes) if (TryUnpatchIfLegacy(orig, p, _allowlistedTypes)) removed++;
+            foreach (var p in info.Postfixes) if (TryUnpatchIfLegacy(orig, p, _allowlistedTypes)) removed++;
+            foreach (var p in info.Transpilers) if (TryUnpatchIfLegacy(orig, p, _allowlistedTypes)) removed++;
+            if (removed > 0)
+                Log.Message($"[SurvivalTools.PatchGuard] Optional sweep removed {removed} legacy patches from {typeof(TDecl).Name}.{name}");
+        }
+
+        static void LogAllowlistSummary()
+        {
+            try
+            {
+                string allowed = string.Join(", ", _allowlistedTypes.Select(t => t.Name));
+                Log.Message($"[SurvivalTools.PatchGuard] Allowlist enforced. Allowed patch containers: {allowed}");
+            }
+            catch { }
+        }
+
+        static void TrySweepOptionalStatic(Type declType, string name, Type[] sig)
+        {
+            if (declType == null) return;
+            var orig = AccessTools.Method(declType, name, sig);
+            if (orig == null) return;
+            var info = Harmony.GetPatchInfo(orig);
+            if (info == null) return;
+            int removed = 0;
+            foreach (var p in info.Prefixes) if (TryUnpatchIfLegacy(orig, p, _allowlistedTypes)) removed++;
+            foreach (var p in info.Postfixes) if (TryUnpatchIfLegacy(orig, p, _allowlistedTypes)) removed++;
+            foreach (var p in info.Transpilers) if (TryUnpatchIfLegacy(orig, p, _allowlistedTypes)) removed++;
+            if (removed > 0)
+                Log.Message($"[SurvivalTools.PatchGuard] Optional sweep removed {removed} legacy patches from {declType.Name}.{name}");
         }
     }
 }

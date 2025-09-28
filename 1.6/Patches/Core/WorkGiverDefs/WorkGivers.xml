@@ -4,7 +4,7 @@
         <xpath>Defs/WorkGiverDef[defName="Mine"]</xpath>
         <match Class="PatchOperationSequence">
             <operations>
-                <!-- Ensure our extension exists -->
+                <!-- Ensure our extension exists (DiggingSpeed only; MiningYieldDigging moved to _removed quarantine) -->
                 <li Class="PatchOperationConditional">
                     <xpath>Defs/WorkGiverDef[defName="Mine"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]</xpath>
                     <nomatch Class="PatchOperationAddModExtension">
@@ -13,7 +13,6 @@
                             <li Class="SurvivalTools.WorkGiverExtension">
                                 <requiredStats>
                                     <li>DiggingSpeed</li>
-                                    <li>MiningYieldDigging</li>
                                 </requiredStats>
                             </li>
                         </value>
@@ -29,15 +28,7 @@
                         </value>
                     </nomatch>
                 </li>
-                <li Class="PatchOperationConditional">
-                    <xpath>Defs/WorkGiverDef[defName="Mine"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats/li[text()="MiningYieldDigging"]</xpath>
-                    <nomatch Class="PatchOperationAdd">
-                        <xpath>Defs/WorkGiverDef[defName="Mine"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats</xpath>
-                        <value>
-                            <li>MiningYieldDigging</li>
-                        </value>
-                    </nomatch>
-                </li>
+                <!-- MiningYieldDigging injection removed (optional stat) -->
             </operations>
         </match>
     </Operation>
@@ -228,7 +219,7 @@
                             <li Class="SurvivalTools.WorkGiverExtension">
                                 <requiredStats>
                                     <li>ButcheryFleshSpeed</li>
-                                    <li>ButcheryFleshEfficiency</li>
+                                    <!-- ButcheryFleshEfficiency removed (optional bonus) -->
                                 </requiredStats>
                             </li>
                         </value>
@@ -243,15 +234,7 @@
                         </value>
                     </nomatch>
                 </li>
-                <li Class="PatchOperationConditional">
-                    <xpath>Defs/WorkGiverDef[defName="DoBillsButcherFlesh"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats/li[text()="ButcheryFleshEfficiency"]</xpath>
-                    <nomatch Class="PatchOperationAdd">
-                        <xpath>Defs/WorkGiverDef[defName="DoBillsButcherFlesh"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats</xpath>
-                        <value>
-                            <li>ButcheryFleshEfficiency</li>
-                        </value>
-                    </nomatch>
-                </li>
+                <!-- ButcheryFleshEfficiency injection removed (optional bonus) -->
             </operations>
         </match>
     </Operation>
@@ -268,7 +251,7 @@
                             <li Class="SurvivalTools.WorkGiverExtension">
                                 <requiredStats>
                                     <li>MedicalOperationSpeed</li>
-                                    <li>MedicalSurgerySuccessChance</li>
+                                    <!-- MedicalSurgerySuccessChance removed (optional bonus) -->
                                 </requiredStats>
                             </li>
                         </value>
@@ -283,15 +266,7 @@
                         </value>
                     </nomatch>
                 </li>
-                <li Class="PatchOperationConditional">
-                    <xpath>Defs/WorkGiverDef[defName="DoBillsMedicalHumanOperation" or defName="DoBillsMedicalAnimalOperation"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats/li[text()="MedicalSurgerySuccessChance"]</xpath>
-                    <nomatch Class="PatchOperationAdd">
-                        <xpath>Defs/WorkGiverDef[defName="DoBillsMedicalHumanOperation" or defName="DoBillsMedicalAnimalOperation"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats</xpath>
-                        <value>
-                            <li>MedicalSurgerySuccessChance</li>
-                        </value>
-                    </nomatch>
-                </li>
+                <!-- MedicalSurgerySuccessChance injection removed (optional bonus) -->
             </operations>
         </match>
     </Operation>
@@ -306,7 +281,7 @@
                     <li Class="SurvivalTools.WorkGiverExtension">
                         <requiredStats>
                             <li>MedicalOperationSpeed</li>
-                            <li>MedicalSurgerySuccessChance</li>
+                            <!-- MedicalSurgerySuccessChance removed (optional bonus) -->
                         </requiredStats>
                     </li>
                 </value>
@@ -318,12 +293,7 @@
                     <li>MedicalOperationSpeed</li>
                 </value>
             </li>
-            <li Class="PatchOperationAdd">
-                <xpath>Defs/WorkGiverDef[workType="Doctor"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats[not(li[text()='MedicalSurgerySuccessChance'])]</xpath>
-                <value>
-                    <li>MedicalSurgerySuccessChance</li>
-                </value>
-            </li>
+            <!-- MedicalSurgerySuccessChance universal doctor injection removed -->
         </operations>
     </Operation>
 
@@ -340,7 +310,7 @@
                             <li Class="SurvivalTools.WorkGiverExtension">
                                 <requiredStats>
                                     <li>ButcheryFleshSpeed</li>
-                                    <li>ButcheryFleshEfficiency</li>
+                                    <!-- ButcheryFleshEfficiency removed (optional bonus) -->
                                 </requiredStats>
                             </li>
                         </value>
@@ -355,15 +325,7 @@
                         </value>
                     </nomatch>
                 </li>
-                <li Class="PatchOperationConditional">
-                    <xpath>Defs/WorkGiverDef[defName="Slaughter"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats/li[text()="ButcheryFleshEfficiency"]</xpath>
-                    <nomatch Class="PatchOperationAdd">
-                        <xpath>Defs/WorkGiverDef[defName="Slaughter"]/modExtensions/li[@Class="SurvivalTools.WorkGiverExtension"]/requiredStats</xpath>
-                        <value>
-                            <li>ButcheryFleshEfficiency</li>
-                        </value>
-                    </nomatch>
-                </li>
+                <!-- ButcheryFleshEfficiency injection removed (optional bonus) -->
             </operations>
         </match>
     </Operation>

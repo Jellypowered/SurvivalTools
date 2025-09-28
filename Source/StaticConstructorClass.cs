@@ -41,7 +41,7 @@ namespace SurvivalTools
                 ResolveAllTools();
 
                 // 5) Warm settings cache (optional/perf)
-                SurvivalTools.InitializeSettings();
+                SurvivalToolsMod.InitializeSettings();
 
                 // 6) Apply conditional feature registration
                 ConditionalRegistration.ApplyTreeFellingConditionals();
@@ -51,6 +51,9 @@ namespace SurvivalTools
 
                 // 8) Schedule delayed job validation (after game fully loads)
                 LongEventHandler.QueueLongEvent(ValidateExistingJobsOnModLoad, "SurvivalTools: Validating existing jobs...", false, null);
+
+                // 9) Schedule optional stat gating validator (ensure demoted optional stats aren't reintroduced as hard requirements by other patches)
+                LongEventHandler.QueueLongEvent(ValidateDemotedOptionalStatsNotHardGated, "SurvivalTools: Validating demoted optional stats...", false, null);
 
                 if (IsDebugLoggingEnabled)
                     Log.Message("[SurvivalTools] Static constructor initialization completed successfully");
@@ -288,7 +291,9 @@ namespace SurvivalTools
             }
             else if (IsDebugLoggingEnabled)
             {
-                Log.Warning($"[SurvivalTools] Failed to register {workGiverDefName} for stat {stat?.defName ?? "null"} - workGiver: {workGiver != null}, stat: {stat != null}");
+                // Dev-mode only noisy warning; in normal mode stay silent to avoid log spam if defs missing by design.
+                if (Prefs.DevMode && ST_Logging.ShouldLogWithCooldown($"RegisterWG_{workGiverDefName}"))
+                    Log.Warning($"[SurvivalTools] (Dev) Failed to register {workGiverDefName} for stat {stat?.defName ?? "null"} - workGiver: {workGiver != null}, stat: {stat != null}");
             }
         }
 
@@ -302,6 +307,70 @@ namespace SurvivalTools
             if (Current.ProgramState != ProgramState.Playing) return;
 
             Helpers.SurvivalToolValidation.ValidateExistingJobs("mod loaded with existing save");
+        }
+
+        /// <summary>
+        /// Runtime safeguard: scan all WorkGiver requirements after full def load and warn if any demoted optional stats
+        /// (MiningYieldDigging, ButcheryFleshEfficiency, MedicalSurgerySuccessChance) appear as required gating stats.
+        /// Intention: avoid external XML patches silently re‑hardening bonus stats and confusing players (blocked work with only efficiency bonus missing).
+        /// Does not mutate data – purely diagnostic.
+        /// </summary>
+        private static void ValidateDemotedOptionalStatsNotHardGated()
+        {
+            try
+            {
+                if (Current.ProgramState != ProgramState.Playing) return; // Only meaningful when a map/game is running
+
+                var optionalStats = new List<StatDef>
+                {
+                    ST_StatDefOf.MiningYieldDigging,
+                    ST_StatDefOf.ButcheryFleshEfficiency,
+                    ST_StatDefOf.MedicalSurgerySuccessChance
+                }.Where(s => s != null).ToList();
+                if (optionalStats.Count == 0) return;
+
+                // Collect any WorkGivers that require these directly via our registry OR via extensions (defName pattern fallback if registry not yet populated for them)
+                var flagged = new List<string>();
+                foreach (var wg in DefDatabase<WorkGiverDef>.AllDefsListForReading)
+                {
+                    if (wg == null) continue;
+
+                    // 1) Extension check
+                    var extStats = wg.GetModExtension<WorkGiverExtension>()?.requiredStats;
+                    if (extStats != null && extStats.Any(s => optionalStats.Contains(s)))
+                    {
+                        flagged.Add($"{wg.defName} (extension)");
+                        continue;
+                    }
+
+                    // 2) Registry (CompatAPI) mapping
+                    var req = Compat.CompatAPI.GetRequiredStatsFor(wg);
+                    if (req != null && req.Any(s => optionalStats.Contains(s)))
+                    {
+                        flagged.Add($"{wg.defName} (registry)");
+                        continue;
+                    }
+                }
+
+                if (flagged.Count > 0)
+                {
+                    if (IsDebugLoggingEnabled)
+                    {
+                        Log.Warning("[SurvivalTools] (Debug) Detected demoted optional stats being used as REQUIRED gating stats. These should usually be treated as bonuses only.\n" +
+                                    " WorkGivers: " + string.Join(", ", flagged) + "\n" +
+                                    " Optional stats involved: " + string.Join(", ", optionalStats.Select(s => s.defName)) + "\n" +
+                                    " If this is intentional (another mod design), you can ignore this message. Otherwise consider removing those stats from required lists.");
+                    }
+                }
+                else if (IsDebugLoggingEnabled)
+                {
+                    Log.Message("[SurvivalTools] (Debug) Optional stat validator: no hard-gating misuse detected.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning("[SurvivalTools] Optional stat validator encountered an error: " + ex);
+            }
         }
 
         #endregion

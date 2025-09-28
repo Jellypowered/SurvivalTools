@@ -13,7 +13,7 @@ namespace SurvivalTools
         public static int BaseWearInterval =>
             Mathf.RoundToInt(GenDate.TicksPerHour * (SurvivalToolUtility.IsHardcoreModeEnabled ? 0.67f : 1f));
 
-        private static float DegradationFactor => SurvivalTools.Settings?.EffectiveToolDegradationFactor ?? 1f;
+        private static float DegradationFactor => SurvivalToolsMod.Settings?.EffectiveToolDegradationFactor ?? 1f;
         private static bool IsDegradationEnabled => DegradationFactor > 0.001f;
 
         public override bool ShouldShowFor(StatRequest req)

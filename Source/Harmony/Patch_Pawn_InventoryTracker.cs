@@ -104,13 +104,15 @@ namespace SurvivalTools.HarmonyStuff
                 // Every ~1s real-time @60 TPS; skip while busy.
                 if (!pawn.IsHashIntervalTick(60) || pawn.jobs?.curJob != null) return;
 
-                var s = SurvivalTools.Settings;
+                var s = SurvivalToolsMod.Settings;
                 if (s == null || s.toolLimit != true) return;
                 if (!pawn.CanUseSurvivalTools() || !pawn.CanRemoveExcessSurvivalTools()) return;
 
                 int heldCount = pawn.HeldSurvivalToolCount();
-                float cap = pawn.GetStatValue(ST_StatDefOf.SurvivalToolCarryCapacity);
-                if (heldCount <= cap) return;
+                int effCap = SurvivalTools.Assign.AssignmentSearch.GetEffectiveCarryLimit(pawn, s);
+                if (heldCount <= effCap) return;
+                if (IsDebugLoggingEnabled)
+                    LogDebug($"[SurvivalTools.InventoryTick] {pawn.LabelShort} over cap: held={heldCount} effCap={effCap} (toolLimit={s.toolLimit})", $"InvOverCap_{pawn.ThingID}");
 
                 // Prefer dropping a held (real/virtual) SurvivalTool that is not forced and not in-use.
                 Thing toolToDrop = FindDroppableHeldTool(pawn);

@@ -47,7 +47,7 @@ namespace SurvivalTools.Helpers
                 if (job != null && job.def == JobDefOf.Ingest)
                 {
                     // Check if gating is active AND pawn lacks cleaning tools
-                    var s = SurvivalTools.Settings;
+                    var s = SurvivalToolsMod.Settings;
                     bool enforce = SurvivalToolUtility.IsHardcoreModeEnabled || (s != null && s.extraHardcoreMode);
 
                     if (enforce && StatGatingHelper.ShouldBlockJobForStat(ST_StatDefOf.CleaningSpeed, s, pawn))
@@ -76,7 +76,7 @@ namespace SurvivalTools.Helpers
                 var job = pawn.CurJob;
                 if (job == null) continue;
 
-                var s = SurvivalTools.Settings;
+                var s = SurvivalToolsMod.Settings;
                 bool enforce = SurvivalToolUtility.IsHardcoreModeEnabled || (s != null && s.extraHardcoreMode);
                 if (!enforce) continue;
 
@@ -109,7 +109,7 @@ namespace SurvivalTools.Helpers
         {
             LogDebug($"[SurvivalTools.JobValidation] ValidateExistingJobs called with reason: {reason}", $"JobValidation_Validate_{reason}");
 
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             LogDebug($"[SurvivalTools.JobValidation] Settings state - hardcoreMode: {settings?.hardcoreMode}, extraHardcoreMode: {settings?.extraHardcoreMode}", $"JobValidation_Settings_{settings?.hardcoreMode}_{settings?.extraHardcoreMode}");
 
             if (settings?.hardcoreMode != true)

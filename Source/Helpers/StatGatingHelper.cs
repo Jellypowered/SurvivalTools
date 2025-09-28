@@ -163,7 +163,7 @@ namespace SurvivalTools.Helpers
             logKey = null;
             if (pawn == null) return false;
 
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings == null || settings.extraHardcoreMode != true) return false; // only hard-block in extra-hardcore
 
             // Respect general pawn/tool capability (mechs, prisoners, etc.)

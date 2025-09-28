@@ -114,7 +114,7 @@ namespace SurvivalTools.Stats
             if (effectiveTool == null || score <= 0.001f)
             {
                 // No meaningful tool - apply baseline penalty in Normal mode only
-                var settings = SurvivalTools.Settings;
+                var settings = SurvivalToolsMod.Settings;
                 if (settings != null && !settings.hardcoreMode && !settings.extraHardcoreMode && settings.enableNormalModePenalties)
                 {
                     val *= settings.noToolStatFactorNormal;
@@ -174,7 +174,7 @@ namespace SurvivalTools.Stats
             if (effectiveTool == null || score <= 0.001f)
             {
                 // No tool case
-                var settings = SurvivalTools.Settings;
+                var settings = SurvivalToolsMod.Settings;
                 if (settings != null && !settings.hardcoreMode && !settings.extraHardcoreMode && settings.enableNormalModePenalties)
                 {
                     _explanationBuilder.AppendLine("ST_StatPart_NoToolPenalty".Translate(settings.noToolStatFactorNormal.ToStringPercent()));

@@ -11,9 +11,24 @@ using UnityEngine;
 using Verse;
 using static SurvivalTools.ST_Logging;
 using Verse.AI;
+using SurvivalTools.Assign;
 
 namespace SurvivalTools.HarmonyStuff
 {
+    // Smoke test: ensure provider type is discoverable in assembly (dev-mode logging only)
+    [StaticConstructorOnStartup]
+    static class ST_FloatMenuProviderSmoke
+    {
+        static ST_FloatMenuProviderSmoke()
+        {
+            try
+            {
+                var t = typeof(SurvivalTools.UI.RightClickRescue.Provider_STPrioritizeWithRescue);
+                if (Prefs.DevMode) Log.Message($"[ST.RightClick] Smoke: provider type present = {t.FullName}");
+            }
+            catch { }
+        }
+    }
     [StaticConstructorOnStartup]
     internal static class HarmonyPatches
     {
@@ -121,41 +136,46 @@ namespace SurvivalTools.HarmonyStuff
         {
             // Attribute patches (if any)
             H.PatchAll(Assembly.GetExecutingAssembly());
+            // Reflection-based AI StartJob hook (robust to signature drift)
+            try { PreWork_AutoEquip.ApplyStartJobHook(H); } catch { }
+
+            // Confirm presence of post-add enforcement hooks (optional diagnostics)
+            try
+            {
+                var addMeth = AccessTools.Method(typeof(Pawn_InventoryTracker), nameof(Pawn_InventoryTracker.TryAddAndUnforbid), new Type[] { typeof(Thing) });
+                var txMeth = AccessTools.Method(typeof(ThingOwner), "TryTransferToContainer", new Type[] { typeof(Thing), typeof(ThingOwner), typeof(int), typeof(Thing).MakeByRefType(), typeof(bool) });
+                Log.Warning($"[SurvivalTools.Harmony] PostAddHooks targets present? TryAddAndUnforbid={(addMeth != null)} TryTransferToContainer={(txMeth != null)}");
+            }
+            catch { }
 
             // IMMEDIATE VERIFICATION - Check if our PreWork patch was applied
             try
             {
-                var targetMethod = typeof(Verse.AI.Pawn_JobTracker).GetMethod("TryTakeOrderedJob");
-                var patchInfo = HarmonyLib.Harmony.GetPatchInfo(targetMethod);
-                if (patchInfo != null)
+                var methods = AccessTools.GetDeclaredMethods(typeof(Verse.AI.Pawn_JobTracker)).Where(m => m.Name == "TryTakeOrderedJob").ToList();
+                int totalPrefixes = 0;
+                for (int mi = 0; mi < methods.Count; mi++)
                 {
-                    var ourPatch = patchInfo.Prefixes.FirstOrDefault(p =>
-                        p.owner == "Jelly.SurvivalToolsReborn" &&
-                        (p.PatchMethod.DeclaringType?.Name?.Contains("PreWork") == true));
-
-                    if (ourPatch != null)
-                    {
-                        Log.Warning($"[SurvivalTools.Harmony] PreWork_AutoEquip patch SUCCESSFULLY applied with priority {ourPatch.priority}");
-                    }
-                    else
-                    {
-                        Log.Error("[SurvivalTools.Harmony] PreWork_AutoEquip patch NOT FOUND after PatchAll!");
-                    }
-
-                    Log.Warning($"[SurvivalTools.Harmony] TryTakeOrderedJob has {patchInfo.Prefixes.Count} total prefixes:");
-                    foreach (var prefix in patchInfo.Prefixes)
-                    {
-                        Log.Warning($"[SurvivalTools.Harmony] - {prefix.owner}: {prefix.PatchMethod.DeclaringType?.Name}.{prefix.PatchMethod.Name} (Priority: {prefix.priority})");
-                    }
+                    var m = methods[mi];
+                    var info = HarmonyLib.Harmony.GetPatchInfo(m);
+                    if (info == null) continue;
+                    totalPrefixes += info.Prefixes.Count;
                 }
-                else
+                Log.Warning($"[SurvivalTools.Harmony] TryTakeOrderedJob overloads scanned={methods.Count} totalPrefixCount={totalPrefixes}");
+                for (int mi = 0; mi < methods.Count; mi++)
                 {
-                    Log.Error("[SurvivalTools.Harmony] No patches found on TryTakeOrderedJob at all!");
+                    var m = methods[mi];
+                    var info = HarmonyLib.Harmony.GetPatchInfo(m);
+                    if (info == null) continue;
+                    Log.Warning($"[SurvivalTools.Harmony] Overload {mi} ({m.GetParameters().Length} params) prefixes={info.Prefixes.Count}");
+                    foreach (var p in info.Prefixes)
+                    {
+                        Log.Warning($"  - {p.owner}: {p.PatchMethod.DeclaringType?.Name}.{p.PatchMethod.Name} (Priority:{p.priority})");
+                    }
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[SurvivalTools.Harmony] Failed to verify PreWork patch: {ex}");
+                Log.Error($"[SurvivalTools.Harmony] Failed enumerating TryTakeOrderedJob prefixes: {ex}");
             }
 
             // -------- Vanilla --------

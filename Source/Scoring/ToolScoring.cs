@@ -87,7 +87,7 @@ namespace SurvivalTools.Scoring
             float score = toolFactor - baseline;
 
             // Apply difficulty multipliers if settings exist
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings != null)
             {
                 // In normal mode, apply penalty settings if enabled

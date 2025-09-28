@@ -115,16 +115,105 @@ Files:
 
 ## Notable Behavior Changes
 
-- Gating/rescue won’t trigger for disabled or unassigned work types unless the user forces the job.
-- Player orders are preserved: if an upgrade is needed, the original job is put back at the front of the queue.
-- Reduced log noise while keeping actionable, cooldowned diagnostics.
-
 ## Example Log Improvements (from Patton scenario)
 
-- Before: Patton (Construction priority 0) repeatedly attempted to grab a hammer while mining.
-- After: Log now shows a single cooldowned line such as:
-  - `[JobGate] Skipping gate/rescue for disabled or inactive work type Construction on Patton`
-  - No construction-tool rescues are queued unless the job is forced.
+- `[JobGate] Skipping gate/rescue for disabled or inactive work type Construction on Patton`
+- No construction-tool rescues are queued unless the job is forced.
+
+## Phase 9 — Consolidation (In Progress)
+
+Objectives:
+
+- Remove/neutralize legacy auto-pickup & optimizer logic while preserving save / XML compatibility
+- Minimize Harmony surface to an explicit allowlist (job start / gear tab only)
+- Provide tooling (debug actions) to verify cleanliness post-load
+- Safeguard against accidental whole-stack textile destruction (Phase 8 bound consumables) — now observable via debug dump
+
+Implemented so far:
+
+- Legacy forwarders/stubs: `Legacy/LegacyForwarders.cs` supplies inert versions of `JobGiver_OptimizeSurvivalTools` & `AutoToolPickup_UtilityIntegrated` (public signatures intact; bodies inert). Original sources wrapped in `#if ST_LEGACY_PATCHES`.
+- PatchGuard sweep extended (planned next): will enforce allowlist: `PreWork_AutoEquip`, `ITab_Gear_ST` only on hotspot methods.
+- Added debug actions:
+  - "Dump bound consumables → Desktop" (registry state of per-(pawn,stat) rag bindings)
+  - "Verify consolidation (patch allowlist)" (ensures only allowlisted patches remain; reports any lingering legacy ones)
+- Bound consumables registry exposes `ActiveBindingCount` & structured dump helper for diagnostics.
+- Legacy scoring forwarders: `LegacyScoringForwarders.cs` adds obsolete `ToolScoreUtility` (root + Legacy namespace) redirecting to `Scoring.ToolScoring` / `ToolStatResolver`.
+- Settings migration: legacy `toolOptimization` / `autoTool` flags persisted but mapped to unified `enableAssignments` with post-load reconciliation.
+
+Pending:
+
+- PatchGuard enhancement (current file present; allowlist refinement pass still to apply for complete consolidation scope)
+- XML PatchOps pruning / relocation of obsolete patches to a quarantine directory
+- Settings migration & obsolete flag forwarding
+- Score forwarders (mark old APIs `[Obsolete]` but forward to new scoring pipeline)
+- Documentation finalization with acceptance checklist & risk notes
+  (Some items above now done: scoring forwarders, partial settings migration; list will be re-trimmed on final pass.)
+
+### Acceptance Checklist (Phase 9 Consolidation)
+
+Goal: all legacy logic neutralized; only curated patch surface; optional stats not hard-gated.
+
+Runtime / Logs:
+
+- [ ] Startup log shows PatchGuard allowlist summary (only `PreWork_AutoEquip` + `ITab_Gear_ST` hotspots).
+- [ ] No warnings about unexpected Harmony owners after running debug action: Verify consolidation (patch allowlist).
+- [ ] Optional stat validator ("Validating demoted optional stats...") either silent or reports 0 flagged WorkGivers.
+- [ ] No WorkGiver gating messages referencing MiningYieldDigging / ButcheryFleshEfficiency / MedicalSurgerySuccessChance (unless extra-hardcore explicitly enables via settings).
+
+Backward Compatibility:
+
+- [ ] Saves with legacy optimizer still load (no red errors for missing JobGiver / AI classes).
+- [ ] External mods calling old `ToolScoreUtility` functions get Obsolete warnings only; behavior matches new scoring.
+- [ ] Legacy settings (toolOptimization / autoTool) migrate deterministically to `enableAssignments` (verify in a save that had them diverged).
+
+Bound Consumables / Wear:
+
+- [ ] Debug dump shows <= (colonists \* active gated stats) bindings.
+- [ ] No multi-stack deletions; textile parent stacks remain unless originally count=1.
+
+Scoring / Assignment:
+
+- [ ] No upgrade thrash across stats within focus window.
+- [ ] Carry-limit=1 pawns keep best tool; no immediate drop/reacquire loops.
+
+Housekeeping:
+
+- [ ] Quarantine directory retains removed XML (historical diff provenance).
+- [ ] Quarantined XML uses .off extension (not parsed by RimWorld) to avoid silent side-effects.
+- [ ] `summary.md` reflects forwarders + migration rationale.
+- [ ] No new warnings introduced (treat Obsolete forwarders as informational only).
+
+### Optional Stat Validator
+
+A new deferred long event now scans all `WorkGiverDef` requirements post-load. If any demoted optional stats are found as _required_ (extension or registry path), a single warning is emitted listing the offending WorkGivers and the stats involved. This guards against third-party patches unintentionally re-hardening efficiency or bonus stats, preserving predictable gating semantics.
+
+Demoted optional stats monitored:
+
+- MiningYieldDigging
+- ButcheryFleshEfficiency
+- MedicalSurgerySuccessChance
+
+## Phase 9 Final Blurb
+
+Phase 9 finalized: Legacy acquisition logic fully neutralized (public stubs only), Harmony patch surface restricted to two audited patch containers, bonus/efficiency stats demoted out of hard gating with a debug-gated validator, and backward compatibility preserved via scoring + settings forwarders. Bound consumables system safeguards textile stacks with drift-aware unbinding. Quarantined XML renamed with .off extension to guarantee it is not ingested by the def loader. This establishes a lean, auditable foundation for future feature work without legacy patch debt.
+
+Action on warning: Either adjust the external XML to remove those from `requiredStats` (preferred), or explicitly accept the design (no further action needed). No automatic mutation occurs.
+
+Safety / Save Integrity:
+
+- No public type removals — all previously XML-addressable classes remain resolvable (stubs) → avoids red errors on load
+- Harmony patch pruning is subtractive and limited to ST-owned legacy patches; does not touch third-party mods
+- Registry-based textile wear ensures at most 1 split-off unit per (pawn,stat); parent stack preserved unless fallback path triggered (single-count stack) in which case no hiding occurs
+
+Verification Workflow (recommended):
+
+1. Load an existing save with legacy optimizer active
+2. Run "Verify consolidation" debug action → expect only allowlisted patches
+3. Perform mining & cleaning work for 2+ in-game days
+4. Run "Dump bound consumables" to ensure bindings <= colonists × relevant stats, no runaway growth
+5. Observe no duplicate gear rows, no stuck rescue loops, and no entire textile stacks vanishing at 0 HP
+
+Snapshot (current date auto-generated on build completion earlier in session) — section will be updated when PatchGuard allowlist refactor lands.
 
 ## Quality gates
 

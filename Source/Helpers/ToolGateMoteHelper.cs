@@ -39,7 +39,7 @@ namespace SurvivalTools
         private static bool CanShow(Pawn pawn, StatDef stat)
         {
             if (pawn?.Map == null) return false;
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             if (settings == null || !settings.showDenialMotes) return false;
             if (stat == null) return false;
 

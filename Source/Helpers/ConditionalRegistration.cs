@@ -30,7 +30,7 @@ namespace SurvivalTools
             if (_hasAppliedTreeFellingConditionals) return;
             _hasAppliedTreeFellingConditionals = true;
 
-            var enabled = SurvivalTools.Settings?.enableSurvivalToolTreeFelling ?? true;
+            var enabled = SurvivalToolsMod.Settings?.enableSurvivalToolTreeFelling ?? true;
 
             ST_Logging.LogInfo($"[SurvivalTools] Applying tree felling conditionals: enabled={enabled}");
 
@@ -64,7 +64,7 @@ namespace SurvivalTools
 
         public static bool IsTreeFellingEnabled()
         {
-            var setting = SurvivalTools.Settings?.enableSurvivalToolTreeFelling ?? true;
+            var setting = SurvivalToolsMod.Settings?.enableSurvivalToolTreeFelling ?? true;
 
             if (SeparateTreeChoppingHelpers.IsSeparateTreeChoppingActive() &&
                 SeparateTreeChoppingHelpers.HasTreeFellingConflict())

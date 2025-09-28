@@ -509,7 +509,7 @@ namespace SurvivalTools.Compat
         public static bool ShouldBlockJobForStat(StatDef stat, Pawn pawn = null)
         {
             // Forward to existing StatGatingHelper during Phase 1
-            var settings = SurvivalTools.Settings;
+            var settings = SurvivalToolsMod.Settings;
             return settings != null && StatGatingHelper.ShouldBlockJobForStat(stat, settings, pawn);
         }
 

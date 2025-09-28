@@ -64,7 +64,7 @@ namespace SurvivalTools.HarmonyStuff
             try
             {
                 if (__instance == null) return;
-                if (SurvivalTools.Settings?.debugLogging == true)
+                if (SurvivalToolsMod.Settings?.debugLogging == true)
                 {
                     try
                     {
@@ -100,7 +100,7 @@ namespace SurvivalTools.HarmonyStuff
                 // Skip logging for virtual tools created by UI (they have no map and no parent holder)
                 bool isVirtualTool = __instance.Map == null && __instance.ParentHolder == null;
 
-                if (SurvivalTools.Settings?.debugLogging == true && !isVirtualTool)
+                if (SurvivalToolsMod.Settings?.debugLogging == true && !isVirtualTool)
                 {
                     try
                     {
@@ -170,7 +170,7 @@ namespace SurvivalTools.HarmonyStuff
                 bool isLikelyVirtualTool = __result.Map == null && __result.ParentHolder == null &&
                                           (__result.def?.IsWeapon == true || __result.def?.IsMeleeWeapon == true);
 
-                if (SurvivalTools.Settings?.debugLogging == true && !isLikelyVirtualTool)
+                if (SurvivalToolsMod.Settings?.debugLogging == true && !isLikelyVirtualTool)
                 {
                     try
                     {
@@ -200,7 +200,7 @@ namespace SurvivalTools.HarmonyStuff
             {
                 if (equipment == null) return;
                 // Debug log to help verify that the reflection-based equipment patches are attached and firing.
-                if (SurvivalTools.Settings?.debugLogging == true)
+                if (SurvivalToolsMod.Settings?.debugLogging == true)
                 {
                     try
                     {
