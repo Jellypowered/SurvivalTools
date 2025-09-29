@@ -11,46 +11,29 @@ using SurvivalTools.Gating;
 
 namespace SurvivalTools.HarmonyStuff
 {
-    [StaticConstructorOnStartup]
     static class WorkGiver_Gates
     {
-        static readonly Harmony H = new Harmony("jellypowered.survivaltools.gating");
-
-        static WorkGiver_Gates()
+        internal static void Init(HarmonyLib.Harmony h)
         {
+            if (h == null) return;
             // Postfix JobOnThing/JobOnCell (authoritative)
-            TryPatchPostfix(typeof(WorkGiver_Scanner), "JobOnThing", new[] { typeof(Pawn), typeof(Thing), typeof(bool) }, nameof(Post_JobOnThing));
-            TryPatchPostfix(typeof(WorkGiver_Scanner), "JobOnCell", new[] { typeof(Pawn), typeof(IntVec3), typeof(bool) }, nameof(Post_JobOnCell));
+            TryPatchPostfix(h, typeof(WorkGiver_Scanner), "JobOnThing", new[] { typeof(Pawn), typeof(Thing), typeof(bool) }, nameof(Post_JobOnThing));
+            TryPatchPostfix(h, typeof(WorkGiver_Scanner), "JobOnCell", new[] { typeof(Pawn), typeof(IntVec3), typeof(bool) }, nameof(Post_JobOnCell));
 
-            // Optional early-out Prefix on HasJob*
-            TryPatchPrefix(typeof(WorkGiver_Scanner), "HasJobOnThing", new[] { typeof(Pawn), typeof(Thing), typeof(bool) }, nameof(Pre_HasJobOnThing));
-            TryPatchPrefix(typeof(WorkGiver_Scanner), "HasJobOnCell", new[] { typeof(Pawn), typeof(IntVec3), typeof(bool) }, nameof(Pre_HasJobOnCell));
+            // Legacy early-out prefixes retired (job-level gating via JobOn* + JobGate only)
+            // (Intentionally not patching HasJobOnThing / HasJobOnCell anymore.)
 
             // Invalidate caches when resolver bumps/settings change
             Compat.CompatAPI.OnAfterDefsLoaded(() => JobGate.ClearCaches());
         }
 
-        static void TryPatchPostfix(System.Type t, string name, System.Type[] sig, string postfix)
+        static void TryPatchPostfix(HarmonyLib.Harmony h, System.Type t, string name, System.Type[] sig, string postfix)
         {
             try
             {
                 var m = AccessTools.Method(t, name, sig);
                 if (m != null)
-                    H.Patch(m, postfix: new HarmonyMethod(typeof(WorkGiver_Gates), postfix));
-            }
-            catch
-            {
-                // Guard: if signature differs, skip patch (Normal mode still works)
-            }
-        }
-
-        static void TryPatchPrefix(System.Type t, string name, System.Type[] sig, string prefix)
-        {
-            try
-            {
-                var m = AccessTools.Method(t, name, sig);
-                if (m != null)
-                    H.Patch(m, prefix: new HarmonyMethod(typeof(WorkGiver_Gates), prefix));
+                    h.Patch(m, postfix: new HarmonyMethod(typeof(WorkGiver_Gates), postfix));
             }
             catch
             {
@@ -83,32 +66,7 @@ namespace SurvivalTools.HarmonyStuff
             }
         }
 
-        // Prefix early-out for perf; we can only pass WG here (no JobDef yet)
-        static bool Pre_HasJobOnThing(WorkGiver_Scanner __instance, Pawn pawn, Thing t, bool forced, ref bool __result)
-        {
-            var settings = SurvivalToolsMod.Settings;
-            if (settings == null || (!settings.hardcoreMode && !settings.extraHardcoreMode)) return true;
-            if (JobGate.ShouldBlock(pawn, __instance.def, null, forced, out var key, out var a1, out var a2))
-            {
-                __result = false;
-                JobFailReason.Is(key.Translate(a1, a2), null);
-                return false;
-            }
-            return true;
-        }
-
-        static bool Pre_HasJobOnCell(WorkGiver_Scanner __instance, Pawn pawn, IntVec3 c, bool forced, ref bool __result)
-        {
-            var settings = SurvivalToolsMod.Settings;
-            if (settings == null || (!settings.hardcoreMode && !settings.extraHardcoreMode)) return true;
-            if (JobGate.ShouldBlock(pawn, __instance.def, null, forced, out var key, out var a1, out var a2))
-            {
-                __result = false;
-                JobFailReason.Is(key.Translate(a1, a2), null);
-                return false;
-            }
-            return true;
-        }
+        // (Removed legacy Pre_HasJobOnThing / Pre_HasJobOnCell prefix implementations)
     }
 }
 

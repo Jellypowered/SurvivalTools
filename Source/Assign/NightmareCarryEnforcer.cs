@@ -11,6 +11,7 @@ using Verse.AI; // Job, JobTag
 using System.Collections.Generic;
 using SurvivalTools.Helpers;
 using SurvivalTools.Scoring;
+using SurvivalTools.Compat; // for research stat via CompatAPI
 using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.Assign
@@ -41,6 +42,7 @@ namespace SurvivalTools.Assign
         {
             // Strict: counts only currently carried real tools. Queued drops do not reduce count.
             if (pawn == null) return true;
+            if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn)) return true; // ignore mechs/animals entirely
             Collect(pawn, collectOnly: true);
             bool ok = _real.Count <= allowed;
             _real.Clear(); _scoreCache.Clear(); // release quickly (no keeper selection required)
@@ -50,6 +52,7 @@ namespace SurvivalTools.Assign
         internal static int CountCarried(Pawn pawn)
         {
             if (pawn == null) return 0;
+            if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn)) return 0;
             int c = 0;
             try
             {
@@ -65,6 +68,7 @@ namespace SurvivalTools.Assign
         internal static int EnforceNow(Pawn pawn, Thing keeperOrNull, int allowed, string reason = null)
         {
             if (pawn == null || allowed < 0) return 0;
+            if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn)) return 0;
             Collect(pawn, collectOnly: false);
             if (_real.Count <= allowed) { Cleanup(); return 0; }
 
@@ -92,6 +96,7 @@ namespace SurvivalTools.Assign
         {
             try
             {
+                if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn)) return; // suppress logging for ineligible
                 int now = Find.TickManager?.TicksGame ?? 0;
                 int pid = pawn.thingIDNumber;
                 if (!_logCooldownUntil.TryGetValue(pid, out var until) || now >= until)
@@ -181,6 +186,12 @@ namespace SurvivalTools.Assign
                 val += ToolScoring.Score(t, pawn, StatDefOf.ConstructionSpeed);
                 val += ToolScoring.Score(t, pawn, ST_StatDefOf.TreeFellingSpeed);
                 val += ToolScoring.Score(t, pawn, ST_StatDefOf.PlantHarvestingSpeed);
+                try
+                {
+                    var rs = CompatAPI.GetResearchSpeedStat() ?? ST_StatDefOf.ResearchSpeed;
+                    if (rs != null) val += ToolScoring.Score(t, pawn, rs);
+                }
+                catch { val += ToolScoring.Score(t, pawn, ST_StatDefOf.ResearchSpeed); }
                 _scoreCache[t] = val;
             }
             return val;

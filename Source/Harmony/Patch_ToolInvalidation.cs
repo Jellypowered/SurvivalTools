@@ -15,15 +15,12 @@ using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.HarmonyStuff
 {
-    [StaticConstructorOnStartup]
     public static class Patch_ToolInvalidation
     {
-        static Patch_ToolInvalidation()
+        internal static void Init(Harmony harmony)
         {
             try
             {
-                var harmony = new Harmony("com.jellypowered.survivaltools.invalidation");
-
                 // Patch Thing.TakeDamage(DamageInfo)
                 var takeDamage = AccessTools.Method(typeof(Thing), "TakeDamage", new Type[] { typeof(DamageInfo) });
                 if (takeDamage != null)
@@ -52,10 +49,7 @@ namespace SurvivalTools.HarmonyStuff
                         harmony.Patch(remove, postfix: new HarmonyMethod(typeof(Patch_ToolInvalidation).GetMethod(nameof(Postfix_Equipment_Changed), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)));
                 }
             }
-            catch
-            {
-                // best-effort
-            }
+            catch { }
         }
 
         // Postfix for Thing.TakeDamage

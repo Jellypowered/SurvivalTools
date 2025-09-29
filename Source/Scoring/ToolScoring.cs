@@ -86,6 +86,29 @@ namespace SurvivalTools.Scoring
             // Base score is improvement over baseline
             float score = toolFactor - baseline;
 
+            // TODO[SMOOTHING_TOOL_PURPOSE]: Tie-breaker bonus
+            // If we're scoring ConstructionSpeed and the tool ALSO improves (SmoothingSpeed|SmoothSpeed),
+            // grant a tiny multiplicative bump so dual-purpose smoothing tools outrank plain hammers at equal ConstructionSpeed.
+            // Intentionally small (2%) so it never substitutes for a real ConstructionSpeed advantage.
+            try
+            {
+                if (workStat == StatDefOf.ConstructionSpeed)
+                {
+                    var smoothing = DefDatabase<StatDef>.GetNamedSilentFail("SmoothingSpeed")
+                                   ?? DefDatabase<StatDef>.GetNamedSilentFail("SmoothSpeed");
+                    if (smoothing != null)
+                    {
+                        float smoothFactor = ToolStatResolver.GetToolStatFactor(tool.def, tool.Stuff, smoothing);
+                        float smoothBaseline = SurvivalToolUtility.GetNoToolBaseline(smoothing);
+                        if (smoothFactor > smoothBaseline + 0.001f)
+                        {
+                            score *= 1.02f; // 2% bump
+                        }
+                    }
+                }
+            }
+            catch { /* non-fatal */ }
+
             // Apply difficulty multipliers if settings exist
             var settings = SurvivalToolsMod.Settings;
             if (settings != null)

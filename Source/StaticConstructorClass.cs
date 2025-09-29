@@ -278,6 +278,12 @@ namespace SurvivalTools
             // Deconstruction
             RegisterWorkGiverForStat("Deconstruct", ST_StatDefOf.DeconstructionSpeed);
 
+            // Research (bench) – ensures vanilla research jobs are gated by appropriate research tools
+            RegisterWorkGiverForStat("Research", ST_StatDefOf.ResearchSpeed);
+
+            // Dynamic discovery pass: pick up any additional (modded) sowing WorkGivers not explicitly known
+            DiscoverAndRegisterAdditionalSowingWorkGivers();
+
             if (IsDebugLoggingEnabled)
                 Log.Message("[SurvivalTools] Initialized job gating mappings for core WorkGivers");
         }
@@ -295,6 +301,56 @@ namespace SurvivalTools
                 if (Prefs.DevMode && ST_Logging.ShouldLogWithCooldown($"RegisterWG_{workGiverDefName}"))
                     Log.Warning($"[SurvivalTools] (Dev) Failed to register {workGiverDefName} for stat {stat?.defName ?? "null"} - workGiver: {workGiver != null}, stat: {stat != null}");
             }
+        }
+
+        /// <summary>
+        /// Auto-detect additional sowing WorkGivers added by other mods and register them for SowingSpeed.
+        /// Heuristics: defName or giverClass name contains "Sow" and it's NOT the vanilla Grower_Sow (already registered),
+        /// the worker derives (directly or indirectly) from RimWorld.WorkGiver_GrowerSow if that type relationship is available.
+        /// Skips any WorkGiver already requiring SowingSpeed to avoid duplicates.
+        /// </summary>
+        private static void DiscoverAndRegisterAdditionalSowingWorkGivers()
+        {
+            if (ST_StatDefOf.SowingSpeed == null) return; // Stat missing – nothing to do
+
+            int inspected = 0, added = 0;
+            foreach (var wg in DefDatabase<WorkGiverDef>.AllDefsListForReading)
+            {
+                if (wg == null) continue;
+                inspected++;
+
+                var defName = wg.defName;
+                if (string.IsNullOrEmpty(defName)) continue;
+                if (defName == "Grower_Sow") continue; // vanilla already explicitly registered
+
+                // Fast textual heuristic first
+                bool nameSuggestsSow = defName.IndexOf("Sow", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                       (wg.giverClass?.Name?.IndexOf("Sow", StringComparison.OrdinalIgnoreCase) >= 0);
+                if (!nameSuggestsSow) continue;
+
+                // Stronger type safety: require giverClass assignable to WorkGiver_GrowerSow if possible
+                try
+                {
+                    if (wg.giverClass == null) continue;
+                    if (!typeof(WorkGiver_GrowerSow).IsAssignableFrom(wg.giverClass))
+                        continue; // Not an actual sowing worker
+                }
+                catch
+                {
+                    continue; // Defensive – if reflection blows up, skip
+                }
+
+                // Already has SowingSpeed registered?
+                var existing = Compat.CompatAPI.GetRequiredStatsFor(wg);
+                if (existing != null && existing.Contains(ST_StatDefOf.SowingSpeed))
+                    continue;
+
+                Compat.CompatAPI.RegisterWorkGiverRequirement(wg, ST_StatDefOf.SowingSpeed);
+                added++;
+            }
+
+            if (added > 0 && IsDebugLoggingEnabled)
+                Log.Message($"[SurvivalTools] Dynamic sowing WG discovery: inspected {inspected}, added SowingSpeed requirement to {added} additional WorkGivers.");
         }
 
         #endregion

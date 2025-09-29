@@ -8,7 +8,7 @@ using RimWorld;
 using Verse;
 using SurvivalTools.Helpers;
 using SurvivalTools.Compat;
-using SurvivalTools.Compat.SeparateTreeChopping;
+using SurvivalTools.Compatibility.SeparateTreeChopping; // Phase 10 conflict class
 
 namespace SurvivalTools
 {
@@ -66,8 +66,8 @@ namespace SurvivalTools
         {
             var setting = SurvivalToolsMod.Settings?.enableSurvivalToolTreeFelling ?? true;
 
-            if (SeparateTreeChoppingHelpers.IsSeparateTreeChoppingActive() &&
-                SeparateTreeChoppingHelpers.HasTreeFellingConflict())
+            if (SeparateTreeChoppingConflict.IsSeparateTreeChoppingActive() &&
+                SeparateTreeChoppingConflict.HasTreeFellingConflict())
             {
                 return false;
             }

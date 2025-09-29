@@ -16,6 +16,7 @@ using SurvivalTools.Gating;
 using SurvivalTools.Scoring;
 using SurvivalTools.Helpers;
 using SurvivalTools.Assign; // NightmareCarryEnforcer
+using SurvivalTools.Compat; // CompatAPI research stat
 using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.Assign
@@ -46,13 +47,66 @@ namespace SurvivalTools.Assign
             }
         }
 
+        // ---------------- Shared Guards & Helpers ----------------
+        // Replaced by shared helper PawnEligibility.IsEligibleColonistHuman
+
+        // Fast filter: if a job has no required/optional tool stats, skip all ST logic.
+        private static bool JobUsesTools(Pawn pawn, Job job)
+        {
+            if (job == null) return false;
+            var jd = job.def;
+            if (jd == null) return false;
+            // Explicit exclusions (tool-less utility jobs)
+            if (jd == JobDefOf.Ingest || jd == JobDefOf.LayDown || jd == JobDefOf.Wait ||
+                jd == JobDefOf.Wait_MaintainPosture || jd == JobDefOf.Goto || jd == JobDefOf.GotoWander)
+                return false;
+            // Explicit inclusion: research (not normally covered by generic RelevantStats resolver in some setups)
+            if (jd == JobDefOf.Research || jd.defName == "Research") return true;
+            try
+            {
+                // Use helper to resolve associated WorkGiver (best-effort) then unified relevant stat resolver.
+                var wg = SurvivalTools.Helpers.JobDefToWorkGiverDefHelper.GetWorkGiverDefForJob(jd);
+                var statsFromJob = SurvivalToolUtility.RelevantStatsFor(wg, job) ?? new System.Collections.Generic.List<StatDef>();
+                if (statsFromJob.Count > 0) return true;
+                // Fallback: jobDef based (covers patterns where job instance targets differ)
+                var statsFromJobDef = SurvivalToolUtility.RelevantStatsFor(wg, jd) ?? new System.Collections.Generic.List<StatDef>();
+                // If still empty and this is research, force true (ensures pre-work logic runs)
+                if (statsFromJobDef.Count == 0 && (jd == JobDefOf.Research || jd.defName == "Research")) return true;
+                return statsFromJobDef.Count > 0;
+            }
+            catch { return true; } // fail open to avoid accidental suppression
+        }
+
+        // Reentrancy / churn gate
+        private static readonly System.Collections.Generic.HashSet<int> _preworkActive = new System.Collections.Generic.HashSet<int>();
+        private static readonly System.Collections.Generic.Dictionary<int, int> _lastStartTick = new System.Collections.Generic.Dictionary<int, int>();
+        private static bool EnterPreworkGate(Pawn p, Job j)
+        {
+            if (p == null) return false;
+            int id = p.thingIDNumber;
+            if (!_preworkActive.Add(id)) return false; // already inside
+            try
+            {
+                int cur = Find.TickManager?.TicksGame ?? 0;
+                if (_lastStartTick.TryGetValue(id, out var last) && (cur - last) < 30) // ~0.5s
+                {
+                    _preworkActive.Remove(id);
+                    return false;
+                }
+                _lastStartTick[id] = cur;
+                return true;
+            }
+            catch { _preworkActive.Remove(id); return false; }
+        }
+        private static void ExitPreworkGate(Pawn p) { if (p != null) _preworkActive.Remove(p.thingIDNumber); }
+
         /// <summary>
         /// Harmony prefix for Pawn_JobTracker.TryTakeOrderedJob.
         /// Checks if job requires tools and attempts auto-equip if beneficial.
         /// </summary>
         // Single real method in 1.6: TryTakeOrderedJob(Job, JobTag?, bool requestQueueing)
         [HarmonyPatch(typeof(Pawn_JobTracker), nameof(Pawn_JobTracker.TryTakeOrderedJob), new[] { typeof(Job), typeof(JobTag?), typeof(bool) })]
-        [HarmonyPriority(Priority.High)]
+        [HarmonyPriority(800)]
         private static class TryTakeOrderedJob_Prefix_3
         {
             static bool Prefix(Pawn_JobTracker __instance, Job job, JobTag? tag, bool requestQueueing)
@@ -124,6 +178,7 @@ namespace SurvivalTools.Assign
                 {
                     h.Patch(exact, prefix: prefix);
                     ST_Logging.LogInfo("[SurvivalTools.Harmony] PreWork_AutoEquip AI StartJob prefix applied (exact).");
+                    Log.Message("[PreWork] StartJob prefix: OK");
                     return;
                 }
 
@@ -144,6 +199,7 @@ namespace SurvivalTools.Assign
                 {
                     h.Patch(candidate, prefix: prefix);
                     ST_Logging.LogInfo("[SurvivalTools.Harmony] PreWork_AutoEquip AI StartJob prefix applied (fallback).");
+                    Log.Message("[PreWork] StartJob prefix: OK (fallback)");
                 }
                 else
                 {
@@ -162,7 +218,15 @@ namespace SurvivalTools.Assign
         {
             if (tracker == null || job == null) return true;
             Pawn pawn = null; try { pawn = (Pawn)PawnField.GetValue(tracker); } catch { }
-            try { Log.Message($"[PreWork.Enter] pawn={pawn?.LabelShort ?? "?"} job={job?.def?.defName ?? "?"} forced={job?.playerForced} queuedReq={requestQueueing}"); } catch { }
+            // Hard gate: only player humanlikes & tool-using jobs
+            if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn) || !JobUsesTools(pawn, job)) return true;
+            if (!EnterPreworkGate(pawn, job)) return true;
+            try
+            {
+                if (Prefs.DevMode)
+                    Log.Message($"[PreWork.Enter] pawn={pawn?.LabelShort ?? "?"} job={job?.def?.defName ?? "?"} forced={job?.playerForced} queuedReq={requestQueueing}");
+            }
+            catch { }
             // EARLY ORDERED FENCE (Nightmare) – run before any upgrade logic to avoid temporary dual-carry window.
             try
             {
@@ -188,14 +252,30 @@ namespace SurvivalTools.Assign
                 }
             }
             catch (Exception eoEx) { ST_Logging.LogWarning("[SurvivalTools.PreWork] Early ordered fence exception: " + eoEx.Message); }
-            return TryPreWorkAutoEquip(tracker, job, aiPath: false);
+            bool ret;
+            try { ret = TryPreWorkAutoEquip(tracker, job, aiPath: false); }
+            finally { ExitPreworkGate(pawn); }
+            if (ret)
+            {
+                // Only log the hook once (first successful invocation) for visibility
+                if (!_loggedOrderedHook)
+                {
+                    _loggedOrderedHook = true;
+                    Log.Message("[PreWork] TryTakeOrderedJob prefix: OK");
+                }
+            }
+            return ret;
         }
+
+        private static bool _loggedOrderedHook = false;
 
         internal static bool TryPreWorkAutoEquip(Pawn_JobTracker tracker, Job job, bool aiPath, JobTag? tag = null, bool draftForced = false, bool hasDraftForced = false)
         {
             if (tracker == null || job?.def == null) return true;
             var pawn = (Pawn)PawnField.GetValue(tracker);
             if (pawn == null) return true;
+            if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn) || !JobUsesTools(pawn, job)) return true; // early skip
+            if (pawn.CurJobDef == JobDefOf.Ingest) return true; // do not manage while eating
             // AI path logging already covered elsewhere; ordered overloads log before delegating
             // Unified path: determine relevant stat (may be null – still enforce carry), attempt upgrade, then strict carry enforcement.
             var workStat = GetRelevantWorkStat(job); // may be null for non‑supported jobs (still enforce carry limit)
@@ -206,6 +286,7 @@ namespace SurvivalTools.Assign
             var settings = SurvivalToolsMod.Settings;
             if (workStat != null && GetEnableAssignments(settings) && pawn.IsColonist && pawn.Awake() && !JobUtils.IsToolManagementJob(job))
             {
+                if (pawn.CurJobDef == JobDefOf.Ingest) return true; // ingest protection
                 upgraded = TryUpgradeForWork(pawn, workStat, job, settings, AssignmentSearch.QueuePriority.Front);
                 if (upgraded)
                 {
@@ -243,6 +324,7 @@ namespace SurvivalTools.Assign
                 var st = SurvivalToolsMod.Settings;
                 if (st == null) return true;
                 if (!st.extraHardcoreMode) return true; // not in Nightmare
+                if (pawn.CurJobDef == JobDefOf.Ingest) return true; // skip during ingest
                 // Toolbelt exemption placeholder intentionally omitted (stub returns false elsewhere)
                 if (JobUtils.IsToolManagementJob(newJob)) return true; // don't block management jobs
 
@@ -258,7 +340,10 @@ namespace SurvivalTools.Assign
                 if (!_nmLogCooldown.TryGetValue(pid, out var until) || nowTick >= until)
                 {
                     _nmLogCooldown[pid] = nowTick + 200;
-                    LogInfo($"[PreWork] pawn={pawn.LabelShort} job={newJob?.def?.defName} carried={carriedNow} allowed={allowed} enq={enq} compliant={ok} keeper={(keeper != null ? keeper.LabelShort : "(auto)")} (playerForced={newJob?.playerForced == true})");
+                    if (Prefs.DevMode)
+                    {
+                        LogInfo($"[PreWork] pawn={pawn.LabelShort} job={newJob?.def?.defName} carried={carriedNow} allowed={allowed} enq={enq} compliant={ok} keeper={(keeper != null ? keeper.LabelShort : "(auto)")} (playerForced={newJob?.playerForced == true})");
+                    }
                 }
                 if (!ok)
                 {
@@ -266,7 +351,8 @@ namespace SurvivalTools.Assign
                     // Extra one-off log when blocking a forced job (no cooldown); still cheap
                     if (newJob?.playerForced == true)
                     {
-                        LogInfo($"[PreWork] BLOCK (Nightmare) forced job for {pawn.LabelShort} until drops resolve");
+                        if (Prefs.DevMode)
+                            LogInfo($"[PreWork] BLOCK (Nightmare) forced job for {pawn.LabelShort} until drops resolve");
                     }
                     return false;
                 }
@@ -365,9 +451,18 @@ namespace SurvivalTools.Assign
                 else if (workTypeDef == WorkTypeDefOf.PlantCutting)
                     relevantStat = ST_StatDefOf.TreeFellingSpeed;
                 else if (workTypeDef == WorkTypeDefOf.Growing)
-                    relevantStat = ST_StatDefOf.PlantHarvestingSpeed;
+                {
+                    // Distinguish sow vs harvest: WorkGiver defName containing "Sow" gets SowingSpeed, otherwise harvesting.
+                    var wgdName = __instance.def?.defName ?? string.Empty;
+                    if (wgdName.IndexOf("Sow", StringComparison.OrdinalIgnoreCase) >= 0)
+                        relevantStat = ST_StatDefOf.SowingSpeed;
+                    //else // We don't want PlantHarvestingSpeed to count for sowing jobs.
+                    //    relevantStat = ST_StatDefOf.PlantHarvestingSpeed;
+                }
                 else if (workTypeDef == WorkTypeDefOf.Construction)
                     relevantStat = StatDefOf.ConstructionSpeed;
+                else if (workTypeDef == WorkTypeDefOf.Research)
+                    relevantStat = CompatAPI.GetResearchSpeedStat() ?? ST_StatDefOf.ResearchSpeed;
 
                 if (relevantStat != null)
                 {
@@ -491,6 +586,12 @@ namespace SurvivalTools.Assign
                 return ST_StatDefOf.TreeFellingSpeed;
             }
 
+            // Sowing (planting)
+            if (jobDef == JobDefOf.Sow || jobDef.defName == "Sow")
+            {
+                return ST_StatDefOf.SowingSpeed;
+            }
+
             // Plant harvesting
             if (jobDef == JobDefOf.Harvest ||
                 jobDef.defName == "HarvestDesignated")
@@ -502,6 +603,12 @@ namespace SurvivalTools.Assign
             if (jobDef == JobDefOf.Mine)
             {
                 return ST_StatDefOf.DiggingSpeed;
+            }
+
+            // Research (bench)
+            if (jobDef == JobDefOf.Research || jobDef.defName == "Research")
+            {
+                try { return CompatAPI.GetResearchSpeedStat() ?? ST_StatDefOf.ResearchSpeed; } catch { return ST_StatDefOf.ResearchSpeed; }
             }
 
             // Construction
@@ -521,7 +628,9 @@ namespace SurvivalTools.Assign
             if (jobDef == JobDefOf.SmoothFloor ||
                 jobDef == JobDefOf.SmoothWall)
             {
-                return StatDefOf.SmoothingSpeed;
+                // Gate on ConstructionSpeed so a hammer is required; SmoothingSpeed (if present) remains an optional bonus for scoring.
+                // TODO[SMOOTHING_TOOL_PURPOSE]: if dedicated smoothing tools appear, evaluate using SmoothingSpeed as primary when tool carries both.
+                return StatDefOf.ConstructionSpeed;
             }
 
             return null; // No relevant work stat found

@@ -29,13 +29,10 @@ namespace SurvivalTools.HarmonyStuff
             catch { }
         }
     }
-    [StaticConstructorOnStartup]
     internal static class HarmonyPatches
     {
         private static readonly Type patchType = typeof(HarmonyPatches);
-
-        // One Harmony instance for all manual patches
-        private static readonly HarmonyLib.Harmony H = new HarmonyLib.Harmony("Jelly.SurvivalToolsReborn");
+        internal static HarmonyLib.Harmony H; // assigned in Init
 
         // Stat/Method lookups used in several transpilers (lazy initialized to avoid early DefOf access)
         private static FieldInfo _constructionSpeed;
@@ -132,8 +129,10 @@ namespace SurvivalTools.HarmonyStuff
 
         #endregion
 
-        static HarmonyPatches()
+        internal static void Init(HarmonyLib.Harmony harmony)
         {
+            if (H != null) return; // already initialized
+            H = harmony ?? throw new ArgumentNullException(nameof(harmony));
             // Attribute patches (if any)
             H.PatchAll(Assembly.GetExecutingAssembly());
             // Reflection-based AI StartJob hook (robust to signature drift)

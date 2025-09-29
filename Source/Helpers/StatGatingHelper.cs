@@ -117,6 +117,26 @@ namespace SurvivalTools.Helpers
             if (name.Contains("construct") || name.Contains("build") || name.Contains("frame") || name.Contains("blueprint"))
                 stats.Add(StatDefOf.ConstructionSpeed);
 
+            // Smoothing (wall / floor) – treat as ConstructionSpeed required + optional SmoothingSpeed bonus.
+            // TODO[SMOOTHING_TOOL_PURPOSE]: consider dual-purpose smoothing tools (ConstructionSpeed + SmoothingSpeed)
+            if (name.Contains("smooth"))
+            {
+                // Required already added above via construct/build heuristic (ConstructionSpeed)
+                // Resolve optional smoothing stat by multiple candidate names (mod compatibility).
+                StatDef smoothing = null;
+                try
+                {
+                    smoothing = DefDatabase<StatDef>.GetNamedSilentFail("SmoothingSpeed")
+                                ?? DefDatabase<StatDef>.GetNamedSilentFail("SmoothSpeed")
+                                ?? StatDef.Named("SmoothingSpeed"); // final attempt (will throw if missing; guarded)
+                }
+                catch { smoothing = null; }
+                if (smoothing != null && !stats.Contains(smoothing))
+                {
+                    stats.Add(smoothing); // OPTIONAL: logging later will mark as optional (not gating)
+                }
+            }
+
             // Repair / maintain => MaintenanceSpeed
             if (name.Contains("repair") || name.Contains("maintain") || name.Contains("maintenance"))
                 stats.Add(ST_StatDefOf.MaintenanceSpeed);

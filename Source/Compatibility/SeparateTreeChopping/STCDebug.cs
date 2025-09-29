@@ -1,7 +1,10 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Compatibility/SeparateTreeChopping/STCDebug.cs
 
-namespace SurvivalTools.Compat.SeparateTreeChopping
+// Updated to Phase 10 conflict API
+using SurvivalTools.Compatibility.SeparateTreeChopping;
+
+namespace SurvivalTools.Compatibility.SeparateTreeChopping
 {
     public static class SeparateTreeChoppingDebug
     {
@@ -9,7 +12,7 @@ namespace SurvivalTools.Compat.SeparateTreeChopping
         public static void LogStatus()
         {
             if (ST_Logging.IsDebugLoggingEnabled && ST_Logging.IsCompatLogging())
-                ST_Logging.LogCompatMessage($"SeparateTreeChopping active={SeparateTreeChoppingHelpers.IsSeparateTreeChoppingActive()}");
+                ST_Logging.LogCompatMessage($"SeparateTreeChopping active={SeparateTreeChoppingConflict.IsSeparateTreeChoppingActive()} conflict={SeparateTreeChoppingConflict.HasTreeFellingConflict()}");
         }
     }
 }

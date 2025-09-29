@@ -16,6 +16,22 @@ namespace SurvivalTools
 {
     internal static class ST_Logging
     {
+        // Convenience dev flag alias (spec uses ST_Logging.Dev)
+        internal static bool Dev => IsDebugLoggingEnabled;
+
+        // One-shot dev log keys
+        private static readonly HashSet<string> _devOnceKeys = new HashSet<string>();
+
+        /// <summary>
+        /// Emit a debug/dev message only once per unique key for the lifetime of the session.
+        /// Ignores if debug logging disabled. Not buffered/deduped beyond the single-shot gate.
+        /// </summary>
+        internal static void DevOnce(string key, string message)
+        {
+            if (!IsDebugLoggingEnabled) return;
+            if (string.IsNullOrEmpty(key)) { Emit(message, LogLevel.Message); return; }
+            if (_devOnceKeys.Add(key)) Emit(message, LogLevel.Message);
+        }
         #region Settings & flags
 
         private static bool? _debugLoggingCache;

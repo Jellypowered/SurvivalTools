@@ -10,6 +10,7 @@ using SurvivalTools.Compat;
 using SurvivalTools.Compat.ResearchReinvented;
 using SurvivalTools.Helpers;
 using static SurvivalTools.ST_Logging;
+using SurvivalTools.Compatibility.TreeStack;
 
 namespace SurvivalTools
 {
@@ -405,7 +406,23 @@ namespace SurvivalTools
                 listing.Label("(Legacy flags: toolOptimization=" + toolOptimization + ", autoTool=" + autoTool + ")");
             }
 #pragma warning restore CS0612
-            listing.CheckboxLabeled("Settings_EnableTreeFelling".Translate(), ref enableSurvivalToolTreeFelling, "Settings_EnableTreeFelling_Tooltip".Translate());
+            // Tree felling toggle (force disabled when Separate Tree Chopping owns authority)
+            if (TreeSystemArbiter.Authority == TreeAuthority.SeparateTreeChopping)
+            {
+                if (enableSurvivalToolTreeFelling) enableSurvivalToolTreeFelling = false; // hard override regardless of saved preference
+                var savedColorTF = GUI.color;
+                GUI.color = Color.gray;
+                var label = "Settings_EnableTreeFelling".Translate();
+                listing.Label(label + " (STC override)");
+                Text.Font = GameFont.Tiny;
+                listing.Label("Separate Tree Chopping detected – internal tree felling system disabled.");
+                Text.Font = GameFont.Small;
+                GUI.color = savedColorTF;
+            }
+            else
+            {
+                listing.CheckboxLabeled("Settings_EnableTreeFelling".Translate(), ref enableSurvivalToolTreeFelling, "Settings_EnableTreeFelling_Tooltip".Translate());
+            }
             listing.CheckboxLabeled("Settings_PickupFromStorageOnly".Translate(), ref pickupFromStorageOnly, "Settings_PickupFromStorageOnly_Tooltip".Translate());
             listing.CheckboxLabeled("Settings_AllowPacifistEquip".Translate(), ref allowPacifistEquip, "Settings_AllowPacifistEquip_Tooltip".Translate());
             listing.CheckboxLabeled("Settings_ShowUpgradeSuggestions".Translate(), ref showUpgradeSuggestions, "Settings_ShowUpgradeSuggestions_Tooltip".Translate());

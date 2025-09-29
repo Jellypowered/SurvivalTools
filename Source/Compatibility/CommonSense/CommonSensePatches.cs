@@ -6,8 +6,9 @@ using HarmonyLib;
 using RimWorld;
 using Verse;
 using static SurvivalTools.ST_Logging;
+using SurvivalTools.Compat; // for ICompatibilityModule interface
 
-namespace SurvivalTools.Compat.CommonSense
+namespace SurvivalTools.Compatibility.CommonSense
 {
     /// <summary>
     /// Compatibility module for CommonSense mod.
@@ -21,7 +22,7 @@ namespace SurvivalTools.Compat.CommonSense
 
         public string ModName => "CommonSense";
 
-        public bool IsModActive => CommonSenseHelpers.IsCommonSenseActive();
+        public bool IsModActive => CommonSenseHelpers.Active;
 
         public void Initialize()
         {
@@ -30,7 +31,7 @@ namespace SurvivalTools.Compat.CommonSense
             try
             {
                 LogCompatMessage("Initializing CommonSense compatibility...");
-                _harmony = new Harmony("com.jellypowered.survivaltools.compat.commonsense");
+                _harmony = SurvivalTools.HarmonyStuff.HarmonyPatches.H ?? throw new InvalidOperationException("HarmonyPatches not initialized");
 
                 // Example patch: intercept CommonSense.JobDriver_Ingest.PrepareToIngestToils
                 var jobType = AccessTools.TypeByName("CommonSense.JobDriver_Ingest");
@@ -78,7 +79,7 @@ namespace SurvivalTools.Compat.CommonSense
         {
             try
             {
-                if (!CommonSenseHelpers.IsCommonSenseActive()) return true;
+                if (!CommonSenseHelpers.Active) return true;
                 // Allow SurvivalTools to harmonize gear/drug policy interactions here.
                 return true; // continue original
             }
@@ -93,7 +94,7 @@ namespace SurvivalTools.Compat.CommonSense
         {
             try
             {
-                if (!CommonSenseHelpers.IsCommonSenseActive()) return;
+                if (!CommonSenseHelpers.Active) return;
                 // Reconcile SurvivalTools state after CommonSense sets up toils.
             }
             catch (Exception e)

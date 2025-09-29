@@ -1,34 +1,47 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Compatibility/SmarterDeconstruction/SmarterDeconstructionHelpers.cs
+// Phase 10: Bulk mapping + right-click eligibility for deconstruction/uninstall.
+
+using System;
+using System.Linq;
+using HarmonyLib;
+using RimWorld;
 using Verse;
 
-// Pacifist equip handled centrally in Patch_EquipmentUtility_CanEquip_PacifistTools.cs
-
-namespace SurvivalTools.Compat.SmarterDeconstruction
+namespace SurvivalTools.Compatibility.SmarterDeconstruction
 {
     internal static class SmarterDeconstructionHelpers
     {
-        public static bool IsSmarterDeconstructionActive()
-        {
-            try { return ModLister.GetActiveModWithIdentifier("smarterdeconstruction.author") != null; }
-            catch { return false; }
-        }
+        private static readonly string PkgId = "smarter.deconstruction"; // placeholder ID
 
-        public static bool IsTDEnhancementPackActive()
-        {
-            try { return ModLister.GetActiveModWithIdentifier("td.enhancement.pack") != null; }
-            catch { return false; }
-        }
+        internal static bool Active =>
+            ModsConfig.ActiveModsInLoadOrder.Any(m => m.PackageId != null && m.PackageId.Equals(PkgId, StringComparison.OrdinalIgnoreCase))
+            || AccessTools.TypeByName("SmarterDeconstruction.WorkGiver_Deconstruct_SD") != null
+            || AccessTools.TypeByName("SmarterDeconstruction.WorkGiver_Uninstall_SD") != null;
 
-        /// <summary>
-        /// Determines if SmarterDeconstruction should be considered the authoritative owner for WorkGiver_Scanner compatibility hooks.
-        /// This helps deduplicate patches when multiple mods (e.g., TD Enhancement Pack) attempt to patch the same targets.
-        /// </summary>
-        public static bool ShouldOwnWorkGiverScannerHooks()
+        internal static void Initialize()
         {
-            // Default to true when SmarterDeconstruction is active. Other compat modules can check CompatibilityRegistry to decide.
-            try { return IsSmarterDeconstructionActive(); }
-            catch { return false; }
+            if (!Active) return;
+            try
+            {
+                var deconstructBase = typeof(WorkGiver_Deconstruct);
+                var uninstallBase = AccessTools.TypeByName("RimWorld.WorkGiver_Uninstall");
+                var sdDeconstructType = AccessTools.TypeByName("SmarterDeconstruction.WorkGiver_Deconstruct_SD");
+                var sdUninstallType = AccessTools.TypeByName("SmarterDeconstruction.WorkGiver_Uninstall_SD");
+
+                SurvivalTools.Compat.CompatAPI.MapWGsToStat_ByDerivationOrAlias(
+                    ST_StatDefOf.DeconstructionSpeed,
+                    new[] { deconstructBase, uninstallBase, sdDeconstructType, sdUninstallType },
+                    new[] { "Deconstruct", "Uninstall" }
+                );
+
+                SurvivalTools.Compat.CompatAPI.RegisterRightClickEligibleWGSubclass(sdDeconstructType);
+                SurvivalTools.Compat.CompatAPI.RegisterRightClickEligibleWGSubclass(sdUninstallType);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning("[SurvivalTools][SmarterDeconstruction] Initialize error: " + ex.Message);
+            }
         }
     }
 }

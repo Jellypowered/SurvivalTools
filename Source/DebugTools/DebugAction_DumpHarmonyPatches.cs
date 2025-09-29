@@ -25,23 +25,20 @@ namespace SurvivalTools.DebugTools
             // Define hotspot methods that are common collision points
             var hotspots = new[]
             {
-                // Job system hotspots
+                // Job system (ordered + AI path)
                 new { Type = typeof(Pawn_JobTracker), Method = "TryTakeOrderedJob", Params = new[] { typeof(Job), typeof(JobTag?), typeof(bool) } },
-                new { Type = typeof(Pawn_JobTracker), Method = "TryTakeOrderedJob", Params = new[] { typeof(Job), typeof(bool) } },
-                new { Type = typeof(Pawn_JobTracker), Method = "TryStartJob", Params = new[] { typeof(Job), typeof(JobTag?), typeof(bool) } },
-                new { Type = typeof(Pawn_JobTracker), Method = "TryStartJob", Params = new[] { typeof(Job), typeof(bool) } },
-                
-                // UI hotspots
+                new { Type = typeof(Pawn_JobTracker), Method = "StartJob", Params = new[] { typeof(Job), typeof(JobCondition), typeof(ThinkNode), typeof(bool), typeof(bool), typeof(ThinkTreeDef), typeof(JobTag?), typeof(bool), typeof(bool), typeof(bool?), typeof(bool), typeof(bool), typeof(bool) } },
+
+                // UI hotspot
                 new { Type = typeof(ITab_Pawn_Gear), Method = "FillTab", Params = Type.EmptyTypes },
-                
+
                 // Tool/equipment hotspots
                 new { Type = typeof(Pawn_EquipmentTracker), Method = "TryDropEquipment", Params = new[] { typeof(ThingWithComps), typeof(ThingWithComps).MakeByRefType(), typeof(IntVec3), typeof(bool) } },
                 new { Type = typeof(Thing), Method = "Destroy", Params = new[] { typeof(DestroyMode) } },
                 new { Type = typeof(ThingMaker), Method = "MakeThing", Params = new[] { typeof(ThingDef), typeof(ThingDef) } },
-                
-                // Work system hotspots  
+
+                // Work system hotspot (still useful to inspect)
                 new { Type = typeof(WorkGiver_Scanner), Method = "HasJobOnThing", Params = new[] { typeof(Pawn), typeof(Thing), typeof(bool) } },
-                new { Type = typeof(WorkGiver_PlantsCut), Method = "HasJobOnThing", Params = new[] { typeof(Pawn), typeof(Thing), typeof(bool) } },
             };
 
             var ourAssembly = typeof(DebugAction_DumpHarmonyPatches).Assembly;
@@ -80,10 +77,12 @@ namespace SurvivalTools.DebugTools
                     var patchType = info.Prefixes.Contains(patch) ? "PREFIX" :
                                   info.Postfixes.Contains(patch) ? "POSTFIX" : "TRANSPILER";
 
+                    string allowMarker = (patchType == "PREFIX" && dt.FullName == "SurvivalTools.Assign.PreWork_AutoEquip") ? "[ST-ALLOW] " : string.Empty;
+
                     bool isOurs = dt.Assembly == ourAssembly;
                     var marker = isOurs ? "[ST]" : "[EXT]";
 
-                    sb.AppendLine($"  {marker} {patchType}: {dt.FullName}.{m.Name}");
+                    sb.AppendLine($"  {marker} {patchType}: {allowMarker}{dt.FullName}.{m.Name}");
                     sb.AppendLine($"       Owner: {patch.owner}");
                     sb.AppendLine($"       Assembly: {dt.Assembly.GetName().Name}");
                     if (isOurs && dt.Namespace != null && dt.Namespace.StartsWith("SurvivalTools", StringComparison.Ordinal))

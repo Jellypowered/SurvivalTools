@@ -185,6 +185,8 @@
     <ST_Prioritize_Sow>Prioritize sowing</ST_Prioritize_Sow>
     <ST_Prioritize_Repair>Prioritize repairing</ST_Prioritize_Repair>
     <ST_Prioritize_Clean>Prioritize cleaning</ST_Prioritize_Clean>
+    <ST_Prioritize_Uninstall>Prioritize uninstalling</ST_Prioritize_Uninstall>
+    <ST_Prioritize_Research>Prioritize researching</ST_Prioritize_Research>
 
     <!-- Unified auto-assignment system toggle (replacing legacy toolOptimization/autoTool) -->
     <Settings_EnableAssignments>Enable smart pre-work tool pickup</Settings_EnableAssignments>

@@ -655,6 +655,45 @@ namespace SurvivalTools.Helpers
             catch { }
             return false;
         }
+
+        /// <summary>
+        /// Enumerate known stat alias pairs for diagnostics. Currently heuristic for tree felling speed.
+        /// Extend when additional alias systems become formalized.
+        /// </summary>
+        public static IEnumerable<(StatDef alias, StatDef canonical)> EnumerateAliases()
+        {
+            StatDef canonical = ST_StatDefOf.TreeFellingSpeed;
+            if (canonical == null) yield break;
+            // Historical / cross-mod alias candidates
+            string[] possible = { "TCSS", "PT_TreeFellingSpeed" };
+            foreach (var name in possible)
+            {
+                StatDef s = DefDatabase<StatDef>.GetNamedSilentFail(name);
+                if (s != null && s != canonical)
+                    yield return (s, canonical);
+            }
+        }
+
+        /// <summary>
+        /// Lightweight alias check used by heuristic scorers. Currently only covers TreeFellingSpeed cross-mod aliases.
+        /// </summary>
+        public static bool IsAliasOf(StatDef candidate, StatDef canonical)
+        {
+            if (candidate == null || canonical == null) return false;
+            if (candidate == canonical) return true;
+            try
+            {
+                if (canonical == ST_StatDefOf.TreeFellingSpeed)
+                {
+                    // Hard-coded alias names (avoid allocations each call)
+                    var name = candidate.defName;
+                    if (string.IsNullOrEmpty(name)) return false;
+                    if (name == "TCSS" || name == "PT_TreeFellingSpeed") return true;
+                }
+            }
+            catch { }
+            return false;
+        }
     }
 
     // -------------------------------------------------------------------------

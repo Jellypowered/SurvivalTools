@@ -14,32 +14,62 @@ namespace SurvivalTools.UI.RightClickRescue
 {
     internal static class WGResolve
     {
+        // Cache worker runtime type name -> WorkGiverDef for fast repeated lookups
+        private static readonly System.Collections.Generic.Dictionary<string, WorkGiverDef> _workerTypeCache = new System.Collections.Generic.Dictionary<string, WorkGiverDef>();
+        private static bool _cacheBuilt;
+        private static void BuildCacheIfNeeded()
+        {
+            if (_cacheBuilt) return;
+            _cacheBuilt = true;
+            try
+            {
+                foreach (var def in DefDatabase<WorkGiverDef>.AllDefs)
+                {
+                    if (def == null) continue;
+                    WorkGiver worker = null;
+                    try { worker = def.Worker; } catch { }
+                    if (worker == null) continue;
+                    var t = worker.GetType();
+                    var full = t.FullName; var name = t.Name;
+                    if (!string.IsNullOrEmpty(full) && !_workerTypeCache.ContainsKey(full)) _workerTypeCache[full] = def;
+                    if (!string.IsNullOrEmpty(name) && !_workerTypeCache.ContainsKey(name)) _workerTypeCache[name] = def;
+                }
+            }
+            catch { /* best effort */ }
+        }
         internal static WorkGiverDef ByWorkerTypes(params string[] typeNames)
         {
             if (typeNames == null) return null;
+            BuildCacheIfNeeded();
             foreach (var n in typeNames)
             {
                 if (string.IsNullOrEmpty(n)) continue;
-                // Allow fully qualified or short names (try RimWorld. prefix first as most vanilla workers live there)
-                var t = AccessTools.TypeByName("RimWorld." + n) ?? AccessTools.TypeByName(n);
+                // Direct cache hit by short or fully qualified name first
+                if (_workerTypeCache.TryGetValue(n, out var cached)) return cached;
+                var maybeFull = "RimWorld." + n;
+                if (_workerTypeCache.TryGetValue(maybeFull, out cached)) return cached;
+
+                // Fallback: resolve Type then attempt cache by type full/name after instantiation
+                var t = AccessTools.TypeByName(maybeFull) ?? AccessTools.TypeByName(n);
                 if (t == null) continue;
                 try
                 {
-                    // Some mod environments may have different accessibility; use simple scan with reflection fallback.
                     foreach (var def in DefDatabase<WorkGiverDef>.AllDefs)
                     {
                         if (def == null) continue;
-                        try
+                        WorkGiver worker = null; try { worker = def.Worker; } catch { }
+                        if (worker == null) continue;
+                        var wt = worker.GetType();
+                        if (wt == t)
                         {
-                            // Use instantiated worker's runtime type; safe across versions even if field name changes.
-                            var worker = def.Worker; // this creates the worker on demand
-                            if (worker != null && worker.GetType() == t)
-                                return def;
+                            var full = wt.FullName; var name = wt.Name;
+                            if (!string.IsNullOrEmpty(full)) _workerTypeCache[full] = def;
+                            if (!string.IsNullOrEmpty(name)) _workerTypeCache[name] = def;
+                            return def;
                         }
-                        catch { /* ignore */ }
                     }
                 }
-                catch { /* best-effort */ }
+                catch { }
             }
             return null;
         }

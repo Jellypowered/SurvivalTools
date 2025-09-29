@@ -161,6 +161,22 @@ namespace SurvivalTools.Assign
             LogCurrentJobState(pawn, caller != null ? $"TryUpgradeFor:start:{caller}" : "TryUpgradeFor:start");
             LogJobQueue(pawn, caller != null ? $"TryUpgradeFor:start:{caller}" : "TryUpgradeFor:start");
 
+            // Hard scope guard: only player-controlled humanlikes.
+            if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn))
+            {
+                return false;
+            }
+            // Skip while eating (avoid churn during ingest sequence)
+            if (pawn.CurJobDef == JobDefOf.Ingest)
+            {
+                return false;
+            }
+            // If no workStat provided or workStat has no gating baseline (unlikely), skip quickly.
+            if (workStat == null)
+            {
+                return false;
+            }
+
             // Early-out blacklist
             if (!CanPawnUpgrade(pawn))
             {

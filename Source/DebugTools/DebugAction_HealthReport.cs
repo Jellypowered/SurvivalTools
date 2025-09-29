@@ -97,6 +97,32 @@ namespace SurvivalTools.DebugTools
                 DumpHarmonyFor(sb, typeof(Pawn_EquipmentTracker), "Notify_EquipmentAdded", new[] { typeof(ThingWithComps) });
                 sb.AppendLine();
 
+                // Legacy HasJob* gating residual warning
+                try
+                {
+                    var hasJob = AccessTools.Method(typeof(WorkGiver_Scanner), "HasJobOnThing", new[] { typeof(Pawn), typeof(Thing), typeof(bool) });
+                    int legacyCount = 0;
+                    if (hasJob != null)
+                    {
+                        var info = Harmony.GetPatchInfo(hasJob);
+                        if (info != null)
+                        {
+                            foreach (var p in info.Prefixes)
+                            {
+                                var dt = p?.PatchMethod?.DeclaringType?.FullName;
+                                if (p?.owner == "jellypowered.survivaltools.gating" || p?.owner == "SurvivalTools.Compat.ResearchReinventedGating" || dt == "SurvivalTools.HarmonyStuff.WorkGiver_Gates" || dt == "SurvivalTools.Compat.ResearchReinvented.RRPatches")
+                                    legacyCount++;
+                            }
+                        }
+                    }
+                    if (legacyCount > 0)
+                        sb.AppendLine($"[WARN] Legacy WG HasJobOnThing gating detected ({legacyCount} patches) — should be 0");
+                }
+                catch (Exception gwarn)
+                {
+                    sb.AppendLine("[WARN] Legacy WG HasJobOnThing gating check error: " + gwarn.Message);
+                }
+
                 // 3) Optional-stat validator summary ----------------------
                 sb.AppendLine("-- Optional Stat Validator --");
                 var optStats = new[] { ST_StatDefOf.MiningYieldDigging, ST_StatDefOf.ButcheryFleshEfficiency, ST_StatDefOf.MedicalSurgerySuccessChance }.Where(s => s != null).ToList();
@@ -180,6 +206,51 @@ namespace SurvivalTools.DebugTools
                 catch (Exception nme)
                 {
                     sb.AppendLine("Nightmare carry invariant: <error> " + nme.Message);
+                }
+
+                // 9) Compatibility status ---------------------------------
+                try
+                {
+                    sb.AppendLine("-- Compatibility --");
+                    var lines = Compat.CompatAPI.DumpCompatibilityStatusLines();
+                    if (lines != null && lines.Count > 0)
+                    {
+                        foreach (var line in lines) sb.AppendLine(line);
+                    }
+                    else sb.AppendLine("(no compatibility modules registered or all inactive)");
+                    sb.AppendLine();
+
+                    // Tree scanner + alias diagnostics
+                    try
+                    {
+                        sb.AppendLine("-- Tree Scanner Diagnostics --");
+                        sb.AppendLine("TreeAuthority: " + Compatibility.TreeStack.TreeWorkGiverMappings.TreeAuthorityLabelSafe());
+                        var regs = Compatibility.TreeStack.TreeWorkGiverMappings.RegisteredTreeWorkersSafe();
+                        var sups = Compatibility.TreeStack.TreeWorkGiverMappings.SuppressedTreeWorkersSafe();
+                        int rc = 0;
+                        foreach (var t in regs) { if (rc++ == 0) sb.AppendLine("Registered:"); sb.AppendLine("  - " + t.FullName); }
+                        if (rc == 0) sb.AppendLine("Registered: (none)");
+                        int sc = 0;
+                        foreach (var t in sups) { if (sc++ == 0) sb.AppendLine("Suppressed:"); sb.AppendLine("  - " + t.FullName); }
+                        if (sc == 0) sb.AppendLine("Suppressed: (none)");
+                        var aliases = ToolStatResolver.EnumerateAliases().ToList();
+                        if (aliases.Count > 0)
+                        {
+                            sb.AppendLine("Stat Aliases:");
+                            foreach (var (alias, canonical) in aliases)
+                                sb.AppendLine($"  {alias.defName} -> {canonical.defName}");
+                        }
+                        else sb.AppendLine("Stat Aliases: (none)");
+                        sb.AppendLine();
+                    }
+                    catch (Exception tdEx)
+                    {
+                        sb.AppendLine("[TreeDiag] error: " + tdEx.Message);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    sb.AppendLine("[Compat] Error collecting status: " + ex);
                 }
 
                 // Write out ------------------------------------------------

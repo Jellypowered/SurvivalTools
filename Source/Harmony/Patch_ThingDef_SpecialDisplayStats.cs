@@ -146,9 +146,10 @@ namespace SurvivalTools.HarmonyStuff
                 if (modifier == null || modifier.stat == null)
                     continue;
 
-                // Only show stats that provide meaningful bonuses (> 100%).
-                // Penalties (< 100%) are intentionally hidden to reduce clutter in info cards.
-                if (modifier.value <= 1.0f)
+                // Dynamic threshold: show stat only if it beats the configured 'no tool' baseline (noToolStatFactorNormal).
+                // This surfaces tools that genuinely improve over the penalty baseline, even if still below 1.0.
+                float baseline = SurvivalToolsMod.Settings?.noToolStatFactorNormal ?? 0.4f;
+                if (modifier.value <= baseline)
                     continue;
 
                 var label = $"Tool — {modifier.stat.LabelCap}";

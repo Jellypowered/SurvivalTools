@@ -55,6 +55,23 @@ namespace SurvivalTools.Gating
                 return false;
             }
 
+            // Hard scope: only player-controlled humanlikes & tool-using jobs.
+            if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn))
+            {
+                LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: "NonPlayerHumanlike");
+                return false;
+            }
+            if (job == JobDefOf.Ingest)
+            {
+                LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: "IngestBypass");
+                return false;
+            }
+            if (!JobLikelyUsesTools(wg, job))
+            {
+                LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: "ToolLessJob");
+                return false;
+            }
+
             var settings = SurvivalToolsMod.Settings;
             if (settings == null || (!settings.hardcoreMode && !settings.extraHardcoreMode))
             {
@@ -266,7 +283,14 @@ namespace SurvivalTools.Gating
                 // DEBUG: Log what stats we found for this WorkGiver
                 if (IsDebugLoggingEnabled)
                 {
-                    LogDebug($"[JobGate.ResolveStats] WorkGiver {wg.defName}: found {arr.Length} stats via resolver: {string.Join(", ", arr.Select(s => s.defName))}", $"JobGate_ResolveStats_{wg.defName}");
+                    // Annotate smoothing optional bonus if present (ConstructionSpeed + SmoothingSpeed)
+                    string list = string.Join(", ", arr.Select(s => s.defName));
+                    if (arr.Length > 1 && arr.Any(s => s.defName.IndexOf("smooth", StringComparison.OrdinalIgnoreCase) >= 0))
+                    {
+                        // TODO[SMOOTHING_TOOL_PURPOSE]: if future smoothing tool exists, treat SmoothingSpeed as weighted tie-breaker
+                        list += " (optional SmoothingSpeed)";
+                    }
+                    LogDebug($"[JobGate.ResolveStats] WorkGiver {wg.defName}: found {arr.Length} stats via resolver: {list}", $"JobGate_ResolveStats_{wg.defName}");
                 }
 
                 _wgReq[wg] = arr;
@@ -285,6 +309,32 @@ namespace SurvivalTools.Gating
                 return _jobReq[job];
             }
             return new StatDef[0];
+        }
+
+        // Shared heuristic with PreWork/GatingEnforcer for quick tool job detection.
+        private static bool JobLikelyUsesTools(WorkGiverDef wg, JobDef job)
+        {
+            try
+            {
+                if (job != null)
+                {
+                    var jd = job;
+                    if (jd == JobDefOf.Ingest || jd == JobDefOf.LayDown || jd == JobDefOf.Wait || jd == JobDefOf.Wait_MaintainPosture || jd == JobDefOf.Goto || jd == JobDefOf.GotoWander)
+                        return false;
+                }
+                var statsFromWG = wg != null ? SurvivalToolUtility.RelevantStatsFor(wg, job) : null;
+                if (statsFromWG != null && statsFromWG.Count > 0) return true;
+                var statsFromJob = SurvivalToolUtility.RelevantStatsFor(wg, job); // job instance path
+                if (statsFromJob != null && statsFromJob.Count > 0) return true;
+                if (job != null)
+                {
+                    var wg2 = Helpers.JobDefToWorkGiverDefHelper.GetWorkGiverDefForJob(job);
+                    var statsFromJobDef = SurvivalToolUtility.RelevantStatsFor(wg2, job);
+                    if (statsFromJobDef != null && statsFromJobDef.Count > 0) return true;
+                }
+            }
+            catch { return true; }
+            return false;
         }
 
         // Optional: call when resolver rebuilds or settings change
@@ -313,8 +363,20 @@ namespace SurvivalTools.Gating
             if (dn.StartsWith("deliverresources")) return true;
             // Defensive: explicit contains checks (cheap) for mid-string naming styles
             if (dn.Contains("deliverresources") && (dn.Contains("frame") || dn.Contains("blueprint"))) return true;
+            // Explicit allowlist additions (Phase 10 modular exemptions)
+            if (_pureDeliveryExplicit != null && _pureDeliveryExplicit.Contains(wg)) return true;
             return false;
         }
+
+        // Phase 10: explicit exemption list populated by CompatAPI.ExemptPureDelivery_ByDerivationOrAlias
+        private static readonly HashSet<WorkGiverDef> _pureDeliveryExplicit = new HashSet<WorkGiverDef>();
+        internal static void MarkPureDelivery(WorkGiverDef wg)
+        {
+            if (wg == null) return; _pureDeliveryExplicit.Add(wg);
+        }
+
+        // Read-only exposure for diagnostics
+        internal static IEnumerable<WorkGiverDef> GetExplicitPureDeliveryWorkGivers() => _pureDeliveryExplicit;
     }
 }
 

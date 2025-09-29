@@ -84,6 +84,12 @@ namespace SurvivalTools.HarmonyStuff
             TrySweepOptional<Thing>("Destroy", new[] { typeof(DestroyMode) });
             TrySweepOptionalStatic(typeof(ThingMaker), "MakeThing", new[] { typeof(ThingDef), typeof(ThingDef) });
 
+            // Optional legacy HasJobOnThing/Cell gating sweep (owners / declaring types listed by user request)
+            LegacyHasJobSweep();
+
+            // Additional namespace-prefix based optional sweep for any lingering ST-owned HasJobOnThing patches
+            OptionalNamespacePrefixHasJobOnThingSweep();
+
             Log.Message("[SurvivalTools.PatchGuard] Patch cleanup complete.");
             LogAllowlistSummary();
         }
@@ -213,6 +219,120 @@ namespace SurvivalTools.HarmonyStuff
             foreach (var p in info.Transpilers) if (TryUnpatchIfLegacy(orig, p, _allowlistedTypes)) removed++;
             if (removed > 0)
                 Log.Message($"[SurvivalTools.PatchGuard] Optional sweep removed {removed} legacy patches from {declType.Name}.{name}");
+        }
+
+        // Sweep for legacy HasJobOnThing / HasJobOnCell prefixes owned by prior gating systems.
+        static void LegacyHasJobSweep()
+        {
+            try
+            {
+                var targets = new (Type type, string method, Type[] sig)[]
+                {
+                    (typeof(WorkGiver_Scanner), "HasJobOnThing", new[] { typeof(Pawn), typeof(Thing), typeof(bool) }),
+                    (typeof(WorkGiver_Scanner), "HasJobOnCell", new[] { typeof(Pawn), typeof(IntVec3), typeof(bool) })
+                };
+
+                string[] owners =
+                {
+                    "jellypowered.survivaltools.gating",
+                    "SurvivalTools.Compat.ResearchReinventedGating"
+                };
+                string[] declaringTypeNames =
+                {
+                    "SurvivalTools.HarmonyStuff.WorkGiver_Gates",
+                    "SurvivalTools.Compat.ResearchReinvented.RRPatches"
+                };
+
+                int totalRemoved = 0;
+                foreach (var (type, method, sig) in targets)
+                {
+                    var orig = AccessTools.Method(type, method, sig);
+                    if (orig == null) continue;
+                    var info = Harmony.GetPatchInfo(orig);
+                    if (info == null) continue;
+                    foreach (var p in info.Prefixes.ToList())
+                    {
+                        try
+                        {
+                            var pm = p.PatchMethod;
+                            var dt = pm?.DeclaringType;
+                            if (pm == null || dt == null) continue;
+                            bool ownerMatch = owners.Contains(p.owner);
+                            bool declMatch = declaringTypeNames.Contains(dt.FullName);
+                            if (ownerMatch || declMatch)
+                            {
+                                _harmony.Unpatch(orig, pm);
+                                totalRemoved++;
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                if (totalRemoved > 0)
+                    Log.Message($"[SurvivalTools.PatchGuard] Legacy HasJob* sweep removed {totalRemoved} obsolete gating prefix(es).");
+            }
+            catch (Exception e)
+            {
+                Log.Warning("[SurvivalTools.PatchGuard] LegacyHasJobSweep error: " + e.Message);
+            }
+        }
+
+        // New (Phase 10 refinement): broad optional sweep removing ST-owned HasJobOnThing patches whose owners / declaring types
+        // start with specific namespace prefixes, excluding allowlisted patch containers.
+        static void OptionalNamespacePrefixHasJobOnThingSweep()
+        {
+            try
+            {
+                var method = AccessTools.Method(typeof(WorkGiver_Scanner), "HasJobOnThing", new[] { typeof(Pawn), typeof(Thing), typeof(bool) });
+                if (method == null) return; // signature may differ in future versions
+                var info = Harmony.GetPatchInfo(method);
+                if (info == null) return;
+
+                string[] nsPrefixes = { "Jelly.SurvivalTools", "SurvivalTools.HarmonyStuff" };
+                var removedTypes = new HashSet<Type>();
+
+                bool IsAllowlisted(Type t) => t != null && Array.IndexOf(_allowlistedTypes, t) >= 0;
+
+                void Consider(Patch p)
+                {
+                    if (p == null) return;
+                    var pm = p.PatchMethod; if (pm == null) return;
+                    var dt = pm.DeclaringType; if (dt == null) return;
+                    // Skip allowlist
+                    if (IsAllowlisted(dt)) return;
+                    string owner = p.owner ?? string.Empty;
+                    string full = dt.FullName ?? string.Empty;
+                    bool ownerMatch = nsPrefixes.Any(pref => owner.StartsWith(pref, StringComparison.Ordinal));
+                    bool declMatch = nsPrefixes.Any(pref => full.StartsWith(pref, StringComparison.Ordinal));
+                    if (ownerMatch || declMatch)
+                    {
+                        try
+                        {
+                            _harmony.Unpatch(method, pm);
+                            removedTypes.Add(dt);
+                        }
+                        catch { /* ignore individual failures */ }
+                    }
+                }
+
+                foreach (var p in info.Prefixes) Consider(p);
+                foreach (var p in info.Postfixes) Consider(p);
+                foreach (var p in info.Transpilers) Consider(p);
+
+                if (removedTypes.Count > 0)
+                {
+                    try
+                    {
+                        var names = string.Join(", ", removedTypes.Select(t => t.FullName));
+                        Log.Message($"[SurvivalTools.PatchGuard] Namespace sweep removed HasJobOnThing patches from: {names}");
+                    }
+                    catch { Log.Message("[SurvivalTools.PatchGuard] Namespace sweep removed HasJobOnThing patches (types list unavailable)"); }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Warning("[SurvivalTools.PatchGuard] OptionalNamespacePrefixHasJobOnThingSweep error: " + e.Message);
+            }
         }
     }
 }

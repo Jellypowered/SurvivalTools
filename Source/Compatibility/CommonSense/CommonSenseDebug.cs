@@ -3,7 +3,7 @@
 using Verse;
 using static SurvivalTools.ST_Logging;
 
-namespace SurvivalTools.Compat.CommonSense
+namespace SurvivalTools.Compatibility.CommonSense
 {
     // Pacifist equip handled centrally in Patch_EquipmentUtility_CanEquip_PacifistTools.cs
     /// <summary>
@@ -16,7 +16,7 @@ namespace SurvivalTools.Compat.CommonSense
         {
             try
             {
-                if (!CommonSenseHelpers.IsCommonSenseActive()) return;
+                if (!CommonSenseHelpers.Active) return;
                 LogCompatMessage(msg);
             }
             catch

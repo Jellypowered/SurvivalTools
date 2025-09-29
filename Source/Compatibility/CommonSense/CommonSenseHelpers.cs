@@ -1,49 +1,49 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Compatibility/CommonSense/CommonSenseHelpers.cs
+// Phase 10: Bulk WG mapping + right-click eligibility for cleaning (vanilla + CommonSense derivatives).
+
 using System;
+using System.Linq;
+using HarmonyLib;
+using RimWorld;
 using Verse;
 
-namespace SurvivalTools.Compat.CommonSense
+namespace SurvivalTools.Compatibility.CommonSense
 {
-    // Pacifist equip handled centrally in Patch_EquipmentUtility_CanEquip_PacifistTools.cs
-    /// <summary>
-    /// Helper utilities for CommonSense compatibility.
-    /// All methods are defensive and safe to call when CommonSense is not loaded.
-    /// </summary>
-    public static class CommonSenseHelpers
+    internal static class CommonSenseHelpers
     {
-        /// <summary>
-        /// Returns true if CommonSense mod is active/available.
-        /// Use this before calling any CommonSense-specific APIs.
-        /// </summary>
-        public static bool IsCommonSenseActive()
-        {
-            try
-            {
-                // Safe check via ModLister if available at runtime
-                return Verse.ModLister.GetActiveModWithIdentifier("com.rimworld.caister.commonsense") != null;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
+        private static readonly string PkgIdGuess = "mehni.rimworld.commonSense"; // benign if inaccurate
 
-        /// <summary>
-        /// Centralized check whether a pawn should be exempt from SurvivalTools logic
-        /// when CommonSense provides alternate handling (e.g. wanderers, gear UI overrides).
-        /// </summary>
-        public static bool ShouldBypassForCommonSense(Pawn pawn)
+        internal static bool Active =>
+            ModsConfig.ActiveModsInLoadOrder.Any(m =>
+                (m.PackageId != null && m.PackageId.Equals(PkgIdGuess, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrEmpty(m.Name) && m.Name.IndexOf("Common Sense", StringComparison.OrdinalIgnoreCase) >= 0))
+            || AccessTools.TypeByName("CommonSense.WorkGiver_CleanFilth_CS") != null
+            || AccessTools.TypeByName("CommonSense.WorkGiver_CleanArea_CS") != null;
+
+        internal static void Initialize()
         {
-            if (pawn == null) return false;
             try
             {
-                // Placeholder for future CommonSense-specific heuristics.
-                return false;
+                var vanillaCleanWG = typeof(WorkGiver_CleanFilth);
+                var csCleanWG = AccessTools.TypeByName("CommonSense.WorkGiver_CleanFilth_CS");
+                var csCleanArea = AccessTools.TypeByName("CommonSense.WorkGiver_CleanArea_CS");
+
+                // 1) Map cleaning WGs -> CleaningSpeed
+                SurvivalTools.Compat.CompatAPI.MapWGsToStat_ByDerivationOrAlias(
+                    ST_StatDefOf.CleaningSpeed,
+                    new[] { vanillaCleanWG, csCleanWG, csCleanArea },
+                    new[] { "CleanFilth", "CleanArea" }
+                );
+
+                // 2) Right-click eligibility (include vanilla always)
+                SurvivalTools.Compat.CompatAPI.RegisterRightClickEligibleWGSubclass(vanillaCleanWG);
+                SurvivalTools.Compat.CompatAPI.RegisterRightClickEligibleWGSubclass(csCleanWG);
+                SurvivalTools.Compat.CompatAPI.RegisterRightClickEligibleWGSubclass(csCleanArea);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return false;
+                Log.Warning("[SurvivalTools][CommonSense] Initialize error: " + ex.Message);
             }
         }
     }

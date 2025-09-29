@@ -181,7 +181,7 @@ namespace SurvivalTools
             if (s.Contains("microscope") || s.Contains("telescope") || s.Contains("sextant") ||
                 s.Contains("calculator") || s.Contains("computer") || s.Contains("analyzer") ||
                 s.Contains("scanner") || s.Contains("spectrometer") || s.Contains("datapad") ||
-                s.Contains("tablet") || s.Contains("laptop")) return STToolKind.Research;
+                s.Contains("tablet") || s.Contains("laptop") || s.Contains("abacus")) return STToolKind.Research;
 
             // Medical
             if (s.Contains("scalpel") || s.Contains("forceps") || s.Contains("stethoscope") ||

@@ -135,7 +135,7 @@ namespace SurvivalTools
                             STToolKind.Research,
                             new ToolDetectionRule
                             {
-                                NamePatterns = new[] { "microscope", "telescope", "sextant", "calculator", "computer", "instrument", "analyzer", "scanner", "spectrometer", "chromatograph", "oscilloscope", "multimeter", "datapad", "tablet", "laptop" },
+                                NamePatterns = new[] { "abacus","microscope", "telescope", "sextant", "calculator", "computer", "instrument", "analyzer", "scanner", "spectrometer", "chromatograph", "oscilloscope", "multimeter", "datapad", "tablet", "laptop" },
                                 ExcludePatterns = new[] { "musical", "music", "guitar", "piano", "drum", "violin", "flute", "horn" },
                                 RequiredStats = new[] { ST_StatDefOf.ResearchSpeed },
                                 Description = "Research and analytical instruments"
@@ -243,18 +243,27 @@ namespace SurvivalTools
 
                 if (!needsEnhancement)
                 {
-                    logEntry = $"Already enhanced {rule.Description.ToLower()}: {thingDef.defName} ({thingDef.label}) from {modSource}";
-                    return false;
+                    // Even if underlying stats already exist, make sure it is tagged as a survival tool so
+                    // gating, scoring & special display lists pick it up (fixes abacus / existing research instruments).
+                    bool addedExtension = false;
+                    if (!thingDef.HasModExtension<SurvivalToolProperties>() && !IsSurvivalToolsItem(thingDef))
+                    {
+                        try { EnsureSurvivalToolExtension(thingDef, kvp.Key); addedExtension = true; } catch { }
+                    }
+                    logEntry = (addedExtension
+                        ? $"Tagged existing {rule.Description.ToLower()} (extension added): {thingDef.defName} ({thingDef.label}) from {modSource}"
+                        : $"Already enhanced {rule.Description.ToLower()}: {thingDef.defName} ({thingDef.label}) from {modSource}");
+                    return addedExtension; // count only if we actually added our tagging
                 }
 
-                // Skip if this is already a SurvivalTools item (don't modify our own tools)
+                // Skip if this is already a SurvivalTools item (don't modify our own tools) BUT if it lacks required stat (shouldn't) we still leave it.
                 if (IsSurvivalToolsItem(thingDef))
                 {
                     logEntry = $"Skipped SurvivalTools item: {thingDef.defName} ({thingDef.label}) from {modSource}";
                     return false;
                 }
 
-                // Enhance the tool
+                // Enhance the tool (add missing stats + extension)
                 EnhanceTool(thingDef, rule, kvp.Key);
                 logEntry = $"Enhanced {rule.Description.ToLower()}: {thingDef.defName} ({thingDef.label}) from {modSource}";
                 return true;

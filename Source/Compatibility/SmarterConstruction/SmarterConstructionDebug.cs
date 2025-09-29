@@ -1,22 +1,15 @@
 ﻿// RimWorld 1.6 / C# 7.3
 // Source/Compatibility/SmarterConstruction/SmarterConstructionDebug.cs
-using Verse;
+using System.Collections.Generic;
 
-// Pacifist equip handled centrally in Patch_EquipmentUtility_CanEquip_PacifistTools.cs
-using static SurvivalTools.ST_Logging;
-
-namespace SurvivalTools.Compat.SmarterConstruction
+namespace SurvivalTools.Compatibility.SmarterConstruction
 {
     internal static class SmarterConstructionDebug
     {
-        public static void D(string msg)
+        internal static void Contribute(Dictionary<string, string> kv)
         {
-            try
-            {
-                if (!SmarterConstructionHelpers.IsSmarterConstructionActive()) return;
-                LogCompatMessage("[SmarterConstruction] " + msg, "SmarterConstruction.Debug");
-            }
-            catch { }
+            if (kv == null) return;
+            kv["SC.Active"] = SmarterConstructionHelpers.Active.ToString();
         }
     }
 }

@@ -1,0 +1,28 @@
+<Patch>
+    <Operation Class="PatchOperationFindMod">
+        <mods>
+            <li>Vanilla Ideology Expanded - Relics and Artifacts</li>
+        </mods>
+        <match Class="PatchOperationSequence">
+            <!-- Don't fail the whole sequence if one op doesn't match -->
+            <success>Always</success>
+            <operations>
+                <!-- Replace any existing relicChance under the Tool Belt def -->
+                <li Class="PatchOperationReplace">
+                    <xpath>Defs/ThingDef[defName="SurvivalTools_ToolBelt"]//relicChance</xpath>
+                    <value>
+                        <relicChance>0</relicChance>
+                    </value>
+                </li>
+
+                <!-- Fallback: if none existed, add one at the ThingDef root -->
+                <li Class="PatchOperationAdd">
+                    <xpath>Defs/ThingDef[defName="SurvivalTools_ToolBelt"]</xpath>
+                    <value>
+                        <relicChance>0</relicChance>
+                    </value>
+                </li>
+            </operations>
+        </match>
+    </Operation>
+</Patch>

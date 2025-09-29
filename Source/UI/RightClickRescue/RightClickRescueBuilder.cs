@@ -12,16 +12,38 @@ using Verse.AI;
 using SurvivalTools.Assign;
 using SurvivalTools.Gating;
 using SurvivalTools.Helpers;
+using SurvivalTools.Compat;
+using SurvivalTools.Compatibility.TreeStack;
+using System.Diagnostics;
 
 namespace SurvivalTools.UI.RightClickRescue
 {
     internal static class RightClickRescueBuilder
     {
+        // Per-pawn breadcrumb cooldown
+        private static readonly Dictionary<int, int> _rcLogCd = new Dictionary<int, int>();
+        private const int RC_LOG_CD_TICKS = 300; // ~5 seconds
+        private static readonly HashSet<StatDef> _statsLoggedThisClick = new HashSet<StatDef>();
+        internal static void ResetClickStatLog() { _statsLoggedThisClick.Clear(); }
+        private static bool AllowRCLog(Pawn p)
+        {
+            try
+            {
+                if (p == null) return false;
+                int now = Find.TickManager?.TicksGame ?? 0;
+                int id = p.thingIDNumber;
+                if (_rcLogCd.TryGetValue(id, out var until) && until > now) return false;
+                _rcLogCd[id] = now + RC_LOG_CD_TICKS;
+                return true;
+            }
+            catch { return false; }
+        }
         private static readonly List<IRescueTargetScanner> Scanners = new List<IRescueTargetScanner>
         {
             // Mining / construction
             new MineScanner(),
             new DeconstructScanner(),
+            new UninstallScanner(),
             new SmoothWallScanner(),
             new SmoothFloorScanner(),
             new FinishFrameScanner(),
@@ -34,65 +56,374 @@ namespace SurvivalTools.UI.RightClickRescue
             // Repair / clean
             new RepairScanner(),
             new CleanScanner(),
+
+            // Research (bench)
+            new ResearchScanner(),
         };
 
-        private static int _lastLoggedTick = -1;
+        private static int _lastConsideredCount;
+        internal static int LastConsideredCount => _lastConsideredCount;
+        // Instrumentation aggregates (DevMode only read)
+        internal struct ScannerRecord { public string Name; public long Ms; public string Reason; public bool Described; }
+        private static readonly List<ScannerRecord> _scannerRecords = new List<ScannerRecord>();
+        internal static IReadOnlyList<ScannerRecord> ScannerRecords => _scannerRecords;
+        private static int _scanCanHandleFalse, _scanDescribeFailed, _scanTreeSuppressed, _scanWorkTypeDisabled, _scanDescribed, _gatingNeeded, _gatingNotNeeded;
+        internal static (int canHandleFalse, int describeFailed, int treeSuppressed, int workTypeDisabled, int described, int gatingNeeded, int gatingNotNeeded) Counters => (_scanCanHandleFalse, _scanDescribeFailed, _scanTreeSuppressed, _scanWorkTypeDisabled, _scanDescribed, _gatingNeeded, _gatingNotNeeded);
+        internal static void ResetInstrumentation()
+        {
+            _scannerRecords.Clear();
+            _scanCanHandleFalse = _scanDescribeFailed = _scanTreeSuppressed = _scanWorkTypeDisabled = _scanDescribed = _gatingNeeded = _gatingNotNeeded = 0;
+            _lastConsideredCount = 0;
+            ScannerDiagnostics.Clear();
+        }
+
+        // Static singleton for sow stats (avoid first-click StatGatingHelper cost ~280ms); per-phase logging removed (summary click only)
+        private static readonly List<StatDef> _sowStatsFast = new List<StatDef> { ST_StatDefOf.SowingSpeed };
+        // Prewarm entrypoint (called by provider) to shift cold reflection (WG + JobDef static init) off the first right-click.
+        internal static void PrewarmSow()
+        {
+            try
+            {
+                // Direct named lookup first (cheap) then fallback to previous reflection path.
+                if (SowScanner._wg == null)
+                {
+                    SowScanner._wg = DefDatabase<WorkGiverDef>.GetNamedSilentFail("GrowerSow")
+                                       ?? DefDatabase<WorkGiverDef>.GetNamedSilentFail("Grower_Sow")
+                                       ?? WGResolve.ByWorkerTypes("WorkGiver_GrowerSow", "WorkGiver_Grower_Sow", "WorkGiver_Grower", "WorkGiver_PlantsSow", "WorkGiver_Sow");
+                }
+                if (SowScanner._job == null)
+                {
+                    // Force JobDefOf static ctor early; fallback name lookup
+                    try { var _ = JobDefOf.Sow; } catch { }
+                    SowScanner._job = JobDefOf.Sow ?? WGResolve.Job("Sow");
+                }
+            }
+            catch { }
+        }
+
+        // Prewarm / cache for research scanner (eliminate repeated reflection & AccessTools type lookups)
+        internal static void PrewarmResearch()
+        {
+            try { ResearchScanner.EnsureInit(); ResearchScanner.Warm(); } catch { }
+        }
+
+        private static bool PawnCanEverDo(Pawn pawn, WorkGiverDef wg)
+        {
+            try
+            {
+                if (pawn == null || wg == null) return false;
+                var wt = wg.workType; if (wt == null) return true; // no work type = assume allowed
+                return !pawn.WorkTypeIsDisabled(wt);
+            }
+            catch { return true; }
+        }
+
+        internal static bool IsSowableNow(Zone_Growing zone, IntVec3 c, Map map)
+        {
+            // Conservative fast checks mirroring vanilla sow WorkGiver logic
+            try
+            {
+                if (zone == null || map == null || !c.IsValid || !c.InBounds(map)) return false;
+                var plantDef = zone.GetPlantDefToGrow();
+                if (plantDef == null) return false;
+                // Skip if another non‑mature plant already here (can't sow yet)
+                var existingPlant = c.GetPlant(map);
+                if (existingPlant != null && !existingPlant.Destroyed && existingPlant.def != plantDef)
+                {
+                    // If it's a different plant and not ready for harvest, can't sow
+                    if (!existingPlant.HarvestableNow) return false;
+                }
+                // Growth season / snow / adjacency checks (guarded via helper to avoid API variance)
+                if (!GrowthSeasonNowSafe(c, map)) return false;
+                if (!SnowAllowsPlantingSafe(c, map)) return false;
+                if (AdjacentSowBlockerSafe(plantDef, c, map) != null) return false;
+                // Terrain fertility check
+                var terrainFert = map.fertilityGrid.FertilityAt(c);
+                if (terrainFert < plantDef.plant.fertilityMin) return false;
+                // No blocking thing (rock, building, etc.)
+                var things = c.GetThingList(map);
+                for (int i = 0; i < things.Count; i++)
+                {
+                    var th = things[i]; if (th.def.category == ThingCategory.Building && th.def.passability == Traversability.Impassable) return false;
+                }
+                return true;
+            }
+            catch { return false; }
+        }
+
+        // --- Safe wrappers (handle potential method signature differences across versions) ---
+        private static bool GrowthSeasonNowSafe(IntVec3 c, Map map)
+        {
+            try
+            {
+                if (map == null) return true;
+                // Approximate vanilla: require outdoor temperature above 0C (or plant min growth temp if available) and not in permanent winter (simplified)
+                float temp = map.mapTemperature?.OutdoorTemp ?? 10f;
+                return temp > 0f; // permissive; prevents false negatives that hide sow option
+            }
+            catch { return true; }
+        }
+        private static bool SnowAllowsPlantingSafe(IntVec3 c, Map map)
+        {
+            try { return PlantUtility.SnowAllowsPlanting(c, map); } catch { return true; }
+        }
+        private static Thing AdjacentSowBlockerSafe(ThingDef plant, IntVec3 c, Map map)
+        {
+            try { return PlantUtility.AdjacentSowBlocker(plant, c, map); } catch { return null; }
+        }
+
         internal static void TryAddRescueOptions(Pawn pawn, FloatMenuContext ctx, List<FloatMenuOption> options)
         {
             if (pawn == null || ctx == null || options == null) return;
+            if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn)) return; // exclude colony mechs, animals, wilds from all logic & logging
             var s = SurvivalToolsMod.Settings;
             if (s == null) return;
             if (!s.enableRightClickRescue) return; // feature gate
             if (!(s.hardcoreMode || s.extraHardcoreMode)) return; // Hardcore / Nightmare only per design
-            foreach (var scanner in Scanners)
+            bool stcExternal = TreeSystemArbiter.Authority == TreeAuthority.SeparateTreeChopping; // external tree authority means suppress tree felling rescue entirely
+            // Determine primary thing (first clicked valid thing) for scoring context
+            Thing primaryThing = null;
+            try
+            {
+                foreach (var t in ctx.ClickedThings)
+                {
+                    if (t != null) { primaryThing = t; break; }
+                }
+            }
+            catch { }
+
+            var cell = ctx.ClickedCell;
+            var map = pawn.Map;
+
+            // Lightweight cell context for early pruning
+            bool hasMineDesignation = false, hasSmoothDesignation = false, hasCutDesignation = false, hasHarvestDesignation = false;
+            bool hasNonSowThing = false;
+            Zone_Growing growZone = null;
+            if (cell.IsValid && map != null)
             {
                 try
                 {
-                    if (!scanner.CanHandle(ctx)) continue;
-                    if (!scanner.TryDescribeTarget(pawn, ctx, out var desc)) continue;
-                    if (desc.RequiredStats == null || desc.RequiredStats.Count == 0) continue;
-
-                    // Ask JobGate (forced=false). If not blocked, vanilla already supplied enabled option.
-                    if (!JobGate.ShouldBlock(pawn, desc.WorkGiverDef, desc.JobDef, false, out var reasonKey, out var a1, out var a2))
+                    var desigs = map.designationManager?.AllDesignationsAt(cell);
+                    if (desigs != null)
                     {
-                        if (Prefs.DevMode && s.debugLogging) Log.Message($"[ST.RightClick] Scanner {scanner.GetType().Name} target not gated – skipping.");
-                        continue;
+                        foreach (var d in desigs)
+                        {
+                            if (d == null) continue;
+                            var def = d.def;
+                            if (def == DesignationDefOf.Mine) hasMineDesignation = true;
+                            else if (def == DesignationDefOf.SmoothFloor || def == DesignationDefOf.SmoothWall) hasSmoothDesignation = true;
+                            else if (def == DesignationDefOf.CutPlant) hasCutDesignation = true;
+                            else if (def == DesignationDefOf.HarvestPlant) hasHarvestDesignation = true;
+                        }
                     }
-                    var firstRequired = desc.RequiredStats[0];
-                    if (firstRequired == null) continue;
+                    growZone = cell.GetZone(map) as Zone_Growing;
+                    // Classify clicked things for pruning
+                    foreach (var t in ctx.ClickedThings)
+                    {
+                        if (t == null) continue;
+                        // Things that imply other work types: frames, buildings needing deconstruct/repair, mineable rock, filth (cleaning), research bench, etc.
+                        if (t is Frame || t is Building || (t.def?.mineable ?? false)) { hasNonSowThing = true; break; }
+                        // Filth: cleaning scanner; if we see filth treat as non-sow context
+                        if (t is Filth) { hasNonSowThing = true; break; }
+                    }
+                }
+                catch { }
+            }
+            bool sowContext = growZone != null && !hasMineDesignation && !hasSmoothDesignation && !hasCutDesignation && !hasHarvestDesignation && !hasNonSowThing;
 
-                    // Preview: can we upgrade? (lightweight). If none found, still offer generic rescue to allow manual pickup path.
-                    string toolName;
-                    bool canUpgrade = AssignmentSearchPreview.CanUpgradePreview(pawn, firstRequired, out toolName);
+            // Pure sow fast path (skip generic scanner pipeline + sorting + second pass)
+            if (sowContext)
+            {
+                var settingsFast = SurvivalToolsMod.Settings;
+                // Timing only retained for aggregate scanner record (no per-phase logs anymore)
+                Stopwatch swFast = null; bool timing = Prefs.DevMode && settingsFast != null && settingsFast.debugLogging;
+                try
+                {
+                    if (timing) swFast = Stopwatch.StartNew();
+                    var zone = growZone; if (zone == null) goto fastRecordFail;
+                    var plantDef = zone.GetPlantDefToGrow(); if (plantDef == null) goto fastRecordFail;
+                    if (!IsSowableNow(zone, cell, map)) goto fastRecordFail;
+                    // Resolve WG / Job via cached SowScanner statics (instantiate one if needed)
+                    SowScanner._wg = SowScanner._wg ?? WGResolve.ByWorkerTypes(
+                        "WorkGiver_PlantsSow", "WorkGiver_Sow", "WorkGiver_GrowerSow", "WorkGiver_Grower_Sow", "WorkGiver_Grower");
+                    var wg = SowScanner._wg; if (wg == null) goto fastRecordFail;
+                    SowScanner._job = SowScanner._job ?? (WGResolve.Of(() => JobDefOf.Sow) ?? WGResolve.Job("Sow"));
+                    var job = SowScanner._job; if (job == null) goto fastRecordFail;
+                    // Direct stat list (avoid reflection / heuristics on first click)
+                    var stats = _sowStatsFast;
+                    if (stats == null || stats.Count == 0) goto fastRecordFail;
+                    if (!PawnCanEverDo(pawn, wg)) goto fastRecordFail; // work type disabled
+                    if (stcExternal && stats.Exists(rs => rs == ST_StatDefOf.TreeFellingSpeed || ToolStatResolver.IsAliasOf(rs, ST_StatDefOf.TreeFellingSpeed))) goto fastRecordFail;
+                    if (!JobGate.ShouldBlock(pawn, wg, job, false, out var rkFast, out var aFast1, out var aFast2)) { _gatingNotNeeded++; goto fastPathDone; }
+                    _gatingNeeded++;
+                    var firstRequired = stats[0]; if (firstRequired == null) goto fastRecordFail;
+                    string toolName; bool canUpgrade = AssignmentSearchPreview.CanUpgradePreview(pawn, firstRequired, out toolName);
                     if (!canUpgrade)
                     {
                         var suffix = "ST_GenericToolSuffix".Translate().ToStringSafe() ?? "tool";
                         toolName = (firstRequired.label ?? "tool").CapitalizeFirst() + " " + suffix;
-                        if (Prefs.DevMode && s.debugLogging) Log.Message($"[ST.RightClick] No upgrade candidate for {firstRequired.defName}; using generic label.");
                     }
-
-                    string label = BuildOptionLabel(desc.PriorityLabel, toolName);
-                    var capture = desc; // avoid modified closure
-                    var reqStat = firstRequired;
-
-                    Action act = () => ExecuteRescue(pawn, capture, reqStat);
-                    var opt = new FloatMenuOption(label, act)
+                    string label = BuildOptionLabel("ST_Prioritize_Sow".Translate().ToStringSafe(), toolName);
+                    var plantDefFast = plantDef; // capture for closure
+                    Action act = () => ExecuteRescue(pawn, new RescueTarget
                     {
-                        iconThing = capture.IconThing,
-                        autoTakeable = false
-                    };
-                    options.Add(FloatMenuUtility.DecoratePrioritizedTask(opt, pawn, new LocalTargetInfo(desc.ClickCell)));
-                    if (Prefs.DevMode && (_lastLoggedTick != GenTicks.TicksGame))
-                    {
-                        _lastLoggedTick = GenTicks.TicksGame;
-                        Log.Message($"[ST.RightClick] Added rescue option (stat {firstRequired.defName}) at {ctx.ClickedCell}.");
-                    }
+                        ClickCell = cell,
+                        IconThing = null,
+                        WorkGiverDef = wg,
+                        JobDef = job,
+                        RequiredStats = stats,
+                        PriorityLabel = "ST_Prioritize_Sow".Translate().ToStringSafe(),
+                        MakeJob = _ =>
+                        {
+                            var j = JobMaker.MakeJob(job, cell);
+                            try { j.plantDefToSow = plantDefFast; } catch { }
+                            return j;
+                        }
+                    }, firstRequired);
+                    var opt = new FloatMenuOption(label, act) { iconThing = null, autoTakeable = false };
+                    options.Add(FloatMenuUtility.DecoratePrioritizedTask(opt, pawn, new LocalTargetInfo(cell)));
+                    Provider_STPrioritizeWithRescue.NotifyOptionAdded();
+                    _lastConsideredCount = 1;
+                    _scanDescribed++;
+                    if (timing && swFast != null) { swFast.Stop(); _scannerRecords.Add(new ScannerRecord { Name = nameof(SowScanner), Ms = swFast.ElapsedMilliseconds, Reason = "Described(Fast)", Described = true }); }
+                    return;
+                fastRecordFail:
+                    if (timing && swFast != null) { swFast.Stop(); _scannerRecords.Add(new ScannerRecord { Name = nameof(SowScanner), Ms = swFast.ElapsedMilliseconds, Reason = "DescribeFailed(Fast)", Described = false }); }
+                fastPathDone:
+                    _lastConsideredCount = 1; // we only considered sow
+                    return; // fast path ends irrespective of success (success added option above)
                 }
-                catch (Exception ex)
+                catch (Exception exFast)
                 {
-                    Log.Warning("[SurvivalTools.RightClickRescue] Scanner exception: " + ex);
+                    if (Prefs.DevMode && settingsFast != null && settingsFast.debugLogging)
+                        Log.Warning("[ST.RightClick] Sow fast path exception: " + exFast);
+                    return;
                 }
             }
+
+            // Build temporary list of (scanner, provisional WGDef, score)
+            var scored = new List<(IRescueTargetScanner scanner, WorkGiverDef wg, int score)>();
+            if (Prefs.DevMode && s.debugLogging) ResetInstrumentation();
+            foreach (var scanner in Scanners)
+            {
+                try
+                {
+                    Stopwatch sw = null; if (Prefs.DevMode && s.debugLogging) sw = Stopwatch.StartNew();
+                    string reason = string.Empty; bool described = false;
+                    // Early skip: if pure sow context run only SowScanner (do not record others at all)
+                    if (sowContext && scanner.GetType() != typeof(SowScanner)) { if (sw != null) sw.Stop(); continue; }
+                    if (!scanner.CanHandle(ctx)) { reason = "CanHandleFalse"; _scanCanHandleFalse++; }
+                    else if (!scanner.TryDescribeTarget(pawn, ctx, out var desc) || desc.WorkGiverDef == null)
+                    {
+                        reason = "DescribeFailed";
+                        // Append granular scanner-provided failure reason if available
+                        if (ScannerDiagnostics.TryGet(scanner.GetType(), out var fr) && !string.IsNullOrEmpty(fr))
+                            reason += ":" + fr;
+                        _scanDescribeFailed++;
+                    }
+                    else
+                    {
+                        bool treeSuppressed = false;
+                        if (stcExternal)
+                        {
+                            try
+                            {
+                                if (desc.RequiredStats != null && desc.RequiredStats.Exists(rs => rs == ST_StatDefOf.TreeFellingSpeed || ToolStatResolver.IsAliasOf(rs, ST_StatDefOf.TreeFellingSpeed)))
+                                { treeSuppressed = true; reason = "TreeSuppressed"; _scanTreeSuppressed++; }
+                            }
+                            catch { }
+                        }
+                        if (!treeSuppressed)
+                        {
+                            if (!PawnCanEverDo(pawn, desc.WorkGiverDef)) { reason = "WorkTypeDisabled"; _scanWorkTypeDisabled++; }
+                            else
+                            {
+                                var wg = desc.WorkGiverDef; int sc = Provider_STPrioritizeWithRescue.ScoreWGForClick(wg, primaryThing, cell, map);
+                                scored.Add((scanner, wg, sc)); described = true; reason = "Described"; _scanDescribed++;
+                            }
+                        }
+                    }
+                    if (sw != null)
+                    {
+                        sw.Stop();
+                        _scannerRecords.Add(new ScannerRecord { Name = scanner.GetType().Name, Ms = sw.ElapsedMilliseconds, Reason = reason, Described = described });
+                    }
+                }
+                catch { }
+            }
+
+            // Sort descending by score
+            scored.Sort((a, b) => b.score.CompareTo(a.score));
+            _lastConsideredCount = scored.Count;
+
+            bool success = false;
+            // Pass 1: prioritized order
+            foreach (var entry in scored)
+            {
+                if (Provider_STPrioritizeWithRescue.AlreadySatisfiedThisClick()) break;
+                try
+                {
+                    if (!entry.scanner.TryDescribeTarget(pawn, ctx, out var desc)) continue;
+                    if (!PawnCanEverDo(pawn, desc.WorkGiverDef)) continue; // work type disabled now
+                    if (desc.RequiredStats == null || desc.RequiredStats.Count == 0) continue;
+                    if (stcExternal && desc.RequiredStats.Exists(rs => rs == ST_StatDefOf.TreeFellingSpeed || ToolStatResolver.IsAliasOf(rs, ST_StatDefOf.TreeFellingSpeed))) continue; // suppress tree option
+                    if (!JobGate.ShouldBlock(pawn, desc.WorkGiverDef, desc.JobDef, false, out var rk, out var a1, out var a2)) { _gatingNotNeeded++; continue; }
+                    _gatingNeeded++;
+                    var firstRequired = desc.RequiredStats[0]; if (firstRequired == null) continue;
+                    string toolName; bool canUpgrade = AssignmentSearchPreview.CanUpgradePreview(pawn, firstRequired, out toolName);
+                    if (!canUpgrade)
+                    {
+                        var suffix = "ST_GenericToolSuffix".Translate().ToStringSafe() ?? "tool";
+                        toolName = (firstRequired.label ?? "tool").CapitalizeFirst() + " " + suffix;
+                    }
+                    string label = BuildOptionLabel(desc.PriorityLabel, toolName);
+                    var capture = desc; var reqStat = firstRequired;
+                    Action act = () => ExecuteRescue(pawn, capture, reqStat);
+                    var opt = new FloatMenuOption(label, act) { iconThing = capture.IconThing, autoTakeable = false };
+                    options.Add(FloatMenuUtility.DecoratePrioritizedTask(opt, pawn, new LocalTargetInfo(desc.ClickCell)));
+                    Provider_STPrioritizeWithRescue.NotifyOptionAdded();
+                    success = true;
+                    break;
+                }
+                catch (Exception ex) { Log.Warning("[SurvivalTools.RightClickRescue] Scanner (score pass) exception: " + ex); }
+            }
+
+            // Pass 2: unfiltered original order fallback (only if nothing succeeded)
+            if (!success)
+            {
+                foreach (var scanner in Scanners)
+                {
+                    if (Provider_STPrioritizeWithRescue.AlreadySatisfiedThisClick()) break;
+                    try
+                    {
+                        if (!scanner.CanHandle(ctx)) continue;
+                        if (!scanner.TryDescribeTarget(pawn, ctx, out var desc)) continue;
+                        if (!PawnCanEverDo(pawn, desc.WorkGiverDef)) continue;
+                        if (desc.RequiredStats == null || desc.RequiredStats.Count == 0) continue;
+                        if (stcExternal && desc.RequiredStats.Exists(rs => rs == ST_StatDefOf.TreeFellingSpeed || ToolStatResolver.IsAliasOf(rs, ST_StatDefOf.TreeFellingSpeed))) continue; // suppress tree option
+                        if (!JobGate.ShouldBlock(pawn, desc.WorkGiverDef, desc.JobDef, false, out var rk, out var a1, out var a2)) { _gatingNotNeeded++; continue; }
+                        _gatingNeeded++;
+                        var firstRequired = desc.RequiredStats[0]; if (firstRequired == null) continue;
+                        string toolName; bool canUpgrade = AssignmentSearchPreview.CanUpgradePreview(pawn, firstRequired, out toolName);
+                        if (!canUpgrade)
+                        {
+                            var suffix = "ST_GenericToolSuffix".Translate().ToStringSafe() ?? "tool";
+                            toolName = (firstRequired.label ?? "tool").CapitalizeFirst() + " " + suffix;
+                        }
+                        string label = BuildOptionLabel(desc.PriorityLabel, toolName);
+                        var capture = desc; var reqStat = firstRequired;
+                        Action act = () => ExecuteRescue(pawn, capture, reqStat);
+                        var opt = new FloatMenuOption(label, act) { iconThing = capture.IconThing, autoTakeable = false };
+                        options.Add(FloatMenuUtility.DecoratePrioritizedTask(opt, pawn, new LocalTargetInfo(desc.ClickCell)));
+                        Provider_STPrioritizeWithRescue.NotifyOptionAdded();
+                        success = true;
+                        break;
+                    }
+                    catch (Exception ex) { Log.Warning("[SurvivalTools.RightClickRescue] Scanner (fallback) exception: " + ex); }
+                }
+            }
+
+            // (Timing logged by provider; instrumentation captured above.)
         }
 
         private static string BuildOptionLabel(string priorityLabel, string toolName)
@@ -196,11 +527,21 @@ namespace SurvivalTools.UI.RightClickRescue
         }
     }
 
+    // --- Scanner diagnostics helper (granular failure reasons without changing interface contract) ---
+    internal static class ScannerDiagnostics
+    {
+        private static readonly Dictionary<Type, string> _lastFail = new Dictionary<Type, string>();
+        internal static void Fail<T>(string reason) where T : RightClickRescueBuilder.IRescueTargetScanner => _lastFail[typeof(T)] = reason;
+        internal static bool TryGet(Type t, out string reason) => _lastFail.TryGetValue(t, out reason);
+        internal static void Clear() => _lastFail.Clear();
+    }
+
     // ---------------- Scanners ----------------
     // Each scanner mirrors the spec given in the user request, using WGResolve helpers.
 
     internal sealed class MineScanner : RightClickRescueBuilder.IRescueTargetScanner
     {
+        private static WorkGiverDef _wg; private static JobDef _job;
         public bool CanHandle(FloatMenuContext ctx) => ctx.ClickedCell.IsValid;
         public bool TryDescribeTarget(Pawn pawn, FloatMenuContext ctx, out RightClickRescueBuilder.RescueTarget desc)
         {
@@ -209,8 +550,9 @@ namespace SurvivalTools.UI.RightClickRescue
             var map = pawn?.Map;
             if (pawn == null || !cell.IsValid || map == null || !cell.InBounds(map)) return false;
             if (map.designationManager.DesignationAt(cell, DesignationDefOf.Mine) == null) return false;
-            var wg = WGResolve.ByWorkerTypes("WorkGiver_Miner", "WorkGiver_Mine");
-            var job = WGResolve.Of(() => JobDefOf.Mine) ?? WGResolve.Job("Mine");
+            _wg = _wg ?? WGResolve.ByWorkerTypes("WorkGiver_Miner", "WorkGiver_Mine");
+            _job = _job ?? (WGResolve.Of(() => JobDefOf.Mine) ?? WGResolve.Job("Mine"));
+            var wg = _wg; var job = _job;
             var label = "ST_Prioritize_Mine".Translate().ToStringSafe();
             desc = new RightClickRescueBuilder.RescueTarget
             {
@@ -228,6 +570,7 @@ namespace SurvivalTools.UI.RightClickRescue
 
     internal sealed class DeconstructScanner : RightClickRescueBuilder.IRescueTargetScanner
     {
+        private static WorkGiverDef _wg; private static JobDef _job;
         public bool CanHandle(FloatMenuContext ctx) => ctx.ClickedThings.Count > 0;
         public bool TryDescribeTarget(Pawn pawn, FloatMenuContext ctx, out RightClickRescueBuilder.RescueTarget desc)
         {
@@ -236,8 +579,9 @@ namespace SurvivalTools.UI.RightClickRescue
             foreach (var t in ctx.ClickedThings)
             {
                 if (map.designationManager.DesignationOn(t, DesignationDefOf.Deconstruct) == null) continue;
-                var wg = WGResolve.ByWorkerTypes("WorkGiver_Deconstruct", "WorkGiver_ConstructDeconstruct");
-                var job = WGResolve.Of(() => JobDefOf.Deconstruct) ?? WGResolve.Job("Deconstruct");
+                _wg = _wg ?? WGResolve.ByWorkerTypes("WorkGiver_Deconstruct", "WorkGiver_ConstructDeconstruct");
+                _job = _job ?? (WGResolve.Of(() => JobDefOf.Deconstruct) ?? WGResolve.Job("Deconstruct"));
+                var wg = _wg; var job = _job;
                 desc = new RightClickRescueBuilder.RescueTarget
                 {
                     ClickCell = t.Position,
@@ -254,22 +598,62 @@ namespace SurvivalTools.UI.RightClickRescue
         }
     }
 
+    internal sealed class UninstallScanner : RightClickRescueBuilder.IRescueTargetScanner
+    {
+        private static WorkGiverDef _wg; private static JobDef _job;
+        public bool CanHandle(FloatMenuContext ctx) => ctx.ClickedThings.Count > 0;
+        public bool TryDescribeTarget(Pawn pawn, FloatMenuContext ctx, out RightClickRescueBuilder.RescueTarget desc)
+        {
+            desc = default; if (pawn == null) return false;
+            var map = pawn.Map;
+            foreach (var t in ctx.ClickedThings)
+            {
+                if (t == null) continue;
+                // Require uninstall designation (mirrors vanilla Prioritize uninstall visibility)
+                var des = map.designationManager.DesignationOn(t, DesignationDefOf.Uninstall);
+                if (des == null) continue;
+                _wg = _wg ?? WGResolve.ByWorkerTypes("WorkGiver_Uninstall");
+                _job = _job ?? WGResolve.Job("Uninstall");
+                var wg = _wg; var job = _job;
+                desc = new RightClickRescueBuilder.RescueTarget
+                {
+                    ClickCell = t.Position,
+                    IconThing = t,
+                    WorkGiverDef = wg,
+                    JobDef = job,
+                    RequiredStats = StatGatingHelper.GetStatsForWorkGiver(wg) ?? new List<StatDef> { ST_StatDefOf.DeconstructionSpeed },
+                    PriorityLabel = "ST_Prioritize_Uninstall".Translate().ToStringSafe() ?? "Prioritize uninstall",
+                    MakeJob = _ => JobMaker.MakeJob(job, t)
+                };
+                return desc.WorkGiverDef != null && desc.JobDef != null;
+            }
+            return false;
+        }
+    }
+
     internal sealed class SmoothWallScanner : RightClickRescueBuilder.IRescueTargetScanner
     {
+        private static WorkGiverDef _wg; private static JobDef _job;
         public bool CanHandle(FloatMenuContext ctx) => ctx.ClickedCell.IsValid;
         public bool TryDescribeTarget(Pawn pawn, FloatMenuContext ctx, out RightClickRescueBuilder.RescueTarget desc)
         {
             desc = default; var cell = ctx.ClickedCell; var map = pawn?.Map; if (pawn == null || map == null) return false;
             if (map.designationManager.DesignationAt(cell, DesignationDefOf.SmoothWall) == null) return false;
-            var wg = WGResolve.ByWorkerTypes("WorkGiver_ConstructSmoothWall");
-            var job = WGResolve.Job("SmoothWall");
+            _wg = _wg ?? WGResolve.ByWorkerTypes("WorkGiver_ConstructSmoothWall");
+            _job = _job ?? WGResolve.Job("SmoothWall");
+            var wg = _wg; var job = _job;
+            // Build required + optional stat list manually to ensure ConstructionSpeed is primary gate.
+            var stats = StatGatingHelper.GetStatsForWorkGiver(wg);
+            if (stats == null || stats.Count == 0) stats = new List<StatDef> { StatDefOf.ConstructionSpeed };
+            else if (!stats.Contains(StatDefOf.ConstructionSpeed)) stats.Insert(0, StatDefOf.ConstructionSpeed);
+            // TODO[SMOOTHING_TOOL_PURPOSE]: future dedicated smoothing tool may elevate SmoothingSpeed weighting here.
             desc = new RightClickRescueBuilder.RescueTarget
             {
                 ClickCell = cell,
                 WorkGiverDef = wg,
                 JobDef = job,
                 IconThing = null,
-                RequiredStats = StatGatingHelper.GetStatsForWorkGiver(wg) ?? new List<StatDef> { StatDefOf.ConstructionSpeed },
+                RequiredStats = stats,
                 PriorityLabel = "ST_Prioritize_SmoothWall".Translate().ToStringSafe(),
                 MakeJob = _ => JobMaker.MakeJob(job, cell)
             };
@@ -279,20 +663,26 @@ namespace SurvivalTools.UI.RightClickRescue
 
     internal sealed class SmoothFloorScanner : RightClickRescueBuilder.IRescueTargetScanner
     {
+        private static WorkGiverDef _wg; private static JobDef _job;
         public bool CanHandle(FloatMenuContext ctx) => ctx.ClickedCell.IsValid;
         public bool TryDescribeTarget(Pawn pawn, FloatMenuContext ctx, out RightClickRescueBuilder.RescueTarget desc)
         {
             desc = default; var cell = ctx.ClickedCell; var map = pawn?.Map; if (pawn == null || map == null) return false;
             if (map.designationManager.DesignationAt(cell, DesignationDefOf.SmoothFloor) == null) return false;
-            var wg = WGResolve.ByWorkerTypes("WorkGiver_ConstructSmoothFloor");
-            var job = WGResolve.Job("SmoothFloor");
+            _wg = _wg ?? WGResolve.ByWorkerTypes("WorkGiver_ConstructSmoothFloor");
+            _job = _job ?? WGResolve.Job("SmoothFloor");
+            var wg = _wg; var job = _job;
+            var stats = StatGatingHelper.GetStatsForWorkGiver(wg);
+            if (stats == null || stats.Count == 0) stats = new List<StatDef> { StatDefOf.ConstructionSpeed };
+            else if (!stats.Contains(StatDefOf.ConstructionSpeed)) stats.Insert(0, StatDefOf.ConstructionSpeed);
+            // TODO[SMOOTHING_TOOL_PURPOSE]: future dedicated smoothing tool may elevate SmoothingSpeed weighting here.
             desc = new RightClickRescueBuilder.RescueTarget
             {
                 ClickCell = cell,
                 WorkGiverDef = wg,
                 JobDef = job,
                 IconThing = null,
-                RequiredStats = StatGatingHelper.GetStatsForWorkGiver(wg) ?? new List<StatDef> { StatDefOf.ConstructionSpeed },
+                RequiredStats = stats,
                 PriorityLabel = "ST_Prioritize_SmoothFloor".Translate().ToStringSafe(),
                 MakeJob = _ => JobMaker.MakeJob(job, cell)
             };
@@ -302,6 +692,7 @@ namespace SurvivalTools.UI.RightClickRescue
 
     internal sealed class FinishFrameScanner : RightClickRescueBuilder.IRescueTargetScanner
     {
+        private static WorkGiverDef _wg; private static JobDef _job;
         public bool CanHandle(FloatMenuContext ctx) => ctx.ClickedThings.Count > 0;
         public bool TryDescribeTarget(Pawn pawn, FloatMenuContext ctx, out RightClickRescueBuilder.RescueTarget desc)
         {
@@ -310,8 +701,9 @@ namespace SurvivalTools.UI.RightClickRescue
             {
                 if (t is Frame f)
                 {
-                    var wg = WGResolve.ByWorkerTypes("WorkGiver_ConstructFinishFrames");
-                    var job = WGResolve.Job("FinishFrame");
+                    _wg = _wg ?? WGResolve.ByWorkerTypes("WorkGiver_ConstructFinishFrames");
+                    _job = _job ?? WGResolve.Job("FinishFrame");
+                    var wg = _wg; var job = _job;
                     desc = new RightClickRescueBuilder.RescueTarget
                     {
                         ClickCell = f.Position,
@@ -331,6 +723,7 @@ namespace SurvivalTools.UI.RightClickRescue
 
     internal sealed class CutPlantScanner : RightClickRescueBuilder.IRescueTargetScanner
     {
+        private static WorkGiverDef _wg; private static JobDef _job;
         public bool CanHandle(FloatMenuContext ctx) => ctx.ClickedThings.Count > 0;
         public bool TryDescribeTarget(Pawn pawn, FloatMenuContext ctx, out RightClickRescueBuilder.RescueTarget desc)
         {
@@ -340,8 +733,11 @@ namespace SurvivalTools.UI.RightClickRescue
                 var p = t as Plant;
                 if (p == null) continue;
                 if (map.designationManager.DesignationOn(p, DesignationDefOf.CutPlant) == null) continue;
-                var wg = WGResolve.ByWorkerTypes("WorkGiver_PlantsCut", "WorkGiver_CutPlant");
-                var job = WGResolve.Of(() => JobDefOf.CutPlant) ?? WGResolve.Job("CutPlant");
+                // External STC authority: do not expose tree felling rescue (tree cut designations on trees)
+                if (TreeSystemArbiter.Authority == TreeAuthority.SeparateTreeChopping && (p.def?.plant?.IsTree ?? false)) continue;
+                _wg = _wg ?? WGResolve.ByWorkerTypes("WorkGiver_PlantsCut", "WorkGiver_CutPlant");
+                _job = _job ?? (WGResolve.Of(() => JobDefOf.CutPlant) ?? WGResolve.Job("CutPlant"));
+                var wg = _wg; var job = _job;
                 desc = new RightClickRescueBuilder.RescueTarget
                 {
                     ClickCell = p.Position,
@@ -360,6 +756,7 @@ namespace SurvivalTools.UI.RightClickRescue
 
     internal sealed class HarvestPlantScanner : RightClickRescueBuilder.IRescueTargetScanner
     {
+        private static WorkGiverDef _wg; private static JobDef _job;
         public bool CanHandle(FloatMenuContext ctx) => ctx.ClickedThings.Count > 0;
         public bool TryDescribeTarget(Pawn pawn, FloatMenuContext ctx, out RightClickRescueBuilder.RescueTarget desc)
         {
@@ -369,9 +766,13 @@ namespace SurvivalTools.UI.RightClickRescue
                 var p = t as Plant;
                 if (p == null) continue;
                 if (map.designationManager.DesignationOn(p, DesignationDefOf.HarvestPlant) == null) continue;
-                var wg = WGResolve.ByWorkerTypes("WorkGiver_PlantsHarvest", "WorkGiver_Harvest");
-                var job = WGResolve.Of(() => JobDefOf.Harvest) ?? WGResolve.Job("Harvest");
-                var labelKey = p.def.plant?.IsTree ?? false ? "ChopWood" : "Harvest";
+                bool isTree = p.def.plant?.IsTree ?? false;
+                // External STC authority: skip tree harvest (ChopWood) entirely
+                if (isTree && TreeSystemArbiter.Authority == TreeAuthority.SeparateTreeChopping) continue;
+                _wg = _wg ?? WGResolve.ByWorkerTypes("WorkGiver_PlantsHarvest", "WorkGiver_Harvest");
+                _job = _job ?? (WGResolve.Of(() => JobDefOf.Harvest) ?? WGResolve.Job("Harvest"));
+                var wg = _wg; var job = _job;
+                var labelKey = isTree ? "ChopWood" : "Harvest";
                 var label = (labelKey == "ChopWood" ? "ST_Prioritize_ChopWood" : "ST_Prioritize_Harvest").Translate().ToStringSafe();
                 desc = new RightClickRescueBuilder.RescueTarget
                 {
@@ -379,7 +780,7 @@ namespace SurvivalTools.UI.RightClickRescue
                     IconThing = p,
                     WorkGiverDef = wg,
                     JobDef = job,
-                    RequiredStats = StatGatingHelper.GetStatsForWorkGiver(wg) ?? new List<StatDef> { ST_StatDefOf.PlantHarvestingSpeed, ST_StatDefOf.TreeFellingSpeed },
+                    RequiredStats = StatGatingHelper.GetStatsForWorkGiver(wg) ?? (isTree ? new List<StatDef> { ST_StatDefOf.PlantHarvestingSpeed, ST_StatDefOf.TreeFellingSpeed } : new List<StatDef> { ST_StatDefOf.PlantHarvestingSpeed }),
                     PriorityLabel = label,
                     MakeJob = _ => JobMaker.MakeJob(job, p)
                 };
@@ -391,29 +792,55 @@ namespace SurvivalTools.UI.RightClickRescue
 
     internal sealed class SowScanner : RightClickRescueBuilder.IRescueTargetScanner
     {
+        internal static WorkGiverDef _wg; internal static JobDef _job;
         public bool CanHandle(FloatMenuContext ctx) => ctx.ClickedCell.IsValid;
         public bool TryDescribeTarget(Pawn pawn, FloatMenuContext ctx, out RightClickRescueBuilder.RescueTarget desc)
         {
             desc = default; if (pawn == null) return false; var map = pawn.Map; var cell = ctx.ClickedCell; if (!cell.IsValid) return false;
-            var zone = cell.GetZone(map) as Zone_Growing; if (zone == null) return false;
-            var wg = WGResolve.ByWorkerTypes("WorkGiver_PlantsSow", "WorkGiver_Sow");
-            var job = WGResolve.Of(() => JobDefOf.Sow) ?? WGResolve.Job("Sow");
+            var zone = cell.GetZone(map) as Zone_Growing; if (zone == null) { ScannerDiagnostics.Fail<SowScanner>("NoZone"); return false; }
+            var plantDef = zone.GetPlantDefToGrow(); if (plantDef == null) { ScannerDiagnostics.Fail<SowScanner>("PlantDefNull"); return false; }
+            // Expanded WG resolution attempts (vanilla + historical + mod variants)
+            if (_wg == null)
+            {
+                _wg = WGResolve.ByWorkerTypes(
+                    "WorkGiver_PlantsSow",
+                    "WorkGiver_Sow",
+                    "WorkGiver_GrowerSow",
+                    "WorkGiver_Grower_Sow",
+                    "WorkGiver_Grower"
+                );
+            }
+            var wg = _wg;
+            if (wg == null) { ScannerDiagnostics.Fail<SowScanner>("WGNull"); return false; }
+            _job = _job ?? (WGResolve.Of(() => JobDefOf.Sow) ?? WGResolve.Job("Sow"));
+            var job = _job;
+            if (job == null) { ScannerDiagnostics.Fail<SowScanner>("JobNull"); return false; }
+            if (!RightClickRescueBuilder.IsSowableNow(zone, cell, map)) { ScannerDiagnostics.Fail<SowScanner>("NotSowable"); return false; }
+            var stats = StatGatingHelper.GetStatsForWorkGiver(wg) ?? new List<StatDef> { ST_StatDefOf.SowingSpeed };
+            if (stats == null || stats.Count == 0) { ScannerDiagnostics.Fail<SowScanner>("NoStats"); return false; }
+            var plantDefCap = plantDef;
             desc = new RightClickRescueBuilder.RescueTarget
             {
                 ClickCell = cell,
                 IconThing = null,
                 WorkGiverDef = wg,
                 JobDef = job,
-                RequiredStats = StatGatingHelper.GetStatsForWorkGiver(wg) ?? new List<StatDef> { ST_StatDefOf.PlantHarvestingSpeed },
+                RequiredStats = stats,
                 PriorityLabel = "ST_Prioritize_Sow".Translate().ToStringSafe(),
-                MakeJob = _ => JobMaker.MakeJob(job, cell)
+                MakeJob = _ =>
+                {
+                    var j = JobMaker.MakeJob(job, cell);
+                    try { j.plantDefToSow = plantDefCap; } catch { }
+                    return j;
+                }
             };
-            return desc.WorkGiverDef != null && desc.JobDef != null;
+            return true;
         }
     }
 
     internal sealed class RepairScanner : RightClickRescueBuilder.IRescueTargetScanner
     {
+        private static WorkGiverDef _wg; private static JobDef _job;
         public bool CanHandle(FloatMenuContext ctx) => ctx.ClickedThings.Count > 0;
         public bool TryDescribeTarget(Pawn pawn, FloatMenuContext ctx, out RightClickRescueBuilder.RescueTarget desc)
         {
@@ -423,8 +850,9 @@ namespace SurvivalTools.UI.RightClickRescue
                 var b = t as Building;
                 if (b == null) continue;
                 if (b.HitPoints >= b.MaxHitPoints) continue;
-                var wg = WGResolve.ByWorkerTypes("WorkGiver_Repair");
-                var job = WGResolve.Of(() => JobDefOf.Repair) ?? WGResolve.Job("Repair");
+                _wg = _wg ?? WGResolve.ByWorkerTypes("WorkGiver_Repair");
+                _job = _job ?? (WGResolve.Of(() => JobDefOf.Repair) ?? WGResolve.Job("Repair"));
+                var wg = _wg; var job = _job;
                 desc = new RightClickRescueBuilder.RescueTarget
                 {
                     ClickCell = b.Position,
@@ -443,6 +871,7 @@ namespace SurvivalTools.UI.RightClickRescue
 
     internal sealed class CleanScanner : RightClickRescueBuilder.IRescueTargetScanner
     {
+        private static WorkGiverDef _wg; private static JobDef _job;
         public bool CanHandle(FloatMenuContext ctx) => ctx.ClickedCell.IsValid;
         public bool TryDescribeTarget(Pawn pawn, FloatMenuContext ctx, out RightClickRescueBuilder.RescueTarget desc)
         {
@@ -463,8 +892,9 @@ namespace SurvivalTools.UI.RightClickRescue
                 catch { /* ignore */ }
             }
             if (filth == null) return false;
-            var wg = WGResolve.ByWorkerTypes("WorkGiver_Clean");
-            var job = WGResolve.Of(() => JobDefOf.Clean) ?? WGResolve.Job("Clean");
+            _wg = _wg ?? WGResolve.ByWorkerTypes("WorkGiver_Clean");
+            _job = _job ?? (WGResolve.Of(() => JobDefOf.Clean) ?? WGResolve.Job("Clean"));
+            var wg = _wg; var job = _job;
             desc = new RightClickRescueBuilder.RescueTarget
             {
                 ClickCell = cell,
@@ -476,6 +906,242 @@ namespace SurvivalTools.UI.RightClickRescue
                 MakeJob = _ => JobMaker.MakeJob(job, filth)
             };
             return desc.WorkGiverDef != null && desc.JobDef != null;
+        }
+    }
+
+    internal sealed class ResearchScanner : RightClickRescueBuilder.IRescueTargetScanner
+    {
+        private static WorkGiverDef _wg; private static JobDef _job;
+        private static Type _benchType;
+        private static bool _inited;
+        private static Func<object> _getCurrentProject; // returns active project (ResearchProjectDef) or null
+        private static int _projCacheTick;
+        private static object _projCache;
+        private const int PROJ_CACHE_INTERVAL = 30; // half second @60 tps
+        private static bool _accessorFallbackBuilt;
+        private static bool _wgFallbackTried; // ensure we only do an expensive fallback scan once if needed
+                                              // Heuristic bench cache: ThingDef -> true if recognized as a research bench surrogate (for mods like Research Reinvented)
+        private static readonly System.Collections.Generic.Dictionary<ThingDef, bool> _benchDefCache = new System.Collections.Generic.Dictionary<ThingDef, bool>();
+        private static bool HeuristicBench(Thing t)
+        {
+            if (t == null) return false; var def = t.def; if (def == null) return false;
+            if (_benchDefCache.TryGetValue(def, out var cached)) return cached;
+            bool result = false;
+            try
+            {
+                string dn = def.defName ?? string.Empty;
+                if (!result && dn.IndexOf("Research", StringComparison.OrdinalIgnoreCase) >= 0) result = true;
+                if (!result && dn.IndexOf("Lab", StringComparison.OrdinalIgnoreCase) >= 0) result = true; // some mods use *Lab
+                                                                                                          // Building flag (some defs expose a bool researchBench or similar)
+                try
+                {
+                    var b = def.building; if (b != null)
+                    {
+                        var bt = b.GetType();
+                        var fi = bt.GetField("researchBench", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+                        if (fi != null)
+                        {
+                            object val = null; try { val = fi.GetValue(b); } catch { }
+                            if (val is bool bb && bb) result = true;
+                        }
+                        if (!result)
+                        {
+                            var pi = bt.GetProperty("ResearchBench", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+                            if (pi != null)
+                            {
+                                object val = null; try { val = pi.GetValue(b, null); } catch { }
+                                if (val is bool pb && pb) result = true;
+                            }
+                        }
+                    }
+                }
+                catch { }
+                // Stat bases referencing ResearchSpeed
+                if (!result)
+                {
+                    try
+                    {
+                        var statBases = def.statBases;
+                        if (statBases != null)
+                        {
+                            foreach (var sb in statBases)
+                            {
+                                var s = sb?.stat; if (s == null) continue;
+                                var sn = s.defName ?? s.label ?? string.Empty;
+                                if (sn.IndexOf("ResearchSpeed", StringComparison.OrdinalIgnoreCase) >= 0) { result = true; break; }
+                            }
+                        }
+                    }
+                    catch { }
+                }
+                // Comps with research in the name
+                if (!result)
+                {
+                    try
+                    {
+                        var twc = t as ThingWithComps; // only ThingWithComps exposes AllComps
+                        var comps = twc?.AllComps;
+                        if (comps != null)
+                        {
+                            for (int i = 0; i < comps.Count; i++)
+                            {
+                                var c = comps[i]; var n = c?.GetType()?.Name; if (n == null) continue;
+                                if (n.IndexOf("Research", StringComparison.OrdinalIgnoreCase) >= 0) { result = true; break; }
+                            }
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+            _benchDefCache[def] = result;
+            return result;
+        }
+        internal static void EnsureInit()
+        {
+            if (_inited) return; _inited = true;
+            try
+            {
+                // Resolve bench type once (covers mod namespaces)
+                _benchType = HarmonyLib.AccessTools.TypeByName("RimWorld.Building_ResearchBench") ?? HarmonyLib.AccessTools.TypeByName("Building_ResearchBench");
+                // Build delegate for current research project
+                var rm = Find.ResearchManager;
+                if (rm != null)
+                {
+                    var type = rm.GetType();
+                    var field = type.GetField("currentProj", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+                    if (field != null)
+                    {
+                        _getCurrentProject = () =>
+                        {
+                            try { return field.GetValue(Find.ResearchManager); } catch { return null; }
+                        };
+                    }
+                    else
+                    {
+                        var prop = type.GetProperty("CurrentProj", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+                        if (prop != null)
+                        {
+                            _getCurrentProject = () =>
+                            {
+                                try { return prop.GetValue(Find.ResearchManager, null); } catch { return null; }
+                            };
+                        }
+                    }
+                    // Fallback: search any field/property whose type name contains "ResearchProject" once (covers naming changes like currentProjInt)
+                    if (_getCurrentProject == null && !_accessorFallbackBuilt)
+                    {
+                        _accessorFallbackBuilt = true;
+                        try
+                        {
+                            var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public;
+                            var members = type.GetMembers(flags);
+                            foreach (var m in members)
+                            {
+                                try
+                                {
+                                    System.Type mt = null; Func<object> del = null;
+                                    if (m is System.Reflection.FieldInfo fi)
+                                    {
+                                        mt = fi.FieldType;
+                                        del = () => { try { return fi.GetValue(Find.ResearchManager); } catch { return null; } };
+                                    }
+                                    else if (m is System.Reflection.PropertyInfo pi && pi.GetIndexParameters().Length == 0)
+                                    {
+                                        mt = pi.PropertyType;
+                                        del = () => { try { return pi.GetValue(Find.ResearchManager, null); } catch { return null; } };
+                                    }
+                                    if (mt != null && mt.Name.IndexOf("ResearchProject", StringComparison.OrdinalIgnoreCase) >= 0)
+                                    {
+                                        _getCurrentProject = del; break;
+                                    }
+                                }
+                                catch { }
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                if (_getCurrentProject == null) _getCurrentProject = () => null;
+                // Touch once to JIT delegate
+                try { var _ = _getCurrentProject(); } catch { }
+            }
+            catch { }
+        }
+        internal static void Warm() { try { EnsureInit(); } catch { } }
+        public bool CanHandle(FloatMenuContext ctx) => ctx.ClickedThings.Count > 0;
+        public bool TryDescribeTarget(Pawn pawn, FloatMenuContext ctx, out RightClickRescueBuilder.RescueTarget desc)
+        {
+            desc = default; if (pawn == null) return false;
+            EnsureInit();
+            // Cached current project (avoid delegate + potential manager churn every frame)
+            try
+            {
+                int now = Find.TickManager?.TicksGame ?? 0;
+                if (now - _projCacheTick >= PROJ_CACHE_INTERVAL)
+                {
+                    _projCache = _getCurrentProject();
+                    _projCacheTick = now;
+                }
+            }
+            catch { }
+            if (_projCache == null) { return false; }
+            var benchType = _benchType;
+            foreach (var t in ctx.ClickedThings)
+            {
+                if (t == null) continue;
+                bool isBench = false;
+                if (benchType != null && benchType.IsAssignableFrom(t.GetType())) isBench = true; else if (HeuristicBench(t)) isBench = true;
+                if (!isBench) continue;
+                // Correct vanilla worker type is WorkGiver_Researcher. Older attempts used _Research / _DoResearch which miss and trigger slow reflection fallback.
+                if (_wg == null)
+                {
+                    _wg = WGResolve.ByWorkerTypes("WorkGiver_Researcher", "Researcher", "WorkGiver_Research", "WorkGiver_DoResearch");
+                    // If still null, perform a one-time broad fallback: scan defs for any worker whose defName or worker class contains "Research" and whose workType matches Research work type.
+                    if (_wg == null && !_wgFallbackTried)
+                    {
+                        _wgFallbackTried = true;
+                        try
+                        {
+                            WorkTypeDef researchWT = null;
+                            try { researchWT = WorkTypeDefOf.Research; } catch { }
+                            foreach (var def in DefDatabase<WorkGiverDef>.AllDefs)
+                            {
+                                if (def == null) continue;
+                                bool match = false;
+                                try
+                                {
+                                    var w = def.Worker; // may allocate; only runs once worst case
+                                    var wt = w?.GetType();
+                                    var name = wt?.Name;
+                                    if (!match && name != null && name.IndexOf("Research", StringComparison.OrdinalIgnoreCase) >= 0) match = true;
+                                    if (!match && def.defName != null && def.defName.IndexOf("Research", StringComparison.OrdinalIgnoreCase) >= 0) match = true;
+                                    if (!match && researchWT != null && def.workType == researchWT) match = true;
+                                }
+                                catch { }
+                                if (match) { _wg = def; break; }
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                _job = _job ?? (WGResolve.Of(() => JobDefOf.Research) ?? WGResolve.Job("Research"));
+                var wg = _wg; var job = _job;
+                var reqStat = Compat.CompatAPI.GetResearchSpeedStat();
+                var reqList = new List<StatDef>(); if (reqStat != null) reqList.Add(reqStat);
+                desc = new RightClickRescueBuilder.RescueTarget
+                {
+                    ClickCell = t.Position,
+                    IconThing = t,
+                    WorkGiverDef = wg,
+                    JobDef = job,
+                    RequiredStats = reqList,
+                    PriorityLabel = "ST_Prioritize_Research".Translate().ToStringSafe() ?? "Prioritize research",
+                    MakeJob = _ => JobMaker.MakeJob(job, t)
+                };
+                return desc.WorkGiverDef != null && desc.JobDef != null;
+            }
+            return false;
         }
     }
 

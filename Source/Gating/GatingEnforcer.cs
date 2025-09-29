@@ -78,11 +78,22 @@ namespace SurvivalTools.Gating
             var cur = jobs.curJob;
             if (cur == null) return 0;
 
+            // Hard gating scope: only player-controlled humanlikes with tool-using jobs.
+            try
+            {
+                if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn))
+                    return 0;
+                if (cur.def == JobDefOf.Ingest) return 0; // never interfere with eating
+                // Fast tool-using job check (mirrors PreWork JobUsesTools heuristic)
+                if (!LikelyJobUsesTools(cur)) return 0;
+            }
+            catch { }
+
             // Use exact JobGate logic
             if (JobGate.ShouldBlock(pawn, null, cur.def, forced: false, out var k, out var a1, out var a2))
             {
                 // End current job; choose a non-spam condition
-                if (IsDebugLoggingEnabled)
+                if (Prefs.DevMode && IsDebugLoggingEnabled)
                     LogDebug($"[GatingEnforcer] Cancel current job {cur.def.defName} for {pawn.LabelShort} due to {k}", $"GatingEnforcer.CancelCur|{pawn.ThingID}|{cur.def.defName}");
                 jobs.EndCurrentJob(JobCondition.Incompletable, startNewJob: true);
                 return 1;
@@ -107,6 +118,15 @@ namespace SurvivalTools.Gating
                 var item = q[idx];
                 if (item?.job == null) continue;
 
+                try
+                {
+                    if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn))
+                        continue;
+                    if (item.job.def == JobDefOf.Ingest) continue;
+                    if (!LikelyJobUsesTools(item.job)) continue;
+                }
+                catch { }
+
                 // Use exact JobGate logic
                 if (JobGate.ShouldBlock(pawn, null, item.job.def, forced: false, out var k, out var a1, out var a2))
                 {
@@ -130,7 +150,7 @@ namespace SurvivalTools.Gating
                         {
                             queueList.RemoveAt(qIdx);
                             removed++;
-                            if (IsDebugLoggingEnabled)
+                            if (Prefs.DevMode && IsDebugLoggingEnabled)
                                 LogDebug($"[GatingEnforcer] Pruned queued job {removedItem.job?.def?.defName ?? "(null)"} for {pawn.LabelShort}", $"GatingEnforcer.Prune|{pawn.ThingID}|{removedItem.job?.def?.defName}");
                             break;
                         }
@@ -139,6 +159,23 @@ namespace SurvivalTools.Gating
             }
 
             return removed;
+        }
+
+        // Lightweight heuristic replicate of PreWork.JobUsesTools without allocations.
+        private static bool LikelyJobUsesTools(Job job)
+        {
+            if (job == null) return false; var jd = job.def; if (jd == null) return false;
+            if (jd == JobDefOf.Ingest || jd == JobDefOf.LayDown || jd == JobDefOf.Wait || jd == JobDefOf.Wait_MaintainPosture || jd == JobDefOf.Goto || jd == JobDefOf.GotoWander)
+                return false;
+            try
+            {
+                var wg = SurvivalTools.Helpers.JobDefToWorkGiverDefHelper.GetWorkGiverDefForJob(jd);
+                var statsJob = SurvivalToolUtility.RelevantStatsFor(wg, job);
+                if (statsJob != null && statsJob.Count > 0) return true;
+                var statsDef = SurvivalToolUtility.RelevantStatsFor(wg, jd);
+                return statsDef != null && statsDef.Count > 0;
+            }
+            catch { return true; }
         }
     }
 }
