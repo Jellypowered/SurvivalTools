@@ -265,21 +265,25 @@ namespace SurvivalTools.UI.RightClickRescue
                     }
                     string label = BuildOptionLabel("ST_Prioritize_Sow".Translate().ToStringSafe(), toolName);
                     var plantDefFast = plantDef; // capture for closure
-                    Action act = () => ExecuteRescue(pawn, new RescueTarget
+                    Action act = () =>
                     {
-                        ClickCell = cell,
-                        IconThing = null,
-                        WorkGiverDef = wg,
-                        JobDef = job,
-                        RequiredStats = stats,
-                        PriorityLabel = "ST_Prioritize_Sow".Translate().ToStringSafe(),
-                        MakeJob = _ =>
+                        bool immediate = KeyBindingDefOf.QueueOrder.IsDown; // Shift => immediate
+                        ExecuteRescue(pawn, new RescueTarget
                         {
-                            var j = JobMaker.MakeJob(job, cell);
-                            try { j.plantDefToSow = plantDefFast; } catch { }
-                            return j;
-                        }
-                    }, firstRequired);
+                            ClickCell = cell,
+                            IconThing = null,
+                            WorkGiverDef = wg,
+                            JobDef = job,
+                            RequiredStats = stats,
+                            PriorityLabel = "ST_Prioritize_Sow".Translate().ToStringSafe(),
+                            MakeJob = _ =>
+                            {
+                                var j = JobMaker.MakeJob(job, cell);
+                                try { j.plantDefToSow = plantDefFast; } catch { }
+                                return j;
+                            }
+                        }, firstRequired, immediate);
+                    };
                     var opt = new FloatMenuOption(label, act) { iconThing = null, autoTakeable = false };
                     options.Add(FloatMenuUtility.DecoratePrioritizedTask(opt, pawn, new LocalTargetInfo(cell)));
                     Provider_STPrioritizeWithRescue.NotifyOptionAdded();
@@ -378,7 +382,11 @@ namespace SurvivalTools.UI.RightClickRescue
                     }
                     string label = BuildOptionLabel(desc.PriorityLabel, toolName);
                     var capture = desc; var reqStat = firstRequired;
-                    Action act = () => ExecuteRescue(pawn, capture, reqStat);
+                    Action act = () =>
+                    {
+                        bool immediate = KeyBindingDefOf.QueueOrder.IsDown;
+                        ExecuteRescue(pawn, capture, reqStat, immediate);
+                    };
                     var opt = new FloatMenuOption(label, act) { iconThing = capture.IconThing, autoTakeable = false };
                     options.Add(FloatMenuUtility.DecoratePrioritizedTask(opt, pawn, new LocalTargetInfo(desc.ClickCell)));
                     Provider_STPrioritizeWithRescue.NotifyOptionAdded();
@@ -412,7 +420,11 @@ namespace SurvivalTools.UI.RightClickRescue
                         }
                         string label = BuildOptionLabel(desc.PriorityLabel, toolName);
                         var capture = desc; var reqStat = firstRequired;
-                        Action act = () => ExecuteRescue(pawn, capture, reqStat);
+                        Action act = () =>
+                        {
+                            bool immediate = KeyBindingDefOf.QueueOrder.IsDown;
+                            ExecuteRescue(pawn, capture, reqStat, immediate);
+                        };
                         var opt = new FloatMenuOption(label, act) { iconThing = capture.IconThing, autoTakeable = false };
                         options.Add(FloatMenuUtility.DecoratePrioritizedTask(opt, pawn, new LocalTargetInfo(desc.ClickCell)));
                         Provider_STPrioritizeWithRescue.NotifyOptionAdded();
@@ -428,14 +440,40 @@ namespace SurvivalTools.UI.RightClickRescue
 
         private static string BuildOptionLabel(string priorityLabel, string toolName)
         {
+            string label;
             try
             {
-                return $"{priorityLabel} (" + "ST_WillFetchTool".Translate(toolName) + ")";
+                label = $"{priorityLabel} (" + "ST_WillFetchTool".Translate(toolName) + ")";
             }
-            catch { return priorityLabel + " (will fetch " + toolName + ")"; }
+            catch { label = priorityLabel + " (will fetch " + toolName + ")"; }
+            // If the queue (Shift) key is held at menu build time, indicate Immediate execution intent
+            try
+            {
+                if (KeyBindingDefOf.QueueOrder != null && KeyBindingDefOf.QueueOrder.IsDown) label += " (Immediate)"; // TODO: optional future translation key
+            }
+            catch { }
+            return label;
         }
 
-        private static void ExecuteRescue(Pawn pawn, RescueTarget capture, StatDef stat)
+        // Lightweight execution logger with cooldown to avoid log spam when players issue rapid rescues.
+        internal static class RescueExecLogger
+        {
+            private static int _lastLogTick = -9999;
+            private const int COOLDOWN_TICKS = 90; // ~1.5s @60 tps
+            internal static void Write(string jobDefName, bool immediate, bool prereqs, bool upgradeQueued, int dropJobs)
+            {
+                try
+                {
+                    int now = Find.TickManager?.TicksGame ?? 0;
+                    if (now - _lastLogTick < COOLDOWN_TICKS) return;
+                    _lastLogTick = now;
+                    Verse.Log.Message($"[RightClick] Rescue exec: job={jobDefName} immediate={immediate} prereqs={prereqs} upgradeQueued={upgradeQueued} dropJobs={dropJobs}");
+                }
+                catch { }
+            }
+        }
+
+        private static void ExecuteRescue(Pawn pawn, RescueTarget capture, StatDef stat, bool immediate = false)
         {
             var settings = SurvivalToolsMod.Settings; if (pawn == null || capture.JobDef == null || settings == null) return;
 
@@ -482,28 +520,47 @@ namespace SurvivalTools.UI.RightClickRescue
             job.playerForced = true;
             var worker = capture.WorkGiverDef?.Worker; // may be null
 
-            bool mustDefer = upgradeQueued || dropJobs > 0; // ensure prerequisites run first
-            if (mustDefer)
+            bool prereqs = upgradeQueued || dropJobs > 0;
+
+            // Debug log (dev only)
+            // Log cooldown (avoid spam when rapidly issuing rescues); 90 tick (~1.5s) window
+            if (Prefs.DevMode && settings.debugLogging)
             {
-                // Enqueue at the end so earlier EnqueueFirst drop jobs and the upgrade job (queued Front) execute first.
-                try
-                {
-                    pawn.jobs?.jobQueue?.EnqueueLast(job, JobTag.Misc);
-                    if (Prefs.DevMode && SurvivalToolsMod.Settings.debugLogging)
-                    {
-                        Log.Message($"[ST.RightClick] Deferred forced job '{job.def.defName}' after {(dropJobs > 0 ? dropJobs + " drop(s)" : "no drops")} {(upgradeQueued ? "+ upgrade" : "")}. QueueCount={(pawn.jobs?.jobQueue?.Count ?? 0)}");
-                    }
-                }
+                try { RescueExecLogger.Write(job.def.defName, immediate, prereqs, upgradeQueued, dropJobs); } catch { }
+            }
+
+            if (!immediate)
+            {
+                // Always enqueue forced job at tail; never interrupt current job regardless of prerequisites.
+                try { pawn.jobs?.jobQueue?.EnqueueLast(job, JobTag.Misc); }
                 catch
                 {
-                    // Fallback: if enqueue fails, attempt immediate start (better than losing the command)
+                    // Fallback if enqueue fails: last resort start (should be rare)
                     if (worker != null && pawn.jobs.TryTakeOrderedJobPrioritizedWork(job, worker, capture.ClickCell)) return;
                     pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
                 }
                 return;
             }
 
-            // No prerequisites – start immediately so player gets instant feedback.
+            // Immediate (Shift)
+            if (prereqs)
+            {
+                // Enqueue forced job (runs after front-queued drops/equip), then interrupt current job now.
+                try { pawn.jobs?.jobQueue?.EnqueueLast(job, JobTag.Misc); }
+                catch { /* ignore */ }
+                try
+                {
+                    var cur = pawn.jobs?.curJob;
+                    bool canInterrupt = cur == null || cur.def == null || cur.def.playerInterruptible;
+                    if (canInterrupt)
+                        pawn.jobs?.EndCurrentJob(JobCondition.InterruptForced, true);
+                    // else: leave current job; chain will start after it finishes (still acceptable fallback)
+                }
+                catch { }
+                return;
+            }
+
+            // Immediate with no prerequisites: start job now for instant feedback.
             if (worker != null && pawn.jobs.TryTakeOrderedJobPrioritizedWork(job, worker, capture.ClickCell)) return;
             pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
         }

@@ -519,7 +519,7 @@ namespace SurvivalTools.UI.RightClickRescue
             }
         }
 
-        private static void ExecuteRRResearchRescue(Pawn pawn, Thing bench, IntVec3 cell, WorkGiverDef wg, JobDef jobDef)
+        private static void ExecuteRRResearchRescue(Pawn pawn, Thing bench, IntVec3 cell, WorkGiverDef wg, JobDef jobDef, bool immediate = false)
         {
             var settings = SurvivalToolsMod.Settings; if (pawn == null || settings == null) return;
             var stat = _researchStat; if (stat == null) return;
@@ -534,12 +534,28 @@ namespace SurvivalTools.UI.RightClickRescue
 
             Job job = JobMaker.MakeJob(jobDef, bench);
             job.playerForced = true;
-            bool mustDefer = upgradeQueued;
-            if (mustDefer)
+            bool prereqs = upgradeQueued;
+            if (Prefs.DevMode && settings.debugLogging)
             {
-                try { pawn.jobs?.jobQueue?.EnqueueLast(job, JobTag.Misc); return; }
-                catch { }
+                try { Log.Message($"[RightClick] Research rescue: job={job.def.defName} immediate={immediate} prereqs={prereqs} upgradeQueued={upgradeQueued}"); } catch { }
             }
+
+            if (!immediate)
+            {
+                // Always enqueue at tail; do not interrupt current job
+                try { pawn.jobs?.jobQueue?.EnqueueLast(job, JobTag.Misc); } catch { pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc); }
+                return;
+            }
+
+            if (prereqs)
+            {
+                // Enqueue then interrupt to let acquisition start immediately
+                try { pawn.jobs?.jobQueue?.EnqueueLast(job, JobTag.Misc); } catch { }
+                try { pawn.jobs?.EndCurrentJob(JobCondition.InterruptForced, true); } catch { }
+                return;
+            }
+
+            // Immediate & no prereqs: start now
             pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
         }
         private static void AddResearchRescueOption(Pawn pawn, RightClickRescueBuilder.RescueTarget desc, string toolName, List<FloatMenuOption> options, string basePrefix)
@@ -549,7 +565,11 @@ namespace SurvivalTools.UI.RightClickRescue
             try { label = basePrefix + " (" + "ST_WillFetchTool".Translate(toolDisplay) + ")"; }
             catch { label = basePrefix + " (will fetch " + toolDisplay + ")"; }
             Thing bench = desc.IconThing; IntVec3 clickCell = desc.ClickCell;
-            Action act = () => ExecuteRRResearchRescue(pawn, bench, clickCell, desc.WorkGiverDef, desc.JobDef);
+            Action act = () =>
+            {
+                bool immediate = KeyBindingDefOf.QueueOrder.IsDown;
+                ExecuteRRResearchRescue(pawn, bench, clickCell, desc.WorkGiverDef, desc.JobDef, immediate);
+            };
             var opt = new FloatMenuOption(label, act) { iconThing = bench, autoTakeable = false };
             options.Add(FloatMenuUtility.DecoratePrioritizedTask(opt, pawn, new LocalTargetInfo(clickCell)));
         }
