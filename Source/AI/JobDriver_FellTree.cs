@@ -8,10 +8,17 @@ using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools
 {
+    // Do we need to guard this if STC is active? (We don't want to do tree felling if STC is active.)
     public class JobDriver_FellTree : JobDriver_PlantWork
     {
         protected override void Init()
         {
+            if (Helpers.TreeSystemArbiterActiveHelper.IsSTCAuthorityActive())
+            {
+                // Abort initialization – STC controls tree jobs
+                EndJobWith(JobCondition.Incompletable);
+                return;
+            }
             base.Init();
 
             // Defensive read of Plant
@@ -37,6 +44,7 @@ namespace SurvivalTools
             var toil = new Toil();
             toil.initAction = () =>
             {
+                if (Helpers.TreeSystemArbiterActiveHelper.IsSTCAuthorityActive()) return; // STC: skip destroy
                 try
                 {
                     // Prefer the driver job (stable) rather than actor.CurJob which may change

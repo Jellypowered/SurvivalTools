@@ -288,7 +288,8 @@ namespace SurvivalTools
                 "haul", "carry", "deliver", "rescue", "tend", "feed", "clean", "extinguish",
                 "manipulate", "handle", "grasp", "lift", "place", "arrange", "organize",
                 // Manipulation and medical jobs that should never be gated
-                "repair", "buildroofs", "deconstruct", "constructfinishframes",
+                //"repair", "buildroofs", "deconstruct", "constructfinishframes",
+                // These may have been allowing things to be skipped.
                 "constructdeliverresourcestoframes", "constructdeliverresourcestoblueprints",
                 "handlingfeedpatientanimals", "cook"
             };

@@ -218,6 +218,28 @@ namespace SurvivalTools.Assign
         {
             if (tracker == null || job == null) return true;
             Pawn pawn = null; try { pawn = (Pawn)PawnField.GetValue(tracker); } catch { }
+            // STC authority: block any attempt to start SurvivalTools FellTree jobs
+            try
+            {
+                if (job.def == ST_JobDefOf.FellTree || job.def == ST_JobDefOf.FellTreeDesignated)
+                {
+                    if (Helpers.TreeSystemArbiterActiveHelper.IsSTCAuthorityActive())
+                    {
+                        if (Prefs.DevMode && SurvivalToolsMod.Settings?.debugLogging == true)
+                        {
+                            int now = Find.TickManager?.TicksGame ?? 0;
+                            const int cd = 120; // 2s cooldown
+                            if (!_nmLogCooldown.TryGetValue(pawn?.thingIDNumber ?? -1, out var nxt) || now >= nxt)
+                            {
+                                _nmLogCooldown[pawn?.thingIDNumber ?? -1] = now + cd;
+                                Log.Message("[ST×STC] Suppressed FellTree TryTakeOrderedJob while STC active");
+                            }
+                        }
+                        return false;
+                    }
+                }
+            }
+            catch { }
             // Hard gate: only player humanlikes & tool-using jobs
             if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn) || !JobUsesTools(pawn, job)) return true;
             if (!EnterPreworkGate(pawn, job)) return true;
@@ -294,6 +316,46 @@ namespace SurvivalTools.Assign
                     try { pendingEquip = job.targetA.Thing; } catch { pendingEquip = null; }
                 }
             }
+
+            // EARLY GATING ENFORCEMENT (before carry enforcement): if sow/chop and not upgraded and pawn lacks required tool, cancel.
+            try
+            {
+                if (!upgraded && workStat != null && settings != null && (
+                        workStat == ST_StatDefOf.SowingSpeed ||
+                        workStat == ST_StatDefOf.TreeFellingSpeed ||
+                        workStat == StatDefOf.ConstructionSpeed))
+                {
+                    bool shouldGate = StatGatingHelper.ShouldBlockJobForStat(workStat, settings, pawn);
+                    if (shouldGate && !pawn.HasSurvivalToolFor(workStat))
+                    {
+                        int now = Find.TickManager?.TicksGame ?? 0;
+                        const int cd = 600;
+                        int keyId = (pawn.thingIDNumber * 479) ^ workStat.index; // separate hash space for clarity
+                        if (!_nmLogCooldown.TryGetValue(keyId, out var next) || now >= next)
+                        {
+                            _nmLogCooldown[keyId] = now + cd;
+                            if (Prefs.DevMode)
+                            {
+                                if (workStat == ST_StatDefOf.SowingSpeed)
+                                    Log.Message($"[Gate] Sow BLOCK (no tool) pawn={pawn.LabelShort}");
+                                else if (workStat == ST_StatDefOf.TreeFellingSpeed)
+                                    Log.Message($"[Gate] Chop BLOCK (no tool) pawn={pawn.LabelShort}");
+                                else if (workStat == StatDefOf.ConstructionSpeed)
+                                    Log.Message($"[Gate] Construct BLOCK (no tool) pawn={pawn.LabelShort}");
+                            }
+                        }
+                        if (Prefs.DevMode)
+                        {
+                            string jobName = job.def.defName;
+                            if (job.def == JobDefOf.FinishFrame) jobName = "FinishFrame"; // stable labeling
+                            Log.Message($"[PreWork] Cancel {jobName}: missing {workStat.defName} tool and no rescue queued (pawn={pawn.LabelShort})");
+                        }
+                        Gating.GatingEnforcer.CancelCurrentJob(pawn, job, Gating.ST_CancelReason.ST_Gate_MissingToolStat);
+                        return false;
+                    }
+                }
+            }
+            catch { }
 
             // Nightmare strict carry enforcement (blocks work until physically compliant)
             if (!EnforceCarryOrBlock(tracker, job, pawn, workStat, pendingEquip)) return false;
@@ -612,8 +674,20 @@ namespace SurvivalTools.Assign
             }
 
             // Construction
-            if (jobDef == JobDefOf.FinishFrame ||
-                jobDef == JobDefOf.Repair)
+            if (jobDef == JobDefOf.FinishFrame)
+            {
+                try
+                {
+                    // Deep inspect frame to detect any building (covers fences & modded building frames)
+                    var frameThing = job.targetA.Thing as Frame;
+                    var b = frameThing?.def?.entityDefToBuild as ThingDef;
+                    if (b?.building != null)
+                        return StatDefOf.ConstructionSpeed;
+                }
+                catch { }
+                return StatDefOf.ConstructionSpeed; // Fallback still requires hammer
+            }
+            if (jobDef == JobDefOf.Repair)
             {
                 return StatDefOf.ConstructionSpeed;
             }

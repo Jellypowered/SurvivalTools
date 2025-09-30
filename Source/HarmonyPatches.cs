@@ -338,7 +338,7 @@ namespace SurvivalTools.HarmonyStuff
         }
 
         // ---------------- Vanilla postfixes/transpilers ----------------
-
+        // This function needs integration with if STC is active. (We block fell tree when STC is active.) 
         public static void Postfix_HandleBlockingThingJob(ref Job __result, Pawn worker)
         {
             if (__result == null || worker == null) return;
@@ -346,6 +346,8 @@ namespace SurvivalTools.HarmonyStuff
             // Redirect tree clearing to our FellTree job if the plant is a tree and pawn is allowed
             if (__result.def == JobDefOf.CutPlant && __result.targetA.Thing?.def?.plant?.IsTree == true)
             {
+                // STC authority: do not redirect; leave vanilla CutPlant (or allow other system to handle). Also avoid nulling.
+                if (SurvivalTools.Helpers.TreeSystemArbiterActiveHelper.IsSTCAuthorityActive()) return;
                 if (worker.CanFellTrees())
                     __result = new Job(ST_JobDefOf.FellTree, __result.targetA);
                 else

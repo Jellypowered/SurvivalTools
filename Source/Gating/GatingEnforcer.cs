@@ -16,6 +16,12 @@ using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.Gating
 {
+    public enum ST_CancelReason
+    {
+        ST_Gate_MissingToolStat,
+        ST_Gate_Internal
+    }
+
     public static class GatingEnforcer
     {
         // Throttle so we don't spam in the same tick
@@ -68,6 +74,27 @@ namespace SurvivalTools.Gating
                 }
             }
             return cancelled;
+        }
+
+        /// <summary>
+        /// Cancel the current job on the pawn if it matches the provided job (or unconditionally if job null) using a standard gating pathway.
+        /// Safe no-op if pawn/job invalid. Returns true if a job was cancelled.
+        /// </summary>
+        public static bool CancelCurrentJob(Pawn pawn, Job job, ST_CancelReason reason = ST_CancelReason.ST_Gate_MissingToolStat)
+        {
+            try
+            {
+                if (pawn?.jobs?.curJob == null) return false;
+                if (job != null && pawn.jobs.curJob != job) return false;
+                var cur = pawn.jobs.curJob;
+                if (Prefs.DevMode && IsDebugLoggingEnabled)
+                {
+                    LogDebug($"[GatingEnforcer] Cancel current job {cur.def.defName} for {pawn.LabelShort} due to {reason}", $"GatingEnforcer.CancelCur|{pawn.ThingID}|{cur.def.defName}|{reason}");
+                }
+                pawn.jobs.EndCurrentJob(JobCondition.Incompletable, startNewJob: true);
+                return true;
+            }
+            catch { return false; }
         }
 
         private static int CancelIfBlocked(Pawn pawn, string reasonKey)

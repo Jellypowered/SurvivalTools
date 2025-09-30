@@ -14,6 +14,7 @@ namespace SurvivalTools
     /// - Avoids duplicate targets
     /// - Chooses correct job (HarvestTreeDesignated / FellTreeDesignated)
     /// </summary>
+    /// Does this need STC compatibility? (We don't want to do tree felling if STC is active.)
     public class WorkGiver_FellTrees : WorkGiver_Scanner
     {
         public override Danger MaxPathDanger(Pawn pawn) => Danger.Deadly;
@@ -21,6 +22,7 @@ namespace SurvivalTools
 
         public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
         {
+            if (SurvivalTools.Helpers.TreeSystemArbiterActiveHelper.IsSTCAuthorityActive()) yield break; // STC owns trees
             var map = pawn?.Map;
             if (map == null) yield break;
 
@@ -49,6 +51,7 @@ namespace SurvivalTools
 
         public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
         {
+            if (SurvivalTools.Helpers.TreeSystemArbiterActiveHelper.IsSTCAuthorityActive()) return null; // STC authority suppresses
             if (pawn == null || t == null) return null;
 
             var plant = t as Plant;

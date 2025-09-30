@@ -25,6 +25,8 @@ namespace SurvivalTools.Helpers
         {
             if (stat == null || settings == null) return false;
 
+            // (Removed prior STC bypass: TreeFellingSpeed should still gate even when STC is active.)
+
             // Never hard-block CleaningSpeed or WorkSpeedGlobal here - these are handled
             // by StatPart_SurvivalTool as a penalty-based fallback and should not abort jobs.
             if (stat == ST_StatDefOf.CleaningSpeed || stat == ST_StatDefOf.WorkSpeedGlobal)
@@ -97,6 +99,21 @@ namespace SurvivalTools.Helpers
 
             // 2) Heuristics by defName
             string name = wgDef.defName?.ToLowerInvariant() ?? string.Empty;
+
+            // Explicit fallback: vanilla grower sow WG (ensure consistent coverage even if heuristics shift)
+            // Prevents intermittent skipping of JobGate evaluation observed in logs.
+            if (wgDef.defName == "GrowerSow")
+            {
+                // Always require SowingSpeed for GrowerSow in hardcore/nightmare
+                // (StatFilters.ShouldBlockJobForMissingStat already marks SowingSpeed as required.)
+                return new List<StatDef> { ST_StatDefOf.SowingSpeed };
+            }
+
+            // Explicit construction finish frames mapping (faster & avoids heuristic misses)
+            if (wgDef.defName == "ConstructFinishFrames" || wgDef.defName.EndsWith("ConstructFinishFrames"))
+            {
+                return new List<StatDef> { StatDefOf.ConstructionSpeed };
+            }
             var stats = new List<StatDef>();
 
             // Research
@@ -114,7 +131,7 @@ namespace SurvivalTools.Helpers
 
             // Construction vs maintenance vs deconstruction
             // Build / construct / frames / blueprints => ConstructionSpeed
-            if (name.Contains("construct") || name.Contains("build") || name.Contains("frame") || name.Contains("blueprint"))
+            if (name.Contains("construct") || name.Contains("build") || name.Contains("frame") || name.Contains("blueprint") || name.Contains("building"))
                 stats.Add(StatDefOf.ConstructionSpeed);
 
             // Smoothing (wall / floor) – treat as ConstructionSpeed required + optional SmoothingSpeed bonus.
@@ -137,16 +154,27 @@ namespace SurvivalTools.Helpers
                 }
             }
 
-            // Repair / maintain => MaintenanceSpeed
+            // Repair / maintain => MaintenanceSpeed + ConstructionSpeed (hammer still required physically)
             if (name.Contains("repair") || name.Contains("maintain") || name.Contains("maintenance"))
+            {
                 stats.Add(ST_StatDefOf.MaintenanceSpeed);
+                stats.Add(StatDefOf.ConstructionSpeed);
+            }
 
-            // Deconstruct / remove / uninstall => DeconstructionSpeed
+            // Deconstruct / remove / uninstall => DeconstructionSpeed + ConstructionSpeed (hammer equivalency)
             if (name.Contains("deconstruct") || name.Contains("remove") || name.Contains("uninstall"))
+            {
                 stats.Add(ST_StatDefOf.DeconstructionSpeed);
+                stats.Add(StatDefOf.ConstructionSpeed);
+            }
+
+            // Floor work (construct affect floor) frequently needs hammer equivalency
+            if (name.Contains("affectfloor") || name.Contains("constructaffectfloor"))
+                stats.Add(StatDefOf.ConstructionSpeed);
 
             // Trees & plants
-            if (name.Contains("felltree") || name.Contains("chopwood") || name.Contains("cutwood"))
+            if (name.Contains("felltree") || name.Contains("chopwood") || name.Contains("chop tree") || name.Contains("cutwood") ||
+                name.Contains("choptree") || (name.Contains("chop") && name.Contains("tree"))) // STC variants (ChopTree / STC_ChopTree*)
                 stats.Add(ST_StatDefOf.TreeFellingSpeed);
 
             if (name.Contains("harvest") || name.Contains("plantscut"))
@@ -203,6 +231,20 @@ namespace SurvivalTools.Helpers
                     logKey = $"BuildRoof_Block_{pawn.ThingID}";
             }
             return should;
+        }
+    }
+}
+namespace SurvivalTools.Helpers
+{
+    internal static class TreeSystemArbiterActiveHelper
+    {
+        internal static bool IsSTCAuthorityActive()
+        {
+            try
+            {
+                return SurvivalTools.Compatibility.TreeStack.TreeSystemArbiter.Authority == SurvivalTools.Compatibility.TreeStack.TreeAuthority.SeparateTreeChopping;
+            }
+            catch { return false; }
         }
     }
 }

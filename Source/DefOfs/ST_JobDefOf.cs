@@ -7,6 +7,7 @@ using RimWorld;
 /// JobDefs used by SurvivalTools.
 /// Initialized automatically by RimWorld's DefOf system.
 /// </summary>
+/// Does this need STC compatibility? (We don't want to do tree felling if STC is active.)
 [DefOf]
 public static class ST_JobDefOf
 {

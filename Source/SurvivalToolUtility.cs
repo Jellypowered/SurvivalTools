@@ -1850,8 +1850,12 @@ namespace SurvivalTools
 
             return true;
         }
+
+        // This should be disabled if STC is active so that we don't accidentally call tree felling.
         public static bool CanFellTrees(this Pawn pawn)
         {
+            // STC authority: never allow SurvivalTools felling logic to engage
+            if (Helpers.TreeSystemArbiterActiveHelper.IsSTCAuthorityActive()) return false;
             var fellWG = ST_WorkGiverDefOf.FellTrees;
             var req = fellWG?.GetModExtension<WorkGiverExtension>()?.requiredStats;
             if (req == null || req.Count == 0) return true;

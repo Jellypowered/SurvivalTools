@@ -33,8 +33,10 @@ namespace SurvivalTools.HarmonyStuff
             if (blocker?.def?.plant?.IsTree != true) return; // only care about trees
 
             // --- SurvivalTools gating ---
+            // Needs STC Compatibility: (We block fell tree when STC is active.)
             if (!worker.CanFellTrees())
             {
+                if (Helpers.TreeSystemArbiterActiveHelper.IsSTCAuthorityActive()) return; // STC handles trees; do not block
                 if (IsDebugLoggingEnabled)
                 {
                     // Avoid spam: many roof cells may query the same blocker repeatedly
