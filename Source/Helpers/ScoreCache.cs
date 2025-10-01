@@ -25,6 +25,7 @@ namespace SurvivalTools.Helpers
             public readonly int StatId;
             public readonly int DifficultySeed;
             public readonly int ResolverVersion;
+            public readonly int ChargeBucket; // Phase 12: 0-20 for powered tools, -1 for unpowered
 
             public CacheKey(Pawn pawn, Thing tool, StatDef stat, int difficultySeed, int resolverVersion)
             {
@@ -33,6 +34,10 @@ namespace SurvivalTools.Helpers
                 StatId = stat?.index ?? 0;
                 DifficultySeed = difficultySeed;
                 ResolverVersion = resolverVersion;
+
+                // Phase 12: Include charge bucket in cache key
+                var powerComp = tool?.TryGetComp<CompPowerTool>();
+                ChargeBucket = powerComp?.GetChargeBucket5() ?? -1;
             }
 
             public bool Equals(CacheKey other)
@@ -41,7 +46,8 @@ namespace SurvivalTools.Helpers
                        ToolId == other.ToolId &&
                        StatId == other.StatId &&
                        DifficultySeed == other.DifficultySeed &&
-                       ResolverVersion == other.ResolverVersion;
+                       ResolverVersion == other.ResolverVersion &&
+                       ChargeBucket == other.ChargeBucket; // Phase 12
             }
 
             public override bool Equals(object obj)
@@ -58,6 +64,7 @@ namespace SurvivalTools.Helpers
                     hash = (hash * 397) ^ StatId;
                     hash = (hash * 397) ^ DifficultySeed;
                     hash = (hash * 397) ^ ResolverVersion;
+                    hash = (hash * 397) ^ ChargeBucket; // Phase 12
                     return hash;
                 }
             }

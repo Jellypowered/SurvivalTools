@@ -24,41 +24,7 @@ namespace SurvivalTools.Helpers
             LogDebug("[SurvivalTools.JobValidation] Manual test validation triggered", "JobValidation_ManualTest");
             ValidateExistingJobs("manual test trigger");
         }
-        /*
-    FUTURE ME NOTE:
 
-    Pawns sometimes start loading with an `Ingest` job that still tries to use CleaningSpeed 
-    (e.g., eating while also flagged for cleaning). Job validation normally ignores Ingest 
-    since it has no WorkGiverDef, so these slip through.
-
-    This helper can be called in JobValidation.ValidateExistingJobs() after the normal loop.
-
-    It cancels Ingest jobs that wrongly require CleaningSpeed but the pawn has no tool 
-    (or when hardcore gating is enabled).
-*/
-
-        /*private static void CancelBadIngestJobs(Map map)
-        {
-            if (map == null) return;
-
-            foreach (var pawn in map.mapPawns.FreeColonistsSpawned)
-            {
-                var job = pawn.CurJob;
-                if (job != null && job.def == JobDefOf.Ingest)
-                {
-                    // Check if gating is active AND pawn lacks cleaning tools
-                    var s = SurvivalToolsMod.Settings;
-                    bool enforce = SurvivalToolUtility.IsHardcoreModeEnabled || (s != null && s.extraHardcoreMode);
-
-                    if (enforce && StatGatingHelper.ShouldBlockJobForStat(ST_StatDefOf.CleaningSpeed, s, pawn))
-                    {
-                        pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
-                        if (ST_Logging.IsDebugLoggingEnabled)
-                            LogDebug($"[SurvivalTools.JobValidation] Cancelled bad Ingest job for {pawn.LabelShort} (required CleaningSpeed, no tool).", $"JobValidation_Cancel_{pawn.ThingID}");
-                    }
-                }
-            }
-        }*/
         /// <summary>
         /// Last-ditch safety net: cancels obviously invalid jobs that sometimes slip through
         /// normal validation (e.g., Ingest with CleaningSpeed requirement).
@@ -148,12 +114,7 @@ namespace SurvivalTools.Helpers
                     continue;
                 }
 
-                // Respect settings toggle for WorkSpeedGlobal jobs
-                if (settings.workSpeedGlobalJobGating != null && settings.workSpeedGlobalJobGating.TryGetValue(workGiverDef.defName, out bool gated) && !gated)
-                {
-                    LogDebug($"[SurvivalTools.JobValidation] Job {currentJob.def.defName} is not gated in settings, skipping.", $"JobValidation_NotGated_{currentJob.def.defName}");
-                    continue;
-                }
+                // Phase 11.10: workSpeedGlobalJobGating check removed - only gate explicitly declared jobs
 
                 var requiredStats = SurvivalToolUtility.RelevantStatsFor(null, currentJob.def);
 

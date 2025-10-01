@@ -16,7 +16,7 @@ namespace SurvivalTools.DebugTools
 {
     public static class DebugAction_GearTabTools
     {
-        [DebugAction("SurvivalTools", "Compare Gear vs Stat Explanation", false, false)]
+        [DebugAction("Survival Tools", "Compare Gear vs Stat Explanation", false, false)]
         public static void CompareGearVsStatExplanation()
         {
             var selectedPawn = Find.Selector.SingleSelectedThing as Pawn;
@@ -85,7 +85,7 @@ namespace SurvivalTools.DebugTools
             Find.WindowStack.Add(new Dialog_MessageBox(sb.ToString(), "Gear vs Stat Comparison"));
         }
 
-        [DebugAction("SurvivalTools", "Gear panel GC check", false, false)]
+        [DebugAction("Survival Tools", "Gear panel GC check", false, false)]
         public static void GearPanelGCCheck()
         {
             var selectedPawn = Find.Selector.SingleSelectedThing as Pawn;
@@ -180,7 +180,7 @@ namespace SurvivalTools.DebugTools
             Messages.Message($"GC Check: {gen0Collections} collections, {avgTimeMs:F1}ms avg", MessageTypeDefOf.TaskCompletion);
         }
 
-        [DebugAction("SurvivalTools", "Test gear tab caching", false, false)]
+        [DebugAction("Survival Tools", "Test gear tab caching", false, false)]
         public static void TestGearTabCaching()
         {
             var selectedPawn = Find.Selector.SingleSelectedThing as Pawn;

@@ -72,6 +72,20 @@ namespace SurvivalTools
         {
             // Don't save hasValidatedThisSession - we want it to reset each time we load
             base.ExposeData();
+
+            // Phase 12: Clear transient state before saving to prevent Job reference warnings
+            if (Scribe.mode == LoadSaveMode.Saving)
+            {
+                try
+                {
+                    SurvivalTools.Assign.AssignmentSearch.ClearTransientState();
+                    SurvivalTools.Assign.PreWork_AutoEquip.ClearTransientState();
+                }
+                catch (System.Exception ex)
+                {
+                    Log.Warning($"[SurvivalTools] Error clearing transient state on save: {ex}");
+                }
+            }
         }
 
         /// <summary>

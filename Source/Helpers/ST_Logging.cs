@@ -108,13 +108,17 @@ namespace SurvivalTools
                 return;
             }
 
+            // Cache settings and tick manager for performance
+            var settings = SurvivalToolsMod.Settings;
+
             // Developer override: if debug logging flag is true, bypass suppression
-            if (SurvivalToolsMod.Settings != null && SurvivalToolsMod.Settings.debugLogging)
+            if (settings != null && settings.debugLogging)
             {
                 try { Log.Message($"[SurvivalTools.ToolGate] {pawn.LabelShort} denied {jobDef.defName} ({statDef.defName}) - {reason}"); } catch { }
                 return;
             }
 
+            // Cache tick access for performance
             int now = 0;
             try { now = Find.TickManager?.TicksGame ?? 0; } catch { }
 
@@ -164,6 +168,7 @@ namespace SurvivalTools
         internal static void TickToolGateBuckets()
         {
             if (!IsDebugLoggingEnabled) return;
+            // Cache tick access for performance
             int now = 0;
             try { now = Find.TickManager?.TicksGame ?? 0; } catch { }
 
@@ -189,7 +194,7 @@ namespace SurvivalTools
                 if (!_toolGateBuckets.TryGetValue(k, out var b)) continue;
                 if (b.suppressedCount > 0)
                 {
-                    // Key format: pawnId|jobDef|statDef
+                    // Key format: pawnId|jobDef|statDef - use ordinal for performance
                     var parts = k.Split('|');
                     string pawnId = parts.Length > 0 ? parts[0] : "?";
                     string job = parts.Length > 1 ? parts[1] : "?";
@@ -220,6 +225,7 @@ namespace SurvivalTools
             if (!IsDebugLoggingEnabled || pawn == null || stat == null)
                 return;
 
+            // Cache for performance
             string pawnId = pawn.ThingID ?? "null";
             string statName = stat.defName ?? "null";
             string jobLabel = jobContext ?? (pawn.CurJob?.def?.defName ?? "null");
@@ -279,17 +285,24 @@ namespace SurvivalTools
             if (!IsDebugLoggingEnabled) return false;
             if (!respectCooldown || string.IsNullOrEmpty(logKey)) return true;
 
+            // Cache tick access for performance
             int now = 0;
             try
             {
-                if (Find.TickManager != null)
-                    now = Find.TickManager.TicksGame;
+                var tickManager = Find.TickManager;
+                if (tickManager != null)
+                    now = tickManager.TicksGame;
             }
             catch { return false; }
 
-            int last;
-            if (_lastLoggedTick.TryGetValue(logKey, out last) && now - last < LOG_COOLDOWN_TICKS)
-                return false;
+            // Optimize: single dictionary lookup
+            if (_lastLoggedTick.TryGetValue(logKey, out int last))
+            {
+                if (now - last < LOG_COOLDOWN_TICKS)
+                    return false;
+                _lastLoggedTick[logKey] = now;
+                return true;
+            }
 
             _lastLoggedTick[logKey] = now;
             return true;
@@ -397,6 +410,7 @@ namespace SurvivalTools
             string oldestKey = null;
             float oldestCreated = float.MaxValue;
 
+            // Find oldest entry
             foreach (var kv in _buffer)
             {
                 var e = kv.Value;
@@ -483,6 +497,7 @@ namespace SurvivalTools
             if (!IsDebugLoggingEnabled) return;
             try
             {
+                // Cache job queue reference
                 var jq = pawn?.jobs?.jobQueue;
                 string key = $"ST.JobQueueSummary|{pawn?.ThingID}|{tag}";
                 if (!ShouldLog(key, respectCooldown: true)) return;
@@ -500,7 +515,8 @@ namespace SurvivalTools
                 }
                 int maxEntries = 20;
                 int shown = Math.Min(count, maxEntries);
-                var sb = new System.Text.StringBuilder(64 + shown * 24);
+                // Pre-allocate StringBuilder with realistic capacity
+                var sb = new System.Text.StringBuilder(64 + shown * 32);
                 sb.Append($"[SurvivalTools.JobQueue][{tag}] jobQueue count={count} :: ");
                 for (int i = 0; i < shown; i++)
                 {
@@ -638,9 +654,11 @@ namespace SurvivalTools
 
             try
             {
+                // Cache def list and count for performance
                 var all = DefDatabase<ThingDef>.AllDefsListForReading;
+                int allCount = all.Count;
                 int count = 0;
-                for (int i = 0; i < all.Count; i++)
+                for (int i = 0; i < allCount; i++)
                 {
                     if (all[i].GetModExtension<SurvivalToolProperties>() != null)
                         count++;
@@ -672,12 +690,6 @@ namespace SurvivalTools
 
                     if (ext.toolWearFactor > 0f)
                         Emit($"    - toolWearFactor: {ext.toolWearFactor}", LogLevel.Message);
-
-                    if (ext.defaultSurvivalToolAssignmentTags != null && ext.defaultSurvivalToolAssignmentTags.Count > 0)
-                    {
-                        var tags = string.Join(", ", ext.defaultSurvivalToolAssignmentTags);
-                        Emit($"    - defaultSurvivalToolAssignmentTags: {tags}", LogLevel.Message);
-                    }
                 }
             }
             catch (Exception e)

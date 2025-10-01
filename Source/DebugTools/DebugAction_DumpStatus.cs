@@ -11,7 +11,7 @@ namespace SurvivalTools
 {
     internal static class ST_DebugActions
     {
-        [LudeonTK.DebugAction("ST", "Dump ST status → Desktop", false, false)]
+        [LudeonTK.DebugAction("Survival Tools", "Dump ST status → Desktop", false, false)]
         private static void DumpStatus()
         {
             var sb = new StringBuilder(4096);
@@ -26,15 +26,15 @@ namespace SurvivalTools
             }
             catch { }
             try { sb.AppendLine($"Filtered tool candidates: {Helpers.ToolStatResolver.GetToolCandidates().Count()}"); } catch { }
-            try { sb.AppendLine($"WorkSpeedGlobal jobs discovered: {Helpers.WorkSpeedGlobalHelper.GetWorkSpeedGlobalJobs().Count()}"); } catch { }
-            try { sb.AppendLine("Active mods carrying ST hooks:"); sb.AppendLine(CompatLine()); } catch { }
+            // Phase 11.10: WorkSpeedGlobal system removed
+            try { sb.AppendLine("Active mods: (legacy compat line removed)"); } catch { }
             sb.AppendLine();
             sb.AppendLine("Tip: use this after loading a save and mining a tile to verify wear/penalties.");
             var path = ST_FileIO.WriteUtf8Atomic($"ST_Status_{System.DateTime.Now:yyyyMMdd_HHmmss}.txt", sb.ToString());
             try { Messages.Message("Survival Tools: wrote " + path, MessageTypeDefOf.TaskCompletion); } catch { }
         }
 
-        [LudeonTK.DebugAction("ST", "Dump resolver comparison → Desktop", false, false)]
+        [LudeonTK.DebugAction("Survival Tools", "Dump resolver comparison → Desktop", false, false)]
         private static void DumpResolverComparison()
         {
             var sb = new StringBuilder(8192);
@@ -114,7 +114,7 @@ namespace SurvivalTools
             try { Messages.Message("Survival Tools: wrote resolver comparison to " + path, MessageTypeDefOf.TaskCompletion); } catch { }
         }
 
-        [LudeonTK.DebugAction("ST", "Test tool quirk system", false, false)]
+        [LudeonTK.DebugAction("Survival Tools", "Test tool quirk system", false, false)]
         private static void TestToolQuirkSystem()
         {
             if (!Prefs.DevMode)
@@ -187,7 +187,7 @@ namespace SurvivalTools
             }
         }
 
-        [LudeonTK.DebugAction("ST", "Bench Score() 10k → Desktop", false, false)]
+        [LudeonTK.DebugAction("Survival Tools", "Bench Score() 10k → Desktop", false, false)]
         private static void BenchmarkScoring()
         {
             if (!Prefs.DevMode)
@@ -323,7 +323,7 @@ namespace SurvivalTools
             }
         }
 
-        [LudeonTK.DebugAction("ST", "Compare StatPart vs ToolScoring → Desktop", false, false)]
+        [LudeonTK.DebugAction("Survival Tools", "Compare StatPart vs ToolScoring → Desktop", false, false)]
         private static void CompareStatPartVsToolScoring()
         {
             if (!Prefs.DevMode)
@@ -422,7 +422,7 @@ namespace SurvivalTools
             }
         }
 
-        [LudeonTK.DebugAction("ST", "Test gating (selected pawn)", false, false)]
+        [LudeonTK.DebugAction("Survival Tools", "Test gating (selected pawn)", false, false)]
         private static void TestGating()
         {
             if (!Prefs.DevMode)
@@ -571,9 +571,6 @@ namespace SurvivalTools
             }
         }
 
-        private static string CompatLine()
-        {
-            try { return string.Join(", ", Helpers.WorkSpeedGlobalHelper.GetWorkSpeedGlobalJobs().Select(wg => wg.defName)); } catch { return "(n/a)"; }
-        }
+        // Phase 11.10: CompatLine removed (WorkSpeedGlobal system retired)
     }
 }

@@ -1,10 +1,8 @@
+<!--
+    Phase 11.11: Manual assignment system removed, replaced with automatic AssignmentSearch.
+    This PawnColumnDef is no longer needed and has been removed to prevent loading errors.
+    The old PawnColumnWorker_SurvivalToolAssignment class no longer exists.
+-->
 <Defs>
-
-    <PawnColumnDef>
-        <defName>SurvivalToolAssignment</defName>
-        <label>tool assignment</label>
-        <workerClass>SurvivalTools.PawnColumnWorker_SurvivalToolAssignment</workerClass>
-        <sortable>true</sortable>
-    </PawnColumnDef>
-
+    <!-- No defs - placeholder file kept for organizational purposes -->
 </Defs>

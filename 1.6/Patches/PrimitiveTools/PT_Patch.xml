@@ -14,12 +14,7 @@
                 <DiggingSpeed>0.75</DiggingSpeed>
                 <MiningYieldDigging>0.75</MiningYieldDigging>
                 <PlantHarvestingSpeed>0.75</PlantHarvestingSpeed>
-              </baseWorkStatFactors>
-              <defaultSurvivalToolAssignmentTags>
-                <li>Miner</li>
-                <li>PlantWorker</li>
-              </defaultSurvivalToolAssignmentTags>
-            </li>
+              </baseWorkStatFactors>            </li>
           </value>
         </li>
         <li Class="PatchOperationAdd">
@@ -34,11 +29,7 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <TreeFellingSpeed>1.1</TreeFellingSpeed>
-              </baseWorkStatFactors>
-              <defaultSurvivalToolAssignmentTags>
-                <li>PlantWorker</li>
-              </defaultSurvivalToolAssignmentTags>
-            </li>
+              </baseWorkStatFactors>            </li>
           </value>
         </li>
         <li Class="PatchOperationAdd">
@@ -53,11 +44,7 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <TreeFellingSpeed>0.5</TreeFellingSpeed>
-              </baseWorkStatFactors>
-              <defaultSurvivalToolAssignmentTags>
-                <li>PlantWorker</li>
-              </defaultSurvivalToolAssignmentTags>
-            </li>
+              </baseWorkStatFactors>            </li>
           </value>
         </li>
         <li Class="PatchOperationAdd">
@@ -74,12 +61,7 @@
                 <TreeFellingSpeed>1.0</TreeFellingSpeed>
                 <MedicalOperationSpeed>0.8</MedicalOperationSpeed>
                 <MedicalSurgerySuccessChance>0.7</MedicalSurgerySuccessChance>
-              </baseWorkStatFactors>
-              <defaultSurvivalToolAssignmentTags>
-                <li>PlantWorker</li>
-                <li>Doctor</li>
-              </defaultSurvivalToolAssignmentTags>
-            </li>
+              </baseWorkStatFactors>            </li>
           </value>
         </li>
         <li Class="PatchOperationAdd">
@@ -94,11 +76,7 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <PlantHarvestingSpeed>1.0</PlantHarvestingSpeed>
-              </baseWorkStatFactors>
-              <defaultSurvivalToolAssignmentTags>
-                <li>PlantWorker</li>
-              </defaultSurvivalToolAssignmentTags>
-            </li>
+              </baseWorkStatFactors>            </li>
           </value>
         </li>
         <li Class="PatchOperationAdd">
@@ -114,11 +92,7 @@
               <baseWorkStatFactors>
                 <ConstructionSpeed>0.85</ConstructionSpeed>
                 <ConstructSuccessChance>1.0</ConstructSuccessChance>
-              </baseWorkStatFactors>
-              <defaultSurvivalToolAssignmentTags>
-                <li>Constructor</li>
-              </defaultSurvivalToolAssignmentTags>
-            </li>
+              </baseWorkStatFactors>            </li>
           </value>
         </li>
         <li Class="PatchOperationAdd">
@@ -134,11 +108,7 @@
               <baseWorkStatFactors>
                 <ConstructionSpeed>0.85</ConstructionSpeed>
                 <ConstructSuccessChance>1.0</ConstructSuccessChance>
-              </baseWorkStatFactors>
-              <defaultSurvivalToolAssignmentTags>
-                <li>Constructor</li>
-              </defaultSurvivalToolAssignmentTags>
-            </li>
+              </baseWorkStatFactors>            </li>
           </value>
         </li>
         <li Class="PatchOperationAdd">
@@ -155,11 +125,7 @@
                 <ConstructionSpeed>1.1</ConstructionSpeed>
                 <ConstructSuccessChance>0.75</ConstructSuccessChance>
                 <!-- Lower chance because big and wieldly -->
-              </baseWorkStatFactors>
-              <defaultSurvivalToolAssignmentTags>
-                <li>Constructor</li>
-              </defaultSurvivalToolAssignmentTags>
-            </li>
+              </baseWorkStatFactors>            </li>
           </value>
         </li>
         <li Class="PatchOperationAdd">

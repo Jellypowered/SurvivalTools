@@ -116,7 +116,16 @@ namespace SurvivalTools.Helpers
             }
             var stats = new List<StatDef>();
 
-            // Research
+            // Phase 12: Research Reinvented explicit WorkGiver detection
+            // RR uses WorkGiver_ResearcherRR, WorkGiver_Analyse, WorkGiver_AnalyseInPlace, WorkGiver_AnalyseTerrain, WorkGiver_LearnRemotely
+            // All of these are research activities that require research tools
+            if (name.Contains("analysi") || name.Contains("analyze") || name.Contains("analyse") ||
+                name.Contains("learnremotely") || name.EndsWith("rr"))
+            {
+                stats.Add(ST_StatDefOf.ResearchSpeed);
+            }
+
+            // Research (vanilla and general)
             if (name.Contains("research"))
                 stats.Add(ST_StatDefOf.ResearchSpeed);
 

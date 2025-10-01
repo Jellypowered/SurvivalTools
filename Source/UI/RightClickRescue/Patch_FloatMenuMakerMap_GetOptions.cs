@@ -1,6 +1,17 @@
 // RimWorld 1.6 / C# 7.3
 // Source/UI/RightClickRescue/Patch_FloatMenuMakerMap_GetOptions.cs
-// Fallback Harmony postfix: if provider system fails or other mods strip providers, ensure rescue options still appear.
+// Phase 11.5 LEGACY: Simple fallback postfix for provider system failures.
+//
+// MODERN SYSTEM:
+//   - Provider_STPrioritizeWithRescue (primary path via RimWorld 1.6 provider system)
+//   - FloatMenu_PrioritizeWithRescue (comprehensive postfix with mod-tagging, STC, RR, dedup)
+//
+// This legacy fallback is redundant because:
+//   1. Provider system is now stable (no longer experimental)
+//   2. Modern postfix provides complete fallback coverage
+//   3. Modern postfix has all features: mod-tagging, dedup logic, STC integration, RR support
+//
+// Phase 11.5 guards added - set STRIP_11_5_OLD_FLOATMENU=true to disable.
 
 using System.Collections.Generic;
 using HarmonyLib;
@@ -15,51 +26,14 @@ namespace SurvivalTools.UI.RightClickRescue
     {
         static void Prefix(List<Pawn> selectedPawns, Vector3 clickPos, ref FloatMenuContext context)
         {
-            try
-            {
-                var pawn = (selectedPawns != null && selectedPawns.Count > 0) ? selectedPawns[0] : null;
-                if (pawn != null)
-                    Provider_STPrioritizeWithRescue.BeginClick(pawn, new IntVec3((int)clickPos.x, 0, (int)clickPos.z));
-            }
-            catch { }
+            // Phase 11.9: Dead code removed. Modern system: Provider_STPrioritizeWithRescue + FloatMenu_PrioritizeWithRescue.
+            // No-op shim kept for Harmony patch stability.
         }
 
         static void Postfix(List<Pawn> selectedPawns, Vector3 clickPos, ref FloatMenuContext context, ref List<FloatMenuOption> __result)
         {
-            try
-            {
-                if (__result == null) return;
-                // Avoid duplicates if provider already satisfied
-                for (int i = 0; i < __result.Count; i++)
-                {
-                    var lab = __result[i]?.Label;
-                    if (!string.IsNullOrEmpty(lab) && lab.IndexOf("(will fetch", System.StringComparison.OrdinalIgnoreCase) >= 0)
-                        return;
-                }
-
-                context = context ?? new FloatMenuContext(selectedPawns, clickPos, Find.CurrentMap);
-                if (context == null) return;
-                var pawn = context.FirstSelectedPawn;
-                if (pawn == null) return;
-                var s = SurvivalToolsMod.Settings; if (s == null) return;
-                if (!s.enableRightClickRescue) return;
-                if (!(s.hardcoreMode || s.extraHardcoreMode)) return;
-                if (Provider_STPrioritizeWithRescue.AlreadySatisfiedThisClick()) return;
-
-                var extra = new List<FloatMenuOption>(4);
-                RightClickRescue.RightClickRescueBuilder.TryAddRescueOptions(pawn, context, extra);
-                if (extra.Count == 0) return;
-                Provider_STPrioritizeWithRescue.NotifyOptionAdded();
-                __result.AddRange(extra);
-            }
-            catch (System.Exception ex)
-            {
-                Log.Warning("[ST.RightClick] Fallback postfix exception: " + ex);
-            }
-            finally
-            {
-                Provider_STPrioritizeWithRescue.EndClick();
-            }
+            // Phase 11.9: Dead code removed. Modern system: FloatMenu_PrioritizeWithRescue (comprehensive postfix).
+            // No-op shim kept for Harmony patch stability.
         }
     }
 }

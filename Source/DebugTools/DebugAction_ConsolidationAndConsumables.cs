@@ -19,7 +19,7 @@ namespace SurvivalTools.DebugTools
         // Avoid direct typeof() references so we don't trip the namespace vs Mod class name collision (SurvivalTools class conflicts with root namespace token).
         private const string AllowPreWorkTypeFullName = "SurvivalTools.Assign.PreWork_AutoEquip";
         private const string AllowGearTabTypeFullName = "SurvivalTools.HarmonyStuff.ITab_Gear_ST";
-        [LudeonTK.DebugAction("ST", "Dump bound consumables → Desktop", false, false)]
+        [LudeonTK.DebugAction("Survival Tools", "Dump bound consumables → Desktop", false, false)]
         private static void DumpBoundConsumables()
         {
             var sb = new StringBuilder(4096);
@@ -41,7 +41,7 @@ namespace SurvivalTools.DebugTools
             try { Messages.Message("Survival Tools: wrote " + path, MessageTypeDefOf.TaskCompletion); } catch { }
         }
 
-        [LudeonTK.DebugAction("ST", "Verify consolidation (patch allowlist)", false, false)]
+        [LudeonTK.DebugAction("Survival Tools", "Verify consolidation (patch allowlist)", false, false)]
         private static void VerifyConsolidation()
         {
             var sb = new StringBuilder(4096);
@@ -91,7 +91,7 @@ namespace SurvivalTools.DebugTools
                         var m = patch.PatchMethod;
                         var dt = m?.DeclaringType;
                         if (dt == null) continue;
-                        bool isOurs = dt.Assembly == ourAsm && (dt.Namespace?.StartsWith("SurvivalTools") == true);
+                        bool isOurs = dt.Assembly == ourAsm && (dt.Namespace?.StartsWith("Survival Tools") == true);
                         string kind = info.Prefixes.Contains(patch) ? "PREFIX" : info.Postfixes.Contains(patch) ? "POSTFIX" : "TRANS";
 
                         // These types are not nested inside SurvivalTools, so compare by full name to avoid occasional assembly load edge cases.
@@ -117,7 +117,7 @@ namespace SurvivalTools.DebugTools
             try { Messages.Message("Survival Tools: wrote " + path, MessageTypeDefOf.TaskCompletion); } catch { }
         }
 
-        [LudeonTK.DebugAction("ST", "Run optional stat gating validator", false, false)]
+        [LudeonTK.DebugAction("Survival Tools", "Run optional stat gating validator", false, false)]
         private static void RunOptionalStatValidator()
         {
             try

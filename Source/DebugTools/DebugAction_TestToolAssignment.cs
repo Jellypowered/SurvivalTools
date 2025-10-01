@@ -14,7 +14,7 @@ namespace SurvivalTools.DebugTools
 {
     public static class DebugAction_TestToolAssignment
     {
-        [DebugAction("SurvivalTools", "Test Tool Assignment", actionType = DebugActionType.Action, allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [DebugAction("Survival Tools", "Test Tool Assignment", actionType = DebugActionType.Action, allowedGameStates = AllowedGameStates.PlayingOnMap)]
         public static void TestToolAssignment()
         {
             try
@@ -49,7 +49,7 @@ namespace SurvivalTools.DebugTools
             }
         }
 
-        [DebugAction("SurvivalTools", "Check Harmony Patches", actionType = DebugActionType.Action, allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [DebugAction("Survival Tools", "Check Harmony Patches", actionType = DebugActionType.Action, allowedGameStates = AllowedGameStates.PlayingOnMap)]
         public static void CheckHarmonyPatches()
         {
             try

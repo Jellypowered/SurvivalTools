@@ -129,6 +129,15 @@ namespace SurvivalTools.Stats
 
             // Apply tool factor using resolver (exactly matching current behavior)
             float toolFactor = ToolStatResolver.GetToolStatFactor(effectiveTool.def, effectiveTool.Stuff, parentStat);
+
+            // Phase 12: Apply powered tool multiplier when tool is charged
+            var powerComp = effectiveTool.TryGetComp<CompPowerTool>();
+            if (powerComp != null && powerComp.HasCharge)
+            {
+                float poweredMultiplier = powerComp.GetPoweredMultiplier(parentStat);
+                toolFactor *= poweredMultiplier;
+            }
+
             val *= toolFactor;
 
             // Phase 8: Wear pulse (only if factor actually modifies value and pawn currently has a job using this stat)
@@ -188,7 +197,28 @@ namespace SurvivalTools.Stats
             {
                 // Tool applied
                 float toolFactor = ToolStatResolver.GetToolStatFactor(effectiveTool.def, effectiveTool.Stuff, parentStat);
-                _explanationBuilder.AppendLine("ST_StatPart_ToolApplied".Translate(effectiveTool.LabelCap, toolFactor.ToStringPercent()));
+
+                // Phase 12: Include powered multiplier if tool is charged
+                var powerComp = effectiveTool.TryGetComp<CompPowerTool>();
+                if (powerComp != null && powerComp.HasCharge)
+                {
+                    float poweredMultiplier = powerComp.GetPoweredMultiplier(parentStat);
+                    toolFactor *= poweredMultiplier;
+
+                    if (poweredMultiplier > 1.001f)
+                    {
+                        _explanationBuilder.AppendLine("ST_StatPart_ToolApplied".Translate(effectiveTool.LabelCap, toolFactor.ToStringPercent()));
+                        _explanationBuilder.AppendLine("  " + "ST_GearTab_PoweredBonus".Translate());
+                    }
+                    else
+                    {
+                        _explanationBuilder.AppendLine("ST_StatPart_ToolApplied".Translate(effectiveTool.LabelCap, toolFactor.ToStringPercent()));
+                    }
+                }
+                else
+                {
+                    _explanationBuilder.AppendLine("ST_StatPart_ToolApplied".Translate(effectiveTool.LabelCap, toolFactor.ToStringPercent()));
+                }
 
                 // Top contributors
                 var contributors = ToolScoring.TopContributors(effectiveTool, pawn, parentStat, 2);

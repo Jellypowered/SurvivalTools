@@ -25,7 +25,7 @@ namespace SurvivalTools.DebugTools
         /// Preview assignment decisions for the selected pawn.
         /// Shows what tools would be assigned for various work stats.
         /// </summary>
-        [DebugAction("SurvivalTools", "Preview Assignments", false, false)]
+        [DebugAction("Survival Tools", "Preview Assignments", false, false)]
         public static void PreviewAssignments()
         {
             var selectedPawn = Find.Selector.SingleSelectedThing as Pawn;
@@ -107,7 +107,7 @@ namespace SurvivalTools.DebugTools
         /// Run performance benchmark on AssignmentSearch.TryUpgradeFor.
         /// Tests 100 iterations to ensure zero GC allocation requirement.
         /// </summary>
-        [DebugAction("SurvivalTools", "Benchmark Assignment Search", false, false)]
+        [DebugAction("Survival Tools", "Benchmark Assignment Search", false, false)]
         public static void BenchmarkAssignmentSearch()
         {
             var selectedPawn = Find.Selector.SingleSelectedThing as Pawn;
@@ -197,7 +197,7 @@ namespace SurvivalTools.DebugTools
         /// Show detailed tool analysis for a pawn and work stat.
         /// Displays scoring breakdown and available alternatives.
         /// </summary>
-        [DebugAction("SurvivalTools", "Analyze Tool Scoring", false, false)]
+        [DebugAction("Survival Tools", "Analyze Tool Scoring", false, false)]
         public static void AnalyzeToolScoring()
         {
             var selectedPawn = Find.Selector.SingleSelectedThing as Pawn;
@@ -289,7 +289,7 @@ namespace SurvivalTools.DebugTools
         /// Test assignment system integration with different settings.
         /// Validates that settings changes affect assignment behavior correctly.
         /// </summary>
-        [DebugAction("SurvivalTools", "Test Assignment Settings", false, false)]
+        [DebugAction("Survival Tools", "Test Assignment Settings", false, false)]
         public static void TestAssignmentSettings()
         {
             var settings = SurvivalToolsMod.Settings;

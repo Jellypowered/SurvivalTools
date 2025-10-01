@@ -123,21 +123,7 @@
     <Compat_FieldResearch>Field Research</Compat_FieldResearch>
     <Compat_ReinventedResearchAlert>Reinvented Research</Compat_ReinventedResearchAlert>
 
-    <!-- WorkSpeedGlobal Configuration (Added) -->
-    <!-- Added WorkSpeedGlobal translation keys -->
-    <WorkSpeedGlobal_Title>General Work Speed Job Configuration</WorkSpeedGlobal_Title>
-    <WorkSpeedGlobal_Description>Select which jobs that use the general work speed stat should be gated by survival tools. Ungated jobs ignore tool penalties when colonists lack proper tools.</WorkSpeedGlobal_Description>
-    <WorkSpeedGlobal_JobTypeHeader>Job Type</WorkSpeedGlobal_JobTypeHeader>
-    <WorkSpeedGlobal_GatedHeader>Gated</WorkSpeedGlobal_GatedHeader>
-    <WorkSpeedGlobal_DescriptionHeader>Description</WorkSpeedGlobal_DescriptionHeader>
-    <WorkSpeedGlobal_NoJobsFound>No general work speed jobs found.</WorkSpeedGlobal_NoJobsFound>
-    <WorkSpeedGlobal_EnableAll>Enable All</WorkSpeedGlobal_EnableAll>
-    <WorkSpeedGlobal_DisableAll>Disable All</WorkSpeedGlobal_DisableAll>
-    <WorkSpeedGlobal_ResetDefaults>Reset to Defaults</WorkSpeedGlobal_ResetDefaults>
-    <WorkSpeedGlobal_TraceWorkGivers>Trace WorkGivers</WorkSpeedGlobal_TraceWorkGivers>
-    <WorkSpeedGlobal_JobStatus_Gated>Requires tools in hardcore modes</WorkSpeedGlobal_JobStatus_Gated>
-    <WorkSpeedGlobal_JobStatus_Ungated>No tool penalties applied</WorkSpeedGlobal_JobStatus_Ungated>
-    <WorkSpeedGlobal_OpenConfigButton>Configure General Work Speed Jobs</WorkSpeedGlobal_OpenConfigButton>
+    <!-- Phase 11.10: WorkSpeedGlobal Configuration removed (system retired) -->
 
     <!-- Job Table Additional (Added) -->
     <JobTable_NoActiveMode>No active mode selected.</JobTable_NoActiveMode>
@@ -191,5 +177,11 @@
     <!-- Unified auto-assignment system toggle (replacing legacy toolOptimization/autoTool) -->
     <Settings_EnableAssignments>Enable smart pre-work tool pickup</Settings_EnableAssignments>
     <Settings_EnableAssignments_Tooltip>When enabled, colonists automatically search for, pick up, and upgrade to better tools before starting jobs (respecting gain thresholds, search radius, and path cost limits). Disable for fully manual tool management or to reduce pathing overhead in very large colonies.</Settings_EnableAssignments_Tooltip>
+
+    <!-- Phase 12: Powered tool battery system -->
+    <ST_Power_Charged>Charge: {0}</ST_Power_Charged>
+    <ST_Power_Empty>Out of charge: {0}</ST_Power_Empty>
+    <ST_GearTab_PoweredBonus>Powered bonus active</ST_GearTab_PoweredBonus>
+    <ST_GearTab_PowerEmpty>Out of charge (unpowered)</ST_GearTab_PowerEmpty>
 
 </LanguageData>

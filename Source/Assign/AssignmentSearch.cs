@@ -92,6 +92,7 @@ namespace SurvivalTools.Assign
             try
             {
                 if (pawn == null || toolOrStack == null) return false;
+                // Cache tick access
                 int now = Find.TickManager?.TicksGame ?? 0;
                 if (!_recentAcquisitions.TryGetValue(pawn.thingIDNumber, out var acq) || now >= acq.untilTick)
                     return false;
@@ -157,9 +158,7 @@ namespace SurvivalTools.Assign
 
         private static bool TryUpgradeForInternal(Pawn pawn, StatDef workStat, float minGainPct, float radius, int pathCostBudget, QueuePriority priority, string caller)
         {
-            LogDebug($"TryUpgradeFor called: pawn={pawn?.LabelShort}, workStat={workStat?.defName}, minGainPct={minGainPct:P1}, radius={radius}, pathCostBudget={pathCostBudget}, caller={caller ?? "(none)"}", "AssignmentSearch.TryUpgradeFor");
-            LogCurrentJobState(pawn, caller != null ? $"TryUpgradeFor:start:{caller}" : "TryUpgradeFor:start");
-            LogJobQueue(pawn, caller != null ? $"TryUpgradeFor:start:{caller}" : "TryUpgradeFor:start");
+            // Hot path: don't log routine entry parameters
 
             // Hard scope guard: only player-controlled humanlikes.
             if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn))
@@ -180,23 +179,19 @@ namespace SurvivalTools.Assign
             // Early-out blacklist
             if (!CanPawnUpgrade(pawn))
             {
-                LogDebug($"CanPawnUpgrade failed for {pawn?.LabelShort}", "AssignmentSearch.CanPawnUpgrade");
+                // Hot path: don't log routine validation failures
                 return false;
             }
 
             // If we recently focused a different work stat, skip to avoid tool thrashing
             if (IsBlockedByFocus(pawn.thingIDNumber, workStat?.defName))
             {
-                string fbKey = $"Assign.FocusBlock|{pawn.ThingID}|{workStat?.defName}";
-                if (ShouldLogWithCooldown(fbKey))
-                {
-                    LogDebug($"Blocked by focus window: {pawn.LabelShort} focus is different than {workStat?.defName}", "AssignmentSearch.FocusBlock");
-                    LogJobQueue(pawn, caller != null ? $"TryUpgradeFor:blockedByFocus:{caller}" : "TryUpgradeFor:blockedByFocus");
-                }
+                // Hot path: don't log routine focus blocks
                 return false;
             }
 
             // Management cooldown: if we just managed tools and we're no longer at baseline, allow work instead of more churn
+            // Cache tick access for performance
             int nowTickCooldown = Find.TickManager?.TicksGame ?? 0;
             if (_managementCooldownUntil.TryGetValue(pawn.thingIDNumber, out int cooldownUntil) && nowTickCooldown < cooldownUntil)
             {
@@ -206,13 +201,13 @@ namespace SurvivalTools.Assign
                     ToolScoring.GetBestTool(pawn, workStat, out float curScoreCooldown);
                     if (curScoreCooldown > baselineCooldown + GatingEpsilon)
                     {
-                        LogDebug($"Cooldown active for {pawn.LabelShort}; skipping upgrade attempts until {cooldownUntil}", "AssignmentSearch.ManagementCooldown");
+                        // Hot path: don't log routine cooldown skips
                         return false;
                     }
                 }
                 else
                 {
-                    LogDebug($"Cooldown active for {pawn.LabelShort}; skipping upgrade attempts until {cooldownUntil}", "AssignmentSearch.ManagementCooldown");
+                    // Hot path: don't log routine cooldown skips
                     return false;
                 }
             }
@@ -221,23 +216,28 @@ namespace SurvivalTools.Assign
             int pawnID = pawn.thingIDNumber;
             if (_processingPawns.TryGetValue(pawnID, out bool processing) && processing)
             {
-                LogDebug($"Anti-recursion triggered for {pawn.LabelShort}", "AssignmentSearch.AntiRecursion");
+                // Hot path: don't log routine anti-recursion triggers
                 return false;
             }
 
             try
             {
                 _processingPawns[pawnID] = true;
+
+                // Cache settings and current tick for performance
+                var settings = SurvivalToolsMod.Settings;
+                int currentTick = Find.TickManager?.TicksGame ?? 0;
+
                 if (workStat == null)
                 {
-                    LogDebug($"workStat is null for {pawn?.LabelShort}", "AssignmentSearch.NullWorkStat");
+                    // Hot path: don't log routine validation failures
                     return false;
                 }
 
                 // Get current score and tool
                 var currentTool = ToolScoring.GetBestTool(pawn, workStat, out float currentScore);
                 string currentDefName = currentTool?.def?.defName ?? "none";
-                LogDebug($"Current tool for {pawn.LabelShort} / {workStat.defName}: {currentDefName} (score: {currentScore:F3})", "AssignmentSearch.CurrentTool");
+                // Hot path: don't log current tool state every time
 
                 // If a drop or acquisition is already being performed as the CURRENT job, defer any new work this pass
                 // Note: we intentionally IGNORE queued items here because queued ordered jobs do not auto-start.
@@ -245,8 +245,7 @@ namespace SurvivalTools.Assign
                 bool pendingAcquire = HasPendingAcquisitionJob(pawn);
                 if (pendingDrop || pendingAcquire)
                 {
-                    LogDebug($"Pending tool-management job detected for {pawn.LabelShort} — deferring (drop={pendingDrop}, acquire={pendingAcquire})", "AssignmentSearch.DeferForPendingQueue");
-                    LogJobQueue(pawn, "TryUpgradeFor:pendingQueue");
+                    // Hot path: don't log routine pending job deferrals
                     // Do NOT signal success when nothing new was enqueued; this avoids repeated requeue loops in PreWork
                     return false;
                 }
@@ -255,19 +254,19 @@ namespace SurvivalTools.Assign
                 var candidate = FindBestCandidate(pawn, workStat, currentScore, minGainPct, radius, pathCostBudget);
                 if (candidate.tool == null)
                 {
-                    LogDebug($"No candidate tool found for {pawn.LabelShort}", "AssignmentSearch.NoCandidate");
+                    // Hot path: don't log routine no-candidate failures
                     return false;
                 }
 
                 LogDebug($"Found candidate tool for {pawn.LabelShort}: {candidate.tool.LabelShort} (score: {candidate.score:F3}, gain: {candidate.gainPct:P1}, location: {candidate.location})", "AssignmentSearch.FoundCandidate");
-                LogJobQueue(pawn, caller != null ? $"TryUpgradeFor:preQueueCandidate:{caller}" : "TryUpgradeFor:preQueueCandidate");
+                // Hot path: don't log job queue state before queueing
 
                 // Apply hysteresis AFTER selecting a concrete candidate so we can use its gain and def
-                int currentTick = Find.TickManager?.TicksGame ?? 0;
+                // Use cached currentTick from method entry
                 var candDefName = candidate.tool.def?.defName ?? string.Empty;
                 if (IsInHysteresis(pawn.thingIDNumber, currentTick, candDefName, candidate.gainPct, minGainPct))
                 {
-                    LogDebug($"Hysteresis check failed for {pawn.LabelShort}", "AssignmentSearch.Hysteresis");
+                    // Hot path: don't log routine hysteresis blocks
                     return false;
                 }
 
@@ -293,9 +292,9 @@ namespace SurvivalTools.Assign
                         ScoreCache.NotifyInventoryChanged(pawn);
                         if (candidate.tool != null)
                             ScoreCache.NotifyToolChanged(candidate.tool);
-                        LogJobQueue(pawn, caller != null ? $"TryUpgradeFor:afterEnqueueAcquisition:{caller}" : "TryUpgradeFor:afterEnqueueAcquisition");
+                        // Hot path: don't log job queue state after every enqueue
 
-                        _managementCooldownUntil[pawn.thingIDNumber] = (Find.TickManager?.TicksGame ?? 0) + ManagementCooldownTicks;
+                        _managementCooldownUntil[pawn.thingIDNumber] = currentTick + ManagementCooldownTicks;
                         return true;
                     }
                     else
@@ -304,8 +303,8 @@ namespace SurvivalTools.Assign
                         LogDebug($"Queued drop for {pawn.LabelShort} and deferred acquisition of {candidate.tool.LabelShort}", "AssignmentSearch.DeferredAfterDrop");
                         // Set a short focus window to prioritize this stat; this avoids cross-stat thrashing.
                         SetFocus(pawn, workStat);
-                        LogJobQueue(pawn, caller != null ? $"TryUpgradeFor:afterEnqueueDrop:{caller}" : "TryUpgradeFor:afterEnqueueDrop");
-                        _managementCooldownUntil[pawn.thingIDNumber] = (Find.TickManager?.TicksGame ?? 0) + ManagementCooldownTicks;
+                        // Hot path: don't log job queue state after every enqueue
+                        _managementCooldownUntil[pawn.thingIDNumber] = currentTick + ManagementCooldownTicks;
                         return true;
                     }
                 }
@@ -362,8 +361,8 @@ namespace SurvivalTools.Assign
                 if (!_statFocus.TryGetValue(pawnID, out var focus)) return false;
                 int now = Find.TickManager?.TicksGame ?? 0;
                 if (now > focus.untilTick) return false;
-                // Block if another stat is currently focused
-                return !string.Equals(focus.statDefName, statDefName);
+                // Block if another stat is currently focused (use ordinal comparison)
+                return !string.Equals(focus.statDefName, statDefName, StringComparison.Ordinal);
             }
             catch { return false; }
         }
@@ -581,7 +580,7 @@ namespace SurvivalTools.Assign
         {
             try
             {
-                if (pawn == null || tool == null) return false;
+                if (pawn == null || tool == null || jobDefs == null || jobDefs.Length == 0) return false;
                 var jobTracker = pawn.jobs; if (jobTracker == null) return false;
                 var queue = jobTracker.jobQueue; if (queue == null) return false;
                 if (jobTracker.curJob != null) return false; // only auto-start when idle
@@ -595,7 +594,7 @@ namespace SurvivalTools.Assign
                     if (j?.def == null) continue;
                     // Only consider requested job defs
                     bool defMatch = false;
-                    for (int d = 0; d < jobDefs.Length; d++) { if (j.def == jobDefs[d]) { defMatch = true; break; } }
+                    for (int d = 0; d < jobDefs.Length; d++) { if (jobDefs[d] != null && j.def == jobDefs[d]) { defMatch = true; break; } }
                     if (!defMatch) continue;
                     // Extract target safely
                     Thing targetThing = null;
@@ -1045,7 +1044,8 @@ namespace SurvivalTools.Assign
 
             // If a drop/acquisition is already pending in the queue, do not enqueue acquisition this pass
             // Nightmare exception: we still need to purge everything before acquiring.
-            bool nightmare = SurvivalToolsMod.Settings?.extraHardcoreMode == true;
+            var settings = SurvivalToolsMod.Settings;
+            bool nightmare = settings?.extraHardcoreMode == true;
             if (!nightmare && (HasPendingDropJob(pawn) || HasPendingAcquisitionJob(pawn)))
             {
                 LogDebug($"QueueAcquisitionJob: tool-management pending for {pawn.LabelShort} — deferring acquisition", "AssignmentSearch.DeferAcquireForPendingQueue");
@@ -1089,7 +1089,7 @@ namespace SurvivalTools.Assign
                 try
                 {
                     // If carry-limit is effectively 1, protect the best tool for the requested stat to avoid ping-pong
-                    var settings = SurvivalToolsMod.Settings;
+                    // Use cached settings
                     int carryLimit = GetCarryLimit(settings);
                     if (HasToolbelt(pawn)) carryLimit = Math.Max(carryLimit, 3);
                     if (carryLimit <= 1 && requestedStat != null)
@@ -1211,6 +1211,7 @@ namespace SurvivalTools.Assign
                         // Protect the just-acquired tool from being dropped immediately
                         try
                         {
+                            // Cache tick access
                             int nowTick = Find.TickManager?.TicksGame ?? 0;
                             _recentAcquisitions[pawn.thingIDNumber] = new RecentAcqData { untilTick = nowTick + FocusTicksWindow, thingID = candidate.tool.thingIDNumber };
                             LogDebug($"Set recent-acquisition protect for {pawn.LabelShort} on {candidate.tool.LabelShort} for {FocusTicksWindow} ticks", "AssignmentSearch.SetRecentAcq");
@@ -1240,6 +1241,7 @@ namespace SurvivalTools.Assign
                 // Protect the just-enqueued acquisition target as "recently acquired" to avoid immediate drop
                 try
                 {
+                    // Cache tick access
                     int nowTick2 = Find.TickManager?.TicksGame ?? 0;
                     _recentAcquisitions[pawn.thingIDNumber] = new RecentAcqData { untilTick = nowTick2 + FocusTicksWindow, thingID = candidate.tool.thingIDNumber };
                     LogDebug($"Set recent-acquisition protect (enqueued) for {pawn.LabelShort} on {candidate.tool.LabelShort} for {FocusTicksWindow} ticks", "AssignmentSearch.SetRecentAcq.Enqueued");
@@ -1349,10 +1351,11 @@ namespace SurvivalTools.Assign
 
             int carryLimit = GetEffectiveCarryLimit(pawn, settings);
             int currentTools = CountCarriedTools(pawn);
+            bool canCarry = currentTools < carryLimit;
 
-            LogDebug($"CanCarryAdditionalTool for {pawn.LabelShort}: current={currentTools}, effectiveLimit={carryLimit} (toolLimit={settings.toolLimit} diffCap={GetCarryLimit(settings)} statCap={(settings.toolLimit ? pawn.GetStatValue(ST_StatDefOf.SurvivalToolCarryCapacity).ToString("F2") : "∞")}), canCarry={currentTools < carryLimit}", "AssignmentSearch.CarryCheck");
+            LogDebug($"CanCarryAdditionalTool for {pawn.LabelShort}: current={currentTools}, effectiveLimit={carryLimit} (toolLimit={settings.toolLimit} diffCap={GetCarryLimit(settings)} statCap={(settings.toolLimit ? pawn.GetStatValue(ST_StatDefOf.SurvivalToolCarryCapacity).ToString("F2") : "∞")}), canCarry={canCarry}", "AssignmentSearch.CarryCheck");
 
-            return currentTools < carryLimit;
+            return canCarry;
         }
 
         private static int GetCarryLimit(SurvivalToolsSettings settings)
@@ -2147,6 +2150,31 @@ namespace SurvivalTools.Assign
             {
                 Log.Error($"[SurvivalTools.Assignment] Exception in direct haul: {ex}");
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Phase 12: Clear transient state to prevent Job reference warnings on save.
+        /// Called from GameComponent during save operation.
+        /// Static dictionaries can hold Job references which cause "Object with load ID Job_XXXXX 
+        /// is referenced but is not deep-saved" warnings during save.
+        /// </summary>
+        public static void ClearTransientState()
+        {
+            try
+            {
+                _hysteresisData?.Clear();
+                _processingPawns?.Clear();
+                _managementCooldownUntil?.Clear();
+                _candidateCooldownTicks?.Clear();
+                _statFocus?.Clear();
+                _recentAcquisitions?.Clear();
+
+                LogDebug("AssignmentSearch transient state cleared for save", "AssignmentSearch.ClearState");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[SurvivalTools.AssignmentSearch] Error clearing transient state: {ex}");
             }
         }
     }

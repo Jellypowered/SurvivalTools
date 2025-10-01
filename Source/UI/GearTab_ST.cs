@@ -19,10 +19,20 @@ namespace SurvivalTools.UI
     public static class GearTab_ST
     {
         // UI constants
-        private const float HEADER_HEIGHT = 24f;
-        private const float TOOL_ROW_HEIGHT = 42f; // Two lines at 21px each
+        private const float HEADER_HEIGHT = 30f;
+        private const float TOOL_ROW_HEIGHT = 48f; // Two lines with better spacing
         private const float SCROLL_BAR_WIDTH = 16f;
-        private const float MARGIN = 6f;
+        private const float MARGIN = 8f;
+
+        // UI colors
+        private static readonly Color HeaderBgColor = new Color(0.15f, 0.25f, 0.35f, 0.95f);
+        private static readonly Color PanelBgColor = new Color(0.08f, 0.08f, 0.08f, 0.9f);
+        private static readonly Color RowBgColor = new Color(0.12f, 0.12f, 0.12f, 0.7f);
+        private static readonly Color RowAltBgColor = new Color(0.16f, 0.16f, 0.16f, 0.7f);
+        private static readonly Color ScoreGoodColor = new Color(0.4f, 0.9f, 0.6f);
+        private static readonly Color ScoreMediumColor = new Color(0.9f, 0.8f, 0.3f);
+        private static readonly Color WhyTextColor = new Color(0.7f, 0.7f, 0.7f);
+        private static readonly Color BorderColor = new Color(0.3f, 0.3f, 0.3f);
 
         // Cached data
         private static Pawn _cachedPawn;
@@ -66,16 +76,20 @@ namespace SurvivalTools.UI
             // Update cache if needed
             UpdateCacheIfNeeded(pawn);
 
-            // Draw background
-            Widgets.DrawBoxSolid(hostRect, new Color(0.1f, 0.1f, 0.1f, 0.8f));
-            Widgets.DrawBox(hostRect);
+            // Draw layered background with subtle gradient effect
+            Widgets.DrawBoxSolid(hostRect, PanelBgColor);
+
+            // Draw border with corner accents
+            Widgets.DrawBox(hostRect, 2);
 
             var contentRect = hostRect.ContractedBy(MARGIN);
             var curY = contentRect.y;
 
-            // Header
-            DrawHeader(new Rect(contentRect.x, curY, contentRect.width, HEADER_HEIGHT));
-            curY += HEADER_HEIGHT + 4f;
+            // Header with background
+            var headerRect = new Rect(contentRect.x, curY, contentRect.width, HEADER_HEIGHT);
+            Widgets.DrawBoxSolid(headerRect, HeaderBgColor);
+            DrawHeader(headerRect);
+            curY += HEADER_HEIGHT + 6f;
 
             // Tool list with scroll view
             var listRect = new Rect(contentRect.x, curY, contentRect.width, contentRect.yMax - curY);
@@ -84,21 +98,36 @@ namespace SurvivalTools.UI
 
         private static void DrawHeader(Rect rect)
         {
-            var titleRect = new Rect(rect.x, rect.y, rect.width - 80f, rect.height);
-            var settingsButtonRect = new Rect(rect.xMax - 75f, rect.y, 75f, rect.height);
+            var titleRect = new Rect(rect.x + 8f, rect.y, rect.width - 88f, rect.height);
+            var settingsButtonRect = new Rect(rect.xMax - 80f, rect.y + 3f, 75f, rect.height - 6f);
 
-            // Title
+            // Title with icon styling
             Text.Font = GameFont.Medium;
             Text.Anchor = TextAnchor.MiddleLeft;
+            GUI.color = new Color(0.9f, 0.95f, 1f); // Slight blue-white tint
             Widgets.Label(titleRect, "ST_GearTab_Header".Translate());
+            GUI.color = Color.white;
 
-            // Settings button
+            // Settings button with better styling
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.MiddleCenter;
-            if (Widgets.ButtonText(settingsButtonRect, "Settings"))
+
+            // Custom button with hover effect
+            var buttonColor = Mouse.IsOver(settingsButtonRect)
+                ? new Color(0.25f, 0.35f, 0.45f)
+                : new Color(0.2f, 0.28f, 0.36f);
+
+            Widgets.DrawBoxSolid(settingsButtonRect, buttonColor);
+            Widgets.DrawBox(settingsButtonRect, 1);
+
+            if (Widgets.ButtonInvisible(settingsButtonRect))
             {
                 Find.WindowStack.Add(new Dialog_ModSettings(LoadedModManager.GetMod<SurvivalToolsMod>()));
             }
+
+            GUI.color = new Color(0.85f, 0.9f, 0.95f);
+            Widgets.Label(settingsButtonRect, "Settings");
+            GUI.color = Color.white;
 
             Text.Anchor = TextAnchor.UpperLeft;
             Text.Font = GameFont.Small;
@@ -117,23 +146,25 @@ namespace SurvivalTools.UI
 
             if (_cachedToolInfo.Count == 0)
             {
-                // Empty state
+                // Empty state with better styling
                 Text.Anchor = TextAnchor.MiddleCenter;
-                var emptyRect = new Rect(0, viewRect.height * 0.5f - 20f, viewRect.width, 40f);
+                GUI.color = new Color(0.6f, 0.6f, 0.6f);
+                var emptyRect = new Rect(0, viewRect.height * 0.5f - 30f, viewRect.width, 60f);
                 Widgets.Label(emptyRect, "ST_GearTab_NoTools".Translate());
+                GUI.color = Color.white;
                 Text.Anchor = TextAnchor.UpperLeft;
             }
             else
             {
-                // Draw tools
+                // Draw tools with alternating backgrounds
                 var curY = 10f;
                 for (int i = 0; i < _cachedToolInfo.Count; i++)
                 {
                     var toolInfo = _cachedToolInfo[i];
-                    var toolRect = new Rect(0, curY, viewRect.width, TOOL_ROW_HEIGHT);
+                    var toolRect = new Rect(4f, curY, viewRect.width - 8f, TOOL_ROW_HEIGHT);
 
-                    DrawToolRow(toolRect, toolInfo, mouseInside);
-                    curY += TOOL_ROW_HEIGHT;
+                    DrawToolRow(toolRect, toolInfo, mouseInside, i % 2 == 0);
+                    curY += TOOL_ROW_HEIGHT + 2f; // Small gap between rows
                 }
             }
 
@@ -141,45 +172,134 @@ namespace SurvivalTools.UI
             GUI.EndGroup();
         }
 
-        private static void DrawToolRow(Rect rect, ToolDisplayInfo toolInfo, bool allowTooltip)
+        private static void DrawToolRow(Rect rect, ToolDisplayInfo toolInfo, bool allowTooltip, bool isEvenRow)
         {
-            // Alternate background
-            if (Event.current.type == EventType.Repaint)
+            // Rounded background with alternating colors
+            var bgColor = isEvenRow ? RowBgColor : RowAltBgColor;
+
+            // Hover highlight
+            if (allowTooltip && Mouse.IsOver(rect))
             {
-                var bgColor = new Color(0.2f, 0.2f, 0.2f, 0.5f);
-                GUI.DrawTexture(rect, TexUI.HighlightTex, ScaleMode.StretchToFill, true, 0f, bgColor, 0f, 0f);
+                bgColor = new Color(bgColor.r + 0.1f, bgColor.g + 0.1f, bgColor.b + 0.15f, bgColor.a);
             }
 
-            var line1Rect = new Rect(rect.x + 4f, rect.y + 2f, rect.width - 8f, 21f);
-            var line2Rect = new Rect(rect.x + 4f, rect.y + 21f, rect.width - 8f, 21f);
+            if (Event.current.type == EventType.Repaint)
+            {
+                Widgets.DrawBoxSolid(rect, bgColor);
+
+                // Subtle left border accent
+                var accentRect = new Rect(rect.x, rect.y, 3f, rect.height);
+                Widgets.DrawBoxSolid(accentRect, new Color(0.3f, 0.5f, 0.7f, 0.6f));
+            }
+
+            var line1Rect = new Rect(rect.x + 10f, rect.y + 6f, rect.width - 20f, 20f);
+            var line2Rect = new Rect(rect.x + 10f, rect.y + 26f, rect.width - 20f, 18f);
+
+            // Phase 12: Check for powered tool and show charge bar
+            var powerComp = toolInfo.Tool?.TryGetComp<CompPowerTool>();
+            bool hasPowerComp = powerComp != null;
+            float chargeBarHeight = 0f;
+
+            if (hasPowerComp)
+            {
+                chargeBarHeight = 4f;
+                line2Rect.y += chargeBarHeight + 2f;
+            }
 
             // Line 1: Tool label + scores
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.MiddleLeft;
+
+            // Draw tool label with slight emphasis
+            GUI.color = new Color(0.95f, 0.95f, 1f);
             var labelWidth = Text.CalcSize(toolInfo.Label).x + 10f;
             var labelRect = new Rect(line1Rect.x, line1Rect.y, labelWidth, line1Rect.height);
-            var scoreRect = new Rect(labelRect.xMax, line1Rect.y, line1Rect.width - labelWidth, line1Rect.height);
-
             Widgets.Label(labelRect, toolInfo.Label);
+            GUI.color = Color.white;
 
+            // Draw scores with color based on quality
+            var scoreRect = new Rect(labelRect.xMax + 8f, line1Rect.y, line1Rect.width - labelWidth - 8f, line1Rect.height);
             Text.Anchor = TextAnchor.MiddleRight;
-            GUI.color = Color.cyan;
+
+            // Color score based on average value
+            var avgScore = GetAverageScore(toolInfo.ScoreText);
+            var scoreColor = avgScore >= 1.5f ? ScoreGoodColor :
+                            avgScore >= 1.0f ? ScoreMediumColor :
+                            new Color(0.8f, 0.6f, 0.4f);
+
+            GUI.color = scoreColor;
             Widgets.Label(scoreRect, toolInfo.ScoreText);
             GUI.color = Color.white;
 
-            // Line 2: Why text
+            // Phase 12: Draw charge bar if powered tool
+            if (hasPowerComp)
+            {
+                var chargeBarRect = new Rect(line1Rect.x, line1Rect.yMax + 2f, line1Rect.width, chargeBarHeight);
+                DrawChargeBar(chargeBarRect, powerComp);
+            }
+
+            // Line 2: Why text with better styling
             Text.Anchor = TextAnchor.MiddleLeft;
-            GUI.color = Color.gray;
+            Text.Font = GameFont.Tiny;
+            GUI.color = WhyTextColor;
             Widgets.Label(line2Rect, toolInfo.WhyText);
             GUI.color = Color.white;
+            Text.Font = GameFont.Small;
 
-            // Tooltip
+            // Tooltip with better formatting
             if (allowTooltip && Mouse.IsOver(rect) && !string.IsNullOrEmpty(toolInfo.TooltipText))
             {
                 TooltipHandler.TipRegion(rect, toolInfo.TooltipText);
             }
 
             Text.Anchor = TextAnchor.UpperLeft;
+        }
+
+        // Phase 12: Draw charge bar for powered tools
+        private static void DrawChargeBar(Rect rect, CompPowerTool powerComp)
+        {
+            if (powerComp == null) return;
+
+            // Background
+            Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.1f, 0.8f));
+
+            // Charge fill (5% bucket steps)
+            float chargePct = powerComp.ChargePct;
+            if (chargePct > 0f)
+            {
+                var fillRect = new Rect(rect.x, rect.y, rect.width * chargePct, rect.height);
+                var fillColor = chargePct > 0.5f ? new Color(0.4f, 0.8f, 0.5f) : // Green when >50%
+                                chargePct > 0.2f ? new Color(0.9f, 0.8f, 0.3f) : // Yellow when >20%
+                                new Color(0.9f, 0.4f, 0.3f); // Red when low
+                Widgets.DrawBoxSolid(fillRect, fillColor);
+            }
+
+            // Border
+            Widgets.DrawBox(rect, 1);
+        }
+
+        private static float GetAverageScore(string scoreText)
+        {
+            if (string.IsNullOrEmpty(scoreText)) return 0f;
+
+            var parts = scoreText.Split(' ');
+            float sum = 0f;
+            int count = 0;
+
+            foreach (var part in parts)
+            {
+                var colonIdx = part.IndexOf(':');
+                if (colonIdx > 0 && colonIdx < part.Length - 1)
+                {
+                    if (float.TryParse(part.Substring(colonIdx + 1), out float val))
+                    {
+                        sum += val;
+                        count++;
+                    }
+                }
+            }
+
+            return count > 0 ? sum / count : 0f;
         }
 
         private static void UpdateCacheIfNeeded(Pawn pawn)
@@ -339,6 +459,23 @@ namespace SurvivalTools.UI
 
             info.ScoreText = scoreBuilder.ToString();
             info.WhyText = whyBuilder.Length > 0 ? whyBuilder.ToString() : "ST_GearTab_BaseValues".Translate().ToString();
+
+            // Phase 12: Add charge status to tooltip
+            var powerComp = tool?.TryGetComp<CompPowerTool>();
+            if (powerComp != null)
+            {
+                _tooltipBuilder.AppendLine();
+                if (powerComp.HasCharge)
+                {
+                    _tooltipBuilder.AppendLine("ST_GearTab_PoweredBonus".Translate());
+                    _tooltipBuilder.AppendLine("ST_Power_Charged".Translate((powerComp.ChargePct * 100f).ToString("F0") + "%"));
+                }
+                else
+                {
+                    _tooltipBuilder.AppendLine("ST_GearTab_PowerEmpty".Translate());
+                }
+            }
+
             info.TooltipText = _tooltipBuilder.ToString();
 
             return info;

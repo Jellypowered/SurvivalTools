@@ -19,10 +19,6 @@ namespace SurvivalTools
         // Used to make better materials (devilstrand, hyperweave) more effective
         public List<StatModifier> stuffPowerMultiplier = new List<StatModifier>();
 
-        // Tags used by default survival tool assignments (untranslated keys/ids)
-        [NoTranslate]
-        public List<string> defaultSurvivalToolAssignmentTags = new List<string>();
-
         // Multiplier for wear rate (1 = normal)
         public float toolWearFactor = 1f;
 
@@ -40,11 +36,6 @@ namespace SurvivalTools
         public bool HasWorkStatFactors => baseWorkStatFactors?.Count > 0;
 
         /// <summary>
-        /// Check if this tool has any assignment tags defined.
-        /// </summary>
-        public bool HasAssignmentTags => defaultSurvivalToolAssignmentTags?.Count > 0;
-
-        /// <summary>
         /// Get the modifier for a specific stat, or null if not found.
         /// </summary>
         public StatModifier GetStatModifier(StatDef stat)
@@ -58,14 +49,6 @@ namespace SurvivalTools
         public float GetStatFactor(StatDef stat)
         {
             return GetStatModifier(stat)?.value ?? 1f;
-        }
-
-        /// <summary>
-        /// Check if this tool has a specific assignment tag.
-        /// </summary>
-        public bool HasAssignmentTag(string tag)
-        {
-            return !string.IsNullOrEmpty(tag) && defaultSurvivalToolAssignmentTags?.Contains(tag) == true;
         }
     }
 }

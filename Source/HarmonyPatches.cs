@@ -24,7 +24,7 @@ namespace SurvivalTools.HarmonyStuff
             try
             {
                 var t = typeof(SurvivalTools.UI.RightClickRescue.Provider_STPrioritizeWithRescue);
-                if (Prefs.DevMode) Log.Message($"[ST.RightClick] Smoke: provider type present = {t.FullName}");
+                if (Prefs.DevMode) LogRawDebug($"[ST.RightClick] Smoke: provider type present = {t.FullName}");
             }
             catch { }
         }
@@ -143,7 +143,7 @@ namespace SurvivalTools.HarmonyStuff
             {
                 var addMeth = AccessTools.Method(typeof(Pawn_InventoryTracker), nameof(Pawn_InventoryTracker.TryAddAndUnforbid), new Type[] { typeof(Thing) });
                 var txMeth = AccessTools.Method(typeof(ThingOwner), "TryTransferToContainer", new Type[] { typeof(Thing), typeof(ThingOwner), typeof(int), typeof(Thing).MakeByRefType(), typeof(bool) });
-                Log.Warning($"[SurvivalTools.Harmony] PostAddHooks targets present? TryAddAndUnforbid={(addMeth != null)} TryTransferToContainer={(txMeth != null)}");
+                LogWarning($"[SurvivalTools.Harmony] PostAddHooks targets present? TryAddAndUnforbid={(addMeth != null)} TryTransferToContainer={(txMeth != null)}");
             }
             catch { }
 
@@ -159,16 +159,16 @@ namespace SurvivalTools.HarmonyStuff
                     if (info == null) continue;
                     totalPrefixes += info.Prefixes.Count;
                 }
-                Log.Warning($"[SurvivalTools.Harmony] TryTakeOrderedJob overloads scanned={methods.Count} totalPrefixCount={totalPrefixes}");
+                LogWarning($"[SurvivalTools.Harmony] TryTakeOrderedJob overloads scanned={methods.Count} totalPrefixCount={totalPrefixes}");
                 for (int mi = 0; mi < methods.Count; mi++)
                 {
                     var m = methods[mi];
                     var info = HarmonyLib.Harmony.GetPatchInfo(m);
                     if (info == null) continue;
-                    Log.Warning($"[SurvivalTools.Harmony] Overload {mi} ({m.GetParameters().Length} params) prefixes={info.Prefixes.Count}");
+                    LogWarning($"[SurvivalTools.Harmony] Overload {mi} ({m.GetParameters().Length} params) prefixes={info.Prefixes.Count}");
                     foreach (var p in info.Prefixes)
                     {
-                        Log.Warning($"  - {p.owner}: {p.PatchMethod.DeclaringType?.Name}.{p.PatchMethod.Name} (Priority:{p.priority})");
+                        LogWarning($"  - {p.owner}: {p.PatchMethod.DeclaringType?.Name}.{p.PatchMethod.Name} (Priority:{p.priority})");
                     }
                 }
             }

@@ -65,14 +65,7 @@ namespace SurvivalTools.Helpers
             // Never drop forced items
             if (IsToolForced(pawn, toolThing)) return false;
 
-            // Check tool assignment rules
-            var tracker = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
-            if (tracker?.CurrentSurvivalToolAssignment != null)
-            {
-                // If the assignment does not allow this tool, it can be dropped
-                return !tracker.CurrentSurvivalToolAssignment.Allows(toolThing);
-            }
-
+            // Phase 11.11: Manual assignment system removed - automatic system handles all tool selection
             // Default: allow dropping if not forced
             return true;
         }
@@ -84,7 +77,7 @@ namespace SurvivalTools.Helpers
         {
             if (pawn?.Faction != Faction.OfPlayer || toolThing == null) return false;
 
-            var tracker = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>();
+            var tracker = pawn.TryGetComp<Pawn_ForcedToolTracker>();
             return tracker?.forcedHandler?.IsForced(toolThing) == true;
         }
 
@@ -127,5 +120,30 @@ namespace SurvivalTools.Helpers
 
             return false;
         }
+
+        /// <summary>
+        /// Phase 12: Check if a tool satisfies a required stat check considering charge state.
+        /// Empty powered tools don't satisfy required checks in HC/NM if the stat is power-dependent.
+        /// </summary>
+        public static bool ToolSatisfiesStatConsideringCharge(Thing tool, StatDef stat)
+        {
+            if (tool == null || stat == null)
+                return false;
+
+            // Check if this is a powered tool
+            var powerComp = tool.TryGetComp<CompPowerTool>();
+            if (powerComp != null)
+            {
+                // If tool is out of charge and this stat is power-dependent, it doesn't satisfy the requirement
+                if (!powerComp.HasCharge && powerComp.IsPoweredStat(stat))
+                {
+                    return false;
+                }
+            }
+
+            // Tool has charge, isn't powered, or stat isn't power-dependent - it satisfies
+            return true;
+        }
     }
 }
+

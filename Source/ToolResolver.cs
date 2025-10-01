@@ -332,12 +332,6 @@ namespace SurvivalTools
             // Add basic SurvivalToolProperties extension
             var toolProps = new SurvivalToolProperties();
 
-            // Set tool assignment tags based on tool kind
-            if (toolKind != STToolKind.None)
-            {
-                toolProps.defaultSurvivalToolAssignmentTags = new List<string> { toolKind.ToString().ToLower() };
-            }
-
             thingDef.modExtensions.Add(toolProps);
         }
 

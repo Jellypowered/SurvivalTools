@@ -102,8 +102,9 @@ namespace SurvivalTools
                                                // Right-click rescue float menu (Hardcore/Nightmare) toggle
         public bool enableRightClickRescue = true;
 
-        // Job gating
-        public Dictionary<string, bool> workSpeedGlobalJobGating = new Dictionary<string, bool>();
+        // Phase 12: Powered tool battery system
+        public bool enablePoweredTools = true; // Enable battery system for powered tools
+        public bool enableNuclearHazards = false; // Enable nuclear battery explosion hazards
 
         // Cached availability of optional tool types
         private bool? _hasCleaningToolsCache = null;
@@ -201,9 +202,11 @@ namespace SurvivalTools
             Scribe_Values.Look(ref enforceOnModeChange, nameof(enforceOnModeChange), true);
             Scribe_Values.Look(ref enableRightClickRescue, nameof(enableRightClickRescue), true);
 
-            Scribe_Collections.Look(ref workSpeedGlobalJobGating, nameof(workSpeedGlobalJobGating), LookMode.Value, LookMode.Value);
-            if (workSpeedGlobalJobGating == null)
-                workSpeedGlobalJobGating = new Dictionary<string, bool>();
+            // Phase 12: Powered tools
+            Scribe_Values.Look(ref enablePoweredTools, nameof(enablePoweredTools), true);
+            Scribe_Values.Look(ref enableNuclearHazards, nameof(enableNuclearHazards), false);
+
+            // Phase 11.10: workSpeedGlobalJobGating serialization removed
 
             // Initialize showGatingAlert based on mode if not set (first run or reset)
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
@@ -373,7 +376,7 @@ namespace SurvivalTools
                     }
                     catch (System.Exception ex)
                     {
-                        Log.Warning($"[SurvivalTools] Gating enforcer failed on mode change: {ex.Message}");
+                        LogWarning($"[SurvivalTools] Gating enforcer failed on mode change: {ex.Message}");
                     }
                 }
             }
@@ -546,507 +549,10 @@ namespace SurvivalTools
             GUI.color = prevColor;
         }
 
-        /// <summary>
-        /// Draw button to open WorkSpeedGlobal job configuration window
-        /// </summary>
-        public void DrawWorkSpeedGlobalConfigButton(Listing_Standard listing)
-        {
-            var prevFont = Text.Font;
-            var prevAnchor = Text.Anchor;
-            var prevColor = GUI.color;
+        #endregion Settings Window
 
-            Text.Font = GameFont.Small;
-            Text.Anchor = TextAnchor.MiddleLeft;
+        // Phase 11.10: WorkSpeedGlobal category removed - no longer gating those jobs
 
-            listing.Gap(6f);
-
-            // Create button rect
-            const float buttonHeight = 30f;
-            const float buttonWidth = 250f;
-            var buttonRect = new Rect(
-                (listing.ColumnWidth - buttonWidth) / 2f, // Center horizontally
-                listing.CurHeight,
-                buttonWidth,
-                buttonHeight
-            );
-
-            // Draw blue WorkSpeedGlobal config button
-            GUI.color = new Color(0.3f, 0.5f, 1f); // Blue color
-
-            if (Widgets.ButtonText(buttonRect, "WorkSpeedGlobal_OpenConfigButton".Translate()))
-            {
-                // Close any existing WorkSpeedGlobal window first
-                var existingWindow = Find.WindowStack.Windows.OfType<WorkSpeedGlobalConfigWindow>().FirstOrDefault();
-                if (existingWindow != null)
-                {
-                    Find.WindowStack.TryRemove(existingWindow);
-                }
-
-                var window = new WorkSpeedGlobalConfigWindow(this);
-                Find.WindowStack.Add(window);
-            }
-
-            GUI.color = prevColor;
-
-            // Advance listing position manually since we drew outside of listing
-            listing.Gap(buttonHeight + 6f);
-
-            // Restore original styling
-            Text.Font = prevFont;
-            Text.Anchor = prevAnchor;
-        }
-
-        /// <summary>
-        /// Draws a display showing how different jobs behave in the current mode
-        /// </summary>
-        private void DrawJobStatusDisplay(Listing_Standard listing)
-        {
-            // Header
-            var headerFont = GameFont.Medium;
-            var prevFont = Text.Font;
-            var prevAnchor = Text.Anchor;
-
-            Text.Font = headerFont;
-            Text.Anchor = TextAnchor.MiddleCenter;
-
-            // Create a rect for the centered header with tooltip
-            var titleRect = listing.GetRect(Text.LineHeight + 4f);
-            var headerText = "JobTable_SectionTitle".Translate();
-            Widgets.Label(titleRect, headerText);
-
-            // Add tooltip to the header
-            if (Mouse.IsOver(titleRect))
-                TooltipHandler.TipRegion(titleRect, "JobTable_SectionTooltip".Translate());
-
-            Text.Font = prevFont;
-            Text.Anchor = prevAnchor;
-
-            listing.Gap(6f);
-
-            // Get all survival tool work givers and their stats
-            var jobCategories = GetJobCategories();
-
-            if (jobCategories.Count == 0)
-            {
-                listing.Label("JobTable_NoJobsFound".Translate());
-                return;
-            }
-
-            // Determine which mode(s) to show based on current settings
-            var showNormal = !hardcoreMode && !extraHardcoreMode;
-            var showHardcore = hardcoreMode && !extraHardcoreMode;
-            var showExtraHardcore = extraHardcoreMode;
-
-            // Calculate number of active columns and their widths
-            var activeColumns = 0;
-            if (showNormal) activeColumns++;
-            if (showHardcore) activeColumns++;
-            if (showExtraHardcore) activeColumns++;
-
-            if (activeColumns == 0)
-            {
-                listing.Label("JobTable_NoActiveMode".Translate());
-                return;
-            }
-
-            const float columnSpacing = 12f; // Increased spacing between columns
-            const float minColumnWidth = 200f; // Increased significantly to provide much more room for content
-
-            // Calculate dynamic job label width based on actual content
-            var measureFont = Text.Font;
-            Text.Font = GameFont.Medium; // Use same font as rendering
-
-            var jobLabelText = "JobTable_JobType".Translate();
-            var dynamicJobLabelWidth = Mathf.Max(Text.CalcSize(jobLabelText).x + 50f, 180f); // Increased padding and minimum significantly
-
-            // Check all job categories for max width needed
-            foreach (var category in jobCategories)
-            {
-                dynamicJobLabelWidth = Mathf.Max(dynamicJobLabelWidth, Text.CalcSize(category.Name).x + 50f);
-            }
-
-            // Also check the column headers to ensure they fit with more generous padding
-            var extraHardcoreHeaderWidth = Text.CalcSize("JobTable_ExtraHardcore".Translate()).x + 80f; // Increased padding significantly
-            var requiredTextWidth = Text.CalcSize("JobTable_Required".Translate()).x + 80f;
-            var gatedTextWidth = Text.CalcSize("JobTable_GatedExample".Translate()).x + 80f; // Account for worst case gated text with extra padding
-            var minNeededColumnWidth = Mathf.Max(extraHardcoreHeaderWidth, Mathf.Max(requiredTextWidth, gatedTextWidth));
-
-            Text.Font = measureFont; // Restore font
-
-            var availableWidth = listing.ColumnWidth - dynamicJobLabelWidth;
-            var calculatedColumnWidth = activeColumns == 1 ? availableWidth :
-                              (availableWidth - (columnSpacing * (activeColumns - 1))) / activeColumns;
-
-            // Ensure column width is sufficient for the text content - use the larger of calculated or needed width
-            var columnWidth = Mathf.Max(calculatedColumnWidth, Mathf.Max(minColumnWidth, minNeededColumnWidth));
-
-            // Calculate total table height for border
-            var tableHeight = (Text.LineHeight + 10f) + (Text.LineHeight * 1.5f * jobCategories.Count) + 8f; // Header + rows with bigger font spacing + padding
-            var tableBorderRect = listing.GetRect(tableHeight);
-
-            // Draw outer table border
-            var tableBorderColor = new Color(0.6f, 0.6f, 0.6f, 0.8f);
-            var borderThickness = 2f;
-            var savedColor = GUI.color;
-
-            // Draw border frame
-            GUI.color = tableBorderColor;
-            // Top border
-            GUI.DrawTexture(new Rect(tableBorderRect.x, tableBorderRect.y, tableBorderRect.width, borderThickness), BaseContent.WhiteTex);
-            // Bottom border
-            GUI.DrawTexture(new Rect(tableBorderRect.x, tableBorderRect.yMax - borderThickness, tableBorderRect.width, borderThickness), BaseContent.WhiteTex);
-            // Left border
-            GUI.DrawTexture(new Rect(tableBorderRect.x, tableBorderRect.y, borderThickness, tableBorderRect.height), BaseContent.WhiteTex);
-            // Right border
-            GUI.DrawTexture(new Rect(tableBorderRect.xMax - borderThickness, tableBorderRect.y, borderThickness, tableBorderRect.height), BaseContent.WhiteTex);
-
-            // Create inner content area (inside the border)
-            var innerTableRect = new Rect(tableBorderRect.x + borderThickness + 4f, tableBorderRect.y + borderThickness + 4f,
-                                        tableBorderRect.width - (borderThickness * 2) - 8f, tableBorderRect.height - (borderThickness * 2) - 8f);
-
-            // Column headers with enhanced styling - increased height for better fonts
-            var headerRect = new Rect(innerTableRect.x, innerTableRect.y, innerTableRect.width, Text.LineHeight + 8f); // Increased from +4f to +8f
-
-            // Draw header background
-            var headerBgColor = new Color(0.1f, 0.1f, 0.1f, 0.6f); // Dark background for header
-            var originalColor = GUI.color;
-            GUI.color = headerBgColor;
-            GUI.DrawTexture(headerRect, BaseContent.WhiteTex);
-
-            // Draw header bottom border
-            var borderRect = new Rect(headerRect.x, headerRect.yMax - 2f, headerRect.width, 2f);
-            var borderColor = new Color(0.6f, 0.6f, 0.6f, 0.8f);
-            GUI.color = borderColor;
-            GUI.DrawTexture(borderRect, BaseContent.WhiteTex);
-
-            var currentX = headerRect.x + dynamicJobLabelWidth; // Offset for job labels
-
-            // Job Types label
-            var jobHeaderRect = new Rect(headerRect.x, headerRect.y + 2f, dynamicJobLabelWidth, headerRect.height - 4f);
-            GUI.color = Color.white;
-            var currentFont = Text.Font;
-            Text.Font = GameFont.Small; // Changed from Tiny to Small for better visibility
-            Text.Anchor = TextAnchor.MiddleCenter;
-            Widgets.Label(jobHeaderRect, "JobTable_JobTypes".Translate());
-            Text.Font = currentFont;
-            Text.Anchor = TextAnchor.MiddleLeft;
-
-            if (showNormal)
-            {
-                var normalRect = new Rect(currentX, headerRect.y + 2f, columnWidth, headerRect.height - 4f);
-                GUI.color = Color.green;
-                Text.Font = GameFont.Small; // Ensure consistent font size
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(normalRect, "JobTable_NormalMode".Translate());
-                Text.Font = currentFont;
-                Text.Anchor = TextAnchor.MiddleLeft;
-                currentX += columnWidth + columnSpacing;
-            }
-
-            if (showHardcore)
-            {
-                var hardcoreRect = new Rect(currentX, headerRect.y + 2f, columnWidth, headerRect.height - 4f);
-                GUI.color = Color.yellow;
-                Text.Font = GameFont.Small; // Ensure consistent font size
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(hardcoreRect, "JobTable_HardcoreMode".Translate());
-                Text.Font = currentFont;
-                Text.Anchor = TextAnchor.MiddleLeft;
-                currentX += columnWidth + columnSpacing;
-            }
-
-            if (showExtraHardcore)
-            {
-                var extraHardcoreRect = new Rect(currentX, headerRect.y + 2f, columnWidth, headerRect.height - 4f);
-                GUI.color = Color.red;
-                Text.Font = GameFont.Small; // Ensure consistent font size
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(extraHardcoreRect, "JobTable_ExtraHardcore".Translate());
-                Text.Font = currentFont;
-                Text.Anchor = TextAnchor.MiddleLeft;
-            }
-
-            GUI.color = Color.white;
-
-            // Draw job categories with alternating row colors inside the bordered table
-            var currentRowY = headerRect.yMax + 4f; // Start below the header
-            var rowHeight = Text.LineHeight * 1.5f; // Increased height for bigger fonts
-            for (int i = 0; i < jobCategories.Count; i++)
-            {
-                var category = jobCategories[i];
-                var rowRect = new Rect(innerTableRect.x, currentRowY, innerTableRect.width, rowHeight);
-                DrawJobCategoryRowInTable(rowRect, category, dynamicJobLabelWidth, columnWidth, columnSpacing, showNormal, showHardcore, showExtraHardcore, i);
-                currentRowY += rowHeight;
-            }
-
-            // Restore saved color
-            GUI.color = savedColor;
-        }
-
-        public void DrawJobCategoryRowInTable(Rect rowRect, JobCategory category, float jobLabelWidth, float columnWidth, float columnSpacing, bool showNormal, bool showHardcore, bool showExtraHardcore, int rowIndex)
-        {
-            // Draw alternating row background
-            if (rowIndex % 2 == 1) // Every other row (1, 3, 5...)
-            {
-                var bgColor = new Color(0.2f, 0.2f, 0.2f, 0.3f); // Subtle dark background
-                var prevColor = GUI.color;
-                GUI.color = bgColor;
-                GUI.DrawTexture(rowRect, BaseContent.WhiteTex);
-                GUI.color = prevColor;
-            }
-
-            // Job category name (leftmost, bigger font for consistency)
-            var prevFont = Text.Font;
-            Text.Font = GameFont.Medium;
-            var jobLabelRect = new Rect(rowRect.x, rowRect.y, jobLabelWidth, rowRect.height);
-            Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(jobLabelRect, category.Name);
-            Text.Anchor = TextAnchor.MiddleLeft;
-            Text.Font = prevFont;
-
-            // Draw vertical separator after job label
-            float sepX = jobLabelRect.xMax + (columnSpacing * 0.5f);
-            GUI.color = new Color(0.6f, 0.6f, 0.6f, 0.6f);
-            GUI.DrawTexture(new Rect(sepX - 0.5f, rowRect.y, 1f, rowRect.height), BaseContent.WhiteTex);
-            GUI.color = Color.white;
-
-            // Draw columns based on which modes are active
-            var currentX = rowRect.x + jobLabelWidth + columnSpacing; // Start after job label
-
-            // Set bigger font for column values
-            var prevColumnFont = Text.Font;
-            Text.Font = GameFont.Medium;
-
-            if (showNormal)
-            {
-                var normalRect = new Rect(currentX, rowRect.y, columnWidth, rowRect.height);
-                GUI.color = Color.green;
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(normalRect, GetModeStatusText(category, GameMode.Normal));
-                Text.Anchor = TextAnchor.MiddleLeft;
-                currentX += columnWidth + columnSpacing;
-
-                // Draw vertical separator after normal mode column (if more columns follow)
-                if (showHardcore || showExtraHardcore)
-                {
-                    float normalSepX = currentX - (columnSpacing * 0.5f);
-                    GUI.color = new Color(0.6f, 0.6f, 0.6f, 0.6f);
-                    GUI.DrawTexture(new Rect(normalSepX - 0.5f, rowRect.y, 1f, rowRect.height), BaseContent.WhiteTex);
-                    GUI.color = Color.white;
-                }
-            }
-
-            if (showHardcore)
-            {
-                var hardcoreRect = new Rect(currentX, rowRect.y, columnWidth, rowRect.height);
-                GUI.color = GetModeColor(category, GameMode.Hardcore);
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(hardcoreRect, GetModeStatusText(category, GameMode.Hardcore));
-                Text.Anchor = TextAnchor.MiddleLeft;
-                currentX += columnWidth + columnSpacing;
-
-                // Draw vertical separator after hardcore mode column (if extra hardcore follows)
-                if (showExtraHardcore)
-                {
-                    float hardcoreSepX = currentX - (columnSpacing * 0.5f);
-                    GUI.color = new Color(0.6f, 0.6f, 0.6f, 0.6f);
-                    GUI.DrawTexture(new Rect(hardcoreSepX - 0.5f, rowRect.y, 1f, rowRect.height), BaseContent.WhiteTex);
-                    GUI.color = Color.white;
-                }
-            }
-
-            if (showExtraHardcore)
-            {
-                var extraHardcoreRect = new Rect(currentX, rowRect.y, columnWidth, rowRect.height);
-                GUI.color = GetModeColor(category, GameMode.ExtraHardcore);
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(extraHardcoreRect, GetModeStatusText(category, GameMode.ExtraHardcore));
-                Text.Anchor = TextAnchor.MiddleLeft;
-            }
-
-            // Reset font and settings
-            Text.Font = prevColumnFont;
-            Text.Anchor = TextAnchor.UpperLeft;
-            GUI.color = Color.white;
-        }
-
-        public List<JobCategory> GetJobCategories()
-        {
-            var categories = new List<JobCategory>();
-
-            // Get all WorkGivers with tool requirements
-            var toolWorkGivers = DefDatabase<WorkGiverDef>.AllDefsListForReading
-                .Where(wg => wg.HasModExtension<WorkGiverExtension>())
-                .ToList();
-
-            // Group by stat type to create logical categories
-            var statGroups = new Dictionary<string, List<StatDef>>();
-
-            foreach (var wg in toolWorkGivers)
-            {
-                var requiredStats = wg.GetModExtension<WorkGiverExtension>()?.requiredStats;
-                if (requiredStats?.Any() == true)
-                {
-                    foreach (var stat in requiredStats)
-                    {
-                        var categoryName = GetStatCategoryName(stat);
-                        if (!statGroups.ContainsKey(categoryName))
-                            statGroups[categoryName] = new List<StatDef>();
-
-                        if (!statGroups[categoryName].Contains(stat))
-                            statGroups[categoryName].Add(stat);
-                    }
-                }
-            }
-
-            // Add compatibility stats from active mods
-            var compatStats = CompatAPI.GetAllCompatibilityStats();
-            foreach (var stat in compatStats)
-            {
-                var categoryName = GetStatCategoryName(stat);
-                if (!statGroups.ContainsKey(categoryName))
-                    statGroups[categoryName] = new List<StatDef>();
-
-                if (!statGroups[categoryName].Contains(stat))
-                    statGroups[categoryName].Add(stat);
-            }
-
-            // Add WorkSpeedGlobal category if there are any configured jobs
-            if (WorkSpeedGlobalHelper.GetWorkSpeedGlobalJobs().Any())
-            {
-                var workSpeedGlobalStat = ST_StatDefOf.WorkSpeedGlobal;
-                if (workSpeedGlobalStat != null)
-                {
-                    var categoryName = GetStatCategoryName(workSpeedGlobalStat);
-                    if (!statGroups.ContainsKey(categoryName))
-                        statGroups[categoryName] = new List<StatDef>();
-
-                    if (!statGroups[categoryName].Contains(workSpeedGlobalStat))
-                        statGroups[categoryName].Add(workSpeedGlobalStat);
-                }
-            }
-
-            // Create job categories
-            foreach (var group in statGroups)
-            {
-                categories.Add(new JobCategory
-                {
-                    Name = group.Key,
-                    Stats = group.Value,
-                    IsOptional = IsOptionalJobCategory(group.Key, group.Value)
-                });
-            }
-
-            return categories.OrderBy(c => c.Name).ToList();
-        }
-
-        private string GetStatCategoryName(StatDef stat)
-        {
-            if (stat == ST_StatDefOf.DiggingSpeed) return "Mining";
-            if (stat == StatDefOf.ConstructionSpeed) return "Construction";
-            if (stat == ST_StatDefOf.TreeFellingSpeed) return "Tree Cutting";
-            if (stat == ST_StatDefOf.PlantHarvestingSpeed) return "Plant Work";
-            if (stat == ST_StatDefOf.SowingSpeed) return "Sowing";
-            if (stat == ST_StatDefOf.ResearchSpeed) return "Research";
-            if (stat == ST_StatDefOf.CleaningSpeed) return "Cleaning";
-            if (stat == ST_StatDefOf.MedicalOperationSpeed || stat == ST_StatDefOf.MedicalSurgerySuccessChance) return "Medical";
-            if (stat == ST_StatDefOf.ButcheryFleshSpeed || stat == ST_StatDefOf.ButcheryFleshEfficiency) return "Butchery";
-            if (stat == ST_StatDefOf.MaintenanceSpeed) return "Maintenance";
-            if (stat == ST_StatDefOf.DeconstructionSpeed) return "Deconstruction";
-
-            // WorkSpeedGlobal stat handling
-            if (stat == ST_StatDefOf.WorkSpeedGlobal) return "General Work Speed";
-
-            // Research Reinvented compatibility
-            if (stat?.defName == "ResearchSpeed") return "Research Reinvented";
-            if (stat?.defName == "FieldResearchSpeedMultiplier") return "Field Research";
-
-            return stat.LabelCap.ToString() ?? stat.defName;
-        }
-
-        private bool IsOptionalJobCategory(string categoryName, List<StatDef> stats)
-        {
-            // Cleaning and butchery are always optional (never required even in hardcore)
-            if (categoryName == "Cleaning" || categoryName == "Butchery") return true;
-
-            // Medical is optional in extra hardcore mode based on settings
-            if (categoryName == "Medical") return true;
-
-            // General Work Speed is configurable - some jobs are gated, some aren't
-            if (categoryName == "General Work Speed") return true;
-
-            // Research Reinvented categories - treat as core research work, not optional
-            if (categoryName == "Reinvented Research" || categoryName == "Field Research") return false;
-
-            return false;
-        }
-
-        private string GetModeStatusText(JobCategory category, GameMode mode)
-        {
-            switch (mode)
-            {
-                case GameMode.Normal:
-                    return "JobTable_Enhanced".Translate(); // Tools provide bonuses but aren't required
-
-                case GameMode.Hardcore:
-                    // Special handling for General Work Speed based on job gating
-                    if (category.Name == "General Work Speed")
-                    {
-                        var gatedJobs = WorkSpeedGlobalHelper.GetWorkSpeedGlobalJobs().Count(j => workSpeedGlobalJobGating.GetValueOrDefault(j.defName, true));
-                        var totalJobs = WorkSpeedGlobalHelper.GetWorkSpeedGlobalJobs().Count();
-                        if (gatedJobs == totalJobs) return "JobTable_Required".Translate();
-                        if (gatedJobs == 0) return "JobTable_Enhanced".Translate();
-                        return "JobTable_GatedFormat".Translate(gatedJobs, totalJobs);
-                    }
-                    if (category.IsOptional && (category.Name == "Cleaning" || category.Name == "Butchery"))
-                        return "JobTable_Enhanced".Translate(); // Still optional in hardcore
-                    return "JobTable_Required".Translate(); // Tools are required to do the job
-
-                case GameMode.ExtraHardcore:
-                    // Special handling for General Work Speed based on job gating
-                    if (category.Name == "General Work Speed")
-                    {
-                        var gatedJobs = WorkSpeedGlobalHelper.GetWorkSpeedGlobalJobs().Count(j => workSpeedGlobalJobGating.GetValueOrDefault(j.defName, true));
-                        var totalJobs = WorkSpeedGlobalHelper.GetWorkSpeedGlobalJobs().Count();
-                        if (gatedJobs == totalJobs) return "JobTable_Required".Translate();
-                        if (gatedJobs == 0) return "JobTable_Enhanced".Translate();
-                        return "JobTable_GatedFormat".Translate(gatedJobs, totalJobs);
-                    }
-                    if (category.Name == "Cleaning" && !requireCleaningTools) return "JobTable_Enhanced".Translate();
-                    if (category.Name == "Butchery" && !requireButcheryTools) return "JobTable_Enhanced".Translate();
-                    if (category.Name == "Medical" && !requireMedicalTools) return "JobTable_Enhanced".Translate();
-                    return "JobTable_Required".Translate(); // Tools are required based on settings
-
-                default:
-                    return "JobTable_Status_Unknown".Translate();
-            }
-        }
-
-        private Color GetModeColor(JobCategory category, GameMode mode)
-        {
-            var status = GetModeStatusText(category, mode);
-            // Compare with localized equivalents
-            if (status == "JobTable_Enhanced".Translate()) return Color.green;
-            if (status == "JobTable_Required".Translate()) return Color.yellow;
-            if (status == "JobTable_Blocked".Translate()) return Color.red;
-            return Color.white;
-        }
-
-        private enum GameMode
-        {
-            Normal,
-            Hardcore,
-            ExtraHardcore
-        }
-
-        public class JobCategory
-        {
-            public string Name { get; set; }
-            public List<StatDef> Stats { get; set; } = new List<StatDef>();
-            public bool IsOptional { get; set; }
-        }
-
-        #endregion
         #region Resets
 
 
@@ -1196,28 +702,43 @@ namespace SurvivalTools
 
         private float CalculateDynamicContentHeight(float availableWidth)
         {
-            // Calculate content height for enhanced window (job table + extra hardcore only)
+            // Calculate content height for enhanced window (extra hardcore settings only)
+            // Phase 11.10: Job table removed with WorkSpeedGlobal system
             // This ensures content scales properly with window size
 
             float baseHeight = 50f; // Base spacing (reduced since no title area)
 
+            // Pacifist equipping checkbox
+            baseHeight += 30f;
+
             // Extra hardcore settings (when enabled and applicable)
-            if (settings.hardcoreMode && settings.HasAnyOptionalTools && settings.extraHardcoreMode)
+            if (settings.hardcoreMode && settings.HasAnyOptionalTools)
             {
-                baseHeight += 35f * 4; // Extra hardcore options
+                baseHeight += 35f; // Extra hardcore mode checkbox
+
+                if (settings.extraHardcoreMode)
+                {
+                    // Individual optional tool requirement checkboxes
+                    if (settings.HasCleaningTools) baseHeight += 30f;
+                    if (settings.HasButcheryTools) baseHeight += 30f;
+                    if (settings.HasMedicalTools) baseHeight += 30f;
+
+                    // Research Reinvented compatibility (if detected)
+                    if (RRHelpers.IsRRActive)
+                    {
+                        baseHeight += 60f; // RR section header + enable checkbox
+                        if (settings.enableRRCompatibility)
+                        {
+                            baseHeight += 60f; // Two RR option checkboxes
+                        }
+                    }
+                }
             }
 
-            // Job requirements table - this is the main content
-            float tableWidth = availableWidth - 40f; // Account for margins
-            float jobCount = CountVisibleJobs();
-            float rowHeight = 30f; // Increased for bigger fonts
-            float headerHeight = 60f; // Header + tooltip space
-            baseHeight += headerHeight + (jobCount * rowHeight) + 40f; // Table + padding
-
             // Add extra space for the Close button at the bottom (RimWorld automatic close button)
-            baseHeight += 60f; // Space for close button + padding
+            baseHeight += 80f; // Space for close button + padding
 
-            return baseHeight + 100f; // Extra padding
+            return baseHeight + 100f; // Extra padding for scrolling comfort
         }
 
         private void DrawDynamicSettingsContent(Listing_Standard listing, float availableWidth)
@@ -1263,7 +784,7 @@ namespace SurvivalTools
                         }
                         catch (System.Exception ex)
                         {
-                            Log.Warning($"[SurvivalTools] Gating enforcer failed on extra hardcore mode change: {ex.Message}");
+                            LogWarning($"[SurvivalTools] Gating enforcer failed on extra hardcore mode change: {ex.Message}");
                         }
                     }
                 }
@@ -1339,276 +860,31 @@ namespace SurvivalTools
                 GUI.color = prevColor;
                 listing.GapLine();
                 listing.Gap(12f);
+
+                // Phase 12: Powered tools settings
+                listing.Label("Powered Tools (Battery System)");
+                listing.Gap(4f);
+
+                var poweredToolsRect = listing.GetRect(Text.LineHeight);
+                Widgets.CheckboxLabeled(poweredToolsRect, "Enable powered tools battery system", ref settings.enablePoweredTools);
+                if (Mouse.IsOver(poweredToolsRect))
+                    TooltipHandler.TipRegion(poweredToolsRect, "When enabled, powered tools (drills, etc.) use batteries. Empty tools function at reduced efficiency and don't satisfy required checks in Hardcore/Nightmare.");
+
+                var nuclearHazardRect = listing.GetRect(Text.LineHeight);
+                nuclearHazardRect.x += 40f;
+                nuclearHazardRect.width -= 40f;
+                Widgets.CheckboxLabeled(nuclearHazardRect, "Enable nuclear battery hazards", ref settings.enableNuclearHazards);
+                if (Mouse.IsOver(nuclearHazardRect))
+                    TooltipHandler.TipRegion(nuclearHazardRect, "When enabled, destroyed nuclear batteries create small explosions.");
+
+                listing.GapLine();
+                listing.Gap(12f);
             }
-
-            // WorkSpeedGlobal Job Configuration Button
-            settings.DrawWorkSpeedGlobalConfigButton(listing);
-
-            // Job Requirements Table - centered and properly sized for the window
-            DrawCenteredJobTable(listing, availableWidth);
 
             // Add some spacing after the job table to prevent Close button overlap
             listing.Gap();
             listing.Gap();
             listing.Gap();
-        }
-
-        /// <summary>
-        /// Draw the job requirements table centered and properly sized for the enhanced window
-        /// </summary>
-        private void DrawCenteredJobTable(Listing_Standard listing, float availableWidth)
-        {
-            // ---- Title ----
-            var prevFont = Text.Font;
-            var prevAnchor = Text.Anchor;
-            var prevColor = GUI.color;
-
-            Text.Font = GameFont.Medium;
-            Text.Anchor = TextAnchor.MiddleCenter;
-
-            var titleRect = listing.GetRect(Text.LineHeight + 4f);
-            Widgets.Label(titleRect, "JobTable_SectionTitle".Translate());
-            if (Mouse.IsOver(titleRect))
-                TooltipHandler.TipRegion(titleRect, "JobTable_SectionTooltip".Translate());
-
-            Text.Font = prevFont;
-            Text.Anchor = prevAnchor;
-
-            listing.Gap(6f);
-
-            // ---- Data ----
-            var jobCategories = settings.GetJobCategories();
-            if (jobCategories.Count == 0)
-            {
-                var noJobsRect = listing.GetRect(Text.LineHeight);
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(noJobsRect, "JobTable_NoJobsFound".Translate());
-                Text.Anchor = TextAnchor.UpperLeft;
-                return;
-            }
-
-            bool showNormal = !settings.hardcoreMode && !settings.extraHardcoreMode;
-            bool showHardcore = settings.hardcoreMode && !settings.extraHardcoreMode;
-            bool showExtraHardcore = settings.extraHardcoreMode;
-
-            int activeColumns = (showNormal ? 1 : 0) + (showHardcore ? 1 : 0) + (showExtraHardcore ? 1 : 0);
-            if (activeColumns == 0)
-            {
-                listing.Label("No active mode selected.");
-                return;
-            }
-
-            // ---- Measure widths (use the same font we render with) ----
-            var measureFont = Text.Font;
-            Text.Font = GameFont.Medium;
-
-            string jobLabelText = "JobTable_JobType".Translate();
-            string normalHeaderText = "JobTable_Normal".Translate();
-            string hardcoreHeaderText = "JobTable_Hardcore".Translate();
-            string extraHardcoreHeaderText = "JobTable_ExtraHardcore".Translate();
-
-            float jobLabelWidth = Mathf.Max(Text.CalcSize(jobLabelText).x + 30f, 140f);
-            float columnWidth = 100f;
-
-            if (showNormal) columnWidth = Mathf.Max(columnWidth, Text.CalcSize(normalHeaderText).x + 40f);
-            if (showHardcore) columnWidth = Mathf.Max(columnWidth, Text.CalcSize(hardcoreHeaderText).x + 40f);
-            if (showExtraHardcore) columnWidth = Mathf.Max(columnWidth, Text.CalcSize(extraHardcoreHeaderText).x + 40f);
-
-            string reqText = "JobTable_Required".Translate();
-            string enhText = "JobTable_Enhanced".Translate();
-
-            foreach (var cat in jobCategories)
-            {
-                jobLabelWidth = Mathf.Max(jobLabelWidth, Text.CalcSize(cat.Name).x + 30f);
-                columnWidth = Mathf.Max(columnWidth, Text.CalcSize(reqText).x + 20f);
-                columnWidth = Mathf.Max(columnWidth, Text.CalcSize(enhText).x + 20f);
-            }
-
-            Text.Font = measureFont;
-
-            // ---- Table geometry ----
-            const float pad = 4f;
-            const float columnSpacing = 8f;
-            float totalSpacing = (activeColumns - 1) * columnSpacing;
-            float totalTableWidth = jobLabelWidth + (columnWidth * activeColumns) + totalSpacing;
-
-            float headerHeight = Text.LineHeight + 10f;
-            float rowHeight = Text.LineHeight * 1.5f;
-
-            // Reserve space for the pinned header
-            float pinnedHeaderSpace = headerHeight + 6f; // Extra space for visual separation
-
-            // Calculate maximum content height for scrolling (available space minus header and padding)
-            float maxContentHeight = 300f; // Maximum height before scrolling
-            float contentHeight = rowHeight * jobCategories.Count;
-            bool needsScrolling = contentHeight > maxContentHeight;
-            float actualContentHeight = needsScrolling ? maxContentHeight : contentHeight;
-
-            float totalTableHeight = pinnedHeaderSpace + actualContentHeight + (pad * 2f);
-
-            // Reserve vertical space from the listing and center horizontally
-            Rect reserved = listing.GetRect(totalTableHeight);
-            float tableStartX = Mathf.Max(0f, (availableWidth - totalTableWidth) / 2f);
-
-            // Outer frame
-            Rect tableRect = new Rect(reserved.x + tableStartX, reserved.y, totalTableWidth, totalTableHeight);
-            GUI.color = new Color(0.1f, 0.1f, 0.1f, 0.3f);
-            GUI.DrawTexture(tableRect, BaseContent.WhiteTex);
-            GUI.color = new Color(0.6f, 0.6f, 0.6f, 0.8f);
-            Widgets.DrawBox(tableRect, 1);
-            GUI.color = Color.white;
-
-            // ---- Pinned Header Area ----
-            Rect pinnedHeaderRect = new Rect(tableRect.x + pad, tableRect.y + pad, tableRect.width - pad * 2f, headerHeight);
-
-            // Header background - darker and more prominent
-            GUI.color = new Color(0.1f, 0.1f, 0.1f, 0.9f);
-            GUI.DrawTexture(pinnedHeaderRect, BaseContent.WhiteTex);
-            GUI.color = new Color(0.6f, 0.6f, 0.6f, 1f);
-            Widgets.DrawBox(pinnedHeaderRect, 1);
-            GUI.color = Color.white;
-
-            // ---- Pinned Header Content ----
-            // Job Type header cell
-            Rect jobHeaderRect = new Rect(pinnedHeaderRect.x, pinnedHeaderRect.y, jobLabelWidth, pinnedHeaderRect.height);
-            Text.Font = GameFont.Small;
-            Text.Anchor = TextAnchor.MiddleCenter;
-            GUI.color = Color.cyan;
-            Widgets.Label(new Rect(jobHeaderRect.x + 4f, jobHeaderRect.y + 2f, jobHeaderRect.width - 8f, jobHeaderRect.height - 4f),
-                          "JobTable_JobType".Translate());
-            GUI.color = Color.white;
-
-            float currentX = jobHeaderRect.xMax + columnSpacing;
-
-            // Vertical separators for pinned header
-            float sepTop = pinnedHeaderRect.y;
-            float sepHeight = pinnedHeaderRect.height;
-
-            float firstSepX = jobHeaderRect.xMax + (columnSpacing * 0.5f);
-            GUI.color = new Color(0.6f, 0.6f, 0.6f, 0.8f);
-            GUI.DrawTexture(new Rect(firstSepX - 0.5f, sepTop, 1f, sepHeight), BaseContent.WhiteTex);
-            GUI.color = Color.white;
-
-            // Mode headers in pinned area
-            if (showNormal)
-            {
-                Rect normalRect = new Rect(currentX, pinnedHeaderRect.y + 2f, columnWidth, pinnedHeaderRect.height - 4f);
-                GUI.color = new Color(0.5f, 1f, 0.5f);
-                Text.Font = GameFont.Medium;
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(normalRect, normalHeaderText);
-                GUI.color = Color.white;
-
-                currentX += columnWidth + columnSpacing;
-
-                if (showHardcore || showExtraHardcore)
-                {
-                    float sepX = currentX - (columnSpacing * 0.5f);
-                    GUI.color = new Color(0.6f, 0.6f, 0.6f, 0.8f);
-                    GUI.DrawTexture(new Rect(sepX - 0.5f, sepTop, 1f, sepHeight), BaseContent.WhiteTex);
-                    GUI.color = Color.white;
-                }
-            }
-
-            if (showHardcore)
-            {
-                Rect hardcoreRect = new Rect(currentX, pinnedHeaderRect.y + 2f, columnWidth, pinnedHeaderRect.height - 4f);
-                GUI.color = new Color(1f, 1f, 0.5f);
-                Text.Font = GameFont.Medium;
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(hardcoreRect, hardcoreHeaderText);
-                GUI.color = Color.white;
-
-                currentX += columnWidth + columnSpacing;
-
-                if (showExtraHardcore)
-                {
-                    float sepX = currentX - (columnSpacing * 0.5f);
-                    GUI.color = new Color(0.6f, 0.6f, 0.6f, 0.8f);
-                    GUI.DrawTexture(new Rect(sepX - 0.5f, sepTop, 1f, sepHeight), BaseContent.WhiteTex);
-                    GUI.color = Color.white;
-                }
-            }
-
-            if (showExtraHardcore)
-            {
-                Rect extraRect = new Rect(currentX, pinnedHeaderRect.y + 2f, columnWidth, pinnedHeaderRect.height - 4f);
-                GUI.color = new Color(1f, 0.5f, 0.5f);
-                Text.Font = GameFont.Medium;
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(extraRect, extraHardcoreHeaderText);
-                GUI.color = Color.white;
-            }
-
-            // ---- Scrollable Content Area ----
-            Rect contentAreaRect = new Rect(tableRect.x + pad, pinnedHeaderRect.yMax + 3f, tableRect.width - pad * 2f, actualContentHeight);
-
-            if (needsScrolling)
-            {
-                // Use scroll view for content. Ensure view height is at least the visible content area to prevent clipping
-                Rect viewRect = new Rect(0, 0, contentAreaRect.width - 20f, Mathf.Max(contentAreaRect.height, contentHeight));
-
-                Widgets.BeginScrollView(contentAreaRect, ref enhancedScrollPosition, viewRect);
-
-                // Draw rows in scroll view
-                float rowY = 0f;
-                for (int i = 0; i < jobCategories.Count; i++)
-                {
-                    var category = jobCategories[i];
-                    Rect rowRect = new Rect(0, rowY, viewRect.width, rowHeight);
-
-                    if (i % 2 == 1)
-                    {
-                        GUI.color = new Color(1f, 1f, 1f, 0.05f);
-                        GUI.DrawTexture(rowRect, BaseContent.WhiteTex);
-                        GUI.color = Color.white;
-                    }
-
-                    settings.DrawJobCategoryRowInTable(rowRect, category, jobLabelWidth, columnWidth, columnSpacing,
-                                                       showNormal, showHardcore, showExtraHardcore, i);
-                    rowY += rowHeight;
-                }
-
-                Widgets.EndScrollView();
-            }
-            else
-            {
-                // Draw rows directly without scrolling
-                float rowY = contentAreaRect.y;
-                for (int i = 0; i < jobCategories.Count; i++)
-                {
-                    var category = jobCategories[i];
-                    Rect rowRect = new Rect(contentAreaRect.x, rowY, contentAreaRect.width, rowHeight);
-
-                    if (i % 2 == 1)
-                    {
-                        GUI.color = new Color(1f, 1f, 1f, 0.05f);
-                        GUI.DrawTexture(rowRect, BaseContent.WhiteTex);
-                        GUI.color = Color.white;
-                    }
-
-                    settings.DrawJobCategoryRowInTable(rowRect, category, jobLabelWidth, columnWidth, columnSpacing,
-                                                       showNormal, showHardcore, showExtraHardcore, i);
-                    rowY += rowHeight;
-                }
-            }
-
-            // Reset text state
-            Text.Anchor = TextAnchor.UpperLeft;
-            Text.Font = GameFont.Small;
-
-            // restore GUI state
-            GUI.color = prevColor;
-            Text.Font = prevFont;
-            Text.Anchor = prevAnchor;
-        }
-
-
-        private float CountVisibleJobs()
-        {
-            // Count jobs that will be displayed in the table
-            // Use a simple estimate since we don't need the exact method
-            return 12f; // Approximate number of job types typically shown
         }
     }
 }

@@ -33,7 +33,7 @@ namespace SurvivalTools.DebugTools
             "SurvivalTools.Assign.PostEquipHooks_AddEquipment",
             "SurvivalTools.Assign.PostEquipHooks_AddEquipment+PostEquipHooks_NotifyAdded"
         };
-        [LudeonTK.DebugAction("ST", "Health Report (one file)", false, false)]
+        [LudeonTK.DebugAction("Survival Tools", "Health Report (one file)", false, false)]
         private static void Generate()
         {
             try

@@ -30,6 +30,10 @@ namespace SurvivalTools.Assign
         private static readonly System.Collections.Generic.Dictionary<int, int> _nmToken = new System.Collections.Generic.Dictionary<int, int>(64); // pawnId -> cooldown tick
         private static readonly System.Collections.Generic.Dictionary<int, int> _nmLogCooldown = new System.Collections.Generic.Dictionary<int, int>(128); // pawnId -> nextTick for instrumentation
 
+        // Throttle repeated PreWork cancels/logs per pawn+job+target+stat to prevent micro-stutter
+        private static readonly System.Collections.Generic.Dictionary<int, int> _preworkCancelCD = new System.Collections.Generic.Dictionary<int, int>(128);
+        private const int PREWORK_CANCEL_COOLDOWN_TICKS = 900; // ~15s default
+
         // (removed unused _patchApplied flag)
 
         /// <summary>
@@ -47,6 +51,48 @@ namespace SurvivalTools.Assign
             }
         }
 
+        // ---------------- Throttle Helpers for Cancel Operations ----------------
+
+        /// <summary>
+        /// Generate hash key for throttle cache: pawn + job + target + stat
+        /// </summary>
+        private static int HashThrottleKey(Pawn p, Job j, StatDef stat)
+        {
+            unchecked
+            {
+                int h = 17;
+                h = h * 31 + (p?.thingIDNumber ?? 0);
+                h = h * 31 + (j?.def?.shortHash ?? 0);
+                // Include main target identity to avoid spamming when switching targets
+                var tgt = j?.GetTarget(TargetIndex.A);
+                if (tgt.HasValue)
+                {
+                    if (tgt.Value.Thing != null)
+                        h = h * 31 + tgt.Value.Thing.thingIDNumber;
+                    else
+                        h = h * 31 + tgt.Value.Cell.GetHashCode();
+                }
+                h = h * 31 + (stat?.shortHash ?? 0);
+                return h;
+            }
+        }
+
+        /// <summary>
+        /// Check if a cancel operation is within cooldown period
+        /// </summary>
+        private static bool IsOnCancelCooldown(int key, int now)
+        {
+            return _preworkCancelCD.TryGetValue(key, out var until) && now < until;
+        }
+
+        /// <summary>
+        /// Arm the cancel cooldown for a specific key
+        /// </summary>
+        private static void ArmCancelCooldown(int key, int now, int durationTicks)
+        {
+            _preworkCancelCD[key] = now + durationTicks;
+        }
+
         // ---------------- Shared Guards & Helpers ----------------
         // Replaced by shared helper PawnEligibility.IsEligibleColonistHuman
 
@@ -61,7 +107,7 @@ namespace SurvivalTools.Assign
                 jd == JobDefOf.Wait_MaintainPosture || jd == JobDefOf.Goto || jd == JobDefOf.GotoWander)
                 return false;
             // Explicit inclusion: research (not normally covered by generic RelevantStats resolver in some setups)
-            if (jd == JobDefOf.Research || jd.defName == "Research") return true;
+            if (jd == JobDefOf.Research || string.Equals(jd.defName, "Research", StringComparison.Ordinal)) return true;
             try
             {
                 // Use helper to resolve associated WorkGiver (best-effort) then unified relevant stat resolver.
@@ -71,7 +117,7 @@ namespace SurvivalTools.Assign
                 // Fallback: jobDef based (covers patterns where job instance targets differ)
                 var statsFromJobDef = SurvivalToolUtility.RelevantStatsFor(wg, jd) ?? new System.Collections.Generic.List<StatDef>();
                 // If still empty and this is research, force true (ensures pre-work logic runs)
-                if (statsFromJobDef.Count == 0 && (jd == JobDefOf.Research || jd.defName == "Research")) return true;
+                if (statsFromJobDef.Count == 0 && (jd == JobDefOf.Research || string.Equals(jd.defName, "Research", StringComparison.Ordinal))) return true;
                 return statsFromJobDef.Count > 0;
             }
             catch { return true; } // fail open to avoid accidental suppression
@@ -298,6 +344,10 @@ namespace SurvivalTools.Assign
             if (pawn == null) return true;
             if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn) || !JobUsesTools(pawn, job)) return true; // early skip
             if (pawn.CurJobDef == JobDefOf.Ingest) return true; // do not manage while eating
+
+            // Cache settings once at method entry for performance
+            var settings = SurvivalToolsMod.Settings;
+
             // AI path logging already covered elsewhere; ordered overloads log before delegating
             // Unified path: determine relevant stat (may be null – still enforce carry), attempt upgrade, then strict carry enforcement.
             var workStat = GetRelevantWorkStat(job); // may be null for non‑supported jobs (still enforce carry limit)
@@ -305,7 +355,6 @@ namespace SurvivalTools.Assign
             // Attempt upgrade only if job has a relevant stat and assignments enabled
             Thing pendingEquip = null;
             bool upgraded = false;
-            var settings = SurvivalToolsMod.Settings;
             if (workStat != null && GetEnableAssignments(settings) && pawn.IsColonist && pawn.Awake() && !JobUtils.IsToolManagementJob(job))
             {
                 if (pawn.CurJobDef == JobDefOf.Ingest) return true; // ingest protection
@@ -317,39 +366,54 @@ namespace SurvivalTools.Assign
                 }
             }
 
-            // EARLY GATING ENFORCEMENT (before carry enforcement): if sow/chop and not upgraded and pawn lacks required tool, cancel.
+            // EARLY GATING ENFORCEMENT (before carry enforcement): if core work stat and not upgraded and pawn lacks required tool, cancel.
+            // Phase 11.13: Expanded to include all non-optional work stats (research, mining, harvesting, medical, maintenance).
+            // Optional stats (CleaningSpeed) deliberately excluded - only gated in Extra Hardcore mode via separate logic.
+            // THROTTLED to prevent micro-stutter from repeated log spam.
             try
             {
-                if (!upgraded && workStat != null && settings != null && (
-                        workStat == ST_StatDefOf.SowingSpeed ||
-                        workStat == ST_StatDefOf.TreeFellingSpeed ||
-                        workStat == StatDefOf.ConstructionSpeed))
+                if (!upgraded && workStat != null && settings != null && IsGateableWorkStat(workStat))
                 {
                     bool shouldGate = StatGatingHelper.ShouldBlockJobForStat(workStat, settings, pawn);
                     if (shouldGate && !pawn.HasSurvivalToolFor(workStat))
                     {
+                        // Cache tick access for hot path performance
                         int now = Find.TickManager?.TicksGame ?? 0;
-                        const int cd = 600;
-                        int keyId = (pawn.thingIDNumber * 479) ^ workStat.index; // separate hash space for clarity
-                        if (!_nmLogCooldown.TryGetValue(keyId, out var next) || now >= next)
+                        int throttleKey = HashThrottleKey(pawn, job, workStat);
+
+                        // Check if rescue is already queued (reuse existing logic)
+                        bool rescueAlreadyQueued = false;
+                        try
                         {
-                            _nmLogCooldown[keyId] = now + cd;
-                            if (Prefs.DevMode)
-                            {
-                                if (workStat == ST_StatDefOf.SowingSpeed)
-                                    Log.Message($"[Gate] Sow BLOCK (no tool) pawn={pawn.LabelShort}");
-                                else if (workStat == ST_StatDefOf.TreeFellingSpeed)
-                                    Log.Message($"[Gate] Chop BLOCK (no tool) pawn={pawn.LabelShort}");
-                                else if (workStat == StatDefOf.ConstructionSpeed)
-                                    Log.Message($"[Gate] Construct BLOCK (no tool) pawn={pawn.LabelShort}");
-                            }
+                            var curJob = pawn?.jobs?.curJob;
+                            var curDef = curJob?.def;
+                            rescueAlreadyQueued = (curDef == JobDefOf.Equip || curDef == JobDefOf.TakeInventory);
                         }
-                        if (Prefs.DevMode)
+                        catch { }
+
+                        // Bypass throttle for player-forced jobs (right-click immediate) or when rescue is queued
+                        bool bypassThrottle = job.playerForced || rescueAlreadyQueued;
+
+                        if (!bypassThrottle && IsOnCancelCooldown(throttleKey, now))
                         {
-                            string jobName = job.def.defName;
-                            if (job.def == JobDefOf.FinishFrame) jobName = "FinishFrame"; // stable labeling
-                            Log.Message($"[PreWork] Cancel {jobName}: missing {workStat.defName} tool and no rescue queued (pawn={pawn.LabelShort})");
+                            // Fast-fail: still block the job, but skip heavy work and logging
+                            Gating.GatingEnforcer.CancelCurrentJob(pawn, job, Gating.ST_CancelReason.ST_Gate_MissingToolStat);
+                            return false;
                         }
+
+                        // Arm cooldown for next window (only when we're about to do heavy work/logging)
+                        if (!bypassThrottle)
+                        {
+                            ArmCancelCooldown(throttleKey, now, PREWORK_CANCEL_COOLDOWN_TICKS);
+                        }
+
+                        // Log only when arming cooldown (at most once per window) AND in DevMode + debugLogging
+                        if (Prefs.DevMode && settings.debugLogging && !bypassThrottle)
+                        {
+                            string kind = GetWorkKindLabel(workStat, job);
+                            Log.Message($"[PreWork] Cancel {kind}: missing {workStat.defName} tool and no rescue queued (pawn={pawn.LabelShort})");
+                        }
+
                         Gating.GatingEnforcer.CancelCurrentJob(pawn, job, Gating.ST_CancelReason.ST_Gate_MissingToolStat);
                         return false;
                     }
@@ -396,7 +460,7 @@ namespace SurvivalTools.Assign
                 int enq = NightmareCarryEnforcer.EnforceNow(pawn, keeper, allowed, "pre-work");
                 bool ok = NightmareCarryEnforcer.IsCompliant(pawn, keeper, allowed);
                 int carriedNow = NightmareCarryEnforcer.CountCarried(pawn);
-                // Local 200‑tick instrumentation cooldown
+                // Local 200‑tick instrumentation cooldown (cache tick access)
                 int nowTick = Find.TickManager?.TicksGame ?? 0;
                 int pid = pawn.thingIDNumber;
                 if (!_nmLogCooldown.TryGetValue(pid, out var until) || nowTick >= until)
@@ -632,9 +696,9 @@ namespace SurvivalTools.Assign
 
             // SAFETY: Skip complex jobs that shouldn't be interrupted by tool assignment
             if (jobDef == JobDefOf.DoBill ||
-                jobDef.defName.Contains("Bill") ||
-                jobDef.defName.Contains("Craft") ||
-                jobDef.defName.Contains("Cook"))
+                jobDef.defName.IndexOf("Bill", StringComparison.Ordinal) >= 0 ||
+                jobDef.defName.IndexOf("Craft", StringComparison.Ordinal) >= 0 ||
+                jobDef.defName.IndexOf("Cook", StringComparison.Ordinal) >= 0)
             {
                 LogDebug($"Skipping complex job {jobDef.defName} - not suitable for tool assignment", "PreWork.SkipComplexJob");
                 return null; // Don't interfere with crafting/cooking jobs
@@ -642,21 +706,21 @@ namespace SurvivalTools.Assign
 
             // Tree cutting/harvesting
             if (jobDef == JobDefOf.CutPlant ||
-                jobDef.defName == "FellTree" ||
-                jobDef.defName == "HarvestTree")
+                string.Equals(jobDef.defName, "FellTree", StringComparison.Ordinal) ||
+                string.Equals(jobDef.defName, "HarvestTree", StringComparison.Ordinal))
             {
                 return ST_StatDefOf.TreeFellingSpeed;
             }
 
             // Sowing (planting)
-            if (jobDef == JobDefOf.Sow || jobDef.defName == "Sow")
+            if (jobDef == JobDefOf.Sow || string.Equals(jobDef.defName, "Sow", StringComparison.Ordinal))
             {
                 return ST_StatDefOf.SowingSpeed;
             }
 
             // Plant harvesting
             if (jobDef == JobDefOf.Harvest ||
-                jobDef.defName == "HarvestDesignated")
+                string.Equals(jobDef.defName, "HarvestDesignated", StringComparison.Ordinal))
             {
                 return ST_StatDefOf.PlantHarvestingSpeed;
             }
@@ -668,7 +732,7 @@ namespace SurvivalTools.Assign
             }
 
             // Research (bench)
-            if (jobDef == JobDefOf.Research || jobDef.defName == "Research")
+            if (jobDef == JobDefOf.Research || string.Equals(jobDef.defName, "Research", StringComparison.Ordinal))
             {
                 try { return CompatAPI.GetResearchSpeedStat() ?? ST_StatDefOf.ResearchSpeed; } catch { return ST_StatDefOf.ResearchSpeed; }
             }
@@ -716,19 +780,19 @@ namespace SurvivalTools.Assign
         /// </summary>
         private static bool TryUpgradeForWork(Pawn pawn, StatDef workStat, Job originalJob, SurvivalToolsSettings settings, AssignmentSearch.QueuePriority priority)
         {
-            LogDebug($"[SurvivalTools.PreWork] TryUpgradeForWork called for {pawn.LabelShort}, stat: {workStat.defName}", $"PreWork.TryUpgradeForWork|{pawn.ThingID}|{workStat.defName}");
+            // Hot path: don't log routine entry parameters
 
             // Get assignment parameters from settings (with defaults)
             float minGainPct = GetMinGainPct(settings);
             float searchRadius = GetSearchRadius(settings);
             int pathCostBudget = GetPathCostBudget(settings);
 
-            LogDebug($"[SurvivalTools.PreWork] Parameters: minGain={minGainPct:P1}, radius={searchRadius}, budget={pathCostBudget}", $"PreWork.Params|{pawn.ThingID}|{workStat.defName}");
+            // Hot path: don't log routine parameters
 
             // Check if gating would block this job (simplified check using current tool score)
             bool wouldBeGated = IsLikelyGated(pawn, workStat);
 
-            LogDebug($"[SurvivalTools.PreWork] Gating check: wouldBeGated={wouldBeGated}, rescueOnGate={GetAssignRescueOnGate(settings)}", $"PreWork.GatingCheck|{pawn.ThingID}|{workStat.defName}");
+            // Hot path: don't log routine gating checks
 
             if (wouldBeGated && GetAssignRescueOnGate(settings))
             {
@@ -740,20 +804,20 @@ namespace SurvivalTools.Assign
             {
                 // Normal assignment mode: require meaningful gain
                 // Use configured minimum gain percentage
-                LogDebug($"[SurvivalTools.PreWork] Normal mode: using threshold {minGainPct:P1}", $"PreWork.NormalMode|{pawn.ThingID}|{workStat.defName}");
+                // Hot path: don't log routine normal mode operation
             }
             else
             {
                 // Gating would block but rescue is disabled
-                LogDebug($"[SurvivalTools.PreWork] Gating would block but rescue disabled, skipping", $"PreWork.GateNoRescue|{pawn.ThingID}|{workStat.defName}");
+                // Hot path: don't log routine gate-no-rescue skips
                 return false;
             }
 
             // Delegate to AssignmentSearch
-            LogDebug($"[SurvivalTools.PreWork] Calling AssignmentSearch.TryUpgradeFor...", $"PreWork.CallAssign|{pawn.ThingID}|{workStat.defName}");
+            // Hot path: don't log routine delegation calls
             string caller = originalJob != null ? $"PreWork.TryTakeOrderedJob({originalJob.def?.defName})" : "PreWork.StartJob";
             bool result = AssignmentSearch.TryUpgradeFor(pawn, workStat, minGainPct, searchRadius, pathCostBudget, priority, caller);
-            LogDebug($"[SurvivalTools.PreWork] AssignmentSearch result: {result}", $"PreWork.AssignResult|{pawn.ThingID}|{workStat.defName}");
+            // Hot path: don't log routine results (AssignmentSearch logs important events)
             return result;
         }
 
@@ -852,6 +916,78 @@ namespace SurvivalTools.Assign
 
             // If current score is at or below baseline, likely gated
             return currentScore <= baseline + 0.001f;
+        }
+
+        /// <summary>
+        /// Phase 11.13: Determines if a work stat should trigger early gating enforcement (tool-seeking behavior).
+        /// Includes only stats where tools are REQUIRED for the work, not optional bonuses.
+        /// </summary>
+        private static bool IsGateableWorkStat(StatDef stat)
+        {
+            if (stat == null) return false;
+
+            // Core work stats that require tools (pawns cannot perform work without them)
+            if (stat == ST_StatDefOf.SowingSpeed) return true;              // Sowing requires tool
+            if (stat == ST_StatDefOf.TreeFellingSpeed) return true;         // Tree felling requires tool
+            if (stat == StatDefOf.ConstructionSpeed) return true;           // Construction requires tool
+            if (stat == ST_StatDefOf.DiggingSpeed) return true;             // Mining requires tool
+            if (stat == ST_StatDefOf.PlantHarvestingSpeed) return true;     // Harvesting requires tool
+            if (stat == ST_StatDefOf.ResearchSpeed) return true;            // Research requires tool
+            if (stat == ST_StatDefOf.MaintenanceSpeed) return true;         // Maintenance requires tool
+            if (stat == ST_StatDefOf.DeconstructionSpeed) return true;      // Deconstruction requires tool
+
+            // Optional stats (provide bonuses but work can be done without tools)
+            // - CleaningSpeed: Optional bonus, only gated in Extra Hardcore mode
+            // - MedicalOperationSpeed: Optional bonus (surgery can be done without tools, just slower)
+            // - MedicalSurgerySuccessChance: Optional bonus (affects quality, not ability)
+            // - ButcheryFleshSpeed: Optional bonus (butchering can be done without tools, just slower)
+            // - ButcheryFleshEfficiency: Optional bonus (affects yield, not ability)
+
+            return false;
+        }
+
+        /// <summary>
+        /// Phase 11.13: Gets a friendly label for the work kind based on stat (for logging).
+        /// </summary>
+        private static string GetWorkKindLabel(StatDef workStat, Job job)
+        {
+            if (workStat == ST_StatDefOf.SowingSpeed) return "Sow";
+            if (workStat == ST_StatDefOf.TreeFellingSpeed) return "CutPlant";
+            if (workStat == StatDefOf.ConstructionSpeed) return "Construct";
+            if (workStat == ST_StatDefOf.DiggingSpeed) return "Mine";
+            if (workStat == ST_StatDefOf.PlantHarvestingSpeed) return "Harvest";
+            if (workStat == ST_StatDefOf.ResearchSpeed) return "Research";
+            if (workStat == ST_StatDefOf.MaintenanceSpeed) return "Maintain";
+            if (workStat == ST_StatDefOf.DeconstructionSpeed) return "Deconstruct";
+            if (workStat == ST_StatDefOf.MedicalOperationSpeed) return "Medical";
+            if (workStat == ST_StatDefOf.MedicalSurgerySuccessChance) return "Surgery";
+            if (workStat == ST_StatDefOf.ButcheryFleshSpeed) return "Butcher";
+            if (workStat == ST_StatDefOf.ButcheryFleshEfficiency) return "Butcher";
+            if (workStat == ST_StatDefOf.CleaningSpeed) return "Clean";
+            return job?.def?.defName ?? "Work";
+        }
+
+        /// <summary>
+        /// Phase 12: Clear transient state to prevent Job reference warnings on save.
+        /// Called from GameComponent during save operation.
+        /// Static dictionaries can hold Job references which cause "Object with load ID Job_XXXXX 
+        /// is referenced but is not deep-saved" warnings during save.
+        /// </summary>
+        public static void ClearTransientState()
+        {
+            try
+            {
+                _wgPendingStat?.Clear();
+                _nmToken?.Clear();
+                _nmLogCooldown?.Clear();
+                _preworkCancelCD?.Clear();
+
+                LogDebug("PreWork_AutoEquip transient state cleared for save", "PreWork.ClearState");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[SurvivalTools.PreWork_AutoEquip] Error clearing transient state: {ex}");
+            }
         }
     }
 }

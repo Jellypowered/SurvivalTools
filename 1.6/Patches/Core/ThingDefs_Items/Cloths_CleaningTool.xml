@@ -11,10 +11,6 @@
                     <MedicalOperationSpeed>0.4</MedicalOperationSpeed>
                     <MedicalSurgerySuccessChance>0.4</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Cleaner</li>
-                    <li>Doctor</li>
-                </defaultSurvivalToolAssignmentTags>
                 <toolWearFactor>2.75</toolWearFactor>
             </li>
         </value>
@@ -30,10 +26,6 @@
                     <MedicalOperationSpeed>0.55</MedicalOperationSpeed>
                     <MedicalSurgerySuccessChance>0.55</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Cleaner</li>
-                    <li>Doctor</li>
-                </defaultSurvivalToolAssignmentTags>
                 <toolWearFactor>2.5</toolWearFactor>
             </li>
         </value>
@@ -49,10 +41,6 @@
                     <MedicalOperationSpeed>0.7</MedicalOperationSpeed>
                     <MedicalSurgerySuccessChance>0.7</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Cleaner</li>
-                    <li>Doctor</li>
-                </defaultSurvivalToolAssignmentTags>
                 <toolWearFactor>2.0</toolWearFactor>
             </li>
         </value>
@@ -68,10 +56,6 @@
                     <MedicalOperationSpeed>0.85</MedicalOperationSpeed>
                     <MedicalSurgerySuccessChance>0.85</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Cleaner</li>
-                    <li>Doctor</li>
-                </defaultSurvivalToolAssignmentTags>
                 <toolWearFactor>1.5</toolWearFactor>
             </li>
         </value>
@@ -87,10 +71,6 @@
                     <MedicalOperationSpeed>0.35</MedicalOperationSpeed>
                     <MedicalSurgerySuccessChance>0.35</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Cleaner</li>
-                    <li>Doctor</li>
-                </defaultSurvivalToolAssignmentTags>
                 <toolWearFactor>3.5</toolWearFactor>
             </li>
         </value>
@@ -106,10 +86,6 @@
                     <MedicalOperationSpeed>0.4</MedicalOperationSpeed>
                     <MedicalSurgerySuccessChance>0.4</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Cleaner</li>
-                    <li>Doctor</li>
-                </defaultSurvivalToolAssignmentTags>
                 <toolWearFactor>3.0</toolWearFactor>
             </li>
         </value>
@@ -125,10 +101,6 @@
                     <MedicalOperationSpeed>0.6</MedicalOperationSpeed>
                     <MedicalSurgerySuccessChance>0.6</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Cleaner</li>
-                    <li>Doctor</li>
-                </defaultSurvivalToolAssignmentTags>
                 <toolWearFactor>2.2</toolWearFactor>
             </li>
         </value>
@@ -144,10 +116,6 @@
                     <MedicalOperationSpeed>0.45</MedicalOperationSpeed>
                     <MedicalSurgerySuccessChance>0.45</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Cleaner</li>
-                    <li>Doctor</li>
-                </defaultSurvivalToolAssignmentTags>
                 <toolWearFactor>2.8</toolWearFactor>
             </li>
         </value>
@@ -163,10 +131,6 @@
                     <MedicalOperationSpeed>0.5</MedicalOperationSpeed>
                     <MedicalSurgerySuccessChance>0.5</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Cleaner</li>
-                    <li>Doctor</li>
-                </defaultSurvivalToolAssignmentTags>
                 <toolWearFactor>2.5</toolWearFactor>
             </li>
         </value>

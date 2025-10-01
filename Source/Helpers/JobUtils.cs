@@ -61,7 +61,8 @@ namespace SurvivalTools.Helpers
                 takeExtraIngestibles = originalJob.takeExtraIngestibles,
                 expireRequiresEnemiesNearby = originalJob.expireRequiresEnemiesNearby,
                 locomotionUrgency = originalJob.locomotionUrgency,
-                def = originalJob.def // redundant but explicit
+                def = originalJob.def, // redundant but explicit
+                plantDefToSow = originalJob.plantDefToSow // Phase 12: Fix for PlantSow NullRef
             };
 
             return clone;

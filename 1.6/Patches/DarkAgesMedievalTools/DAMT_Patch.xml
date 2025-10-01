@@ -15,11 +15,7 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <ConstructionSpeed>1.1</ConstructionSpeed>
-              </baseWorkStatFactors>
-              <defaultSurvivalToolAssignmentTags>
-                <li>Constructor</li>
-              </defaultSurvivalToolAssignmentTags>
-            </li>
+              </baseWorkStatFactors>            </li>
           </value>
         </li>
 
@@ -38,11 +34,7 @@
               <baseWorkStatFactors>
                 <DiggingSpeed>1.15</DiggingSpeed>
                 <MiningYieldDigging>1.1</MiningYieldDigging>
-              </baseWorkStatFactors>
-              <defaultSurvivalToolAssignmentTags>
-                <li>Miner</li>
-              </defaultSurvivalToolAssignmentTags>
-            </li>
+              </baseWorkStatFactors>            </li>
           </value>
         </li>
 
@@ -60,11 +52,7 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <PlantHarvestingSpeed>1.2</PlantHarvestingSpeed>
-              </baseWorkStatFactors>
-              <defaultSurvivalToolAssignmentTags>
-                <li>PlantWorker</li>
-              </defaultSurvivalToolAssignmentTags>
-            </li>
+              </baseWorkStatFactors>            </li>
           </value>
         </li>
 
@@ -83,11 +71,7 @@
               <baseWorkStatFactors>
                 <ButcheryFleshSpeed>1.2</ButcheryFleshSpeed>
                 <ButcheryFleshEfficiency>1.15</ButcheryFleshEfficiency>
-              </baseWorkStatFactors>
-              <defaultSurvivalToolAssignmentTags>
-                <li>Cook</li>
-              </defaultSurvivalToolAssignmentTags>
-            </li>
+              </baseWorkStatFactors>            </li>
           </value>
         </li>
 
@@ -106,11 +90,7 @@
               <baseWorkStatFactors>
                 <MedicalOperationSpeed>1.2</MedicalOperationSpeed>
                 <MedicalSurgerySuccessChance>0.9</MedicalSurgerySuccessChance>
-              </baseWorkStatFactors>
-              <defaultSurvivalToolAssignmentTags>
-                <li>Doctor</li>
-              </defaultSurvivalToolAssignmentTags>
-            </li>
+              </baseWorkStatFactors>            </li>
           </value>
         </li>
 
@@ -128,11 +108,7 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <CleaningSpeed>1.35</CleaningSpeed>
-              </baseWorkStatFactors>
-              <defaultSurvivalToolAssignmentTags>
-                <li>Cleaner</li>
-              </defaultSurvivalToolAssignmentTags>
-            </li>
+              </baseWorkStatFactors>            </li>
           </value>
         </li>
 

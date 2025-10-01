@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using Verse;
 using RimWorld;
+using HarmonyLib;
 using SurvivalTools.Compat;
 using static SurvivalTools.ToolResolver;
 using static SurvivalTools.ST_Logging;
@@ -22,7 +23,7 @@ namespace SurvivalTools
             try
             {
                 if (IsDebugLoggingEnabled)
-                    Log.Message("[SurvivalTools] Starting static constructor initialization...");
+                    LogInfo("[SurvivalTools] Starting static constructor initialization...");
 
                 // 1) MapGen / content constraints
                 ConfigureAncientRuinsTools();
@@ -56,11 +57,11 @@ namespace SurvivalTools
                 LongEventHandler.QueueLongEvent(ValidateDemotedOptionalStatsNotHardGated, "SurvivalTools: Validating demoted optional stats...", false, null);
 
                 if (IsDebugLoggingEnabled)
-                    Log.Message("[SurvivalTools] Static constructor initialization completed successfully");
+                    LogInfo("[SurvivalTools] Static constructor initialization completed successfully");
             }
             catch (Exception ex)
             {
-                Log.Error($"[SurvivalTools] Error during static constructor initialization: {ex}");
+                LogError($"[SurvivalTools] Error during static constructor initialization: {ex}");
                 throw;
             }
         }
@@ -80,7 +81,7 @@ namespace SurvivalTools
             tsm.fixedParams = p;
 
             if (IsDebugLoggingEnabled)
-                Log.Message("[SurvivalTools] Configured ancient ruins tools to neolithic category");
+                LogInfo("[SurvivalTools] Configured ancient ruins tools to neolithic category");
         }
 
         #endregion
@@ -89,23 +90,33 @@ namespace SurvivalTools
 
         private static void AddSurvivalToolTrackersToHumanlikes()
         {
-            int addedCount = 0;
+            int legacyCount = 0;
+            int forcedCount = 0;
 
             foreach (var tDef in DefDatabase<ThingDef>.AllDefs.Where(t => t?.race?.Humanlike == true))
             {
                 if (tDef.comps == null)
                     tDef.comps = new List<CompProperties>();
 
-                // Avoid duplicates if another mod or reload path already injected it.
+                // Phase 11.11: Add legacy assignment tracker (for save migration)
+#pragma warning disable CS0618 // Type is obsolete - intentionally adding for save compatibility/migration
                 if (!tDef.comps.Any(c => c?.compClass == typeof(Pawn_SurvivalToolAssignmentTracker)))
                 {
                     tDef.comps.Add(new CompProperties(typeof(Pawn_SurvivalToolAssignmentTracker)));
-                    addedCount++;
+                    legacyCount++;
+                }
+#pragma warning restore CS0618
+
+                // Phase 11.11: Add new forced tool tracker (replaces forcedHandler functionality)
+                if (!tDef.comps.Any(c => c?.compClass == typeof(Pawn_ForcedToolTracker)))
+                {
+                    tDef.comps.Add(new CompProperties(typeof(Pawn_ForcedToolTracker)));
+                    forcedCount++;
                 }
             }
 
             if (IsDebugLoggingEnabled)
-                Log.Message($"[SurvivalTools] Added SurvivalToolAssignmentTracker to {addedCount} humanlike defs");
+                LogInfo($"[SurvivalTools] Added SurvivalToolAssignmentTracker (legacy) to {legacyCount} humanlike defs, ForcedToolTracker to {forcedCount}");
         }
 
         #endregion
@@ -137,7 +148,7 @@ namespace SurvivalTools
             }
 
             if (IsDebugLoggingEnabled)
-                Log.Message($"[SurvivalTools] Processed {processed} Mend&Recycle recipes, cleared {cleared} without valid ingredients");
+                LogInfo($"[SurvivalTools] Processed {processed} Mend&Recycle recipes, cleared {cleared} without valid ingredients");
         }
 
         private static void ResolveSmeltingRecipeUsers()
@@ -166,7 +177,7 @@ namespace SurvivalTools
             }
 
             if (IsDebugLoggingEnabled)
-                Log.Message($"[SurvivalTools] Processed {benchesProcessed} work benches: added {smeltAdded} smelt recipes, {destroyAdded} destroy recipes");
+                LogInfo($"[SurvivalTools] Processed {benchesProcessed} work benches: added {smeltAdded} smelt recipes, {destroyAdded} destroy recipes");
         }
 
         #endregion
@@ -195,7 +206,7 @@ namespace SurvivalTools
             sb.Append(noProps);
 
             if (IsDebugLoggingEnabled)
-                Log.Message(sb.ToString());
+                LogInfo(sb.ToString());
         }
 
         private static HashSet<StuffCategoryDef> GetSurvivalToolStuffCategories()
@@ -281,11 +292,14 @@ namespace SurvivalTools
             // Research (bench) – ensures vanilla research jobs are gated by appropriate research tools
             RegisterWorkGiverForStat("Research", ST_StatDefOf.ResearchSpeed);
 
+            // NOTE: Cleaning is NOT registered here. It's an optional stat only gated in Extra Hardcore mode
+            // via the requireCleaningTools setting. The XML patches handle cleaning WorkGiver extensions.
+
             // Dynamic discovery pass: pick up any additional (modded) sowing WorkGivers not explicitly known
             DiscoverAndRegisterAdditionalSowingWorkGivers();
 
             if (IsDebugLoggingEnabled)
-                Log.Message("[SurvivalTools] Initialized job gating mappings for core WorkGivers");
+                LogInfo("[SurvivalTools] Initialized job gating mappings for core WorkGivers");
         }
 
         private static void RegisterWorkGiverForStat(string workGiverDefName, StatDef stat)
@@ -299,7 +313,7 @@ namespace SurvivalTools
             {
                 // Dev-mode only noisy warning; in normal mode stay silent to avoid log spam if defs missing by design.
                 if (Prefs.DevMode && ST_Logging.ShouldLogWithCooldown($"RegisterWG_{workGiverDefName}"))
-                    Log.Warning($"[SurvivalTools] (Dev) Failed to register {workGiverDefName} for stat {stat?.defName ?? "null"} - workGiver: {workGiver != null}, stat: {stat != null}");
+                    LogWarning($"[SurvivalTools] (Dev) Failed to register {workGiverDefName} for stat {stat?.defName ?? "null"} - workGiver: {workGiver != null}, stat: {stat != null}");
             }
         }
 
@@ -350,8 +364,10 @@ namespace SurvivalTools
             }
 
             if (added > 0 && IsDebugLoggingEnabled)
-                Log.Message($"[SurvivalTools] Dynamic sowing WG discovery: inspected {inspected}, added SowingSpeed requirement to {added} additional WorkGivers.");
+                LogInfo($"[SurvivalTools] Dynamic sowing WG discovery: inspected {inspected}, added SowingSpeed requirement to {added} additional WorkGivers.");
         }
+
+
 
         #endregion
 
@@ -412,7 +428,7 @@ namespace SurvivalTools
                 {
                     if (IsDebugLoggingEnabled)
                     {
-                        Log.Warning("[SurvivalTools] (Debug) Detected demoted optional stats being used as REQUIRED gating stats. These should usually be treated as bonuses only.\n" +
+                        LogWarning("[SurvivalTools] (Debug) Detected demoted optional stats being used as REQUIRED gating stats. These should usually be treated as bonuses only.\n" +
                                     " WorkGivers: " + string.Join(", ", flagged) + "\n" +
                                     " Optional stats involved: " + string.Join(", ", optionalStats.Select(s => s.defName)) + "\n" +
                                     " If this is intentional (another mod design), you can ignore this message. Otherwise consider removing those stats from required lists.");
@@ -420,12 +436,12 @@ namespace SurvivalTools
                 }
                 else if (IsDebugLoggingEnabled)
                 {
-                    Log.Message("[SurvivalTools] (Debug) Optional stat validator: no hard-gating misuse detected.");
+                    LogInfo("[SurvivalTools] (Debug) Optional stat validator: no hard-gating misuse detected.");
                 }
             }
             catch (Exception ex)
             {
-                Log.Warning("[SurvivalTools] Optional stat validator encountered an error: " + ex);
+                LogWarning("[SurvivalTools] Optional stat validator encountered an error: " + ex);
             }
         }
 

@@ -67,7 +67,7 @@ namespace SurvivalTools.HarmonyStuff
                 // (Avoid guessing among similar stacks to prevent marking the wrong item.)
                 if (!inv.Contains(thing)) return;
 
-                var tracker = actor.GetComp<Pawn_SurvivalToolAssignmentTracker>();
+                var tracker = actor.GetComp<Pawn_ForcedToolTracker>();
                 var fh = tracker?.forcedHandler;
                 if (fh == null) return;
 

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using Verse;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.Helpers
 {
@@ -284,7 +285,7 @@ namespace SurvivalTools.Helpers
                 }
                 catch (Exception e)
                 {
-                    Log.Warning($"[SurvivalTools] Tool quirk failed for {info.ToolDef.defName}: {e.Message}");
+                    LogWarning($"[SurvivalTools] Tool quirk failed for {info.ToolDef.defName}: {e.Message}");
                 }
             }
 

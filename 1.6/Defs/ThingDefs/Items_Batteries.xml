@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+    <!-- ============================================= -->
+    <!-- BATTERIES FOR POWERED TOOLS                   -->
+    <!-- Phase 12: Battery system for powered tools    -->
+    <!-- ============================================= -->
+
+    <!-- Basic Battery -->
+    <ThingDef ParentName="ResourceBase">
+        <defName>ST_Battery_Basic</defName>
+        <label>basic tool battery</label>
+        <description>A simple rechargeable battery cell designed for powered tools. Provides basic energy storage with moderate capacity. Can power hand drills and light-duty equipment.</description>
+        <graphicData>
+            <texPath>Things/Item/Resource/Battery_Basic</texPath>
+            <graphicClass>Graphic_Single</graphicClass>
+        </graphicData>
+        <soundInteract>Metal_Drop</soundInteract>
+        <soundDrop>Metal_Drop</soundDrop>
+        <stackLimit>10</stackLimit>
+        <statBases>
+            <MaxHitPoints>50</MaxHitPoints>
+            <MarketValue>25</MarketValue>
+            <Mass>0.5</Mass>
+            <Flammability>0.6</Flammability>
+        </statBases>
+        <thingCategories>
+            <li>Manufactured</li>
+        </thingCategories>
+        <techLevel>Industrial</techLevel>
+    </ThingDef>
+
+    <!-- Advanced Battery -->
+    <ThingDef ParentName="ResourceBase">
+        <defName>ST_Battery_Advanced</defName>
+        <label>advanced tool battery</label>
+        <description>An advanced lithium-ion battery pack optimized for powered tools. Features higher energy density and longer runtime than basic cells. Ideal for professional-grade equipment.</description>
+        <graphicData>
+            <texPath>Things/Item/Resource/Battery_Advanced</texPath>
+            <graphicClass>Graphic_Single</graphicClass>
+        </graphicData>
+        <soundInteract>Metal_Drop</soundInteract>
+        <soundDrop>Metal_Drop</soundDrop>
+        <stackLimit>10</stackLimit>
+        <statBases>
+            <MaxHitPoints>70</MaxHitPoints>
+            <MarketValue>60</MarketValue>
+            <Mass>0.4</Mass>
+            <Flammability>0.5</Flammability>
+        </statBases>
+        <thingCategories>
+            <li>Manufactured</li>
+        </thingCategories>
+        <techLevel>Industrial</techLevel>
+    </ThingDef>
+
+    <!-- Industrial Battery -->
+    <ThingDef ParentName="ResourceBase">
+        <defName>ST_Battery_Industrial</defName>
+        <label>industrial tool battery</label>
+        <description>A high-capacity industrial battery pack with advanced power management. Designed for heavy-duty construction equipment and workshop tools. Provides extended runtime for demanding applications.</description>
+        <graphicData>
+            <texPath>Things/Item/Resource/Battery_Industrial</texPath>
+            <graphicClass>Graphic_Single</graphicClass>
+        </graphicData>
+        <soundInteract>Metal_Drop</soundInteract>
+        <soundDrop>Metal_Drop</soundDrop>
+        <stackLimit>5</stackLimit>
+        <statBases>
+            <MaxHitPoints>100</MaxHitPoints>
+            <MarketValue>150</MarketValue>
+            <Mass>1.2</Mass>
+            <Flammability>0.4</Flammability>
+        </statBases>
+        <thingCategories>
+            <li>Manufactured</li>
+        </thingCategories>
+        <techLevel>Industrial</techLevel>
+    </ThingDef>
+
+    <!-- Nuclear Battery -->
+    <ThingDef ParentName="ResourceBase">
+        <defName>ST_Battery_Nuclear</defName>
+        <label>nuclear tool battery</label>
+        <description>An exotic radioisotope power cell that generates electricity through radioactive decay. Provides near-limitless power for extended operations. Handle with extreme caution - contains hazardous materials that can pose risks if damaged.</description>
+        <graphicData>
+            <texPath>Things/Item/Resource/Battery_Nuclear</texPath>
+            <graphicClass>Graphic_Single</graphicClass>
+        </graphicData>
+        <soundInteract>Metal_Drop</soundInteract>
+        <soundDrop>Metal_Drop</soundDrop>
+        <stackLimit>5</stackLimit>
+        <statBases>
+            <MaxHitPoints>150</MaxHitPoints>
+            <MarketValue>800</MarketValue>
+            <Mass>2.0</Mass>
+            <Flammability>0.1</Flammability>
+        </statBases>
+        <thingCategories>
+            <li>Manufactured</li>
+        </thingCategories>
+        <techLevel>Spacer</techLevel>
+    </ThingDef>
+
+</Defs>

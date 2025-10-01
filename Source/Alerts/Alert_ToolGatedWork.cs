@@ -21,12 +21,10 @@ namespace SurvivalTools
     {
         private List<PawnGatingIssue> _gatedPawns;
         private int _lastUpdateTick = -9999;
-        private readonly Dictionary<Pawn, int> _lastShownTick = new Dictionary<Pawn, int>();
-        // Phase 8: stickiness map (pawn -> hideAfterTick)
+        // Phase 8: stickiness map (pawn -> hideAfterTick) - keeps alert visible for minimum duration
+        // to prevent rapid flickering, but content updates in real-time
         private static readonly Dictionary<int, int> _stickyUntil = new Dictionary<int, int>(64);
 
-        private const int UpdateIntervalTicks = 600; // Update rarely
-        private const int PawnThrottleTicks = 3000; // Don't repeat same pawn too often
         private const int MaxPawnsToShow = 10; // Keep explanation short
 
         // Representative WorkGiverDefs for checking (avoid scanning all)
@@ -58,42 +56,41 @@ namespace SurvivalTools
             if (!settings.hardcoreMode && !settings.extraHardcoreMode) return AlertReport.Inactive;
             if (!settings.showGatingAlert) return AlertReport.Inactive;
 
-            // Update gated pawns list periodically
+            // Always update on every check for real-time responsiveness
             int now = Find.TickManager?.TicksGame ?? 0;
-            if (_gatedPawns == null || now - _lastUpdateTick >= UpdateIntervalTicks)
-            {
-                _lastUpdateTick = now;
-                UpdateGatedPawns(now);
-            }
+            UpdateGatedPawns(now);
+            _lastUpdateTick = now;
 
-            // If any new gated pawns -> active
-            bool active = _gatedPawns != null && _gatedPawns.Count > 0;
+            // If any gated pawns exist right now -> active
+            bool hasCurrentIssues = _gatedPawns != null && _gatedPawns.Count > 0;
 
-            // Stickiness: keep alert active while any pawn still within sticky window
-            if (!active)
+            // Stickiness: keep alert active for minimum duration even if issues resolve
+            // This prevents rapid flickering when pawns are actively picking up tools
+            bool stillSticky = false;
+            if (_stickyUntil.Count > 0)
             {
-                if (_stickyUntil.Count > 0)
+                // Prune expired entries & check if any are still active
+                var toRemove = (List<int>)null;
+                foreach (var kv in _stickyUntil)
                 {
-                    // Prune & check
-                    var toRemove = (List<int>)null;
-                    foreach (var kv in _stickyUntil)
+                    if (now < kv.Value)
                     {
-                        if (now < kv.Value)
-                        {
-                            active = true; // still sticky
-                        }
-                        else
-                        {
-                            if (toRemove == null) toRemove = new List<int>(4);
-                            toRemove.Add(kv.Key);
-                        }
+                        stillSticky = true; // at least one pawn still in sticky window
                     }
-                    if (toRemove != null)
+                    else
                     {
-                        for (int i = 0; i < toRemove.Count; i++) _stickyUntil.Remove(toRemove[i]);
+                        if (toRemove == null) toRemove = new List<int>(4);
+                        toRemove.Add(kv.Key);
                     }
                 }
+                if (toRemove != null)
+                {
+                    for (int i = 0; i < toRemove.Count; i++) _stickyUntil.Remove(toRemove[i]);
+                }
             }
+
+            // Active if there are current issues OR we're still in sticky window
+            bool active = hasCurrentIssues || stillSticky;
 
             return active ? AlertReport.Active : AlertReport.Inactive;
         }
@@ -151,13 +148,6 @@ namespace SurvivalTools
                 if (pawn.RaceProps == null || !pawn.RaceProps.Humanlike) continue;
                 if (pawn.guest != null && !pawn.IsColonist) continue;
 
-                // Throttle per-pawn repetition
-                if (_lastShownTick.TryGetValue(pawn, out int lastShown))
-                {
-                    if (currentTick - lastShown < PawnThrottleTicks)
-                        continue;
-                }
-
                 // Check work types with available work
                 CheckPawnForGatedWork(pawn, map, currentTick);
             }
@@ -170,7 +160,6 @@ namespace SurvivalTools
             {
                 if (HasMiningWork(map) && IsBlockedForWork(pawn, _miningWG, "ST_Alert_WorkType_Mining".Translate()))
                 {
-                    _lastShownTick[pawn] = currentTick;
                     RegisterSticky(pawn, currentTick);
                     return; // One issue per pawn per update
                 }
@@ -181,7 +170,6 @@ namespace SurvivalTools
             {
                 if (HasConstructionWork(map) && IsBlockedForWork(pawn, _constructWG, "ST_Alert_WorkType_Construction".Translate()))
                 {
-                    _lastShownTick[pawn] = currentTick;
                     RegisterSticky(pawn, currentTick);
                     return;
                 }
@@ -192,7 +180,6 @@ namespace SurvivalTools
             {
                 if (HasPlantCuttingWork(map) && IsBlockedForWork(pawn, _plantCutWG, "ST_Alert_WorkType_PlantCutting".Translate()))
                 {
-                    _lastShownTick[pawn] = currentTick;
                     RegisterSticky(pawn, currentTick);
                     return;
                 }
@@ -203,7 +190,6 @@ namespace SurvivalTools
             {
                 if (HasPlantHarvestWork(map) && IsBlockedForWork(pawn, _plantHarvestWG, "ST_Alert_WorkType_PlantHarvest".Translate()))
                 {
-                    _lastShownTick[pawn] = currentTick;
                     RegisterSticky(pawn, currentTick);
                     return;
                 }

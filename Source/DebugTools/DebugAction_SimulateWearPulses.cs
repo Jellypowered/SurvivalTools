@@ -16,7 +16,7 @@ namespace SurvivalTools.DebugTools
     {
         // Exposed debug action (requires Verse.DebugAction attribute). If attribute missing (older API), method still callable via reflection.
 #if !NO_DEBUG
-        [DebugAction(category: "SurvivalTools", name: "Simulate wear pulses (selected pawn, 30s)", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [DebugAction(category: "Survival Tools", name: "Simulate wear pulses (selected pawn, 30s)", allowedGameStates = AllowedGameStates.PlayingOnMap)]
 #endif
         public static void SimulateWear()
         {

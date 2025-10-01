@@ -206,7 +206,7 @@ namespace SurvivalTools.HarmonyStuff
 
             private static bool IsForced(Pawn pawn, Thing physical)
             {
-                var tracker = pawn?.GetComp<Pawn_SurvivalToolAssignmentTracker>();
+                var tracker = pawn?.GetComp<Pawn_ForcedToolTracker>();
                 if (tracker?.forcedHandler == null || physical == null) return false;
                 return tracker.forcedHandler.IsForced(physical);
             }
@@ -233,7 +233,7 @@ namespace SurvivalTools.HarmonyStuff
                 // Clear forced status for SurvivalTool or tool-stuff.
                 if (item is SurvivalTool || item.def.IsToolStuff())
                 {
-                    var tracker = pawn.GetComp<Pawn_SurvivalToolAssignmentTracker>();
+                    var tracker = pawn.GetComp<Pawn_ForcedToolTracker>();
                     var fh = tracker?.forcedHandler;
                     fh?.SetForced(item, false);
                     try { SurvivalToolUtility.ToolFactorCache.InvalidateForThing(item); } catch { }

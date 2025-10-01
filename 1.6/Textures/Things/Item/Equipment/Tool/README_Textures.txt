@@ -155,23 +155,55 @@ COMMISSIONED ARTWORK SHOPPING LIST
 
 -----------------------------------------------------------------
 
+=== POWER TOOL BATTERIES (PHASE 12) ===
+24. Battery_Basic.png - Basic Battery Pack
+    • Resolution: 128x128
+    • Style: Industrial/consumer grade
+    • Description: Cylindrical or rectangular battery pack with metal contacts
+    • Details: Simple casing, basic terminals, minimal decoration
+    • Use: Powers basic powered tools (PowerDrill)
+
+25. Battery_Advanced.png - Advanced Battery Cell
+    • Resolution: 128x128
+    • Style: Industrial/professional grade
+    • Description: Sleeker battery with reinforced casing and indicator lights
+    • Details: Small LED charge indicator, improved contacts, compact design
+    • Use: Powers industrial tools (WorkshopHammerDrill)
+
+26. Battery_Industrial.png - Industrial Power Cell
+    • Resolution: 128x128
+    • Style: Heavy-duty industrial
+    • Description: Robust rectangular battery with cooling fins and safety features
+    • Details: Ventilation grilles, warning labels, rugged construction
+    • Use: Powers advanced spacer tools (Multitool, Nanofabricator)
+
+27. Battery_Nuclear.png - Nuclear Power Cell
+    • Resolution: 128x128
+    • Style: Spacer/Ultra-tech with hazard warnings
+    • Description: Cylindrical cell with radioactive symbols and glow effect
+    • Details: Yellow/orange glow from core, radiation trefoil markings, containment seals
+    • Use: Powers glitterworld tools (OmniTool), creates explosion if destroyed
+    • Special: Subtle pulsing glow on separate layer for hazard effect
+
+-----------------------------------------------------------------
+
 === EXISTING TOOL TEXTURES (TO BE REDONE AT 128×128) ===
-24. Axe.png - Forestry Axe
+28. Axe.png - Forestry Axe
     • Resolution: 128x128
     • Style: Functional, primitive-to-industrial variants
     • Use: Tree felling, wood chopping
 
-25. Pickaxe.png - Mining Pickaxe
+29. Pickaxe.png - Mining Pickaxe
     • Resolution: 128x128
     • Style: Sturdy, material-adaptive (stone/iron/steel)
     • Use: Mining, digging
 
-26. Hammer.png - Construction Hammer
+30. Hammer.png - Construction Hammer
     • Resolution: 128x128
     • Style: Simple head + wooden/metal shaft
     • Use: Building, construction
 
-27. Sickle.png - Harvesting Sickle
+31. Sickle.png - Harvesting Sickle
     • Resolution: 128x128
     • Style: Curved blade with wood/metal handle
     • Use: Crop/plant harvesting  
@@ -192,15 +224,17 @@ COMMISSIONED ARTWORK SHOPPING LIST
 === COMMISSION DELIVERY GUIDELINES ===
 • Provide layered source files (PSD or equivalent) + PNG exports  
 • Keep holograms/glow elements on separate layers for flexibility  
+• Battery glow effects (especially Nuclear) on separate layer for animation potential
 • Test readability at 50% and 25% scales  
 • Avoid over-detailing fine lines (<1px)  
 • Ensure silhouettes remain clear against RimWorld floors  
 
 -----------------------------------------------------------------
 
-TOTAL NEW TEXTURES: 23  
+TOTAL NEW TEXTURES: 27  
 - Primitive/Medieval: 11  
 - Industrial: 5  
 - Precision: 4  
-- Spacer/Glitterworld: 3  
+- Spacer/Glitterworld: 3
+- Power Tool Batteries: 4
 =================================================================

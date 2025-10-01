@@ -391,30 +391,7 @@ namespace SurvivalTools
                     baseNormal = 1f;
                 }
 
-                // For WorkSpeedGlobal: if no gating jobs enabled, don't penalize
-                if (stat == ST_StatDefOf.WorkSpeedGlobal)
-                {
-                    var settings = SurvivalToolsMod.Settings;
-                    if (settings != null)
-                    {
-                        var jobDict = settings.workSpeedGlobalJobGating;
-                        if (jobDict != null)
-                        {
-                            bool anyGateEligibleJobEnabled = false;
-                            foreach (var kvp in jobDict)
-                            {
-                                var jobDef = DefDatabase<WorkGiverDef>.GetNamedSilentFail(kvp.Key);
-                                if (jobDef != null && SurvivalToolUtility.ShouldGateByDefault(jobDef) && kvp.Value)
-                                {
-                                    anyGateEligibleJobEnabled = true;
-                                    break;
-                                }
-                            }
-                            if (!anyGateEligibleJobEnabled)
-                                baseNormal = 1f;
-                        }
-                    }
-                }
+                // Phase 11.10: WorkSpeedGlobal penalty logic removed - no longer gating those jobs
 
                 float result;
                 var settingsRef = SurvivalToolsMod.Settings;
@@ -1075,7 +1052,9 @@ namespace SurvivalTools
                 return list;
             }
 
-            if (s.Contains("research") || s.Contains("experiment") || s.Contains("study"))
+            if (s.Contains("research") || s.Contains("experiment") || s.Contains("study") ||
+                s.Contains("analys") || s.Contains("analyz") || s.Contains("learnremotely") || // Phase 12: RR jobs
+                s.Contains("interrogate") || s.EndsWith("rr")) // Phase 12: RR suffix
             {
                 list.Add(ST_StatDefOf.ResearchSpeed);
                 if (IsDebugLoggingEnabled && ShouldLogJobForPawn(pawn, jobDef))
@@ -1472,193 +1451,28 @@ namespace SurvivalTools
                 SurvivalTool st = thing as SurvivalTool;
                 if (st == null && thing.def != null && thing.def.IsToolStuff()) st = VirtualTool.FromThing(thing);
                 if (st == null) continue;
+
+                // Phase 12: Check if tool satisfies stat considering charge
+                if (!PawnToolValidator.ToolSatisfiesStatConsideringCharge(thing, stat))
+                    continue;
+
                 if (GetToolProvidedFactor(st, stat) > baseline + 0.001f) return true;
             }
             return false;
         }
 
         /// <summary>
-        /// Attempt to find a useful tool on the map/storage and enqueue a TakeInventory pickup job for the pawn.
-        /// Returns true if a pickup job was enqueued.
+        /// Phase 11.11: Obsolete - unused legacy pickup function.
+        /// Replaced by AssignmentSearch + PreWork_AutoEquip which handle all tool acquisition.
+        /// Kept as no-op stub for any external mod references.
         /// </summary>
+        [Obsolete("Phase 11.11: Unused legacy pickup function. Replaced by AssignmentSearch + PreWork_AutoEquip.", true)]
         public static bool TryEnqueuePickupForMissingTool(Pawn pawn, List<StatDef> requiredStats)
         {
-            try
-            {
-                if (pawn == null || requiredStats == null || requiredStats.Count == 0) return false;
-                if (!(SurvivalToolsMod.Settings?.autoTool ?? false)) return false;
-                if (!pawn.CanUseSurvivalTools()) return false;
-
-                // If pawn already has a helpful tool, nothing to do
-                if (pawn.GetAllUsableSurvivalTools().OfType<SurvivalTool>().Any(st => ToolImprovesAny(st, requiredStats)))
-                    return false;
-
-                var map = pawn.Map;
-                if (map == null) return false;
-
-                SurvivalTool bestTool = null;
-                float bestScore = 0f;
-                var seen = new HashSet<int>();
-
-                // 1) Radial scan around pawn (fast, preferred)
-                const int SearchRadius = 28;
-                foreach (var thing in GenRadial.RadialDistinctThingsAround(pawn.Position, map, SearchRadius, true))
-                {
-                    if (thing == null) continue;
-
-                    SurvivalTool candidate = null;
-                    if (thing is SurvivalTool st) candidate = st;
-                    else if (thing.def != null && thing.def.IsToolStuff()) candidate = VirtualTool.FromThing(thing);
-                    if (candidate == null) continue;
-
-                    var backing = BackingThing(candidate, pawn) ?? (candidate as Thing);
-                    if (backing == null) continue;
-                    if (seen.Contains(backing.thingIDNumber)) continue;
-                    seen.Add(backing.thingIDNumber);
-                    if (!backing.Spawned || backing.Map != map) continue;
-                    if (backing.IsForbidden(pawn)) continue;
-                    if (!pawn.CanReserveAndReach(backing, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
-                    if (!ToolImprovesAny(candidate, requiredStats)) continue;
-
-#pragma warning disable CS0618 // Phase 3: Legacy method still used internally
-                    float score = ScoreToolForStats(candidate, pawn, requiredStats);
-#pragma warning restore CS0618
-                    score -= 0.01f * backing.Position.DistanceTo(pawn.Position);
-
-                    if (score > bestScore)
-                    {
-                        bestScore = score;
-                        bestTool = candidate;
-                    }
-                }
-
-                // 2) Storage / haulable scans: storage-first, nearby, then wider fallback
-                var candidates = map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableEver);
-                const int StorageSearchRadius = 80;
-                const int FallbackSearchRadius = 200;
-
-                // Storage items within StorageSearchRadius
-                foreach (var item in candidates)
-                {
-                    if (item == null) continue;
-                    if (!item.IsInAnyStorage()) continue;
-                    if (item.Map != map) continue;
-                    if (item.Position.DistanceTo(pawn.Position) > StorageSearchRadius) continue;
-                    var backing = item;
-                    if (seen.Contains(backing.thingIDNumber)) continue;
-                    seen.Add(backing.thingIDNumber);
-
-                    SurvivalTool candidate = null;
-                    if (item is SurvivalTool st2) candidate = st2;
-                    else if (item.def != null && item.def.IsToolStuff()) candidate = VirtualTool.FromThing(item);
-                    if (candidate == null) continue;
-                    if (!ToolImprovesAny(candidate, requiredStats)) continue;
-                    if (backing.IsForbidden(pawn)) continue;
-                    if (!pawn.CanReserveAndReach(backing, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
-#pragma warning disable CS0618 // Phase 3: Legacy method still used internally
-                    float score = ScoreToolForStats(candidate, pawn, requiredStats);
-#pragma warning restore CS0618
-                    score -= 0.01f * backing.Position.DistanceTo(pawn.Position);
-                    if (score > bestScore)
-                    {
-                        bestScore = score;
-                        bestTool = candidate;
-                    }
-                }
-
-                // Nearby haulable (within StorageSearchRadius)
-                foreach (var item in candidates)
-                {
-                    if (item == null) continue;
-                    if (item.IsInAnyStorage()) continue;
-                    if (item.Map != map) continue;
-                    if (item.Position.DistanceTo(pawn.Position) > StorageSearchRadius) continue;
-                    var backing = item;
-                    if (seen.Contains(backing.thingIDNumber)) continue;
-                    seen.Add(backing.thingIDNumber);
-
-                    SurvivalTool candidate = null;
-                    if (item is SurvivalTool st2) candidate = st2;
-                    else if (item.def != null && item.def.IsToolStuff()) candidate = VirtualTool.FromThing(item);
-                    if (candidate == null) continue;
-                    if (!ToolImprovesAny(candidate, requiredStats)) continue;
-                    if (backing.IsForbidden(pawn)) continue;
-                    if (!pawn.CanReserveAndReach(backing, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
-#pragma warning disable CS0618 // Phase 3: Legacy method still used internally
-                    float score = ScoreToolForStats(candidate, pawn, requiredStats);
-#pragma warning restore CS0618
-                    score -= 0.01f * backing.Position.DistanceTo(pawn.Position);
-                    if (score > bestScore)
-                    {
-                        bestScore = score;
-                        bestTool = candidate;
-                    }
-                }
-
-                // Wider-area fallback
-                foreach (var item in candidates)
-                {
-                    if (item == null) continue;
-                    if (item.Map != map) continue;
-                    if (item.Position.DistanceTo(pawn.Position) > FallbackSearchRadius) continue;
-                    var backing = item;
-                    if (seen.Contains(backing.thingIDNumber)) continue;
-                    seen.Add(backing.thingIDNumber);
-
-                    SurvivalTool candidate = null;
-                    if (item is SurvivalTool st2) candidate = st2;
-                    else if (item.def != null && item.def.IsToolStuff()) candidate = VirtualTool.FromThing(item);
-                    if (candidate == null) continue;
-                    if (!ToolImprovesAny(candidate, requiredStats)) continue;
-                    if (backing.IsForbidden(pawn)) continue;
-                    if (!pawn.CanReserveAndReach(backing, PathEndMode.OnCell, pawn.NormalMaxDanger())) continue;
-#pragma warning disable CS0618 // Phase 3: Legacy method still used internally
-                    float score = ScoreToolForStats(candidate, pawn, requiredStats);
-#pragma warning restore CS0618
-                    score -= 0.01f * backing.Position.DistanceTo(pawn.Position);
-                    if (score > bestScore)
-                    {
-                        bestScore = score;
-                        bestTool = candidate;
-                    }
-                }
-
-                if (bestTool == null) return false;
-
-                var backingThing = BackingThing(bestTool, pawn) ?? (bestTool as Thing);
-                if (backingThing == null || !backingThing.Spawned) return false;
-
-                // NIGHTMARE MODE: purge all carried tools before enqueuing pickup so we cannot cheese carry limit.
-                try
-                {
-                    if (SurvivalToolsMod.Settings?.extraHardcoreMode == true)
-                    {
-                        if (Assign.AssignmentSearch.NightmarePurgeAllTools(pawn, backingThing))
-                        {
-                            if (IsDebugLoggingEnabled)
-                                LogDebug($"[Nightmare] Purged carried tools (auto-pickup) for {pawn.LabelShort}; deferring pickup of {backingThing.LabelShort}", $"Nightmare.AutoPickupPurge_{pawn.ThingID}");
-                            return true; // we did work; pickup deferred until next pass (so return true to avoid re-scan spam)
-                        }
-                    }
-                }
-                catch (Exception exNM)
-                {
-                    if (IsDebugLoggingEnabled)
-                        LogDebug($"Nightmare auto-pickup purge exception: {exNM}", $"Nightmare.AutoPickupPurgeEx_{pawn.ThingID}");
-                }
-
-                var pickupJob = JobMaker.MakeJob(JobDefOf.TakeInventory, backingThing);
-                pickupJob.count = 1;
-                try
-                {
-                    pawn.jobs.jobQueue.EnqueueFirst(pickupJob);
-                    if (IsDebugLoggingEnabled)
-                        LogDebug($"[SurvivalTools] Enqueued pickup for missing tool for {pawn.LabelShort}: target={backingThing.LabelCap}", $"AutoTool_Enqueue_{pawn.ThingID}");
-                    return true;
-                }
-                catch { return false; }
-            }
-            catch { return false; }
+            // Phase 11.11: Dead code removed. AssignmentSearch + PreWork_AutoEquip handle all tool pickup.
+            // This function was never called anywhere in the codebase.
+            // The last reference to Settings.autoTool has been eliminated.
+            return false;
         }
 
         public static bool HasSurvivalToolFor(this Pawn pawn, StatDef stat, out SurvivalTool tool, out float statFactor)
@@ -1673,6 +1487,11 @@ namespace SurvivalTools
                 SurvivalTool st = thing as SurvivalTool;
                 if (st == null && thing.def != null && thing.def.IsToolStuff()) st = VirtualTool.FromThing(thing);
                 if (st == null) continue;
+
+                // Phase 12: Check if tool satisfies stat considering charge
+                if (!PawnToolValidator.ToolSatisfiesStatConsideringCharge(thing, stat))
+                    continue;
+
                 float f = GetToolProvidedFactor(st, stat);
                 if (f > bestFactor + 0.001f) { bestFactor = f; best = st; }
             }
@@ -1887,27 +1706,7 @@ namespace SurvivalTools
                 .Distinct()
                 .ToList();
 
-            // Consider WorkSpeedGlobal: if pawn has any assigned WorkGiver that maps to WorkSpeedGlobal
-            // and the per-job gating setting is enabled, include WorkSpeedGlobal in the relevant stats.
-            try
-            {
-                var settings = SurvivalToolsMod.Settings;
-                if (settings != null && pawn?.workSettings != null)
-                {
-                    foreach (var wg in WorkSpeedGlobalHelper.GetWorkSpeedGlobalJobs())
-                    {
-                        // Check pawn has this workgiver (in normal order list) and gating enabled for that job
-                        bool pawnHasWg = pawn.workSettings.WorkGiversInOrderNormal.Any(wgInst => wgInst?.def == wg);
-                        if (pawnHasWg && settings.workSpeedGlobalJobGating.GetValueOrDefault(wg.defName, true))
-                        {
-                            if (!all.Contains(ST_StatDefOf.WorkSpeedGlobal))
-                                all.Add(ST_StatDefOf.WorkSpeedGlobal);
-                            break;
-                        }
-                    }
-                }
-            }
-            catch { /* best-effort: do not break callers on error */ }
+            // Phase 11.10: WorkSpeedGlobal job discovery removed - no longer gating WorkSpeedGlobal jobs
 
             // Only those we can actually satisfy with tools available in this game
             return FilterStatsWithAvailableTools(all);

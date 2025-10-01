@@ -64,9 +64,6 @@
                 <baseWorkStatFactors>
                     <TreeFellingSpeed>1.5</TreeFellingSpeed>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>PlantWorker</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <tools>
@@ -108,9 +105,6 @@
                     <DiggingSpeed>1.5</DiggingSpeed>
                     <MiningYieldDigging>1.2</MiningYieldDigging>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Miner</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <tools>
@@ -150,9 +144,6 @@
                 <baseWorkStatFactors>
                     <ConstructionSpeed>1.5</ConstructionSpeed>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Constructor</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <tools>
@@ -192,9 +183,6 @@
                 <baseWorkStatFactors>
                     <PlantHarvestingSpeed>1.5</PlantHarvestingSpeed>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>PlantWorker</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <tools>
@@ -234,9 +222,6 @@
                 <baseWorkStatFactors>
                     <SowingSpeed>1</SowingSpeed>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>PlantWorker</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <tools>
@@ -278,9 +263,6 @@
                     <MaintenanceSpeed>1</MaintenanceSpeed>
                     <DeconstructionSpeed>1</DeconstructionSpeed>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Constructor</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <tools>
@@ -349,9 +331,6 @@
                     <MaintenanceSpeed>0.6</MaintenanceSpeed>
                     <DeconstructionSpeed>0.8</DeconstructionSpeed>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Constructor</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <tools>
@@ -397,9 +376,6 @@
                 <baseWorkStatFactors>
                     <ResearchSpeed>0.7</ResearchSpeed>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Researcher</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <tools>
@@ -454,9 +430,6 @@
                 <baseWorkStatFactors>
                     <ResearchSpeed>1.4</ResearchSpeed>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Researcher</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <tools>
@@ -538,10 +511,6 @@
                     <MedicalOperationSpeed>1.1</MedicalOperationSpeed>
                     <MedicalSurgerySuccessChance>1.05</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Butcher</li>
-                    <li>Medical</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <tools>
@@ -619,10 +588,6 @@
                     <DeconstructionSpeed>1.3</DeconstructionSpeed>
                     <TreeFellingSpeed>1.1</TreeFellingSpeed>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Constructor</li>
-                    <li>PlantWorker</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <tools>
@@ -702,9 +667,6 @@
                     <DiggingSpeed>1.3</DiggingSpeed>
                     <MiningYieldDigging>1.2</MiningYieldDigging>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Miner</li>
-                </defaultSurvivalToolAssignmentTags>
                 <toolWearFactor>0.7</toolWearFactor>
             </li>
         </modExtensions>
@@ -779,9 +741,6 @@
                     <MedicalSurgerySuccessChance>1.15</MedicalSurgerySuccessChance>
                     <MedicalTendQuality>1.1</MedicalTendQuality>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Medical</li>
-                </defaultSurvivalToolAssignmentTags>
                 <toolWearFactor>0.8</toolWearFactor>
             </li>
         </modExtensions>
@@ -857,13 +816,29 @@
                     <MaintenanceSpeed>1.4</MaintenanceSpeed>
                     <DiggingSpeed>1.2</DiggingSpeed>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Constructor</li>
-                    <li>Miner</li>
-                </defaultSurvivalToolAssignmentTags>
                 <toolWearFactor>0.9</toolWearFactor>
             </li>
         </modExtensions>
+        <comps>
+            <li Class="SurvivalTools.CompProperties_PowerTool">
+                <capacity>6000</capacity>
+                <dischargePerWorkTick>1.0</dischargePerWorkTick>
+                <poweredMultipliers>
+                    <li>
+                        <stat>ConstructionSpeed</stat>
+                        <factor>1.25</factor>
+                    </li>
+                    <li>
+                        <stat>MaintenanceSpeed</stat>
+                        <factor>1.20</factor>
+                    </li>
+                    <li>
+                        <stat>DiggingSpeed</stat>
+                        <factor>1.20</factor>
+                    </li>
+                </poweredMultipliers>
+            </li>
+        </comps>
         <tools>
             <li>
                 <label>body</label>
@@ -961,19 +936,49 @@
                     <ButcheryFleshSpeed>1.3</ButcheryFleshSpeed>
                     <ButcheryFleshEfficiency>1.1</ButcheryFleshEfficiency>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Constructor</li>
-                    <li>Miner</li>
-                    <li>PlantWorker</li>
-                    <li>Researcher</li>
-                    <!-- Extended tags (only if other mods provide tools for these) -->
-                    <li>Cleaner</li>
-                    <li>Medical</li>
-                    <li>Butcher</li>
-                </defaultSurvivalToolAssignmentTags>
                 <toolWearFactor>0.15</toolWearFactor>
             </li>
         </modExtensions>
+        <comps>
+            <li Class="SurvivalTools.CompProperties_PowerTool">
+                <capacity>10000</capacity>
+                <dischargePerWorkTick>0.8</dischargePerWorkTick>
+                <poweredMultipliers>
+                    <li>
+                        <stat>TreeFellingSpeed</stat>
+                        <factor>1.20</factor>
+                    </li>
+                    <li>
+                        <stat>PlantHarvestingSpeed</stat>
+                        <factor>1.20</factor>
+                    </li>
+                    <li>
+                        <stat>SowingSpeed</stat>
+                        <factor>1.20</factor>
+                    </li>
+                    <li>
+                        <stat>DiggingSpeed</stat>
+                        <factor>1.20</factor>
+                    </li>
+                    <li>
+                        <stat>ConstructionSpeed</stat>
+                        <factor>1.20</factor>
+                    </li>
+                    <li>
+                        <stat>MaintenanceSpeed</stat>
+                        <factor>1.20</factor>
+                    </li>
+                    <li>
+                        <stat>DeconstructionSpeed</stat>
+                        <factor>1.20</factor>
+                    </li>
+                    <li>
+                        <stat>ResearchSpeed</stat>
+                        <factor>1.25</factor>
+                    </li>
+                </poweredMultipliers>
+            </li>
+        </comps>
         <tools>
             <li>
                 <label>handle</label>
@@ -1020,10 +1025,6 @@
                     <ButcheryFleshEfficiency>1</ButcheryFleshEfficiency>
                     <MedicalOperationSpeed>1</MedicalOperationSpeed>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Butcher</li>
-                    <li>Medical</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <tools>
@@ -1091,9 +1092,6 @@
                     <ConstructionSpeed>1</ConstructionSpeed>
                     <DeconstructionSpeed>1</DeconstructionSpeed>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Constructor</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <tools>
@@ -1138,9 +1136,6 @@
                 <baseWorkStatFactors>
                     <PlantHarvestingSpeed>0.8</PlantHarvestingSpeed>
                 </baseWorkStatFactors>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>PlantWorker</li>
-                </defaultSurvivalToolAssignmentTags>
                 <toolWearFactor>1.3</toolWearFactor>
             </li>
         </modExtensions>
@@ -1241,9 +1236,6 @@
                 <stuffPowerMultiplier>
                     <CleaningSpeed>1.0</CleaningSpeed>
                 </stuffPowerMultiplier>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Cleaner</li>
-                </defaultSurvivalToolAssignmentTags>
                 <toolWearFactor>1.5</toolWearFactor>
             </li>
         </modExtensions>
@@ -1298,9 +1290,6 @@
                     <WorkSpeedGlobal>1.00</WorkSpeedGlobal>
                 </baseWorkStatFactors>
                 <toolWearFactor>1.10</toolWearFactor>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Generalist</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <tools>
@@ -1373,9 +1362,6 @@
                     <WorkSpeedGlobal>1.05</WorkSpeedGlobal>
                 </baseWorkStatFactors>
                 <toolWearFactor>1.00</toolWearFactor>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Generalist</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <tools>
@@ -1449,9 +1435,6 @@
                     <WorkSpeedGlobal>1.10</WorkSpeedGlobal>
                 </baseWorkStatFactors>
                 <toolWearFactor>0.90</toolWearFactor>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Generalist</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <recipeMaker>
@@ -1521,9 +1504,6 @@
                     <WorkSpeedGlobal>1.15</WorkSpeedGlobal>
                 </baseWorkStatFactors>
                 <toolWearFactor>0.80</toolWearFactor>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Generalist</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <recipeMaker>
@@ -1594,9 +1574,6 @@
                     <WorkSpeedGlobal>1.22</WorkSpeedGlobal>
                 </baseWorkStatFactors>
                 <toolWearFactor>0.65</toolWearFactor>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Generalist</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
         <recipeMaker>
@@ -1664,11 +1641,20 @@
                     <WorkSpeedGlobal>1.30</WorkSpeedGlobal>
                 </baseWorkStatFactors>
                 <toolWearFactor>0.50</toolWearFactor>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Generalist</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
+        <comps>
+            <li Class="SurvivalTools.CompProperties_PowerTool">
+                <capacity>8000</capacity>
+                <dischargePerWorkTick>1.5</dischargePerWorkTick>
+                <poweredMultipliers>
+                    <li>
+                        <stat>WorkSpeedGlobal</stat>
+                        <factor>1.30</factor>
+                    </li>
+                </poweredMultipliers>
+            </li>
+        </comps>
         <recipeMaker>
             <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
             <workSkill>Crafting</workSkill>
@@ -1737,11 +1723,20 @@
                     <WorkSpeedGlobal>1.45</WorkSpeedGlobal>
                 </baseWorkStatFactors>
                 <toolWearFactor>0.30</toolWearFactor>
-                <defaultSurvivalToolAssignmentTags>
-                    <li>Generalist</li>
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
+        <comps>
+            <li Class="SurvivalTools.CompProperties_PowerTool">
+                <capacity>15000</capacity>
+                <dischargePerWorkTick>0.5</dischargePerWorkTick>
+                <poweredMultipliers>
+                    <li>
+                        <stat>WorkSpeedGlobal</stat>
+                        <factor>1.30</factor>
+                    </li>
+                </poweredMultipliers>
+            </li>
+        </comps>
         <recipeMaker>
             <workSpeedStat>WorkSpeedGlobal</workSpeedStat>
             <workSkill>Crafting</workSkill>
@@ -1792,11 +1787,20 @@
                     <WorkSpeedGlobal>1.60</WorkSpeedGlobal>
                 </baseWorkStatFactors>
                 <toolWearFactor>0.10</toolWearFactor>
-                <defaultSurvivalToolAssignmentTags>
-                    <!--<li>Generalist</li>-->
-                </defaultSurvivalToolAssignmentTags>
             </li>
         </modExtensions>
+        <comps>
+            <li Class="SurvivalTools.CompProperties_PowerTool">
+                <capacity>20000</capacity>
+                <dischargePerWorkTick>0.3</dischargePerWorkTick>
+                <poweredMultipliers>
+                    <li>
+                        <stat>WorkSpeedGlobal</stat>
+                        <factor>1.35</factor>
+                    </li>
+                </poweredMultipliers>
+            </li>
+        </comps>
         <tools>
             <li>
                 <label>emitter housing</label>

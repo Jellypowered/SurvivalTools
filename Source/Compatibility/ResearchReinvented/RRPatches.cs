@@ -62,7 +62,55 @@ namespace SurvivalTools.Compat.ResearchReinvented
                 // Patch RR pawn extension methods (postfixes are applied by RRHelpers.Initialize which calls ApplyHarmonyHooks)
                 RRHelpers.Initialize(h);
 
-                // Research progress hook (ResearchManager.ResearchPerformed) – zero progress in Hardcore/Nightmare if lacking tool
+                // PHASE 12 FIX: Patch the actual RR progress methods (ResearchOpportunity.ResearchPerformed)
+                // This is the CENTRAL chokepoint for ALL RR research progress
+                try
+                {
+                    var rrOpportunityType = AccessTools.TypeByName("PeteTimesSix.ResearchReinvented.Opportunities.ResearchOpportunity");
+                    if (rrOpportunityType != null)
+                    {
+                        // Main progress method - ALL RR progress goes through here
+                        var miResearchPerformed = AccessTools.Method(rrOpportunityType, "ResearchPerformed", new[] {
+                            typeof(float),  // amount
+                            typeof(Pawn),   // researcher
+                            typeof(float?), // moteAmount
+                            typeof(string), // moteSubjectName
+                            typeof(float)   // moteOffsetHint
+                        });
+
+                        if (miResearchPerformed != null)
+                        {
+                            h.Patch(miResearchPerformed, prefix: new HarmonyMethod(typeof(RRPatches), nameof(Prefix_ResearchOpportunity_ResearchPerformed)));
+                            if (IsCompatLogging()) LogCompat("RR gating: Patched ResearchOpportunity.ResearchPerformed (main progress method)");
+                        }
+
+                        // Backup: Tick-based progress
+                        var miResearchTickPerformed = AccessTools.Method(rrOpportunityType, "ResearchTickPerformed");
+                        if (miResearchTickPerformed != null)
+                        {
+                            h.Patch(miResearchTickPerformed, prefix: new HarmonyMethod(typeof(RRPatches), nameof(Prefix_ResearchOpportunity_ResearchTickPerformed)));
+                            if (IsCompatLogging()) LogCompat("RR gating: Patched ResearchOpportunity.ResearchTickPerformed (tick method)");
+                        }
+
+                        // Backup: Chunk-based progress (one-time events)
+                        var miResearchChunkPerformed = AccessTools.Method(rrOpportunityType, "ResearchChunkPerformed");
+                        if (miResearchChunkPerformed != null)
+                        {
+                            h.Patch(miResearchChunkPerformed, prefix: new HarmonyMethod(typeof(RRPatches), nameof(Prefix_ResearchOpportunity_ResearchChunkPerformed)));
+                            if (IsCompatLogging()) LogCompat("RR gating: Patched ResearchOpportunity.ResearchChunkPerformed (chunk method)");
+                        }
+                    }
+                    else
+                    {
+                        LogCompatWarning("RR gating: Could not find ResearchOpportunity type - RR progress will not be gated!");
+                    }
+                }
+                catch (Exception e)
+                {
+                    LogCompatWarning($"RR gating: failed to patch ResearchOpportunity methods: {e}");
+                }
+
+                // Legacy patch (kept for compatibility, but RR doesn't use this)
                 try
                 {
                     var rmType = typeof(ResearchManager);
@@ -134,6 +182,99 @@ namespace SurvivalTools.Compat.ResearchReinvented
                 Log.Error($"[SurvivalTools Compat] RR gating patch init failed: {e}");
             }
         }
+
+        // ========== PHASE 12 FIX: Core RR Progress Patches ==========
+
+        /// <summary>
+        /// Main patch for RR progress - ALL research progress goes through ResearchOpportunity.ResearchPerformed
+        /// This is the single chokepoint for research, field research, analysis, everything.
+        /// </summary>
+        private static void Prefix_ResearchOpportunity_ResearchPerformed(ref float amount, Pawn researcher)
+        {
+            try
+            {
+                if (!RRHelpers.IsActive()) return;
+                if (researcher == null) return;
+
+                // Check if pawn has research tool - block ALL progress when lacking tool
+                if (!RRHelpers.PawnHasResearchTool(researcher))
+                {
+                    if (amount > 0f)
+                    {
+                        float originalAmount = amount;
+                        amount = 0f;
+
+                        if (Prefs.DevMode && SurvivalToolsMod.Settings?.debugLogging == true)
+                            LogCompat($"RR Progress BLOCKED: {researcher.LabelShort} (no research tool, {originalAmount:F2} → 0)");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                LogCompatWarning($"Prefix_ResearchOpportunity_ResearchPerformed error: {e}");
+            }
+        }
+
+        /// <summary>
+        /// Backup patch for tick-based progress (called during work ticks)
+        /// In Nightmare mode, skip the entire method to prevent any processing
+        /// </summary>
+        private static bool Prefix_ResearchOpportunity_ResearchTickPerformed(Pawn researcher)
+        {
+            try
+            {
+                if (!RRHelpers.IsActive()) return true;
+                if (researcher == null) return true;
+
+                // In Nightmare mode, block the entire tick if lacking tool
+                if (RRHelpers.Mode() == RRHelpers.RRMode.Nightmare)
+                {
+                    if (!RRHelpers.PawnHasResearchTool(researcher))
+                    {
+                        return false; // Skip method entirely
+                    }
+                }
+
+                // In other modes, allow (ResearchPerformed prefix will zero the amount)
+                return true;
+            }
+            catch (Exception e)
+            {
+                LogCompatWarning($"Prefix_ResearchOpportunity_ResearchTickPerformed error: {e}");
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Backup patch for chunk-based progress (one-time events like analyzing items)
+        /// Zero the amount before it reaches ResearchPerformed
+        /// </summary>
+        private static void Prefix_ResearchOpportunity_ResearchChunkPerformed(ref float amount, Pawn researcher)
+        {
+            try
+            {
+                if (!RRHelpers.IsActive()) return;
+                if (researcher == null) return;
+
+                if (!RRHelpers.PawnHasResearchTool(researcher))
+                {
+                    if (amount > 0f)
+                    {
+                        float originalAmount = amount;
+                        amount = 0f;
+
+                        if (Prefs.DevMode && SurvivalToolsMod.Settings?.debugLogging == true)
+                            LogCompat($"RR Chunk BLOCKED: {researcher.LabelShort} (no research tool, {originalAmount:F2} → 0)");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                LogCompatWarning($"Prefix_ResearchOpportunity_ResearchChunkPerformed error: {e}");
+            }
+        }
+
+        // ========== Legacy/Defensive Patches ==========
 
         // Defensive prefix for Toils_Recipe.DoRecipeWork – adjust or block progress when research tools are required
         private static bool Prefix_Toils_Recipe_DoRecipeWork(object __instance, JobDriver __state)

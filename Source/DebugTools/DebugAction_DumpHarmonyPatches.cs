@@ -14,7 +14,7 @@ namespace SurvivalTools.DebugTools
 {
     internal static class DebugAction_DumpHarmonyPatches
     {
-        [LudeonTK.DebugAction("ST", "Dump Harmony on hotspots", false, false)]
+        [LudeonTK.DebugAction("Survival Tools", "Dump Harmony on hotspots", false, false)]
         public static void DumpHarmonyPatches()
         {
             var sb = new StringBuilder();
@@ -85,7 +85,7 @@ namespace SurvivalTools.DebugTools
                     sb.AppendLine($"  {marker} {patchType}: {allowMarker}{dt.FullName}.{m.Name}");
                     sb.AppendLine($"       Owner: {patch.owner}");
                     sb.AppendLine($"       Assembly: {dt.Assembly.GetName().Name}");
-                    if (isOurs && dt.Namespace != null && dt.Namespace.StartsWith("SurvivalTools", StringComparison.Ordinal))
+                    if (isOurs && dt.Namespace != null && dt.Namespace.StartsWith("Survival Tools", StringComparison.Ordinal))
                     {
                         sb.AppendLine($"       ST Type: {dt.Name}");
                     }

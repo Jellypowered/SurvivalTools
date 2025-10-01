@@ -23,6 +23,9 @@ namespace SurvivalTools
         {
             this.FailOnDestroyedOrNull(TargetIndex.A);
 
+            // Cache map reference for performance
+            var map = pawn?.Map;
+
             // Determine where to drop: storage → stockpile → home area → current position
             ComputePreferredDropCell();
 
@@ -36,7 +39,7 @@ namespace SurvivalTools
 
             yield return Toils_General.DoAtomic(() =>
             {
-                if (pawn == null || pawn.Map == null)
+                if (pawn == null || map == null)
                 {
                     EndJobWith(JobCondition.Incompletable);
                     return;
@@ -45,21 +48,23 @@ namespace SurvivalTools
                 var toolAsSurvival = ToolToDrop as SurvivalTool;
                 var backing = SurvivalToolUtility.BackingThing(toolAsSurvival, pawn) ?? ToolToDrop;
 
-                if (pawn.inventory?.innerContainer == null)
+                // Cache inventory reference for performance
+                var inv = pawn.inventory?.innerContainer;
+                if (inv == null)
                 {
                     LogDebug($"[SurvivalTools.DropTool] {pawn.LabelShort} has no inventory; cannot drop tool.", $"DropTool_NoInventory_{pawn.ThingID}");
                     EndJobWith(JobCondition.Incompletable);
                     return;
                 }
 
-                var inv = pawn.inventory.innerContainer;
-
                 // Handle drop from equipment if applicable
+                // Cache equipment list to avoid repeated property access
                 var eqList = pawn.equipment?.AllEquipmentListForReading;
                 ThingWithComps eqTool = null;
                 if (eqList != null)
                 {
-                    for (int i = 0; i < eqList.Count; i++)
+                    int eqCount = eqList.Count;
+                    for (int i = 0; i < eqCount; i++)
                     {
                         var e = eqList[i];
                         if (e == null) continue;
@@ -76,7 +81,8 @@ namespace SurvivalTools
                 {
                     try
                     {
-                        if (pawn.equipment?.TryDropEquipment(eqTool, out ThingWithComps droppedEq, pawn.Position) == true)
+                        // Use cached map reference (implicit in TryDropEquipment)
+                        if (pawn.equipment.TryDropEquipment(eqTool, out ThingWithComps droppedEq, pawn.Position))
                         {
                             droppedTool = droppedEq;
                         }
@@ -113,8 +119,8 @@ namespace SurvivalTools
                     bool dropOk = false;
                     try
                     {
-                        if (pawn.Map != null)
-                            dropOk = inv.TryDrop(toDrop, pawn.Position, pawn.Map, ThingPlaceMode.Near, out droppedTool);
+                        if (map != null)
+                            dropOk = inv.TryDrop(toDrop, pawn.Position, map, ThingPlaceMode.Near, out droppedTool);
                     }
                     catch
                     {
@@ -128,8 +134,8 @@ namespace SurvivalTools
                         bool placed = false;
                         try
                         {
-                            if (pawn.Map != null)
-                                placed = GenPlace.TryPlaceThing(toDrop, pawn.Position, pawn.Map, ThingPlaceMode.Near);
+                            if (map != null)
+                                placed = GenPlace.TryPlaceThing(toDrop, pawn.Position, map, ThingPlaceMode.Near);
                         }
                         catch
                         {
@@ -195,7 +201,7 @@ namespace SurvivalTools
                 try { droppedTool.SetForbidden(false, false); } catch { }
 
                 // Clear forced-handler references
-                pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>()?.forcedHandler?.SetForced(droppedTool, false);
+                pawn.TryGetComp<Pawn_ForcedToolTracker>()?.forcedHandler?.SetForced(droppedTool, false);
 
                 // After dropping, if we're still over the immediate effective limit (e.g. Nightmare 1) enforce again
                 try
