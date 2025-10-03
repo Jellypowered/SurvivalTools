@@ -24,7 +24,7 @@
     <baseCost>2000</baseCost>
     <techLevel>Spacer</techLevel>
     <prerequisites>
-      <li>Microelectronics</li>
+      <li>MicroelectronicsBasics</li>
       <li>ST_BatteryTech</li>
     </prerequisites>
     <tab>Main</tab>
@@ -41,7 +41,7 @@
     <techLevel>Spacer</techLevel>
     <prerequisites>
       <li>Fabrication</li>
-      <li>Microelectronics</li>
+      <li>MicroelectronicsBasics</li>
       <li>ST_BatteryTech</li>
     </prerequisites>
     <tab>Main</tab>

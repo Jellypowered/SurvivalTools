@@ -1,76 +1,104 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Patch>
 
-  <!-- Add Basic batteries to Bulk Goods Trader (Industrial) -->
-  <Operation Class="PatchOperationSequence">
-    <operations>
-      <li Class="PatchOperationTest">
-        <xpath>/Defs/TraderKindDef[defName="Caravan_BulkGoods_Rare"]</xpath>
-      </li>
-      <li Class="PatchOperationAdd">
-        <xpath>/Defs/TraderKindDef[defName="Caravan_BulkGoods_Rare"]/stockGenerators</xpath>
-        <value>
-          <li Class="StockGenerator_SingleDef">
-            <thingDef>ST_Battery_Basic</thingDef>
-            <countRange>5~15</countRange>
-          </li>
-        </value>
-      </li>
-    </operations>
+  <!-- Add Basic batteries to Empire Trader -->
+  <Operation Class="PatchOperationFindMod">
+    <mods>
+      <li>Core</li>
+    </mods>
+    <match Class="PatchOperationSequence">
+      <success>Always</success>
+      <operations>
+        <li Class="PatchOperationTest">
+          <xpath>/Defs/TraderKindDef[defName="Empire_Caravan_TraderGeneral"]</xpath>
+          <success>Always</success>
+        </li>
+        <li Class="PatchOperationAdd">
+          <xpath>/Defs/TraderKindDef[defName="Empire_Caravan_TraderGeneral"]/stockGenerators</xpath>
+          <value>
+            <li Class="StockGenerator_SingleDef">
+              <thingDef>ST_Battery_Basic</thingDef>
+              <countRange>3~12</countRange>
+            </li>
+          </value>
+        </li>
+      </operations>
+    </match>
   </Operation>
 
-  <!-- Add Industrial batteries to Bulk Goods Trader (Industrial) -->
-  <Operation Class="PatchOperationSequence">
-    <operations>
-      <li Class="PatchOperationTest">
-        <xpath>/Defs/TraderKindDef[defName="Caravan_BulkGoods_Rare"]</xpath>
-      </li>
-      <li Class="PatchOperationAdd">
-        <xpath>/Defs/TraderKindDef[defName="Caravan_BulkGoods_Rare"]/stockGenerators</xpath>
-        <value>
-          <li Class="StockGenerator_SingleDef">
-            <thingDef>ST_Battery_Industrial</thingDef>
-            <countRange>2~8</countRange>
-          </li>
-        </value>
-      </li>
-    </operations>
+  <!-- Add Industrial batteries to Combat Supplier -->
+  <Operation Class="PatchOperationFindMod">
+    <mods>
+      <li>Core</li>
+    </mods>
+    <match Class="PatchOperationSequence">
+      <success>Always</success>
+      <operations>
+        <li Class="PatchOperationTest">
+          <xpath>/Defs/TraderKindDef[defName="Base_Outlander_Standard"]</xpath>
+          <success>Always</success>
+        </li>
+        <li Class="PatchOperationAdd">
+          <xpath>/Defs/TraderKindDef[defName="Base_Outlander_Standard"]/stockGenerators</xpath>
+          <value>
+            <li Class="StockGenerator_SingleDef">
+              <thingDef>ST_Battery_Industrial</thingDef>
+              <countRange>2~8</countRange>
+            </li>
+          </value>
+        </li>
+      </operations>
+    </match>
   </Operation>
 
   <!-- Add Industrial batteries to Orbital Goods Trader (Spacer) -->
-  <Operation Class="PatchOperationSequence">
-    <operations>
-      <li Class="PatchOperationTest">
-        <xpath>/Defs/TraderKindDef[defName="Orbital_BulkGoods"]</xpath>
-      </li>
-      <li Class="PatchOperationAdd">
-        <xpath>/Defs/TraderKindDef[defName="Orbital_BulkGoods"]/stockGenerators</xpath>
-        <value>
-          <li Class="StockGenerator_SingleDef">
-            <thingDef>ST_Battery_Industrial</thingDef>
-            <countRange>3~10</countRange>
-          </li>
-        </value>
-      </li>
-    </operations>
+  <Operation Class="PatchOperationFindMod">
+    <mods>
+      <li>Core</li>
+    </mods>
+    <match Class="PatchOperationSequence">
+      <success>Always</success>
+      <operations>
+        <li Class="PatchOperationTest">
+          <xpath>/Defs/TraderKindDef[defName="Orbital_BulkGoods"]</xpath>
+          <success>Always</success>
+        </li>
+        <li Class="PatchOperationAdd">
+          <xpath>/Defs/TraderKindDef[defName="Orbital_BulkGoods"]/stockGenerators</xpath>
+          <value>
+            <li Class="StockGenerator_SingleDef">
+              <thingDef>ST_Battery_Industrial</thingDef>
+              <countRange>3~10</countRange>
+            </li>
+          </value>
+        </li>
+      </operations>
+    </match>
   </Operation>
 
   <!-- Add Nuclear batteries (rare) to Orbital Exotic Goods Trader -->
-  <Operation Class="PatchOperationSequence">
-    <operations>
-      <li Class="PatchOperationTest">
-        <xpath>/Defs/TraderKindDef[defName="Orbital_Exotic"]</xpath>
-      </li>
-      <li Class="PatchOperationAdd">
-        <xpath>/Defs/TraderKindDef[defName="Orbital_Exotic"]/stockGenerators</xpath>
-        <value>
-          <li Class="StockGenerator_SingleDef">
-            <thingDef>ST_Battery_Nuclear</thingDef>
-            <countRange>1~3</countRange>
-          </li>
-        </value>
-      </li>
-    </operations>
+  <Operation Class="PatchOperationFindMod">
+    <mods>
+      <li>Core</li>
+    </mods>
+    <match Class="PatchOperationSequence">
+      <success>Always</success>
+      <operations>
+        <li Class="PatchOperationTest">
+          <xpath>/Defs/TraderKindDef[defName="Orbital_Exotic"]</xpath>
+          <success>Always</success>
+        </li>
+        <li Class="PatchOperationAdd">
+          <xpath>/Defs/TraderKindDef[defName="Orbital_Exotic"]/stockGenerators</xpath>
+          <value>
+            <li Class="StockGenerator_SingleDef">
+              <thingDef>ST_Battery_Nuclear</thingDef>
+              <countRange>1~3</countRange>
+            </li>
+          </value>
+        </li>
+      </operations>
+    </match>
   </Operation>
 
 </Patch>

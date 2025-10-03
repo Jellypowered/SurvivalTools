@@ -2,41 +2,51 @@
 <Patch>
 
   <!-- Add 2× Basic batteries to Crashlanded scenario -->
-  <Operation Class="PatchOperationSequence">
-    <operations>
-      <li Class="PatchOperationTest">
-        <xpath>/Defs/ScenarioDef[defName="Crashlanded"]</xpath>
-      </li>
-      <li Class="PatchOperationAdd">
-        <xpath>/Defs/ScenarioDef[defName="Crashlanded"]/scenario/parts</xpath>
-        <value>
-          <li Class="ScenPart_StartingThing_Defined">
-            <def>StartingThing_Defined</def>
-            <thingDef>ST_Battery_Basic</thingDef>
-            <count>2</count>
-          </li>
-        </value>
-      </li>
-    </operations>
+  <Operation Class="PatchOperationFindMod">
+    <mods>
+      <li>Core</li>
+    </mods>
+    <match Class="PatchOperationSequence">
+      <operations>
+        <li Class="PatchOperationTest">
+          <xpath>/Defs/ScenarioDef[defName="Crashlanded"]</xpath>
+        </li>
+        <li Class="PatchOperationAdd">
+          <xpath>/Defs/ScenarioDef[defName="Crashlanded"]/scenario/parts</xpath>
+          <value>
+            <li Class="ScenPart_StartingThing_Defined">
+              <def>StartingThing_Defined</def>
+              <thingDef>ST_Battery_Basic</thingDef>
+              <count>2</count>
+            </li>
+          </value>
+        </li>
+      </operations>
+    </match>
   </Operation>
 
-  <!-- Add 1× Industrial battery to Rich Explorer scenario -->
-  <Operation Class="PatchOperationSequence">
-    <operations>
-      <li Class="PatchOperationTest">
-        <xpath>/Defs/ScenarioDef[defName="RichExplorer"]</xpath>
-      </li>
-      <li Class="PatchOperationAdd">
-        <xpath>/Defs/ScenarioDef[defName="RichExplorer"]/scenario/parts</xpath>
-        <value>
-          <li Class="ScenPart_StartingThing_Defined">
-            <def>StartingThing_Defined</def>
-            <thingDef>ST_Battery_Industrial</thingDef>
-            <count>1</count>
-          </li>
-        </value>
-      </li>
-    </operations>
+  <!-- Add 1× Industrial battery to Lost Tribe scenario -->
+  <Operation Class="PatchOperationFindMod">
+    <mods>
+      <li>Core</li>
+    </mods>
+    <match Class="PatchOperationSequence">
+      <operations>
+        <li Class="PatchOperationTest">
+          <xpath>/Defs/ScenarioDef[defName="LostTribe"]</xpath>
+        </li>
+        <li Class="PatchOperationAdd">
+          <xpath>/Defs/ScenarioDef[defName="LostTribe"]/scenario/parts</xpath>
+          <value>
+            <li Class="ScenPart_StartingThing_Defined">
+              <def>StartingThing_Defined</def>
+              <thingDef>ST_Battery_Basic</thingDef>
+              <count>1</count>
+            </li>
+          </value>
+        </li>
+      </operations>
+    </match>
   </Operation>
 
 </Patch>
