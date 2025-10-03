@@ -7,6 +7,7 @@
 // - Settings-driven behavior with performance safeguards
 
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using RimWorld;
@@ -351,6 +352,26 @@ namespace SurvivalTools.Assign
             // AI path logging already covered elsewhere; ordered overloads log before delegating
             // Unified path: determine relevant stat (may be null – still enforce carry), attempt upgrade, then strict carry enforcement.
             var workStat = GetRelevantWorkStat(job); // may be null for non‑supported jobs (still enforce carry limit)
+
+            // Phase 12: Battery auto-swap check (before upgrade attempts)
+            if (workStat != null && settings?.autoSwapBatteries == true && GetEnableAssignments(settings))
+            {
+                bool swapped = TryAutoSwapBattery(pawn, workStat, settings);
+                if (swapped)
+                {
+                    // Battery swap queued, requeue original job and exit
+                    try
+                    {
+                        if (JobUtils.IsJobStillValid(job, pawn))
+                        {
+                            var cloned = JobUtils.CloneJobForQueue(job);
+                            pawn.jobs?.jobQueue?.EnqueueFirst(cloned, JobTag.Misc);
+                        }
+                    }
+                    catch (Exception e) { LogError($"[SurvivalTools.PreWork] Battery swap requeue exception: {e}"); }
+                    return false;
+                }
+            }
 
             // Attempt upgrade only if job has a relevant stat and assignments enabled
             Thing pendingEquip = null;
@@ -965,6 +986,124 @@ namespace SurvivalTools.Assign
             if (workStat == ST_StatDefOf.ButcheryFleshEfficiency) return "Butcher";
             if (workStat == ST_StatDefOf.CleaningSpeed) return "Clean";
             return job?.def?.defName ?? "Work";
+        }
+
+        /// <summary>
+        /// Phase 12: Try to auto-swap battery in current tool if charge is low.
+        /// Returns true if battery swap was queued.
+        /// </summary>
+        private static bool TryAutoSwapBattery(Pawn pawn, StatDef workStat, SurvivalToolsSettings settings)
+        {
+            if (pawn == null || workStat == null || settings == null)
+                return false;
+
+            if (!settings.autoSwapBatteries || !settings.enablePoweredTools)
+                return false;
+
+            // Find current best tool for this stat
+            var currentTool = ToolScoring.GetBestTool(pawn, workStat, out float _);
+            if (currentTool == null)
+                return false;
+
+            // Check if it's a powered tool
+            var powerComp = currentTool.TryGetComp<CompPowerTool>();
+            if (powerComp == null)
+                return false;
+
+            // Check if charge is below threshold
+            float chargePct = powerComp.ChargePct;
+            if (chargePct > settings.autoSwapThreshold)
+                return false; // Still has enough charge
+
+            // Search for a better battery in inventory and nearby
+            Thing bestBattery = FindBestBattery(pawn, powerComp);
+            if (bestBattery == null)
+                return false; // No better battery available
+
+            // Queue battery swap job
+            Job swapJob = JobMaker.MakeJob(ST_JobDefOf.ST_SwapBattery, currentTool, bestBattery);
+            pawn.jobs?.jobQueue?.EnqueueFirst(swapJob, JobTag.Misc);
+
+            if (Prefs.DevMode && settings.debugLogging)
+            {
+                LogDebug($"[PreWork] Auto-swap battery queued for {pawn.LabelShort}: {currentTool.LabelShort} ({chargePct:P0} < {settings.autoSwapThreshold:P0})",
+                    $"PreWork.AutoSwap|{pawn.ThingID}");
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Phase 12: Find the best available battery for a powered tool.
+        /// Searches inventory first, then nearby stockpiles.
+        /// </summary>
+        private static Thing FindBestBattery(Pawn pawn, CompPowerTool powerComp)
+        {
+            if (pawn == null || powerComp == null)
+                return null;
+
+            Thing bestBattery = null;
+            float bestCharge = powerComp.ChargePct;
+
+            // Search inventory first
+            if (pawn.inventory?.innerContainer != null)
+            {
+                for (int i = 0; i < pawn.inventory.innerContainer.Count; i++)
+                {
+                    var item = pawn.inventory.innerContainer[i];
+                    if (item == null)
+                        continue;
+
+                    var batteryComp = item.TryGetComp<CompBatteryCell>();
+                    if (batteryComp == null)
+                        continue;
+
+                    // Check if this battery has more charge than current
+                    float itemCharge = batteryComp.ChargePct;
+                    if (itemCharge > bestCharge)
+                    {
+                        bestBattery = item;
+                        bestCharge = itemCharge;
+                    }
+                }
+            }
+
+            // If we found a good battery in inventory, return it
+            if (bestBattery != null)
+                return bestBattery;
+
+            // Search nearby stockpiles (within assignment search radius)
+            var settings = SurvivalToolsMod.Settings;
+            float searchRadius = settings?.assignSearchRadius ?? 25f;
+
+            if (!pawn.Spawned || pawn.Map == null)
+                return null;
+
+            // Find all batteries in range
+            List<Thing> nearbyBatteries = pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableEver);
+            if (nearbyBatteries == null)
+                return null;
+
+            for (int i = 0; i < nearbyBatteries.Count; i++)
+            {
+                var item = nearbyBatteries[i];
+                if (item == null || item.Position.DistanceTo(pawn.Position) > searchRadius)
+                    continue;
+
+                var batteryComp = item.TryGetComp<CompBatteryCell>();
+                if (batteryComp == null)
+                    continue;
+
+                // Check if this battery has more charge than current
+                float itemCharge = batteryComp.ChargePct;
+                if (itemCharge > bestCharge && pawn.CanReach(item, PathEndMode.ClosestTouch, Danger.Deadly))
+                {
+                    bestBattery = item;
+                    bestCharge = itemCharge;
+                }
+            }
+
+            return bestBattery;
         }
 
         /// <summary>

@@ -19,7 +19,7 @@
         <stackLimit>10</stackLimit>
         <statBases>
             <MaxHitPoints>50</MaxHitPoints>
-            <MarketValue>25</MarketValue>
+            <MarketValue>75</MarketValue>
             <Mass>0.5</Mass>
             <Flammability>0.6</Flammability>
         </statBases>
@@ -27,9 +27,15 @@
             <li>Manufactured</li>
         </thingCategories>
         <techLevel>Industrial</techLevel>
+        <comps>
+            <li Class="SurvivalTools.CompProperties_BatteryCell">
+                <capacity>6000</capacity>
+                <tier>Basic</tier>
+            </li>
+        </comps>
     </ThingDef>
 
-    <!-- Advanced Battery -->
+    <!-- Advanced Battery (Legacy - kept for compatibility) -->
     <ThingDef ParentName="ResourceBase">
         <defName>ST_Battery_Advanced</defName>
         <label>advanced tool battery</label>
@@ -43,7 +49,7 @@
         <stackLimit>10</stackLimit>
         <statBases>
             <MaxHitPoints>70</MaxHitPoints>
-            <MarketValue>60</MarketValue>
+            <MarketValue>120</MarketValue>
             <Mass>0.4</Mass>
             <Flammability>0.5</Flammability>
         </statBases>
@@ -51,6 +57,12 @@
             <li>Manufactured</li>
         </thingCategories>
         <techLevel>Industrial</techLevel>
+        <comps>
+            <li Class="SurvivalTools.CompProperties_BatteryCell">
+                <capacity>10000</capacity>
+                <tier>Industrial</tier>
+            </li>
+        </comps>
     </ThingDef>
 
     <!-- Industrial Battery -->
@@ -67,7 +79,7 @@
         <stackLimit>5</stackLimit>
         <statBases>
             <MaxHitPoints>100</MaxHitPoints>
-            <MarketValue>150</MarketValue>
+            <MarketValue>180</MarketValue>
             <Mass>1.2</Mass>
             <Flammability>0.4</Flammability>
         </statBases>
@@ -75,6 +87,12 @@
             <li>Manufactured</li>
         </thingCategories>
         <techLevel>Industrial</techLevel>
+        <comps>
+            <li Class="SurvivalTools.CompProperties_BatteryCell">
+                <capacity>15000</capacity>
+                <tier>Industrial</tier>
+            </li>
+        </comps>
     </ThingDef>
 
     <!-- Nuclear Battery -->
@@ -91,7 +109,7 @@
         <stackLimit>5</stackLimit>
         <statBases>
             <MaxHitPoints>150</MaxHitPoints>
-            <MarketValue>800</MarketValue>
+            <MarketValue>450</MarketValue>
             <Mass>2.0</Mass>
             <Flammability>0.1</Flammability>
         </statBases>
@@ -99,6 +117,12 @@
             <li>Manufactured</li>
         </thingCategories>
         <techLevel>Spacer</techLevel>
+        <comps>
+            <li Class="SurvivalTools.CompProperties_BatteryCell">
+                <capacity>40000</capacity>
+                <tier>Nuclear</tier>
+            </li>
+        </comps>
     </ThingDef>
 
 </Defs>

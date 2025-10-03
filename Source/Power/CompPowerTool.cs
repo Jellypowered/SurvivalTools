@@ -17,12 +17,16 @@ namespace SurvivalTools
         private Dictionary<string, float> poweredMultipliers;
         private int chargeBucket = -1; // 0..20 for 5% steps, -1 = uninitialized
 
+        // Phase 12: Battery v2 - inserted battery item
+        private Thing batteryItem;
+
         private CompProperties_PowerTool Props => (CompProperties_PowerTool)props;
 
-        public float Charge => charge;
-        public float Capacity => capacity;
-        public bool HasCharge => charge > 0f;
-        public float ChargePct => capacity <= 0 ? 0f : charge / capacity;
+        public float Charge => batteryItem != null ? GetBatteryCharge() : charge;
+        public float Capacity => batteryItem != null ? GetBatteryCapacity() : capacity;
+        public bool HasCharge => Charge > 0f;
+        public float ChargePct => Capacity <= 0 ? 0f : Charge / Capacity;
+        public Thing BatteryItem => batteryItem;
 
         public override void PostExposeData()
         {
@@ -31,6 +35,7 @@ namespace SurvivalTools
             Scribe_Values.Look(ref capacity, "capacity", 6000f);
             Scribe_Values.Look(ref dischargePerWorkTick, "dischargePerWorkTick", 1f);
             Scribe_Values.Look(ref chargeBucket, "chargeBucket", -1);
+            Scribe_References.Look(ref batteryItem, "batteryItem");
 
             // Don't save poweredMultipliers - rebuild from props
         }
@@ -73,6 +78,91 @@ namespace SurvivalTools
                     }
                 }
             }
+        }
+
+        // Phase 12: Battery v2 helper methods
+
+        private float GetBatteryCharge()
+        {
+            if (batteryItem == null) return 0f;
+            var batteryComp = batteryItem.TryGetComp<CompBatteryCell>();
+            return batteryComp?.Charge ?? 0f;
+        }
+
+        private float GetBatteryCapacity()
+        {
+            if (batteryItem == null) return capacity;
+            var batteryComp = batteryItem.TryGetComp<CompBatteryCell>();
+            return batteryComp?.Capacity ?? capacity;
+        }
+
+        /// <summary>
+        /// Check if a battery can be inserted into this tool
+        /// </summary>
+        public bool CanAcceptBattery(Thing battery)
+        {
+            if (battery == null) return false;
+            if (batteryItem != null) return false; // Already has a battery
+
+            var batteryComp = battery.TryGetComp<CompBatteryCell>();
+            if (batteryComp == null) return false;
+
+            // For now, accept any battery (tier validation could be added here)
+            return true;
+        }
+
+        /// <summary>
+        /// Try to insert a battery into this tool
+        /// Returns true if successful
+        /// </summary>
+        public bool TryInsertBattery(Thing battery)
+        {
+            if (!CanAcceptBattery(battery))
+                return false;
+
+            // Remove from current container
+            if (battery.holdingOwner != null)
+            {
+                battery.holdingOwner.TryDrop(battery, ThingPlaceMode.Direct, out Thing _);
+            }
+
+            batteryItem = battery;
+            battery.DeSpawn();
+            RecalculateBucket();
+
+            if (Prefs.DevMode)
+            {
+                ST_Logging.LogDebug($"[Power] Inserted battery into {parent.LabelShort}: {battery.LabelShort} ({batteryItem.TryGetComp<CompBatteryCell>()?.ChargePct.ToStringPercent()})");
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Eject the current battery from this tool
+        /// Returns the ejected battery or null
+        /// </summary>
+        public Thing EjectBattery()
+        {
+            if (batteryItem == null)
+                return null;
+
+            Thing ejected = batteryItem;
+            batteryItem = null;
+            RecalculateBucket();
+
+            // Spawn the battery at the tool's location
+            if (parent.Spawned && parent.Map != null)
+            {
+                GenPlace.TryPlaceThing(ejected, parent.Position, parent.Map, ThingPlaceMode.Near);
+            }
+
+            if (Prefs.DevMode)
+            {
+                ST_Logging.LogDebug($"[Power] Ejected battery from {parent.LabelShort}: {ejected.LabelShort}");
+            }
+
+            return ejected;
         }
 
         /// <summary>
@@ -143,8 +233,19 @@ namespace SurvivalTools
             if (!IsPoweredStat(stat))
                 return;
 
-            // Discharge
-            charge = UnityEngine.Mathf.Clamp(charge - dischargePerWorkTick, 0f, capacity);
+            // Discharge (from battery if present, otherwise internal charge)
+            if (batteryItem != null)
+            {
+                var batteryComp = batteryItem.TryGetComp<CompBatteryCell>();
+                if (batteryComp != null)
+                {
+                    batteryComp.ConsumeCharge(dischargePerWorkTick);
+                }
+            }
+            else
+            {
+                charge = UnityEngine.Mathf.Clamp(charge - dischargePerWorkTick, 0f, capacity);
+            }
 
             // Recalc bucket (will dirty mesh if changed)
             RecalculateBucket();
@@ -152,7 +253,7 @@ namespace SurvivalTools
             // Dev logging (throttled)
             if (Prefs.DevMode && UnityEngine.Random.value < 0.001f) // 0.1% sample rate
             {
-                ST_Logging.LogDebug($"[Power] {parent.LabelShort} discharged to {charge:F1}/{capacity:F1} ({ChargePct:P0}) for {stat.defName}");
+                ST_Logging.LogDebug($"[Power] {parent.LabelShort} discharged to {Charge:F1}/{Capacity:F1} ({ChargePct:P0}) for {stat.defName}");
             }
         }
 
@@ -164,7 +265,19 @@ namespace SurvivalTools
             if (amount <= 0f)
                 return;
 
-            charge = UnityEngine.Mathf.Clamp(charge + amount, 0f, capacity);
+            if (batteryItem != null)
+            {
+                var batteryComp = batteryItem.TryGetComp<CompBatteryCell>();
+                if (batteryComp != null)
+                {
+                    batteryComp.AddCharge(amount);
+                }
+            }
+            else
+            {
+                charge = UnityEngine.Mathf.Clamp(charge + amount, 0f, capacity);
+            }
+
             RecalculateBucket();
         }
 
@@ -173,8 +286,34 @@ namespace SurvivalTools
         /// </summary>
         public void SetCharge(float amount)
         {
-            charge = UnityEngine.Mathf.Clamp(amount, 0f, capacity);
+            if (batteryItem != null)
+            {
+                var batteryComp = batteryItem.TryGetComp<CompBatteryCell>();
+                if (batteryComp != null)
+                {
+                    batteryComp.SetCharge(amount);
+                }
+            }
+            else
+            {
+                charge = UnityEngine.Mathf.Clamp(amount, 0f, capacity);
+            }
+
             RecalculateBucket();
+        }
+
+        public override void PostDestroy(DestroyMode mode, Map previousMap)
+        {
+            base.PostDestroy(mode, previousMap);
+
+            // If tool is being destroyed and has a battery, drop the battery
+            if (batteryItem != null && previousMap != null)
+            {
+                GenPlace.TryPlaceThing(batteryItem, parent.Position, previousMap, ThingPlaceMode.Near);
+                batteryItem = null;
+            }
+
+            CheckForDestruction();
         }
 
         public void CheckForDestruction()

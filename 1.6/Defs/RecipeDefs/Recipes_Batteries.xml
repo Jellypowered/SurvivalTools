@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Basic Battery Recipe -->
+  <RecipeDef>
+    <defName>ST_Make_Battery_Basic</defName>
+    <label>craft basic battery</label>
+    <description>Craft a basic rechargeable battery for powered tools.</description>
+    <jobString>Crafting basic battery.</jobString>
+    <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+    <effectWorking>Smith</effectWorking>
+    <soundWorking>Recipe_Smith</soundWorking>
+    <workAmount>3000</workAmount>
+    <unfinishedThingDef>UnfinishedComponent</unfinishedThingDef>
+    <ingredients>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>Steel</li>
+          </thingDefs>
+        </filter>
+        <count>10</count>
+      </li>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>ComponentIndustrial</li>
+          </thingDefs>
+        </filter>
+        <count>2</count>
+      </li>
+    </ingredients>
+    <products>
+      <ST_Battery_Basic>1</ST_Battery_Basic>
+    </products>
+    <skillRequirements>
+      <Crafting>4</Crafting>
+    </skillRequirements>
+    <workSkill>Crafting</workSkill>
+    <researchPrerequisite>ST_BatteryTech</researchPrerequisite>
+    <recipeUsers>
+      <li>ElectricSmithy</li>
+      <li>FabricationBench</li>
+    </recipeUsers>
+  </RecipeDef>
+
+  <!-- Industrial Battery Recipe -->
+  <RecipeDef>
+    <defName>ST_Make_Battery_Industrial</defName>
+    <label>craft industrial battery</label>
+    <description>Craft a high-capacity industrial battery for demanding power tool applications.</description>
+    <jobString>Crafting industrial battery.</jobString>
+    <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+    <effectWorking>Smith</effectWorking>
+    <soundWorking>Recipe_Machining</soundWorking>
+    <workAmount>5000</workAmount>
+    <unfinishedThingDef>UnfinishedComponent</unfinishedThingDef>
+    <ingredients>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>Steel</li>
+          </thingDefs>
+        </filter>
+        <count>15</count>
+      </li>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>Plasteel</li>
+          </thingDefs>
+        </filter>
+        <count>5</count>
+      </li>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>ComponentIndustrial</li>
+          </thingDefs>
+        </filter>
+        <count>4</count>
+      </li>
+    </ingredients>
+    <products>
+      <ST_Battery_Industrial>1</ST_Battery_Industrial>
+    </products>
+    <skillRequirements>
+      <Crafting>6</Crafting>
+    </skillRequirements>
+    <workSkill>Crafting</workSkill>
+    <researchPrerequisite>ST_AdvancedBatteryTech</researchPrerequisite>
+    <recipeUsers>
+      <li>FabricationBench</li>
+    </recipeUsers>
+  </RecipeDef>
+
+  <!-- Nuclear Battery Recipe -->
+  <RecipeDef>
+    <defName>ST_Make_Battery_Nuclear</defName>
+    <label>craft nuclear battery</label>
+    <description>Craft an advanced nuclear battery with exceptional capacity. Handle with care.</description>
+    <jobString>Crafting nuclear battery.</jobString>
+    <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+    <effectWorking>ConstructMetal</effectWorking>
+    <soundWorking>Recipe_Machining</soundWorking>
+    <workAmount>8000</workAmount>
+    <unfinishedThingDef>UnfinishedComponent</unfinishedThingDef>
+    <ingredients>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>Plasteel</li>
+          </thingDefs>
+        </filter>
+        <count>10</count>
+      </li>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>Uranium</li>
+          </thingDefs>
+        </filter>
+        <count>5</count>
+      </li>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>ComponentSpacer</li>
+          </thingDefs>
+        </filter>
+        <count>2</count>
+      </li>
+    </ingredients>
+    <products>
+      <ST_Battery_Nuclear>1</ST_Battery_Nuclear>
+    </products>
+    <skillRequirements>
+      <Crafting>8</Crafting>
+    </skillRequirements>
+    <workSkill>Crafting</workSkill>
+    <researchPrerequisite>ST_IndustrialBatteryTech</researchPrerequisite>
+    <recipeUsers>
+      <li>FabricationBench</li>
+    </recipeUsers>
+  </RecipeDef>
+
+</Defs>

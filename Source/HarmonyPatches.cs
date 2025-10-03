@@ -360,18 +360,145 @@ namespace SurvivalTools.HarmonyStuff
         {
             try
             {
-                if (!Prefs.DevMode || __instance == null || !Find.Selector.IsSelected(__instance)) return;
                 var list = __result != null ? __result.ToList() : new List<Gizmo>();
-                list.Add(new Command_Action
+
+                // Phase 12: Add battery management gizmos for powered tools
+                if (__instance != null && __instance.IsColonistPlayerControlled && Find.Selector.IsSelected(__instance))
                 {
-                    defaultLabel = "ST: Sim Wear 30s",
-                    defaultDesc = "Simulate 30 seconds of survival tool wear pulses on this pawn's current best tools.",
-                    icon = TexCommand.DesirePower, // generic icon
-                    action = () => global::SurvivalTools.DebugTools.DebugAction_SimulateWearPulses.SimulateWear()
-                });
+                    var settings = SurvivalToolsMod.Settings;
+                    if (settings?.enablePoweredTools == true)
+                    {
+                        AddBatteryGizmos(__instance, list);
+                    }
+                }
+
+                // Dev mode debug gizmos
+                if (Prefs.DevMode && __instance != null && Find.Selector.IsSelected(__instance))
+                {
+                    list.Add(new Command_Action
+                    {
+                        defaultLabel = "ST: Sim Wear 30s",
+                        defaultDesc = "Simulate 30 seconds of survival tool wear pulses on this pawn's current best tools.",
+                        icon = TexCommand.DesirePower, // generic icon
+                        action = () => global::SurvivalTools.DebugTools.DebugAction_SimulateWearPulses.SimulateWear()
+                    });
+                }
+
                 __result = list;
             }
             catch { }
+        }
+
+        /// <summary>
+        /// Phase 12: Add battery management gizmos for powered tools
+        /// </summary>
+        private static void AddBatteryGizmos(Pawn pawn, List<Gizmo> gizmos)
+        {
+            if (pawn?.equipment?.Primary == null)
+                return;
+
+            var tool = pawn.equipment.Primary;
+            var powerComp = tool.TryGetComp<CompPowerTool>();
+            if (powerComp == null)
+                return;
+
+            // Eject battery gizmo (only if battery is present)
+            if (powerComp.BatteryItem != null)
+            {
+                var ejectGizmo = new Command_Action
+                {
+                    defaultLabel = "Eject battery",
+                    defaultDesc = $"Eject the battery from {tool.LabelShort}. The battery will be placed in the pawn's inventory or dropped nearby.",
+                    icon = ContentFinder<UnityEngine.Texture2D>.Get("UI/Commands/LaunchReport", true),
+                    action = () =>
+                    {
+                        Thing ejected = powerComp.EjectBattery();
+                        if (ejected != null && pawn.inventory != null)
+                        {
+                            if (!pawn.inventory.innerContainer.TryAdd(ejected))
+                            {
+                                GenPlace.TryPlaceThing(ejected, pawn.Position, pawn.Map, ThingPlaceMode.Near);
+                            }
+                        }
+                    }
+                };
+                gizmos.Add(ejectGizmo);
+            }
+
+            // Insert battery gizmo (only if no battery present)
+            if (powerComp.BatteryItem == null)
+            {
+                var insertGizmo = new Command_Action
+                {
+                    defaultLabel = "Insert battery",
+                    defaultDesc = $"Insert a battery into {tool.LabelShort} from inventory or nearby storage.",
+                    icon = ContentFinder<UnityEngine.Texture2D>.Get("UI/Commands/Attack", true),
+                    action = () =>
+                    {
+                        // Create float menu of available batteries
+                        List<FloatMenuOption> options = new List<FloatMenuOption>();
+
+                        // Search inventory
+                        if (pawn.inventory?.innerContainer != null)
+                        {
+                            for (int i = 0; i < pawn.inventory.innerContainer.Count; i++)
+                            {
+                                var item = pawn.inventory.innerContainer[i];
+                                var batteryComp = item?.TryGetComp<CompBatteryCell>();
+                                if (batteryComp != null)
+                                {
+                                    Thing battery = item; // Capture for closure
+                                    string label = $"{battery.LabelShort} ({batteryComp.ChargePct.ToStringPercent()})";
+                                    options.Add(new FloatMenuOption(label, () =>
+                                    {
+                                        if (powerComp.TryInsertBattery(battery))
+                                        {
+                                            Messages.Message($"Inserted {battery.LabelShort} into {tool.LabelShort}", MessageTypeDefOf.TaskCompletion, false);
+                                        }
+                                    }));
+                                }
+                            }
+                        }
+
+                        // Search nearby (within 10 tiles for manual selection)
+                        if (pawn.Spawned && pawn.Map != null)
+                        {
+                            List<Thing> nearbyItems = pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableEver);
+                            for (int i = 0; i < nearbyItems.Count; i++)
+                            {
+                                var item = nearbyItems[i];
+                                if (item == null || item.Position.DistanceTo(pawn.Position) > 10f)
+                                    continue;
+
+                                var batteryComp = item?.TryGetComp<CompBatteryCell>();
+                                if (batteryComp != null)
+                                {
+                                    Thing battery = item; // Capture for closure
+                                    string label = $"{battery.LabelShort} ({batteryComp.ChargePct.ToStringPercent()}) - {item.Position.DistanceTo(pawn.Position):F1} tiles";
+                                    options.Add(new FloatMenuOption(label, () =>
+                                    {
+                                        // Queue a job to go get it and insert it
+                                        Job getJob = JobMaker.MakeJob(JobDefOf.TakeInventory, battery);
+                                        pawn.jobs?.TryTakeOrderedJob(getJob, JobTag.Misc);
+                                        
+                                        // Queue swap after pickup
+                                        Job swapJob = JobMaker.MakeJob(ST_JobDefOf.ST_SwapBattery, tool, battery);
+                                        pawn.jobs?.jobQueue?.EnqueueLast(swapJob, JobTag.Misc);
+                                    }));
+                                }
+                            }
+                        }
+
+                        if (options.Count == 0)
+                        {
+                            options.Add(new FloatMenuOption("No batteries available", null));
+                        }
+
+                        Find.WindowStack.Add(new FloatMenu(options));
+                    }
+                };
+                gizmos.Add(insertGizmo);
+            }
         }
 
         public static IEnumerable<CodeInstruction> Transpile_JobDriver_PlantWork_MakeNewToils(IEnumerable<CodeInstruction> instructions)

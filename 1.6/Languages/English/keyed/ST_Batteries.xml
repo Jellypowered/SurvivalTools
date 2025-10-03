@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+
+  <!-- Phase 12: Battery system translations -->
+  
+  <!-- Power status -->
+  <ST_Power_Charged>Charge: {0}</ST_Power_Charged>
+  <ST_Power_Empty>Empty (0%)</ST_Power_Empty>
+
+  <!-- Battery swap job -->
+  <ST_Job_SwapBattery>Swapping battery in {0}</ST_Job_SwapBattery>
+
+  <!-- Settings -->
+  <ST_Settings_AutoSwapBatteries>Auto-swap batteries when low</ST_Settings_AutoSwapBatteries>
+  <ST_Settings_AutoSwapBatteries_Tooltip>When enabled, pawns will automatically swap to a charged battery when their current battery drops below the threshold.</ST_Settings_AutoSwapBatteries_Tooltip>
+  
+  <ST_Settings_AutoSwapThreshold>Auto-swap threshold</ST_Settings_AutoSwapThreshold>
+  <ST_Settings_AutoSwapThreshold_Tooltip>Battery charge percentage at which pawns will automatically swap to a fresh battery.</ST_Settings_AutoSwapThreshold_Tooltip>
+
+  <!-- Gizmos -->
+  <ST_Gizmo_EjectBattery>Eject battery</ST_Gizmo_EjectBattery>
+  <ST_Gizmo_EjectBattery_Desc>Remove the battery from this tool and place it in inventory or drop it nearby.</ST_Gizmo_EjectBattery_Desc>
+  
+  <ST_Gizmo_InsertBattery>Insert battery</ST_Gizmo_InsertBattery>
+  <ST_Gizmo_InsertBattery_Desc>Insert a battery into this tool from inventory or nearby storage.</ST_Gizmo_InsertBattery_Desc>
+
+  <!-- Messages -->
+  <ST_BatteryInserted>Inserted {0} into {1}</ST_BatteryInserted>
+  <ST_BatteryEjected>Ejected battery from {0}</ST_BatteryEjected>
+  <ST_NoBatteriesAvailable>No batteries available</ST_NoBatteriesAvailable>
+
+</LanguageData>

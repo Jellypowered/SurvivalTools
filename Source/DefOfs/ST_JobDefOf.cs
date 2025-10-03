@@ -26,6 +26,9 @@ public static class ST_JobDefOf
     /// <summary>Job: Drop a carried survival tool.</summary>
     public static JobDef DropSurvivalTool;
 
+    /// <summary>Job: Swap battery in a powered tool (Phase 12).</summary>
+    public static JobDef ST_SwapBattery;
+
     static ST_JobDefOf()
     {
         DefOfHelper.EnsureInitializedInCtor(typeof(ST_JobDefOf));

@@ -7,4 +7,14 @@
         <allowOpportunisticPrefix>true</allowOpportunisticPrefix>
     </JobDef>
 
+    <!-- Phase 12: Battery swapping job -->
+    <JobDef>
+        <defName>ST_SwapBattery</defName>
+        <driverClass>SurvivalTools.JobDriver_SwapBattery</driverClass>
+        <reportString>swapping battery in powered tool.</reportString>
+        <allowOpportunisticPrefix>false</allowOpportunisticPrefix>
+        <playerInterruptible>true</playerInterruptible>
+        <suspendable>false</suspendable>
+    </JobDef>
+
 </Defs>

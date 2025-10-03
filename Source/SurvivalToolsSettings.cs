@@ -105,6 +105,8 @@ namespace SurvivalTools
         // Phase 12: Powered tool battery system
         public bool enablePoweredTools = true; // Enable battery system for powered tools
         public bool enableNuclearHazards = false; // Enable nuclear battery explosion hazards
+        public bool autoSwapBatteries = true; // Automatically swap batteries when low
+        public float autoSwapThreshold = 0.15f; // Threshold for auto-swap (15% charge)
 
         // Cached availability of optional tool types
         private bool? _hasCleaningToolsCache = null;
@@ -205,6 +207,8 @@ namespace SurvivalTools
             // Phase 12: Powered tools
             Scribe_Values.Look(ref enablePoweredTools, nameof(enablePoweredTools), true);
             Scribe_Values.Look(ref enableNuclearHazards, nameof(enableNuclearHazards), false);
+            Scribe_Values.Look(ref autoSwapBatteries, nameof(autoSwapBatteries), true);
+            Scribe_Values.Look(ref autoSwapThreshold, nameof(autoSwapThreshold), 0.15f);
 
             // Phase 11.10: workSpeedGlobalJobGating serialization removed
 
@@ -870,12 +874,37 @@ namespace SurvivalTools
                 if (Mouse.IsOver(poweredToolsRect))
                     TooltipHandler.TipRegion(poweredToolsRect, "When enabled, powered tools (drills, etc.) use batteries. Empty tools function at reduced efficiency and don't satisfy required checks in Hardcore/Nightmare.");
 
-                var nuclearHazardRect = listing.GetRect(Text.LineHeight);
-                nuclearHazardRect.x += 40f;
-                nuclearHazardRect.width -= 40f;
-                Widgets.CheckboxLabeled(nuclearHazardRect, "Enable nuclear battery hazards", ref settings.enableNuclearHazards);
-                if (Mouse.IsOver(nuclearHazardRect))
-                    TooltipHandler.TipRegion(nuclearHazardRect, "When enabled, destroyed nuclear batteries create small explosions.");
+                if (settings.enablePoweredTools)
+                {
+                    var autoSwapRect = listing.GetRect(Text.LineHeight);
+                    autoSwapRect.x += 20f;
+                    autoSwapRect.width -= 20f;
+                    Widgets.CheckboxLabeled(autoSwapRect, "Auto-swap batteries when low", ref settings.autoSwapBatteries);
+                    if (Mouse.IsOver(autoSwapRect))
+                        TooltipHandler.TipRegion(autoSwapRect, "Automatically swap to a charged battery when current battery drops below threshold.");
+
+                    if (settings.autoSwapBatteries)
+                    {
+                        // Threshold slider
+                        var thresholdRect = listing.GetRect(Text.LineHeight * 2);
+                        thresholdRect.x += 40f;
+                        thresholdRect.width -= 40f;
+                        
+                        Rect labelRect = new Rect(thresholdRect.x, thresholdRect.y, thresholdRect.width, Text.LineHeight);
+                        Widgets.Label(labelRect, $"Auto-swap threshold: {settings.autoSwapThreshold.ToStringPercent()}");
+                        
+                        Rect sliderRect = new Rect(thresholdRect.x, thresholdRect.y + Text.LineHeight, thresholdRect.width, Text.LineHeight);
+                        settings.autoSwapThreshold = Widgets.HorizontalSlider(sliderRect, settings.autoSwapThreshold, 0.05f, 0.5f, true);
+                        settings.autoSwapThreshold = UnityEngine.Mathf.Round(settings.autoSwapThreshold * 20f) / 20f; // Round to 5% increments
+                    }
+
+                    var nuclearHazardRect = listing.GetRect(Text.LineHeight);
+                    nuclearHazardRect.x += 20f;
+                    nuclearHazardRect.width -= 20f;
+                    Widgets.CheckboxLabeled(nuclearHazardRect, "Enable nuclear battery hazards", ref settings.enableNuclearHazards);
+                    if (Mouse.IsOver(nuclearHazardRect))
+                        TooltipHandler.TipRegion(nuclearHazardRect, "When enabled, destroyed nuclear batteries create small explosions.");
+                }
 
                 listing.GapLine();
                 listing.Gap(12f);
