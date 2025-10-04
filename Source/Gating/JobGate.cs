@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
+using Verse.AI;
 using RimWorld;
 using SurvivalTools.Assign;
 // using SurvivalTools.Helpers; // already included above
@@ -44,7 +45,19 @@ namespace SurvivalTools.Gating
         }
 
         // hot path: LINQ-free
+        // Overload: accepts Job instance for target-aware stat resolution (trees vs plants)
+        public static bool ShouldBlock(Pawn pawn, WorkGiverDef wg, Job jobInstance, bool forced, out string reasonKey, out string a1, out string a2)
+        {
+            return ShouldBlockInternal(pawn, wg, jobInstance?.def, jobInstance, forced, out reasonKey, out a1, out a2);
+        }
+
+        // Original: accepts JobDef for backward compatibility
         public static bool ShouldBlock(Pawn pawn, WorkGiverDef wg, JobDef job, bool forced, out string reasonKey, out string a1, out string a2)
+        {
+            return ShouldBlockInternal(pawn, wg, job, null, forced, out reasonKey, out a1, out a2);
+        }
+
+        private static bool ShouldBlockInternal(Pawn pawn, WorkGiverDef wg, JobDef job, Job jobInstance, bool forced, out string reasonKey, out string a1, out string a2)
         {
             reasonKey = null; a1 = null; a2 = null;
 
@@ -94,7 +107,8 @@ namespace SurvivalTools.Gating
                 return false;
             }
             // Resolve declared stats once (may include optional ones like MiningYieldDigging)
-            var declaredStats = ResolveRequiredStats(wg, job);
+            // Pass jobInstance for target-aware resolution (trees vs plants)
+            var declaredStats = ResolveRequiredStats(wg, job, jobInstance);
             // If no stats, do not gate
             if (declaredStats == null || declaredStats.Length == 0)
             {
@@ -234,7 +248,7 @@ namespace SurvivalTools.Gating
             return false;
         }
 
-        static StatDef[] ResolveRequiredStats(WorkGiverDef wg, JobDef job)
+        static StatDef[] ResolveRequiredStats(WorkGiverDef wg, JobDef job, Job jobInstance)
         {
             // prefer WG binding; fall back to Job binding
             if (wg != null)
@@ -264,12 +278,21 @@ namespace SurvivalTools.Gating
             }
             if (job != null)
             {
+                // Use Job instance for target-aware resolution if available (trees vs plants)
+                // Don't cache when using jobInstance since results vary by target
+                if (jobInstance != null)
+                {
+                    var statsList = SurvivalToolUtility.StatsForJob(jobInstance);
+                    return statsList?.ToArray() ?? new StatDef[0];
+                }
+
+                // Fallback to JobDef-based resolution (cacheable)
                 StatDef[] arr;
                 if (_jobReq.TryGetValue(job, out arr)) return arr;
 
                 // PHASE 6 INTEGRATION: Use SurvivalToolUtility for job stats
-                var statsList = SurvivalToolUtility.StatsForJob(job);
-                arr = statsList?.ToArray() ?? new StatDef[0];
+                var statsListDef = SurvivalToolUtility.StatsForJob(job);
+                arr = statsListDef?.ToArray() ?? new StatDef[0];
 
                 _jobReq[job] = arr;
                 return _jobReq[job];

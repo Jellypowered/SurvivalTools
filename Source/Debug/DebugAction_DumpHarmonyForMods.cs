@@ -24,7 +24,7 @@ namespace SurvivalTools.Debugging
             "Separate Tree Chopping"
         };
 
-        [DebugAction("SurvivalTools", "Dump Harmony (Tree Stack Mods)", actionType = DebugActionType.Action, allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [DebugAction("Survival Tools", "Dump Harmony (Tree Stack Mods)", actionType = DebugActionType.Action, allowedGameStates = AllowedGameStates.PlayingOnMap)]
         private static void Dump()
         {
             try

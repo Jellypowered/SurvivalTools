@@ -888,7 +888,38 @@ namespace SurvivalTools
             return fallback;
         }
 
-        public static List<StatDef> StatsForJob(Job job) => StatsForJob(job?.def);
+        public static List<StatDef> StatsForJob(Job job)
+        {
+            if (job == null) return new List<StatDef>();
+
+            // Special handling for plant/harvest jobs: check if target is a tree
+            // Covers: CutPlant, Harvest, HarvestDesignated, and any other harvest/cut jobs
+            if (job.targetA.HasThing)
+            {
+                var target = job.targetA.Thing;
+                if (target?.def?.plant?.IsTree == true)
+                {
+                    var jobName = job.def?.defName?.ToLowerInvariant() ?? "";
+
+                    // Any plant-related job on a tree should use TreeFellingSpeed
+                    if (job.def == JobDefOf.CutPlant ||
+                        job.def == JobDefOf.Harvest ||
+                        jobName.Contains("harvest") ||
+                        jobName.Contains("cut") ||
+                        jobName.Contains("plant"))
+                    {
+                        if (IsDebugLoggingEnabled)
+                        {
+                            LogDebug($"[SurvivalTools.TreeCheck] Job '{job.def.defName}' targeting tree '{target.def.defName}' -> TreeFellingSpeed",
+                                    $"TreeCheck_{job.def.defName}_{target.def.defName}");
+                        }
+                        return new List<StatDef> { ST_StatDefOf.TreeFellingSpeed };
+                    }
+                }
+            }
+
+            return StatsForJob(job?.def);
+        }
 
         private static bool IsToolRelevantJob(JobDef jobDef)
         {

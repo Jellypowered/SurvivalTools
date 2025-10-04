@@ -15,7 +15,8 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <ConstructionSpeed>1.1</ConstructionSpeed>
-              </baseWorkStatFactors>            </li>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
 
@@ -34,7 +35,8 @@
               <baseWorkStatFactors>
                 <DiggingSpeed>1.15</DiggingSpeed>
                 <MiningYieldDigging>1.1</MiningYieldDigging>
-              </baseWorkStatFactors>            </li>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
 
@@ -52,7 +54,8 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <PlantHarvestingSpeed>1.2</PlantHarvestingSpeed>
-              </baseWorkStatFactors>            </li>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
 
@@ -71,7 +74,8 @@
               <baseWorkStatFactors>
                 <ButcheryFleshSpeed>1.2</ButcheryFleshSpeed>
                 <ButcheryFleshEfficiency>1.15</ButcheryFleshEfficiency>
-              </baseWorkStatFactors>            </li>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
 
@@ -88,9 +92,10 @@
           <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
-                <MedicalOperationSpeed>1.2</MedicalOperationSpeed>
-                <MedicalSurgerySuccessChance>0.9</MedicalSurgerySuccessChance>
-              </baseWorkStatFactors>            </li>
+                <MedicalOperationSpeed>1.15</MedicalOperationSpeed>
+                <MedicalSurgerySuccessChance>1.05</MedicalSurgerySuccessChance>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
 
@@ -108,7 +113,8 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <CleaningSpeed>1.35</CleaningSpeed>
-              </baseWorkStatFactors>            </li>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
 

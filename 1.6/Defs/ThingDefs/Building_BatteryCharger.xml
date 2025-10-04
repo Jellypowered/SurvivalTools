@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+    <!-- ============================================= -->
+    <!-- BATTERY CHARGER                               -->
+    <!-- Phase 12.2: Charging station for tool batteries -->
+    <!-- ============================================= -->
+
+    <ThingDef ParentName="BuildingBase">
+        <defName>ST_BatteryCharger</defName>
+        <label>battery charger</label>
+        <description>A specialized workstation for recharging depleted tool batteries. Connect to the power grid to restore charge to basic, advanced, and industrial batteries. Nuclear batteries cannot be recharged as they generate their own power through radioactive decay.</description>
+
+        <thingClass>Building</thingClass>
+        <graphicData>
+            <texPath>Things/Building/Production/BatteryCharger</texPath>
+            <graphicClass>Graphic_Single</graphicClass>
+            <drawSize>(2,2)</drawSize>
+            <damageData>
+                <cornerTL>Damage/Corner</cornerTL>
+                <cornerTR>Damage/Corner</cornerTR>
+                <cornerBL>Damage/Corner</cornerBL>
+                <cornerBR>Damage/Corner</cornerBR>
+            </damageData>
+        </graphicData>
+
+        <altitudeLayer>Building</altitudeLayer>
+        <passability>PassThroughOnly</passability>
+        <pathCost>14</pathCost>
+        <blockWind>true</blockWind>
+        <fillPercent>0.5</fillPercent>
+        <castEdgeShadows>true</castEdgeShadows>
+        <staticSunShadowHeight>0.20</staticSunShadowHeight>
+
+        <minifiedDef>MinifiedThing</minifiedDef>
+        <thingCategories>
+            <li>BuildingsProduction</li>
+        </thingCategories>
+
+        <statBases>
+            <MaxHitPoints>200</MaxHitPoints>
+            <WorkToBuild>3500</WorkToBuild>
+            <Mass>35</Mass>
+            <Flammability>0.5</Flammability>
+        </statBases>
+
+        <size>(2,1)</size>
+        <rotatable>true</rotatable>
+        <designationCategory>Production</designationCategory>
+        <designationHotKey>Misc4</designationHotKey>
+
+        <comps>
+            <li Class="CompProperties_Power">
+                <compClass>CompPowerTrader</compClass>
+                <basePowerConsumption>200</basePowerConsumption>
+            </li>
+            <li Class="CompProperties_Flickable"/>
+            <li Class="CompProperties_Breakdownable"/>
+            <li Class="SurvivalTools.CompProperties_BatteryCharger">
+                <chargeRate>50</chargeRate>                <!-- Charge per tick when powered -->
+                <maxBatteries>4</maxBatteries>                <!-- Can charge up to 4 batteries simultaneously -->
+            </li>
+        </comps>
+
+        <building>
+            <destroySound>BuildingDestroyed_Metal_Small</destroySound>
+        </building>
+
+        <constructionSkillPrerequisite>6</constructionSkillPrerequisite>
+        <researchPrerequisites>
+            <li>ST_BatteryTech</li>
+        </researchPrerequisites>
+
+        <costList>
+            <Steel>100</Steel>
+            <ComponentIndustrial>6</ComponentIndustrial>
+        </costList>
+
+        <inspectorTabs>
+            <li>SurvivalTools.ITab_BatteryCharger</li>
+        </inspectorTabs>
+
+        <hasInteractionCell>true</hasInteractionCell>
+        <interactionCellOffset>(0,0,-1)</interactionCellOffset>
+    </ThingDef>
+
+    <!-- Advanced Battery Charger -->
+    <ThingDef ParentName="BuildingBase">
+        <defName>ST_BatteryCharger_Advanced</defName>
+        <label>advanced battery charger</label>
+        <description>A compact high-speed battery charging station. Uses more power than a standard charger but recharges batteries much faster. Can charge up to 2 batteries simultaneously. Requires higher construction skill and advanced components.</description>
+
+        <thingClass>Building</thingClass>
+        <graphicData>
+            <texPath>Things/Building/Production/BatteryCharger_Advanced</texPath>
+            <graphicClass>Graphic_Single</graphicClass>
+            <drawSize>(1,1)</drawSize>
+            <damageData>
+                <cornerTL>Damage/Corner</cornerTL>
+                <cornerTR>Damage/Corner</cornerTR>
+                <cornerBL>Damage/Corner</cornerBL>
+                <cornerBR>Damage/Corner</cornerBR>
+            </damageData>
+        </graphicData>
+
+        <altitudeLayer>Building</altitudeLayer>
+        <passability>PassThroughOnly</passability>
+        <pathCost>14</pathCost>
+        <blockWind>true</blockWind>
+        <fillPercent>0.4</fillPercent>
+        <castEdgeShadows>true</castEdgeShadows>
+        <staticSunShadowHeight>0.20</staticSunShadowHeight>
+
+        <minifiedDef>MinifiedThing</minifiedDef>
+        <thingCategories>
+            <li>BuildingsProduction</li>
+        </thingCategories>
+
+        <statBases>
+            <MaxHitPoints>150</MaxHitPoints>
+            <WorkToBuild>5000</WorkToBuild>
+            <Mass>20</Mass>
+            <Flammability>0.5</Flammability>
+        </statBases>
+
+        <size>(1,1)</size>
+        <rotatable>false</rotatable>
+        <designationCategory>Production</designationCategory>
+
+        <comps>
+            <li Class="CompProperties_Power">
+                <compClass>CompPowerTrader</compClass>
+                <basePowerConsumption>400</basePowerConsumption>
+            </li>
+            <li Class="CompProperties_Flickable"/>
+            <li Class="CompProperties_Breakdownable"/>
+            <li Class="SurvivalTools.CompProperties_BatteryCharger">
+                <chargeRate>150</chargeRate>                <!-- 3x faster than standard charger -->
+                <maxBatteries>2</maxBatteries>                <!-- Only 2 batteries at once -->
+            </li>
+        </comps>
+
+        <building>
+            <destroySound>BuildingDestroyed_Metal_Small</destroySound>
+        </building>
+
+        <constructionSkillPrerequisite>8</constructionSkillPrerequisite>
+        <researchPrerequisites>
+            <li>ST_AdvancedBatteryTech</li>
+        </researchPrerequisites>
+
+        <costList>
+            <Steel>75</Steel>
+            <Plasteel>20</Plasteel>
+            <ComponentIndustrial>8</ComponentIndustrial>
+        </costList>
+
+        <inspectorTabs>
+            <li>SurvivalTools.ITab_BatteryCharger</li>
+        </inspectorTabs>
+
+        <hasInteractionCell>true</hasInteractionCell>
+        <interactionCellOffset>(0,0,-1)</interactionCellOffset>
+    </ThingDef>
+
+</Defs>

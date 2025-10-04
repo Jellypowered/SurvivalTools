@@ -17,7 +17,7 @@
                 <li Class="PatchOperationAdd">
                     <xpath>Defs/ThingDef[defName="SurvivalTools_Abacus"]/modExtensions/li[@Class="SurvivalTools.SurvivalToolProperties"]/baseWorkStatFactors</xpath>
                     <value>
-                        <FieldResearchSpeedMultiplier>0.7</FieldResearchSpeedMultiplier>
+                        <FieldResearchSpeedMultiplier>1.15</FieldResearchSpeedMultiplier>
                     </value>
                 </li>
                 <!-- Add FieldResearchSpeedMultiplier to Microscope -->

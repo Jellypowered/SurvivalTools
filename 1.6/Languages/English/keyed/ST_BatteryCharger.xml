@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+
+    <!-- Battery Charger -->
+    <ST_BatteryCharger_Tab>Battery Charger</ST_BatteryCharger_Tab>
+    <ST_BatteryCharger_Insert>Insert battery</ST_BatteryCharger_Insert>
+    <ST_BatteryCharger_InsertDesc>Insert a battery into the charger for recharging. Nuclear batteries cannot be recharged.</ST_BatteryCharger_InsertDesc>
+    <ST_BatteryCharger_EjectAll>Eject all</ST_BatteryCharger_EjectAll>
+    <ST_BatteryCharger_EjectAllDesc>Eject all batteries from the charger and drop them nearby.</ST_BatteryCharger_EjectAllDesc>
+
+    <!-- Messages -->
+    <ST_BatteryCharger_Full>Battery charger is full.</ST_BatteryCharger_Full>
+    <ST_BatteryCharger_NotABattery>That is not a battery.</ST_BatteryCharger_NotABattery>
+    <ST_BatteryCharger_CannotChargeNuclear>Nuclear batteries cannot be recharged. They generate power through radioactive decay.</ST_BatteryCharger_CannotChargeNuclear>
+    <ST_BatteryCharger_AlreadyCharging>That battery is already in the charger.</ST_BatteryCharger_AlreadyCharging>
+    <ST_BatteryCharger_AlreadyFull>That battery is already fully charged.</ST_BatteryCharger_AlreadyFull>
+    <ST_BatteryCharger_NoPawnAvailable>No available colonist to haul the battery.</ST_BatteryCharger_NoPawnAvailable>
+    <ST_BatteryCharger_NoBatteriesAvailable>No batteries available nearby.</ST_BatteryCharger_NoBatteriesAvailable>
+
+</LanguageData>

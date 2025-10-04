@@ -12,7 +12,7 @@ namespace SurvivalTools.Compatibility.SmarterDeconstruction
 {
     internal static class SmarterDeconstructionHelpers
     {
-        private static readonly string PkgId = "smarter.deconstruction"; // placeholder ID
+        private static readonly string PkgId = "mlie.smarterdeconstructionandmining"; // placeholder ID
 
         internal static bool Active =>
             ModsConfig.ActiveModsInLoadOrder.Any(m => m.PackageId != null && m.PackageId.Equals(PkgId, StringComparison.OrdinalIgnoreCase))

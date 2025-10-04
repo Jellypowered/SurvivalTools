@@ -56,6 +56,9 @@ namespace SurvivalTools
                 // 9) Schedule optional stat gating validator (ensure demoted optional stats aren't reintroduced as hard requirements by other patches)
                 LongEventHandler.QueueLongEvent(ValidateDemotedOptionalStatsNotHardGated, "SurvivalTools: Validating demoted optional stats...", false, null);
 
+                // 10) Pre-warm performance-critical caches to eliminate first-click lag
+                LongEventHandler.QueueLongEvent(PreWarmCaches, "SurvivalTools: Pre-warming caches...", false, null);
+
                 if (IsDebugLoggingEnabled)
                     LogInfo("[SurvivalTools] Static constructor initialization completed successfully");
             }
@@ -442,6 +445,42 @@ namespace SurvivalTools
             catch (Exception ex)
             {
                 LogWarning("[SurvivalTools] Optional stat validator encountered an error: " + ex);
+            }
+        }
+
+        #endregion
+
+        #region Cache pre-warming
+
+        /// <summary>
+        /// Pre-warm performance-critical caches during game load to eliminate first-click lag.
+        /// Builds caches while loading screen is visible so first right-click is instant.
+        /// </summary>
+        private static void PreWarmCaches()
+        {
+            try
+            {
+                if (IsDebugLoggingEnabled)
+                    LogInfo("[SurvivalTools] Starting cache pre-warming...");
+
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+
+                // 1) Warm ToolStatResolver (RegisteredWorkStats HashSet)
+                SurvivalTools.Helpers.ToolStatResolver.Initialize();
+
+                // 2) Warm AssignmentSearch.GetRelevantToolDefs cache
+                // This is the MAJOR bottleneck (~50-150ms on first call)
+                SurvivalTools.Assign.AssignmentSearch.WarmRelevantToolDefsCache();
+
+                sw.Stop();
+
+                if (IsDebugLoggingEnabled)
+                    LogInfo($"[SurvivalTools] Cache pre-warming completed in {sw.ElapsedMilliseconds}ms");
+            }
+            catch (Exception ex)
+            {
+                // Don't fail startup on cache warming errors
+                LogWarning($"[SurvivalTools] Cache pre-warming encountered an error: {ex}");
             }
         }
 

@@ -16,9 +16,9 @@
                 <toolStatFactors>
                   <TreeFellingSpeed>1.3</TreeFellingSpeed>
                   <PlantHarvestingSpeed>1.3</PlantHarvestingSpeed>
-                  <DiggingSpeed>0.7</DiggingSpeed>
-                  <MiningYieldDigging>0.8</MiningYieldDigging>
-                  <ConstructionSpeed>0.7</ConstructionSpeed>
+                  <DiggingSpeed>1.10</DiggingSpeed>
+                  <MiningYieldDigging>1.12</MiningYieldDigging>
+                  <ConstructionSpeed>1.10</ConstructionSpeed>
                 </toolStatFactors>
               </li>
             </value>

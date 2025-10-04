@@ -7,9 +7,9 @@
         <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <CleaningSpeed>0.4</CleaningSpeed>
-                    <MedicalOperationSpeed>0.4</MedicalOperationSpeed>
-                    <MedicalSurgerySuccessChance>0.4</MedicalSurgerySuccessChance>
+                    <CleaningSpeed>1.05</CleaningSpeed>
+                    <MedicalOperationSpeed>1.05</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>1.05</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
                 <toolWearFactor>2.75</toolWearFactor>
             </li>
@@ -22,9 +22,9 @@
         <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <CleaningSpeed>0.55</CleaningSpeed>
-                    <MedicalOperationSpeed>0.55</MedicalOperationSpeed>
-                    <MedicalSurgerySuccessChance>0.55</MedicalSurgerySuccessChance>
+                    <CleaningSpeed>1.55</CleaningSpeed>
+                    <MedicalOperationSpeed>1.55</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>1.55</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
                 <toolWearFactor>2.5</toolWearFactor>
             </li>
@@ -37,9 +37,9 @@
         <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <CleaningSpeed>0.7</CleaningSpeed>
-                    <MedicalOperationSpeed>0.7</MedicalOperationSpeed>
-                    <MedicalSurgerySuccessChance>0.7</MedicalSurgerySuccessChance>
+                    <CleaningSpeed>1.70</CleaningSpeed>
+                    <MedicalOperationSpeed>1.70</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>1.70</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
                 <toolWearFactor>2.0</toolWearFactor>
             </li>
@@ -52,9 +52,9 @@
         <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <CleaningSpeed>0.85</CleaningSpeed>
-                    <MedicalOperationSpeed>0.85</MedicalOperationSpeed>
-                    <MedicalSurgerySuccessChance>0.85</MedicalSurgerySuccessChance>
+                    <CleaningSpeed>1.85</CleaningSpeed>
+                    <MedicalOperationSpeed>1.85</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>1.85</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
                 <toolWearFactor>1.5</toolWearFactor>
             </li>
@@ -67,9 +67,9 @@
         <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <CleaningSpeed>0.35</CleaningSpeed>
-                    <MedicalOperationSpeed>0.35</MedicalOperationSpeed>
-                    <MedicalSurgerySuccessChance>0.35</MedicalSurgerySuccessChance>
+                    <CleaningSpeed>1.35</CleaningSpeed>
+                    <MedicalOperationSpeed>1.35</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>1.35</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
                 <toolWearFactor>3.5</toolWearFactor>
             </li>
@@ -82,9 +82,9 @@
         <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <CleaningSpeed>0.4</CleaningSpeed>
-                    <MedicalOperationSpeed>0.4</MedicalOperationSpeed>
-                    <MedicalSurgerySuccessChance>0.4</MedicalSurgerySuccessChance>
+                    <CleaningSpeed>1.4</CleaningSpeed>
+                    <MedicalOperationSpeed>1.4</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>1.4</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
                 <toolWearFactor>3.0</toolWearFactor>
             </li>
@@ -97,9 +97,9 @@
         <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <CleaningSpeed>0.6</CleaningSpeed>
-                    <MedicalOperationSpeed>0.6</MedicalOperationSpeed>
-                    <MedicalSurgerySuccessChance>0.6</MedicalSurgerySuccessChance>
+                    <CleaningSpeed>1.6</CleaningSpeed>
+                    <MedicalOperationSpeed>1.6</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>1.6</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
                 <toolWearFactor>2.2</toolWearFactor>
             </li>
@@ -112,9 +112,9 @@
         <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <CleaningSpeed>0.45</CleaningSpeed>
-                    <MedicalOperationSpeed>0.45</MedicalOperationSpeed>
-                    <MedicalSurgerySuccessChance>0.45</MedicalSurgerySuccessChance>
+                    <CleaningSpeed>1.45</CleaningSpeed>
+                    <MedicalOperationSpeed>1.45</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>1.45</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
                 <toolWearFactor>2.8</toolWearFactor>
             </li>
@@ -127,9 +127,9 @@
         <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <CleaningSpeed>0.5</CleaningSpeed>
-                    <MedicalOperationSpeed>0.5</MedicalOperationSpeed>
-                    <MedicalSurgerySuccessChance>0.5</MedicalSurgerySuccessChance>
+                    <CleaningSpeed>1.5</CleaningSpeed>
+                    <MedicalOperationSpeed>1.5</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>1.5</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
                 <toolWearFactor>2.5</toolWearFactor>
             </li>

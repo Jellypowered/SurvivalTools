@@ -12,7 +12,7 @@ namespace SurvivalTools.Compatibility.CommonSense
 {
     internal static class CommonSenseHelpers
     {
-        private static readonly string PkgIdGuess = "mehni.rimworld.commonSense"; // benign if inaccurate
+        private static readonly string PkgIdGuess = "avilmask.commonsense"; // Updated to current package ID
 
         internal static bool Active =>
             ModsConfig.ActiveModsInLoadOrder.Any(m =>

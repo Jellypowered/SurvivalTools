@@ -201,7 +201,7 @@ namespace SurvivalTools
             if (workGiver == null) return false;
 
             // Use exact JobGate.ShouldBlock logic
-            if (JobGate.ShouldBlock(pawn, workGiver, null, false, out var key, out var a1, out var a2))
+            if (JobGate.ShouldBlock(pawn, workGiver, (JobDef)null, false, out var key, out var a1, out var a2))
             {
                 string reason = key.Translate(a1, a2);
                 _gatedPawns.Add(new PawnGatingIssue

@@ -1,103 +1,114 @@
 <Patch>
 
-    <!-- Steel -->
+    <!-- Steel - Standard industrial material, solid all-around performance -->
     <Operation Class="PatchOperationAddModExtension">
         <xpath>Defs/ThingDef[defName="Steel"]</xpath>
         <value>
             <li Class="SurvivalTools.StuffPropsTool">
                 <toolStatFactors>
-                    <TreeFellingSpeed>1.1</TreeFellingSpeed>
-                    <ConstructionSpeed>1.1</ConstructionSpeed>
-                    <DeconstructionSpeed>1.1</DeconstructionSpeed>
-                    <DiggingSpeed>1.1</DiggingSpeed>
-                    <MiningYieldDigging>1.1</MiningYieldDigging>
+                    <TreeFellingSpeed>1.15</TreeFellingSpeed>
+                    <ConstructionSpeed>1.15</ConstructionSpeed>
+                    <DeconstructionSpeed>1.15</DeconstructionSpeed>
+                    <DiggingSpeed>1.15</DiggingSpeed>
+                    <MiningYieldDigging>1.10</MiningYieldDigging>
                 </toolStatFactors>
             </li>
         </value>
     </Operation>
 
-    <!-- Silver -->
+    <!-- Silver - Soft precious metal, poor for hard work but decent for delicate tasks -->
     <Operation Class="PatchOperationAddModExtension">
         <xpath>Defs/ThingDef[defName="Silver"]</xpath>
         <value>
             <li Class="SurvivalTools.StuffPropsTool">
                 <toolStatFactors>
-                    <TreeFellingSpeed>0.7</TreeFellingSpeed>
-                    <PlantHarvestingSpeed>0.7</PlantHarvestingSpeed>
+                    <TreeFellingSpeed>1.05</TreeFellingSpeed>
+                    <PlantHarvestingSpeed>1.10</PlantHarvestingSpeed>
+                    <MedicalOperationSpeed>1.15</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>1.10</MedicalSurgerySuccessChance>
                 </toolStatFactors>
             </li>
         </value>
     </Operation>
 
-    <!-- Gold -->
+    <!-- Gold - Very soft, terrible for structural work, but excellent for precision/medical -->
     <Operation Class="PatchOperationAddModExtension">
         <xpath>Defs/ThingDef[defName="Gold"]</xpath>
         <value>
             <li Class="SurvivalTools.StuffPropsTool">
                 <toolStatFactors>
-                    <TreeFellingSpeed>0.6</TreeFellingSpeed>
-                    <PlantHarvestingSpeed>0.6</PlantHarvestingSpeed>
-                    <DiggingSpeed>1.1</DiggingSpeed>
-                    <MiningYieldDigging>1.1</MiningYieldDigging>
-                    <ConstructionSpeed>1.1</ConstructionSpeed>
+                    <TreeFellingSpeed>1.05</TreeFellingSpeed>
+                    <PlantHarvestingSpeed>1.10</PlantHarvestingSpeed>
+                    <DiggingSpeed>1.10</DiggingSpeed>
+                    <MiningYieldDigging>1.15</MiningYieldDigging>
+                    <ConstructionSpeed>1.05</ConstructionSpeed>
+                    <MedicalOperationSpeed>1.20</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>1.15</MedicalSurgerySuccessChance>
                 </toolStatFactors>
             </li>
         </value>
     </Operation>
 
-    <!-- Plasteel -->
+    <!-- Plasteel - Advanced composite, best all-around endgame material -->
     <Operation Class="PatchOperationAddModExtension">
         <xpath>Defs/ThingDef[defName="Plasteel"]</xpath>
         <value>
             <li Class="SurvivalTools.StuffPropsTool">
                 <toolStatFactors>
-                    <TreeFellingSpeed>1.3</TreeFellingSpeed>
-                    <PlantHarvestingSpeed>1.3</PlantHarvestingSpeed>
+                    <TreeFellingSpeed>1.30</TreeFellingSpeed>
+                    <PlantHarvestingSpeed>1.30</PlantHarvestingSpeed>
+                    <ConstructionSpeed>1.25</ConstructionSpeed>
+                    <DeconstructionSpeed>1.25</DeconstructionSpeed>
+                    <DiggingSpeed>1.30</DiggingSpeed>
+                    <MiningYieldDigging>1.20</MiningYieldDigging>
                 </toolStatFactors>
             </li>
         </value>
     </Operation>
 
-    <!-- Wood -->
+    <!-- Wood - Weak material, minimal bonuses, but accessible early game -->
     <Operation Class="PatchOperationAddModExtension">
         <xpath>Defs/ThingDef[defName="WoodLog"]</xpath>
         <value>
             <li Class="SurvivalTools.StuffPropsTool">
                 <toolStatFactors>
-                    <TreeFellingSpeed>0.6</TreeFellingSpeed>
-                    <PlantHarvestingSpeed>0.6</PlantHarvestingSpeed>
-                    <DiggingSpeed>0.6</DiggingSpeed>
-                    <MiningYieldDigging>0.8</MiningYieldDigging>
-                    <ConstructionSpeed>0.6</ConstructionSpeed>
+                    <TreeFellingSpeed>1.05</TreeFellingSpeed>
+                    <PlantHarvestingSpeed>1.10</PlantHarvestingSpeed>
+                    <DiggingSpeed>1.05</DiggingSpeed>
+                    <MiningYieldDigging>1.05</MiningYieldDigging>
+                    <ConstructionSpeed>1.10</ConstructionSpeed>
                 </toolStatFactors>
             </li>
         </value>
     </Operation>
 
-    <!-- Uranium -->
+    <!-- Uranium - Dense, heavy, excellent for breaking/smashing but slow for precision -->
     <Operation Class="PatchOperationAddModExtension">
         <xpath>Defs/ThingDef[defName="Uranium"]</xpath>
         <value>
             <li Class="SurvivalTools.StuffPropsTool">
                 <toolStatFactors>
-                    <DiggingSpeed>1.3</DiggingSpeed>
-                    <MiningYieldDigging>1.1</MiningYieldDigging>
-                    <ConstructionSpeed>1.3</ConstructionSpeed>
+                    <DiggingSpeed>1.35</DiggingSpeed>
+                    <MiningYieldDigging>1.25</MiningYieldDigging>
+                    <ConstructionSpeed>1.20</ConstructionSpeed>
+                    <DeconstructionSpeed>1.30</DeconstructionSpeed>
+                    <TreeFellingSpeed>1.15</TreeFellingSpeed>
                 </toolStatFactors>
             </li>
         </value>
     </Operation>
 
-    <!-- Jade -->
+    <!-- Jade - Hard gemstone, decent for precision work and mining -->
     <Operation Class="PatchOperationAddModExtension">
         <xpath>Defs/ThingDef[defName="Jade"]</xpath>
         <value>
             <li Class="SurvivalTools.StuffPropsTool">
                 <toolStatFactors>
-                    <TreeFellingSpeed>0.9</TreeFellingSpeed>
-                    <PlantHarvestingSpeed>0.9</PlantHarvestingSpeed>
-                    <MiningYieldDigging>0.9</MiningYieldDigging>
-                    <DiggingSpeed>1.1</DiggingSpeed>
+                    <TreeFellingSpeed>1.10</TreeFellingSpeed>
+                    <PlantHarvestingSpeed>1.15</PlantHarvestingSpeed>
+                    <MiningYieldDigging>1.15</MiningYieldDigging>
+                    <DiggingSpeed>1.20</DiggingSpeed>
+                    <MedicalOperationSpeed>1.10</MedicalOperationSpeed>
                 </toolStatFactors>
             </li>
         </value>

@@ -15,7 +15,8 @@
               <baseWorkStatFactors>
                 <DiggingSpeed>1.0</DiggingSpeed>
                 <MiningYieldDigging>1.0</MiningYieldDigging>
-              </baseWorkStatFactors>            </li>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
 
@@ -33,7 +34,8 @@
               <baseWorkStatFactors>
                 <ConstructionSpeed>1.0</ConstructionSpeed>
                 <ConstructSuccessChance>1.0</ConstructSuccessChance>
-              </baseWorkStatFactors>            </li>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
 
@@ -50,8 +52,9 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <ConstructionSpeed>1.1</ConstructionSpeed>
-                <ConstructSuccessChance>0.9</ConstructSuccessChance>
-              </baseWorkStatFactors>            </li>
+                <ConstructSuccessChance>1.01</ConstructSuccessChance>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
 
@@ -69,7 +72,8 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <TreeFellingSpeed>1.0</TreeFellingSpeed>
-              </baseWorkStatFactors>            </li>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
 
@@ -86,7 +90,8 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <TreeFellingSpeed>1.1</TreeFellingSpeed>
-              </baseWorkStatFactors>            </li>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
 
@@ -104,7 +109,8 @@
               <baseWorkStatFactors>
                 <DiggingSpeed>1.1</DiggingSpeed>
                 <MiningYieldDigging>1.1</MiningYieldDigging>
-              </baseWorkStatFactors>            </li>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
 
@@ -126,7 +132,8 @@
                 <ConstructionSpeed>1.0</ConstructionSpeed>
                 <ConstructSuccessChance>1.0</ConstructSuccessChance>
                 <PlantHarvestingSpeed>1.0</PlantHarvestingSpeed>
-              </baseWorkStatFactors>            </li>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
 
@@ -150,7 +157,8 @@ Maybe they need to add carrying capacity and tool slots, more for the advanced o
                 <ConstructionSpeed>1.1</ConstructionSpeed>
                 <ConstructSuccessChance>1.1</ConstructSuccessChance>
                 <PlantHarvestingSpeed>1.1</PlantHarvestingSpeed>
-              </baseWorkStatFactors>            </li>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
 

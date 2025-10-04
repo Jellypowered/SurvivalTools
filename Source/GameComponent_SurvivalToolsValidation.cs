@@ -78,6 +78,10 @@ namespace SurvivalTools
             {
                 try
                 {
+                    // Release all tool reservations first (they reference Job instances)
+                    SurvivalTools.Assign.AssignmentSearch.ReleaseAllToolReservations();
+
+                    // Then clear transient dictionaries
                     SurvivalTools.Assign.AssignmentSearch.ClearTransientState();
                     SurvivalTools.Assign.PreWork_AutoEquip.ClearTransientState();
                 }

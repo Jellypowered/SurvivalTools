@@ -28,11 +28,17 @@ namespace SurvivalTools.Assign
                 if (ST_BoundConsumables.IsBoundUnit(newEq)) return;
 
                 int allowed = AssignmentSearch.GetEffectiveCarryLimit(pawn, settings);
-                // Favor keeping the newly equipped tool (keeper=newEq)
-                NightmareCarryEnforcer.EnforceNow(pawn, keeperOrNull: newEq, allowed: allowed, reason: "post-equip.AddEquipment");
+                int carried = CountRealTools(pawn);
 
-                TryLogCooldown(("nm-carry-postequip", pawn.thingIDNumber), 60,
-                    $"[NightmareCarry] post-equip enforce | pawn={pawn.LabelShortCap} carried={CountRealTools(pawn)} allowed={allowed}");
+                // ONLY enforce if we're actually over the limit - don't drop tools just because we equipped something
+                if (carried > allowed)
+                {
+                    // Favor keeping the newly equipped tool (keeper=newEq)
+                    NightmareCarryEnforcer.EnforceNow(pawn, keeperOrNull: newEq, allowed: allowed, reason: "post-equip.AddEquipment");
+
+                    TryLogCooldown(("nm-carry-postequip", pawn.thingIDNumber), 60,
+                        $"[NightmareCarry] post-equip enforce | pawn={pawn.LabelShortCap} carried={carried} allowed={allowed}");
+                }
             }
             catch (Exception ex)
             {
@@ -57,10 +63,16 @@ namespace SurvivalTools.Assign
                     if (ST_BoundConsumables.IsBoundUnit(eq)) return;
 
                     int allowed = AssignmentSearch.GetEffectiveCarryLimit(pawn, settings);
-                    NightmareCarryEnforcer.EnforceNow(pawn, keeperOrNull: eq, allowed: allowed, reason: "post-equip.NotifyAdded");
+                    int carried = CountRealTools(pawn);
 
-                    TryLogCooldown2(("nm-carry-postequip2", pawn.thingIDNumber), 60,
-                        $"[NightmareCarry] post-equip notify | pawn={pawn.LabelShortCap} carried={CountRealTools(pawn)} allowed={allowed}");
+                    // ONLY enforce if we're actually over the limit - don't drop tools just because we equipped something
+                    if (carried > allowed)
+                    {
+                        NightmareCarryEnforcer.EnforceNow(pawn, keeperOrNull: eq, allowed: allowed, reason: "post-equip.NotifyAdded");
+
+                        TryLogCooldown2(("nm-carry-postequip2", pawn.thingIDNumber), 60,
+                            $"[NightmareCarry] post-equip notify | pawn={pawn.LabelShortCap} carried={carried} allowed={allowed}");
+                    }
                 }
                 catch (Exception ex)
                 {

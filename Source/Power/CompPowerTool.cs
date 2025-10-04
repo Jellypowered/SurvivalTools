@@ -373,5 +373,27 @@ namespace SurvivalTools
             string status = HasCharge ? "ST_Power_Charged" : "ST_Power_Empty";
             return status.Translate(ChargePct.ToStringPercent());
         }
+
+        /// <summary>
+        /// Phase 12.1: Show unified power tool manager when tool itself is selected (on ground, in stockpile, etc.)
+        /// </summary>
+        public override IEnumerable<Gizmo> CompGetGizmosExtra()
+        {
+            var settings = SurvivalToolsMod.Settings;
+            if (settings?.enablePoweredTools != true)
+                yield break;
+
+            // Only show if tool is spawned and selected
+            if (parent?.Spawned != true || !Find.Selector.IsSelected(parent))
+                yield break;
+
+            // Show unified power tool manager (no pawn context when tool selected directly)
+            yield return new Gizmo_PowerToolManager
+            {
+                powerComp = this,
+                tool = parent,
+                pawn = null
+            };
+        }
     }
 }

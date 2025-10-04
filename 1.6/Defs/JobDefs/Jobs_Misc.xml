@@ -17,4 +17,14 @@
         <suspendable>false</suspendable>
     </JobDef>
 
+    <!-- Phase 12.2: Battery charging job -->
+    <JobDef>
+        <defName>ST_ChargeBattery</defName>
+        <driverClass>SurvivalTools.JobDriver_ChargeBattery</driverClass>
+        <reportString>inserting battery into charger.</reportString>
+        <allowOpportunisticPrefix>false</allowOpportunisticPrefix>
+        <playerInterruptible>true</playerInterruptible>
+        <suspendable>true</suspendable>
+    </JobDef>
+
 </Defs>

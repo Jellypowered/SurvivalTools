@@ -1,55 +1,8 @@
 =================================================================
-COMMISSIONED ARTWORK SHOPPING LIST
+ARTWORK TODO LIST
 =================================================================
 
 === PRIMITIVE TIER TOOLS ===
-1. Knife.png - Basic Utility Knife
-   • Resolution: 128x128
-   • Style: Primitive/rustic
-   • Description: Simple blade with wooden or stone handle
-   • Use: Butchery, basic medical work
-
-2. HandSaw.png - Primitive Hand Saw
-   • Resolution: 128x128
-   • Style: Simple, functional
-   • Description: Toothed blade with wooden handle
-   • Use: Basic woodworking, construction
-
-3. BoneSickle.png - Bone Sickle
-   • Resolution: 128x128
-   • Style: Bone/fossil aesthetic
-   • Description: Curved blade shaped like carved bone
-   • Use: Harvesting crops/plants
-
-4. Hoe.png - Farming Hoe
-   • Resolution: 128x128
-   • Style: Agricultural
-   • Description: Wooden handle, metal or stone blade
-   • Use: Soil preparation, farming
-
-5. PryBar.png - Primitive Lever Tool
-   • Resolution: 128x128
-   • Style: Primitive
-   • Description: Wood or stone pry tool
-   • Use: Demolition, leverage
-
-6. Abacus.png - Counting Frame
-   • Resolution: 128x128
-   • Style: Neolithic research aid
-   • Description: Wooden frame with beads
-   • Use: Research, intellectual work
-
-7. PileOfRags.png - Cleaning Rags
-   • Resolution: 128x128
-   • Style: Practical
-   • Description: Bundle of cloth rags
-   • Use: Cleaning, maintenance
-
-8. MultipurposeStoneTool.png - Crude Stone Tool
-   • Resolution: 128x128
-   • Style: Tribal/neolithic
-   • Description: Chipped stone lashed to wood grip with twine
-   • Use: WorkSpeedGlobal (primitive tier)
 
 9. CarvedBoneImplements.png - Bundle of Bone Tools
    • Resolution: 128x128
@@ -75,11 +28,7 @@ COMMISSIONED ARTWORK SHOPPING LIST
 -----------------------------------------------------------------
 
 === INDUSTRIAL TIER TOOLS ===
-12. SteelKnife.png - Professional Knife
-    • Resolution: 128x128
-    • Style: Industrial
-    • Description: High-quality steel blade with ergonomic grip
-    • Use: Butchery, medical
+
 
 13. CrosscutSaw.png - Industrial Saw
     • Resolution: 128x128
@@ -187,54 +136,56 @@ COMMISSIONED ARTWORK SHOPPING LIST
 
 -----------------------------------------------------------------
 
-=== EXISTING TOOL TEXTURES (TO BE REDONE AT 128×128) ===
-28. Axe.png - Forestry Axe
-    • Resolution: 128x128
-    • Style: Functional, primitive-to-industrial variants
-    • Use: Tree felling, wood chopping
+=================================================================
 
-29. Pickaxe.png - Mining Pickaxe
-    • Resolution: 128x128
-    • Style: Sturdy, material-adaptive (stone/iron/steel)
-    • Use: Mining, digging
+=== BATTERY CHARGER BUILDINGS (PHASE 12.2) ===
+28. BatteryCharger.png - Standard Battery Charger
+    • Resolution: 128x64 (2×1 tiles)
+    • Style: Industrial workstation
+    • Description: Metallic charging station with 4 visible battery slots
+    • Details: Power cables/conduits, industrial metal construction, LED status lights
+    • Visual: 4 charging bays, blue/cyan accent lights, workshop-style
+    • Use: Charges Basic/Advanced/Industrial batteries at 50 charge/tick
+    • Power: 200W when active
+    • Path: Things/Building/Production/BatteryCharger
 
-30. Hammer.png - Construction Hammer
-    • Resolution: 128x128
-    • Style: Simple head + wooden/metal shaft
-    • Use: Building, construction
+29. BatteryCharger_Advanced.png - Advanced Battery Charger
+    • Resolution: 64x64 (1×1 tile)
+    • Style: Compact high-tech unit
+    • Description: Sleek advanced charging unit with 2 slots
+    • Details: Plasteel appearance, glowing power indicators (bright), advanced circuitry
+    • Visual: 2 charging slots, compact design, higher-tech materials, intense power effects
+    • Use: Charges batteries 3x faster (150 charge/tick), only 2 slots
+    • Power: 400W when active
+    • Path: Things/Building/Production/BatteryCharger_Advanced
 
-31. Sickle.png - Harvesting Sickle
-    • Resolution: 128x128
-    • Style: Curved blade with wood/metal handle
-    • Use: Crop/plant harvesting  
+-----------------------------------------------------------------
+
+=== UI ICONS (PHASE 12.2) ===
+30. InsertBattery.png - Insert Battery Icon
+    • Resolution: 64x64
+    • Style: Simple UI icon
+    • Description: Battery symbol with plus/insert arrow
+    • Use: Gizmo button for inserting batteries into chargers
+    • Path: UI/Commands/InsertBattery
+
+31. EjectBattery.png - Eject Battery Icon
+    • Resolution: 64x64
+    • Style: Simple UI icon
+    • Description: Battery symbol with eject/remove arrow
+    • Use: Gizmo button for ejecting batteries from chargers
+    • Path: UI/Commands/EjectBattery
 
 -----------------------------------------------------------------
 
 === ARTWORK SPECIFICATIONS ===
-• Resolution: All textures 128x128  
+• Resolution: Items 128x128, Buildings 64x64 per tile, UI Icons 64x64
 • Format: PNG with transparency  
 • Lighting: RimWorld top-down, NW soft light, SE shadow  
 • Style: Match RimWorld vanilla aesthetic  
 • Silhouette: Must be distinct/readable at 25% scale  
 • Material Adaptability: Wood/stone/metal where applicable  
-• Tech Progression: Primitive → Medieval → Industrial → Precision → Spacer → Glitterworld  
+• Tech Progression: Primitive → Medieval → Industrial → Precision → Spacer → Glitterworld
+• Buildings: Industrial workstations should look connected to power grid
+• Color Palette: Grays/browns for industrial, plasteel shine for advanced, cyan/blue for power indicators
 
------------------------------------------------------------------
-
-=== COMMISSION DELIVERY GUIDELINES ===
-• Provide layered source files (PSD or equivalent) + PNG exports  
-• Keep holograms/glow elements on separate layers for flexibility  
-• Battery glow effects (especially Nuclear) on separate layer for animation potential
-• Test readability at 50% and 25% scales  
-• Avoid over-detailing fine lines (<1px)  
-• Ensure silhouettes remain clear against RimWorld floors  
-
------------------------------------------------------------------
-
-TOTAL NEW TEXTURES: 27  
-- Primitive/Medieval: 11  
-- Industrial: 5  
-- Precision: 4  
-- Spacer/Glitterworld: 3
-- Power Tool Batteries: 4
-=================================================================

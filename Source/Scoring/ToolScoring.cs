@@ -80,6 +80,8 @@ namespace SurvivalTools.Scoring
             float baseline = SurvivalToolUtility.GetNoToolBaseline(workStat);
 
             // If tool doesn't improve over baseline, score is 0
+            // In RimWorld's stat system: higher factor = faster work
+            // Tool must have factor > baseline to be beneficial
             if (toolFactor <= baseline + 0.001f)
                 return 0f;
 

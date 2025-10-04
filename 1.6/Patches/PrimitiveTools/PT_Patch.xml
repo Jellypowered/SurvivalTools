@@ -11,10 +11,11 @@
           <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
-                <DiggingSpeed>0.75</DiggingSpeed>
-                <MiningYieldDigging>0.75</MiningYieldDigging>
-                <PlantHarvestingSpeed>0.75</PlantHarvestingSpeed>
-              </baseWorkStatFactors>            </li>
+                <DiggingSpeed>1.08</DiggingSpeed>
+                <MiningYieldDigging>1.08</MiningYieldDigging>
+                <PlantHarvestingSpeed>1.08</PlantHarvestingSpeed>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
         <li Class="PatchOperationAdd">
@@ -29,7 +30,8 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <TreeFellingSpeed>1.1</TreeFellingSpeed>
-              </baseWorkStatFactors>            </li>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
         <li Class="PatchOperationAdd">
@@ -43,8 +45,9 @@
           <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
-                <TreeFellingSpeed>0.5</TreeFellingSpeed>
-              </baseWorkStatFactors>            </li>
+                <TreeFellingSpeed>1.05</TreeFellingSpeed>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
         <li Class="PatchOperationAdd">
@@ -59,9 +62,10 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <TreeFellingSpeed>1.0</TreeFellingSpeed>
-                <MedicalOperationSpeed>0.8</MedicalOperationSpeed>
-                <MedicalSurgerySuccessChance>0.7</MedicalSurgerySuccessChance>
-              </baseWorkStatFactors>            </li>
+                <MedicalOperationSpeed>1.05</MedicalOperationSpeed>
+                <MedicalSurgerySuccessChance>1.08</MedicalSurgerySuccessChance>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
         <li Class="PatchOperationAdd">
@@ -76,7 +80,8 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <PlantHarvestingSpeed>1.0</PlantHarvestingSpeed>
-              </baseWorkStatFactors>            </li>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
         <li Class="PatchOperationAdd">
@@ -90,9 +95,10 @@
           <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
-                <ConstructionSpeed>0.85</ConstructionSpeed>
+                <ConstructionSpeed>1.08</ConstructionSpeed>
                 <ConstructSuccessChance>1.0</ConstructSuccessChance>
-              </baseWorkStatFactors>            </li>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
         <li Class="PatchOperationAdd">
@@ -106,9 +112,10 @@
           <value>
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
-                <ConstructionSpeed>0.85</ConstructionSpeed>
+                <ConstructionSpeed>1.08</ConstructionSpeed>
                 <ConstructSuccessChance>1.0</ConstructSuccessChance>
-              </baseWorkStatFactors>            </li>
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
         <li Class="PatchOperationAdd">
@@ -123,9 +130,10 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
               <baseWorkStatFactors>
                 <ConstructionSpeed>1.1</ConstructionSpeed>
-                <ConstructSuccessChance>0.75</ConstructSuccessChance>
-                <!-- Lower chance because big and wieldly -->
-              </baseWorkStatFactors>            </li>
+                <ConstructSuccessChance>1.05</ConstructSuccessChance>
+                <!-- Big and powerful -->
+              </baseWorkStatFactors>
+            </li>
           </value>
         </li>
         <li Class="PatchOperationAdd">

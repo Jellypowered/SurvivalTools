@@ -544,7 +544,7 @@ namespace SurvivalTools
                 foreach (var wg in testWorkGivers)
                 {
                     // Use exact JobGate.ShouldBlock call matching live logic
-                    bool blocked = Gating.JobGate.ShouldBlock(selected, wg, null, false, out var reasonKey, out var a1, out var a2);
+                    bool blocked = Gating.JobGate.ShouldBlock(selected, wg, (JobDef)null, false, out var reasonKey, out var a1, out var a2);
                     string result = blocked ? "BLOCK" : "ALLOW";
                     string reason = blocked ? reasonKey.Translate(a1, a2).ToString() : "No blocking";
 

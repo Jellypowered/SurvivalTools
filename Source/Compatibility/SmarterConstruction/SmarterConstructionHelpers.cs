@@ -12,7 +12,7 @@ namespace SurvivalTools.Compatibility.SmarterConstruction
 {
     internal static class SmarterConstructionHelpers
     {
-        private static readonly string PkgId = "dubwise.smarterconstruction"; // adjust if exact differs
+        private static readonly string PkgId = "dhultgren.smarterconstruction"; // adjust if exact differs
 
         internal static bool Active =>
             ModsConfig.ActiveModsInLoadOrder.Any(m => string.Equals(m.PackageId, PkgId, StringComparison.OrdinalIgnoreCase))

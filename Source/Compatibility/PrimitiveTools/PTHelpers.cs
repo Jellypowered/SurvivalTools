@@ -36,7 +36,8 @@ namespace SurvivalTools.Compat.PrimitiveTools
         {
             "vby.primitivetools",        // canonical-ish
             "primitivetools",            // generic substring
-            "virusbombay.primitivetools" // safety alias if mod renames
+            "virusbombay.primitivetools", // safety alias if mod renames
+            "primitivetools.velcroboy333" // current actual package ID 
         };
 
         #region Cache control

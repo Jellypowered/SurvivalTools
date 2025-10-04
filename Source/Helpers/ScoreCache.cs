@@ -148,7 +148,8 @@ namespace SurvivalTools.Helpers
             _scoreCache[key] = new CacheValue(score, _accessCounter);
 
             // Periodic cleanup to prevent unbounded growth
-            if (_accessCounter - _lastCleanupAccess > 1000)
+            // Increased threshold from 1000 to 2500 to reduce cleanup frequency
+            if (_accessCounter - _lastCleanupAccess > 2500)
             {
                 CleanupOldEntries();
                 _lastCleanupAccess = _accessCounter;
@@ -231,30 +232,28 @@ namespace SurvivalTools.Helpers
         /// <summary>
         /// Remove old cache entries to prevent unbounded growth.
         /// Keeps the most recently accessed entries.
+        /// Optimized: Simple age-based cutoff without sorting.
         /// </summary>
         private static void CleanupOldEntries()
         {
-            const int MaxCacheSize = 500;
+            const int MaxCacheSize = 750; // Increased from 500 for better hit rate
 
             if (_scoreCache.Count <= MaxCacheSize) return;
 
-            // Find cutoff access time (keep most recent half)
-            var accessTimes = new List<int>(_scoreCache.Count);
-            foreach (var value in _scoreCache.Values)
-            {
-                accessTimes.Add(value.LastAccess);
-            }
+            // Simple age-based cleanup: remove entries older than 1500 accesses
+            // This is much faster than sorting all entries
+            int cutoffAge = _accessCounter - 1500;
 
-            accessTimes.Sort();
-            int cutoffAccess = accessTimes[accessTimes.Count / 2];
-
-            // Remove entries older than cutoff
-            var keysToRemove = new List<CacheKey>();
+            // Use List<T>.RemoveAll pattern for better performance
+            var keysToRemove = new List<CacheKey>(_scoreCache.Count / 3);
             foreach (var kvp in _scoreCache)
             {
-                if (kvp.Value.LastAccess < cutoffAccess)
+                if (kvp.Value.LastAccess < cutoffAge)
                 {
                     keysToRemove.Add(kvp.Key);
+                    // Early exit if we've removed enough
+                    if (_scoreCache.Count - keysToRemove.Count <= MaxCacheSize)
+                        break;
                 }
             }
 

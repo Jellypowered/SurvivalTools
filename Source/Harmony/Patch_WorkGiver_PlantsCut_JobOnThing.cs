@@ -26,7 +26,25 @@ namespace SurvivalTools.HarmonyStuff
             if (plant == null || !plant.IsTree) return;
             if (__result.def != JobDefOf.CutPlant) return;
 
-            // Block PlantsCut on trees; specialized felling logic will handle them instead.
+            // STC-aware: If STC is active (external tree authority), let it handle trees entirely
+            // Otherwise, block PlantsCut on trees so our specialized felling logic handles them
+            bool stcActive = Helpers.TreeSystemArbiterActiveHelper.IsSTCAuthorityActive();
+            if (stcActive)
+            {
+                // STC is handling trees, don't interfere - but still block to avoid tool confusion
+                __result = null;
+                if (IsDebugLoggingEnabled)
+                {
+                    var key = $"PlantsCut_BlockTree_STC_{pawn?.ThingID ?? "nullPawn"}_{t.def.defName}";
+                    if (ShouldLogWithCooldown(key))
+                    {
+                        LogDecision(key, $"[SurvivalTools] PlantsCut blocked on tree '{t.def.defName}' (STC active) — deferring to STC.");
+                    }
+                }
+                return;
+            }
+
+            // ST authority: Block PlantsCut on trees; specialized felling logic will handle them instead.
             __result = null;
 
             // Cooldowned debug log to avoid spam.

@@ -14,7 +14,7 @@ namespace SurvivalTools.Compat.ResearchReinvented
     public static class RRDebug
     {
 #if DEBUG
-        [DebugAction("SurvivalTools", "Dump Research Reinvented Harmony patches")]
+        [DebugAction("Survival Tools", "Dump Research Reinvented Harmony patches")]
         public static void DumpResearchReinventedPatches_DebugAction() => DumpResearchReinventedPatches();
 #endif
 

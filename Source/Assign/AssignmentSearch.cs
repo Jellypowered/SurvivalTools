@@ -621,7 +621,11 @@ namespace SurvivalTools.Assign
                     catch (Exception ex)
                     { LogError($"[SurvivalTools.Assignment] Exception starting cloned queued job: {ex}"); started = false; }
                     if (!started) continue;
-                    LogDebug($"[SurvivalTools.Assignment] Started queued {cloned.def.defName} immediately for {pawn.LabelShort} targeting {tool.LabelShort}", $"Assign.StartQueued|{pawn.ThingID}|{tool.thingIDNumber}|{cloned.def?.defName}");
+                    // Enhanced null safety for logging
+                    string clonedDefName = cloned?.def?.defName ?? "(null)";
+                    string toolLabel = tool?.LabelShort ?? "(null)";
+                    int toolId = tool?.thingIDNumber ?? -1;
+                    LogDebug($"[SurvivalTools.Assignment] Started queued {clonedDefName} immediately for {pawn.LabelShort} targeting {toolLabel}", $"Assign.StartQueued|{pawn.ThingID}|{toolId}|{clonedDefName}");
                     // Remove stale/duplicate queued jobs now that one started
                     RemoveQueuedToolJobsFor(pawn, tool, JobDefOf.Equip, JobDefOf.TakeInventory);
                     return true;
@@ -1080,7 +1084,7 @@ namespace SurvivalTools.Assign
             }
 
             // Check carry limits BEFORE creating jobs and try to make room
-            if (!CanCarryAdditionalTool(pawn))
+            if (!CanCarryAdditionalTool(pawn, candidate.tool))
             {
                 LogDebug($"Carry limit reached for {pawn.LabelShort}, need to drop worst tool first", "AssignmentSearch.CarryLimit");
 
@@ -1254,10 +1258,19 @@ namespace SurvivalTools.Assign
             {
                 LogError($"[SurvivalTools.Assignment] Exception enqueueing job for {pawn.LabelShort}: {ex}");
 
-                // Clean up reservation on failure
+                // Clean up reservation on failure - only if we actually reserved it
+                // Check if the tool is reserved by this pawn before attempting release
                 try
                 {
-                    pawn.Map?.reservationManager?.Release(candidate.tool, pawn, job);
+                    if (candidate.tool != null && pawn?.Map?.reservationManager != null)
+                    {
+                        var resMan = pawn.Map.reservationManager;
+                        if (resMan.ReservedBy(candidate.tool, pawn))
+                        {
+                            // Release with null job (reservation cleanup doesn't require the job reference)
+                            resMan.Release(candidate.tool, pawn, null);
+                        }
+                    }
                 }
                 catch (Exception releaseEx)
                 {
@@ -1343,7 +1356,7 @@ namespace SurvivalTools.Assign
             return cap;
         }
 
-        private static bool CanCarryAdditionalTool(Pawn pawn)
+        private static bool CanCarryAdditionalTool(Pawn pawn, Thing candidateTool = null)
         {
             var settings = SurvivalToolsMod.Settings;
             if (settings == null)
@@ -1351,11 +1364,42 @@ namespace SurvivalTools.Assign
 
             int carryLimit = GetEffectiveCarryLimit(pawn, settings);
             int currentTools = CountCarriedTools(pawn);
+
+            // If the candidate tool is already carried, we're not adding a NEW tool
+            if (candidateTool != null && IsToolAlreadyCarried(pawn, candidateTool))
+            {
+                LogDebug($"CanCarryAdditionalTool for {pawn.LabelShort}: candidate {candidateTool.LabelShort} is already carried, no drop needed", "AssignmentSearch.CarryCheck.AlreadyCarried");
+                return true;
+            }
+
             bool canCarry = currentTools < carryLimit;
 
             LogDebug($"CanCarryAdditionalTool for {pawn.LabelShort}: current={currentTools}, effectiveLimit={carryLimit} (toolLimit={settings.toolLimit} diffCap={GetCarryLimit(settings)} statCap={(settings.toolLimit ? pawn.GetStatValue(ST_StatDefOf.SurvivalToolCarryCapacity).ToString("F2") : "∞")}), canCarry={canCarry}", "AssignmentSearch.CarryCheck");
 
             return canCarry;
+        }
+
+        private static bool IsToolAlreadyCarried(Pawn pawn, Thing tool)
+        {
+            if (pawn == null || tool == null) return false;
+
+            // Check inventory
+            var inventory = pawn.inventory?.innerContainer;
+            if (inventory != null && inventory.Contains(tool))
+                return true;
+
+            // Check equipment
+            var equipment = pawn.equipment?.AllEquipmentListForReading;
+            if (equipment != null)
+            {
+                for (int i = 0; i < equipment.Count; i++)
+                {
+                    if (equipment[i] == tool)
+                        return true;
+                }
+            }
+
+            return false;
         }
 
         private static int GetCarryLimit(SurvivalToolsSettings settings)
@@ -1890,29 +1934,98 @@ namespace SurvivalTools.Assign
         }
 
 
+        // Cache for GetRelevantToolDefs to avoid repeated DefDatabase queries
+        private static readonly Dictionary<StatDef, List<ThingDef>> _relevantToolDefsCache = new Dictionary<StatDef, List<ThingDef>>();
+        private static bool _relevantToolDefsCacheBuilt = false;
+
+        /// <summary>
+        /// Public helper to pre-warm the GetRelevantToolDefs cache during game load.
+        /// Called by StaticConstructorClass to eliminate first-click lag.
+        /// </summary>
+        internal static void WarmRelevantToolDefsCache()
+        {
+            if (!_relevantToolDefsCacheBuilt)
+            {
+                BuildRelevantToolDefsCache();
+                _relevantToolDefsCacheBuilt = true;
+            }
+        }
+
         private static List<ThingDef> GetRelevantToolDefs(StatDef workStat)
         {
-            // Return tool defs that could provide this work stat
-            var result = new List<ThingDef>();
+            // Build cache on first use (fallback if pre-warming didn't run)
+            if (!_relevantToolDefsCacheBuilt)
+            {
+                BuildRelevantToolDefsCache();
+                _relevantToolDefsCacheBuilt = true;
+            }
 
+            // Return cached list or empty list
+            if (_relevantToolDefsCache.TryGetValue(workStat, out var cached))
+                return cached;
+
+            return new List<ThingDef>(); // Empty list for unknown stats
+        }
+
+        /// <summary>
+        /// Build cache of tool defs per work stat once at startup.
+        /// This avoids repeated DefDatabase queries during hot path.
+        /// </summary>
+        private static void BuildRelevantToolDefsCache()
+        {
+            var allToolDefs = new List<ThingDef>();
+
+            // Collect all tool defs once
             foreach (var toolDef in DefDatabase<ThingDef>.AllDefsListForReading)
             {
-                // Only consider real tool defs; skip generic tool-stuff resources here to avoid false positives.
                 if (toolDef?.IsSurvivalTool() == true)
                 {
-                    // Quick check if this tool type could provide the stat
+                    allToolDefs.Add(toolDef);
+                }
+            }
+
+            // Build cache for each registered work stat
+            var workStats = new[]
+            {
+                ST_StatDefOf.DiggingSpeed,
+                ST_StatDefOf.MiningYieldDigging,
+                ST_StatDefOf.PlantHarvestingSpeed,
+                ST_StatDefOf.SowingSpeed,
+                ST_StatDefOf.TreeFellingSpeed,
+                ST_StatDefOf.MaintenanceSpeed,
+                ST_StatDefOf.DeconstructionSpeed,
+                ST_StatDefOf.ResearchSpeed,
+                ST_StatDefOf.CleaningSpeed,
+                ST_StatDefOf.MedicalOperationSpeed,
+                ST_StatDefOf.MedicalSurgerySuccessChance,
+                ST_StatDefOf.ButcheryFleshSpeed,
+                ST_StatDefOf.ButcheryFleshEfficiency,
+                StatDefOf.ConstructionSpeed,
+                ST_StatDefOf.WorkSpeedGlobal
+            };
+
+            foreach (var workStat in workStats)
+            {
+                if (workStat == null) continue;
+
+                var relevantDefs = new List<ThingDef>();
+                float baseline = SurvivalToolUtility.GetNoToolBaseline(workStat);
+
+                foreach (var toolDef in allToolDefs)
+                {
+                    // Create dummy tool to check if it provides this stat
                     var dummyTool = new SurvivalTool();
                     dummyTool.def = toolDef;
 
                     var factor = SurvivalToolUtility.GetToolProvidedFactor(dummyTool, workStat);
-                    if (factor > SurvivalToolUtility.GetNoToolBaseline(workStat) + GatingEpsilon)
+                    if (factor > baseline + GatingEpsilon)
                     {
-                        result.Add(toolDef);
+                        relevantDefs.Add(toolDef);
                     }
                 }
-            }
 
-            return result;
+                _relevantToolDefsCache[workStat] = relevantDefs;
+            }
         }
 
         /// <summary>
@@ -2175,6 +2288,63 @@ namespace SurvivalTools.Assign
             catch (Exception ex)
             {
                 Log.Warning($"[SurvivalTools.AssignmentSearch] Error clearing transient state: {ex}");
+            }
+        }
+
+        /// <summary>
+        /// Release all survival tool reservations before saving to prevent "loaded reservation with null job" errors.
+        /// When a game is saved, Job instances are not persisted with loadIDs, so reservations that reference
+        /// jobs will fail to restore on load. We release all tool reservations before save to avoid this.
+        /// </summary>
+        public static void ReleaseAllToolReservations()
+        {
+            try
+            {
+                if (Find.Maps == null) return;
+
+                int releasedCount = 0;
+                foreach (var map in Find.Maps)
+                {
+                    if (map?.reservationManager == null) continue;
+
+                    // Get all survival tools on the map
+                    var tools = map.listerThings?.ThingsInGroup(ThingRequestGroup.HaulableEver)
+                        ?.OfType<SurvivalTool>()
+                        ?.ToList();
+
+                    if (tools == null || tools.Count == 0) continue;
+
+                    // Release reservations for all tools
+                    foreach (var tool in tools)
+                    {
+                        if (tool == null || tool.Destroyed) continue;
+
+                        try
+                        {
+                            // Check if tool is reserved
+                            var reserver = map.reservationManager.FirstRespectedReserver(tool, null);
+                            if (reserver != null)
+                            {
+                                // Release the reservation (job parameter can be null for cleanup)
+                                map.reservationManager.Release(tool, reserver, null);
+                                releasedCount++;
+                            }
+                        }
+                        catch
+                        {
+                            // Skip individual failures
+                        }
+                    }
+                }
+
+                if (releasedCount > 0)
+                {
+                    LogDebug($"Released {releasedCount} tool reservations before save to prevent null job errors", "AssignmentSearch.ReleaseReservations");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[SurvivalTools.AssignmentSearch] Error releasing tool reservations: {ex}");
             }
         }
     }

@@ -220,7 +220,7 @@
         <modExtensions>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <SowingSpeed>1</SowingSpeed>
+                    <SowingSpeed>1.10</SowingSpeed>
                 </baseWorkStatFactors>
             </li>
         </modExtensions>
@@ -260,8 +260,8 @@
         <modExtensions>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <MaintenanceSpeed>1</MaintenanceSpeed>
-                    <DeconstructionSpeed>1</DeconstructionSpeed>
+                    <MaintenanceSpeed>1.15</MaintenanceSpeed>
+                    <DeconstructionSpeed>1.15</DeconstructionSpeed>
                 </baseWorkStatFactors>
             </li>
         </modExtensions>
@@ -328,8 +328,8 @@
         <modExtensions>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <MaintenanceSpeed>0.6</MaintenanceSpeed>
-                    <DeconstructionSpeed>0.8</DeconstructionSpeed>
+                    <MaintenanceSpeed>1.05</MaintenanceSpeed>
+                    <DeconstructionSpeed>1.05</DeconstructionSpeed>
                 </baseWorkStatFactors>
             </li>
         </modExtensions>
@@ -374,7 +374,7 @@
         <modExtensions>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <ResearchSpeed>0.7</ResearchSpeed>
+                    <ResearchSpeed>1.15</ResearchSpeed>
                 </baseWorkStatFactors>
             </li>
         </modExtensions>
@@ -665,7 +665,7 @@
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
                     <DiggingSpeed>1.3</DiggingSpeed>
-                    <MiningYieldDigging>1.2</MiningYieldDigging>
+                    <MiningYieldDigging>1.25</MiningYieldDigging>
                 </baseWorkStatFactors>
                 <toolWearFactor>0.7</toolWearFactor>
             </li>
@@ -1021,9 +1021,9 @@
         <modExtensions>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <ButcheryFleshSpeed>1</ButcheryFleshSpeed>
-                    <ButcheryFleshEfficiency>1</ButcheryFleshEfficiency>
-                    <MedicalOperationSpeed>1</MedicalOperationSpeed>
+                    <ButcheryFleshSpeed>1.05</ButcheryFleshSpeed>
+                    <ButcheryFleshEfficiency>1.05</ButcheryFleshEfficiency>
+                    <MedicalOperationSpeed>1.05</MedicalOperationSpeed>
                 </baseWorkStatFactors>
             </li>
         </modExtensions>
@@ -1134,7 +1134,7 @@
         <modExtensions>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <PlantHarvestingSpeed>0.8</PlantHarvestingSpeed>
+                    <PlantHarvestingSpeed>1.01</PlantHarvestingSpeed>
                 </baseWorkStatFactors>
                 <toolWearFactor>1.3</toolWearFactor>
             </li>
@@ -1231,7 +1231,7 @@
         <modExtensions>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <CleaningSpeed>0.75</CleaningSpeed>
+                    <CleaningSpeed>1.01</CleaningSpeed>
                 </baseWorkStatFactors>
                 <stuffPowerMultiplier>
                     <CleaningSpeed>1.0</CleaningSpeed>
@@ -1432,7 +1432,7 @@
         <modExtensions>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <WorkSpeedGlobal>1.10</WorkSpeedGlobal>
+                    <WorkSpeedGlobal>1.25</WorkSpeedGlobal>
                 </baseWorkStatFactors>
                 <toolWearFactor>0.90</toolWearFactor>
             </li>

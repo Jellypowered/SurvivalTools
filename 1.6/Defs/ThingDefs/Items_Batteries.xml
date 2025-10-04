@@ -31,6 +31,7 @@
             <li Class="SurvivalTools.CompProperties_BatteryCell">
                 <capacity>6000</capacity>
                 <tier>Basic</tier>
+                <maxChargeCycles>150</maxChargeCycles>
             </li>
         </comps>
     </ThingDef>
@@ -61,6 +62,7 @@
             <li Class="SurvivalTools.CompProperties_BatteryCell">
                 <capacity>10000</capacity>
                 <tier>Industrial</tier>
+                <maxChargeCycles>300</maxChargeCycles>
             </li>
         </comps>
     </ThingDef>
@@ -91,6 +93,7 @@
             <li Class="SurvivalTools.CompProperties_BatteryCell">
                 <capacity>15000</capacity>
                 <tier>Industrial</tier>
+                <maxChargeCycles>400</maxChargeCycles>
             </li>
         </comps>
     </ThingDef>
@@ -121,6 +124,7 @@
             <li Class="SurvivalTools.CompProperties_BatteryCell">
                 <capacity>40000</capacity>
                 <tier>Nuclear</tier>
+                <maxChargeCycles>0</maxChargeCycles>
             </li>
         </comps>
     </ThingDef>

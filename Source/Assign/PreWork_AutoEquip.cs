@@ -374,16 +374,27 @@ namespace SurvivalTools.Assign
             }
 
             // Attempt upgrade only if job has a relevant stat and assignments enabled
+            // Skip if JobGate already queued an acquisition (to avoid competing systems)
             Thing pendingEquip = null;
             bool upgraded = false;
             if (workStat != null && GetEnableAssignments(settings) && pawn.IsColonist && pawn.Awake() && !JobUtils.IsToolManagementJob(job))
             {
                 if (pawn.CurJobDef == JobDefOf.Ingest) return true; // ingest protection
-                upgraded = TryUpgradeForWork(pawn, workStat, job, settings, AssignmentSearch.QueuePriority.Front);
-                if (upgraded)
+
+                // Check if JobGate already handled tool acquisition for this pawn
+                bool acquisitionAlreadyQueued = AssignmentSearch.HasAcquisitionPendingOrQueued(pawn);
+                if (!acquisitionAlreadyQueued)
                 {
-                    // the queued equip job's TargetA will be the tool; we resolve keeper below after equip completes, for now treat none
-                    try { pendingEquip = job.targetA.Thing; } catch { pendingEquip = null; }
+                    upgraded = TryUpgradeForWork(pawn, workStat, job, settings, AssignmentSearch.QueuePriority.Front);
+                    if (upgraded)
+                    {
+                        // the queued equip job's TargetA will be the tool; we resolve keeper below after equip completes, for now treat none
+                        try { pendingEquip = job.targetA.Thing; } catch { pendingEquip = null; }
+                    }
+                }
+                else if (IsDebugLoggingEnabled)
+                {
+                    LogDebug($"[PreWork] Skipping upgrade for {pawn.LabelShort}: acquisition already queued by JobGate", $"PreWork_SkipDupe_{pawn.ThingID}");
                 }
             }
 
@@ -725,11 +736,39 @@ namespace SurvivalTools.Assign
                 return null; // Don't interfere with crafting/cooking jobs
             }
 
-            // Tree cutting/harvesting
+            // Tree cutting/harvesting - CHECK IF IT'S ACTUALLY A TREE!
             if (jobDef == JobDefOf.CutPlant ||
                 string.Equals(jobDef.defName, "FellTree", StringComparison.Ordinal) ||
                 string.Equals(jobDef.defName, "HarvestTree", StringComparison.Ordinal))
             {
+                // For CutPlant, verify the target is actually a tree
+                if (jobDef == JobDefOf.CutPlant)
+                {
+                    try
+                    {
+                        if (job.targetA.HasThing)
+                        {
+                            var target = job.targetA.Thing;
+                            if (target?.def?.plant != null)
+                            {
+                                if (target.def.plant.IsTree)
+                                {
+                                    LogDebug($"[PreWork] CutPlant targeting tree '{target.def.defName}' -> TreeFellingSpeed", $"PreWork.CutPlantTree_{target.def.defName}");
+                                    return ST_StatDefOf.TreeFellingSpeed;
+                                }
+                                else
+                                {
+                                    // It's a plant, not a tree - use PlantHarvestingSpeed
+                                    LogDebug($"[PreWork] CutPlant targeting plant '{target.def.defName}' -> PlantHarvestingSpeed", $"PreWork.CutPlantPlant_{target.def.defName}");
+                                    return ST_StatDefOf.PlantHarvestingSpeed;
+                                }
+                            }
+                        }
+                    }
+                    catch { /* fall through to default tree handling */ }
+                }
+
+                // FellTree and HarvestTree are always trees
                 return ST_StatDefOf.TreeFellingSpeed;
             }
 
@@ -739,10 +778,25 @@ namespace SurvivalTools.Assign
                 return ST_StatDefOf.SowingSpeed;
             }
 
-            // Plant harvesting
+            // Plant harvesting - BUT CHECK IF IT'S A TREE!
             if (jobDef == JobDefOf.Harvest ||
                 string.Equals(jobDef.defName, "HarvestDesignated", StringComparison.Ordinal))
             {
+                // Check if the target is a tree - if so, use TreeFellingSpeed instead
+                try
+                {
+                    if (job.targetA.HasThing)
+                    {
+                        var target = job.targetA.Thing;
+                        if (target?.def?.plant?.IsTree == true)
+                        {
+                            LogDebug($"[PreWork] HarvestDesignated targeting tree '{target.def.defName}' -> TreeFellingSpeed", $"PreWork.TreeHarvest_{target.def.defName}");
+                            return ST_StatDefOf.TreeFellingSpeed;
+                        }
+                    }
+                }
+                catch { /* fall through to default */ }
+
                 return ST_StatDefOf.PlantHarvestingSpeed;
             }
 
@@ -752,9 +806,19 @@ namespace SurvivalTools.Assign
                 return ST_StatDefOf.DiggingSpeed;
             }
 
-            // Research (bench)
+            // Research (bench) - includes Research Reinvented jobs (RR_Research, etc.)
             if (jobDef == JobDefOf.Research || string.Equals(jobDef.defName, "Research", StringComparison.Ordinal))
             {
+                try { return CompatAPI.GetResearchSpeedStat() ?? ST_StatDefOf.ResearchSpeed; } catch { return ST_StatDefOf.ResearchSpeed; }
+            }
+
+            // Research Reinvented and modded research jobs (use heuristic)
+            string jobName = jobDef.defName?.ToLowerInvariant() ?? string.Empty;
+            if (jobName.Contains("research") || jobName.Contains("experiment") || jobName.Contains("study") ||
+                jobName.Contains("analys") || jobName.Contains("analyz") || jobName.EndsWith("_rr") ||
+                jobName.Contains("interrogate") || jobName == "rr_research")
+            {
+                LogDebug($"[PreWork] Matched RR/modded research job '{jobDef.defName}' -> ResearchSpeed", $"PreWork.RRResearch_{jobDef.defName}");
                 try { return CompatAPI.GetResearchSpeedStat() ?? ST_StatDefOf.ResearchSpeed; } catch { return ST_StatDefOf.ResearchSpeed; }
             }
 

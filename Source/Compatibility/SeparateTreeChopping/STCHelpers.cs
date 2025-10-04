@@ -14,7 +14,7 @@ namespace SurvivalTools.Compatibility.SeparateTreeChopping
 {
     internal static class STCHelpers
     {
-        private static readonly string PkgIdGuess = "saucysalad.separatetreechopping"; // safe guess
+        private static readonly string PkgIdGuess = "mlie.separatetreechoppingpriority"; // safe guess
 
         internal static bool Active =>
             ModsConfig.ActiveModsInLoadOrder.Any(m =>

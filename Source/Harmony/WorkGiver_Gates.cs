@@ -47,7 +47,8 @@ namespace SurvivalTools.HarmonyStuff
             if (__result == null) return;
             var settings = SurvivalToolsMod.Settings;
             if (settings == null || (!settings.hardcoreMode && !settings.extraHardcoreMode)) return;
-            if (JobGate.ShouldBlock(pawn, __instance.def, __result.def, forced, out var key, out var a1, out var a2))
+            // Pass Job instance (not just JobDef) for target-aware stat resolution
+            if (JobGate.ShouldBlock(pawn, __instance.def, __result, forced, out var key, out var a1, out var a2))
             {
                 __result = null;
                 JobFailReason.Is(key.Translate(a1, a2), null);
@@ -59,7 +60,8 @@ namespace SurvivalTools.HarmonyStuff
             if (__result == null) return;
             var settings = SurvivalToolsMod.Settings;
             if (settings == null || (!settings.hardcoreMode && !settings.extraHardcoreMode)) return;
-            if (JobGate.ShouldBlock(pawn, __instance.def, __result.def, forced, out var key, out var a1, out var a2))
+            // Pass Job instance (not just JobDef) for target-aware stat resolution
+            if (JobGate.ShouldBlock(pawn, __instance.def, __result, forced, out var key, out var a1, out var a2))
             {
                 __result = null;
                 JobFailReason.Is(key.Translate(a1, a2), null);

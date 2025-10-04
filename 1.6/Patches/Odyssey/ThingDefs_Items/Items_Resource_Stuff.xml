@@ -27,20 +27,20 @@
                     <value>
                         <li Class="SurvivalTools.StuffPropsTool">
                             <toolStatFactors>
-                                <TreeFellingSpeed>0.8</TreeFellingSpeed>
-                                <PlantHarvestingSpeed>0.8</PlantHarvestingSpeed>
-                                <DiggingSpeed>0.9</DiggingSpeed>
-                                <MiningYieldDigging>0.95</MiningYieldDigging>
-                                <ConstructionSpeed>0.8</ConstructionSpeed>
-                                <MaintenanceSpeed>0.8</MaintenanceSpeed>
-                                <DeconstructionSpeed>0.9</DeconstructionSpeed>
-                                <ResearchSpeed>0.9</ResearchSpeed>
-                                <CleaningSpeed>1.0</CleaningSpeed>
-                                <MedicalOperationSpeed>1.2</MedicalOperationSpeed>
-                                <MedicalSurgerySuccessChance>1.1</MedicalSurgerySuccessChance>
-                                <ButcheryFleshSpeed>1.3</ButcheryFleshSpeed>
-                                <ButcheryFleshEfficiency>1.1</ButcheryFleshEfficiency>
-                                <SowingSpeed>0.8</SowingSpeed>
+                                <TreeFellingSpeed>1.05</TreeFellingSpeed>
+                                <PlantHarvestingSpeed>1.10</PlantHarvestingSpeed>
+                                <DiggingSpeed>1.05</DiggingSpeed>
+                                <MiningYieldDigging>1.05</MiningYieldDigging>
+                                <ConstructionSpeed>1.05</ConstructionSpeed>
+                                <MaintenanceSpeed>1.05</MaintenanceSpeed>
+                                <DeconstructionSpeed>1.05</DeconstructionSpeed>
+                                <ResearchSpeed>1.05</ResearchSpeed>
+                                <CleaningSpeed>1.10</CleaningSpeed>
+                                <MedicalOperationSpeed>1.25</MedicalOperationSpeed>
+                                <MedicalSurgerySuccessChance>1.20</MedicalSurgerySuccessChance>
+                                <ButcheryFleshSpeed>1.35</ButcheryFleshSpeed>
+                                <ButcheryFleshEfficiency>1.20</ButcheryFleshEfficiency>
+                                <SowingSpeed>1.10</SowingSpeed>
                             </toolStatFactors>
                         </li>
                     </value>

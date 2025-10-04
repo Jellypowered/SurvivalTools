@@ -271,7 +271,7 @@ namespace SurvivalTools.Compat
         // (moved) Tree Stack alias dictionary now lives within CompatAPI proper.
 
 #if DEBUG
-        [DebugAction("SurvivalTools", "Dump compatibility modules status")]
+        [DebugAction("Survival Tools", "Dump compatibility modules status")]
         public static void DumpCompatibilityStatus()
         {
             Log.Message("[SurvivalTools Compat] === Compatibility Modules Status ===");
@@ -760,7 +760,7 @@ namespace SurvivalTools.Compat
             return lines;
         }
 
-        [DebugAction("SurvivalTools", "Dump compatibility status")]
+        [DebugAction("Survival Tools", "Dump compatibility status")]
         public static void DumpCompatibilityStatus() => CompatibilityRegistry.DumpCompatibilityStatus();
 
         // Hot reload helper if you ever need to re-init on game load changes.

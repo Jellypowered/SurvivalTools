@@ -12,7 +12,7 @@ namespace SurvivalTools.Compatibility.TDEnhancementPack
 {
     internal static class TDEnhancementPackHelpers
     {
-        private static readonly string PkgIdGuess = "Uuugggg.TDEnhancementPack"; // safe guess; detection is OR'd
+        private static readonly string PkgIdGuess = "memegoddess.tdpack"; // safe guess; detection is OR'd
 
         internal static bool Active =>
             ModsConfig.ActiveModsInLoadOrder.Any(m =>

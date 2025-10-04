@@ -84,7 +84,7 @@ namespace SurvivalTools
         public bool showUpgradeSuggestions = true;
 
         // Visual feedback: denial/slow motes toggle
-        public bool showDenialMotes = true; // When true, spawn text motes for blocked/slow tool-gated jobs
+        public bool showDenialMotes = false; // When true, spawn text motes for blocked/slow tool-gated jobs
 
         // Gating alert settings  
         public bool showGatingAlert = true; // Show alert when pawns are blocked by tool gating
@@ -198,7 +198,7 @@ namespace SurvivalTools
             Scribe_Values.Look(ref rrResearchRequiredInExtraHardcore, nameof(rrResearchRequiredInExtraHardcore), false);
             Scribe_Values.Look(ref rrFieldResearchRequiredInExtraHardcore, nameof(rrFieldResearchRequiredInExtraHardcore), false);
             Scribe_Values.Look(ref showUpgradeSuggestions, nameof(showUpgradeSuggestions), true);
-            Scribe_Values.Look(ref showDenialMotes, nameof(showDenialMotes), true);
+            Scribe_Values.Look(ref showDenialMotes, nameof(showDenialMotes), false);
             Scribe_Values.Look(ref showGatingAlert, nameof(showGatingAlert), true);
             Scribe_Values.Look(ref toolGateAlertMinTicks, nameof(toolGateAlertMinTicks), 1500);
             Scribe_Values.Look(ref enforceOnModeChange, nameof(enforceOnModeChange), true);
@@ -433,7 +433,7 @@ namespace SurvivalTools
             listing.CheckboxLabeled("Settings_PickupFromStorageOnly".Translate(), ref pickupFromStorageOnly, "Settings_PickupFromStorageOnly_Tooltip".Translate());
             listing.CheckboxLabeled("Settings_AllowPacifistEquip".Translate(), ref allowPacifistEquip, "Settings_AllowPacifistEquip_Tooltip".Translate());
             listing.CheckboxLabeled("Settings_ShowUpgradeSuggestions".Translate(), ref showUpgradeSuggestions, "Settings_ShowUpgradeSuggestions_Tooltip".Translate());
-            listing.CheckboxLabeled("Settings_ShowDenialMotes".Translate(), ref showDenialMotes, "Settings_ShowDenialMotes_Tooltip".Translate());
+            //listing.CheckboxLabeled("Settings_ShowDenialMotes".Translate(), ref showDenialMotes, "Settings_ShowDenialMotes_Tooltip".Translate());
             listing.CheckboxLabeled("Settings_ShowGatingAlert".Translate(), ref showGatingAlert, "Settings_ShowGatingAlert_Tooltip".Translate());
             if (showGatingAlert)
             {
@@ -889,10 +889,10 @@ namespace SurvivalTools
                         var thresholdRect = listing.GetRect(Text.LineHeight * 2);
                         thresholdRect.x += 40f;
                         thresholdRect.width -= 40f;
-                        
+
                         Rect labelRect = new Rect(thresholdRect.x, thresholdRect.y, thresholdRect.width, Text.LineHeight);
                         Widgets.Label(labelRect, $"Auto-swap threshold: {settings.autoSwapThreshold.ToStringPercent()}");
-                        
+
                         Rect sliderRect = new Rect(thresholdRect.x, thresholdRect.y + Text.LineHeight, thresholdRect.width, Text.LineHeight);
                         settings.autoSwapThreshold = Widgets.HorizontalSlider(sliderRect, settings.autoSwapThreshold, 0.05f, 0.5f, true);
                         settings.autoSwapThreshold = UnityEngine.Mathf.Round(settings.autoSwapThreshold * 20f) / 20f; // Round to 5% increments

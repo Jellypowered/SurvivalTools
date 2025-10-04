@@ -151,15 +151,21 @@ namespace SurvivalTools.Helpers
         /// 2. Intersect statBases with registered work stats  
         /// 3. Name/verb hints fallback
         /// 4. Safe defaults
+        /// 
+        /// Optimized: Fast path for cache hits before hierarchy evaluation.
         /// </summary>
         public static float GetToolStatFactor(ThingDef toolDef, ThingDef stuffDef, StatDef stat)
         {
-            if (!_initialized) Initialize();
             if (toolDef == null || stat == null) return GetNoToolBaseline();
 
             string cacheKey = $"{toolDef.defName}|{stuffDef?.defName ?? "null"}|{stat.defName}";
+
+            // Fast path: check cache first before any initialization
             if (_factorCache.TryGetValue(cacheKey, out float cachedFactor))
                 return cachedFactor;
+
+            // Only initialize if we have a cache miss
+            if (!_initialized) Initialize();
 
             var info = ResolveToolStatInfo(toolDef, stuffDef, stat);
             float factor = info.Factor;
@@ -507,12 +513,12 @@ namespace SurvivalTools.Helpers
         {
             switch (techLevel)
             {
-                case TechLevel.Neolithic: return 0.75f;
-                case TechLevel.Medieval: return 0.85f;
-                case TechLevel.Industrial: return 1.0f;
-                case TechLevel.Spacer: return 1.15f;
-                case TechLevel.Ultra: return 1.3f;
-                default: return 0.85f;
+                case TechLevel.Neolithic: return 1.05f;  // Primitive but functional
+                case TechLevel.Medieval: return 1.10f;   // Decent quality
+                case TechLevel.Industrial: return 1.15f; // Good modern tools
+                case TechLevel.Spacer: return 1.25f;     // Advanced technology
+                case TechLevel.Ultra: return 1.40f;      // Cutting-edge
+                default: return 1.10f;                   // Safe fallback
             }
         }
 
