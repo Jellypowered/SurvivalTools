@@ -2,16 +2,6 @@
 ARTWORK TODO LIST
 =================================================================
 
-=== PRIMITIVE TIER TOOLS ===
-
-9. CarvedBoneImplements.png - Bundle of Bone Tools
-   • Resolution: 128x128
-   • Style: Tribal/organic
-   • Description: Carved animal bones (scrapers, chisels, awl) tied with sinew
-   • Use: WorkSpeedGlobal (primitive tier)
-
------------------------------------------------------------------
-
 === MEDIEVAL / ARTISAN TIER TOOLS ===
 10. Artisan’sToolkit.png - Leather Tool Wrap
     • Resolution: 128x128
