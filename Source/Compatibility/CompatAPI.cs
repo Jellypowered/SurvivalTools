@@ -156,6 +156,7 @@ namespace SurvivalTools.Compat
                 SurvivalTools.Compatibility.TDEnhancementPack.TDEnhancementPackHelpers.Initialize();
                 SurvivalTools.Compatibility.TDEnhancementPack.TDEnhancementPackPatches.Initialize(primaryHarmony);
                 SurvivalTools.Compatibility.SeparateTreeChopping.STCHelpers.Initialize();
+                SurvivalTools.Compat.TCSS.TCSS_Patches.Init(primaryHarmony);
                 SurvivalTools.Compat.ResearchReinvented.RRHelpers.Initialize(primaryHarmony);
                 SurvivalTools.Compat.ResearchReinvented.RRPatches.Init(primaryHarmony);
                 // Tree Stack (aliases first, then WG mappings). Arbiter auto-runs via static ctor.

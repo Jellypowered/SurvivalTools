@@ -8,7 +8,7 @@ using Verse;
 
 namespace SurvivalTools.Compatibility.TreeStack
 {
-    internal enum TreeAuthority { None, SeparateTreeChopping, PrimitiveTools_TCSS, Internal }
+    internal enum TreeAuthority { None, SeparateTreeChopping, TreeChoppingSpeedStat, PrimitiveTools_TCSS, Internal }
 
     [StaticConstructorOnStartup]
     internal static class TreeSystemArbiter
@@ -24,9 +24,15 @@ namespace SurvivalTools.Compatibility.TreeStack
         {
             try
             {
-                if (STC_Active) Authority = TreeAuthority.SeparateTreeChopping;
-                else if (PT_Active && TCSS_Active) Authority = TreeAuthority.PrimitiveTools_TCSS;
-                else Authority = TreeAuthority.Internal;
+                // Priority: STC > TCSS (standalone) > PT+TCSS > Internal
+                if (STC_Active)
+                    Authority = TreeAuthority.SeparateTreeChopping;
+                else if (TCSS_Active && !PT_Active)
+                    Authority = TreeAuthority.TreeChoppingSpeedStat;
+                else if (PT_Active && TCSS_Active)
+                    Authority = TreeAuthority.PrimitiveTools_TCSS;
+                else
+                    Authority = TreeAuthority.Internal;
 
                 Log.Message($"[ST] TreeSystemArbiter → {Authority} (STC={STC_Active}, PT={PT_Active}, TCSS={TCSS_Active}, PC={PrimitiveCore_Active})");
 

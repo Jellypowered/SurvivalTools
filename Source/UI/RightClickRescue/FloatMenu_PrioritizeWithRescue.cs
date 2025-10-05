@@ -171,8 +171,19 @@ namespace SurvivalTools.UI.RightClickRescue
         {
             try
             {
-                return SurvivalTools.Compatibility.TreeStack.TreeSystemArbiter.Authority
-                    == SurvivalTools.Compatibility.TreeStack.TreeAuthority.SeparateTreeChopping;
+                var auth = SurvivalTools.Compatibility.TreeStack.TreeSystemArbiter.Authority;
+                return auth == SurvivalTools.Compatibility.TreeStack.TreeAuthority.SeparateTreeChopping;
+            }
+            catch { return false; }
+        }
+
+        private static bool IsTCSSAuthorityActive()
+        {
+            try
+            {
+                var auth = SurvivalTools.Compatibility.TreeStack.TreeSystemArbiter.Authority;
+                return auth == SurvivalTools.Compatibility.TreeStack.TreeAuthority.TreeChoppingSpeedStat ||
+                       auth == SurvivalTools.Compatibility.TreeStack.TreeAuthority.PrimitiveTools_TCSS;
             }
             catch { return false; }
         }
@@ -181,7 +192,7 @@ namespace SurvivalTools.UI.RightClickRescue
         {
             try
             {
-                if (opt == null || !IsSTCAuthorityActive()) return null;
+                if (opt == null) return null;
 
                 // Label must look like a "chop tree" command…
                 var lab = opt.Label;
@@ -194,7 +205,14 @@ namespace SurvivalTools.UI.RightClickRescue
                 var plant = opt.iconThing as Plant;
                 if (plant?.def?.plant?.IsTree != true) return null;
 
-                return "Separate Tree Chopping";
+                // Check which system has authority
+                if (IsSTCAuthorityActive())
+                    return "Separate Tree Chopping";
+                
+                if (IsTCSSAuthorityActive())
+                    return "TCSS";
+
+                return null;
             }
             catch { return null; }
         }
@@ -305,11 +323,16 @@ namespace SurvivalTools.UI.RightClickRescue
                     catch { }
                 }
 
-                // If STC owns authority, purge any SurvivalTools-added *tree felling* rescue options.
+                // If STC or TCSS owns authority, purge any SurvivalTools-added *tree felling* rescue options.
                 try
                 {
                     bool externalTree = SurvivalTools.Compatibility.TreeStack.TreeSystemArbiter.Authority
-                                      == SurvivalTools.Compatibility.TreeStack.TreeAuthority.SeparateTreeChopping;
+                                      == SurvivalTools.Compatibility.TreeStack.TreeAuthority.SeparateTreeChopping ||
+                                        SurvivalTools.Compatibility.TreeStack.TreeSystemArbiter.Authority
+                                      == SurvivalTools.Compatibility.TreeStack.TreeAuthority.TreeChoppingSpeedStat ||
+                                        SurvivalTools.Compatibility.TreeStack.TreeSystemArbiter.Authority
+                                      == SurvivalTools.Compatibility.TreeStack.TreeAuthority.PrimitiveTools_TCSS;
+                    
                     if (externalTree && __result.Count > 0)
                     {
                         for (int i = __result.Count - 1; i >= 0; i--)
@@ -318,7 +341,7 @@ namespace SurvivalTools.UI.RightClickRescue
                             if (lab.IndexOf("(will fetch", StringComparison.OrdinalIgnoreCase) >= 0)
                             {
                                 var lower = lab.ToLowerInvariant();
-                                // Keep this strict so we only remove ST's felling rescues, not STC's native chop entries.
+                                // Keep this strict so we only remove ST's felling rescues, not external mod's native chop entries.
                                 if (lower.Contains("fell") || lower.Contains("felling"))
                                 {
                                     __result.RemoveAt(i);
