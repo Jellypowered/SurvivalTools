@@ -9,12 +9,14 @@ Added full compatibility support for the Tree Chopping Speed Stat (TCSS) mod, fo
 ### New Files Created
 
 1. **Source/Compatibility/TreeChoppingSpeedStat/TCSS_Helpers.cs**
+
    - Detection and authority helpers
    - `IsActive()` - Detects TCSS via type probe (TreeChopSpeed.WorkTypeDefOf) or packageId fallback
    - `IsAuthorityActive()` - Returns true when TCSS is active AND STC is not (TCSS has authority)
    - Includes one-time smoke logging for compat detection
 
 2. **Source/Compatibility/TreeChoppingSpeedStat/TCSS_Debug.cs**
+
    - Debug and logging helpers proxying to ST_Logging
    - `IsCompatLogging()` - Check if compat logging enabled
    - `LogCompat()` / `LogCompatWarning()` - Cooldown-safe logging
@@ -29,9 +31,11 @@ Added full compatibility support for the Tree Chopping Speed Stat (TCSS) mod, fo
 ### Modified Files
 
 1. **Source/Compatibility/CompatAPI.cs**
+
    - Added `TCSS_Patches.Init(primaryHarmony)` call after STC initialization
 
 2. **Source/Compatibility/TreeStack/TreeSystemArbiter.cs**
+
    - Added `TreeChoppingSpeedStat` to TreeAuthority enum
    - Updated authority resolution logic: STC > TCSS (standalone) > PT+TCSS > Internal
    - Logs authority decision with all mod detection states
@@ -52,6 +56,7 @@ When multiple tree-handling mods are present, the authority hierarchy is:
 4. **Internal (ST native)** - Default fallback
 
 If both STC and TCSS are detected:
+
 - STC takes authority
 - TCSS helpers return inactive
 - Single warning log: "Both TCSS and STC found; STC takes authority"
@@ -59,10 +64,12 @@ If both STC and TCSS are detected:
 ## Behavioral Changes
 
 ### When TCSS is NOT detected
+
 - No change in behavior
 - ST FellTree system operates normally
 
 ### When TCSS is detected (STC not present)
+
 - ST FellTree WorkGivers are stripped from all WorkTypeDefs
 - No "Fell tree" options appear in work priorities or right-click menus
 - Vanilla "Chop tree" path remains available via TCSS
@@ -71,30 +78,33 @@ If both STC and TCSS are detected:
 - Tool rescue functionality works for vanilla chopping jobs
 
 ### When both STC and TCSS are detected
+
 - STC behavior unchanged
 - TCSS patches do not apply
 - Single warning logged about conflict resolution
 
 ## Key Differences from STC Integration
 
-| Aspect | STC | TCSS |
-|--------|-----|------|
-| WorkGiver_PlantsCut patch | ✅ Patches to redirect | ❌ No patch (vanilla path used) |
-| TreeFellingSpeed bypass | ✅ Bypasses gating | ❌ Continues gating |
-| WorkGiver stripping | ✅ Strips ST FellTree WGs | ✅ Strips ST FellTree WGs |
-| Right-click rescue | ✅ Removes ST felling | ✅ Removes ST felling |
-| Mod tag display | "(Separate Tree Chopping)" | "(TCSS)" |
-| Conflict resolution | STC wins vs TCSS | TCSS defers to STC |
+| Aspect                    | STC                        | TCSS                            |
+| ------------------------- | -------------------------- | ------------------------------- |
+| WorkGiver_PlantsCut patch | ✅ Patches to redirect     | ❌ No patch (vanilla path used) |
+| TreeFellingSpeed bypass   | ✅ Bypasses gating         | ❌ Continues gating             |
+| WorkGiver stripping       | ✅ Strips ST FellTree WGs  | ✅ Strips ST FellTree WGs       |
+| Right-click rescue        | ✅ Removes ST felling      | ✅ Removes ST felling           |
+| Mod tag display           | "(Separate Tree Chopping)" | "(TCSS)"                        |
+| Conflict resolution       | STC wins vs TCSS           | TCSS defers to STC              |
 
 ## Testing Checklist
 
 ### TCSS Off (baseline)
+
 - [ ] Game unchanged
 - [ ] ST FellTree shows in work priorities
 - [ ] Right-click "Fell tree" options available
 - [ ] No TCSS-related log messages
 
 ### TCSS On, STC Off
+
 - [ ] No "Fell tree" options in work priorities
 - [ ] No ST felling right-click entries
 - [ ] Vanilla "Chop tree" available via TCSS
@@ -105,12 +115,14 @@ If both STC and TCSS are detected:
 - [ ] Log shows: "[TCSS] Removed ST FellTree WGs under TCSS authority: ..."
 
 ### Both STC and TCSS On
+
 - [ ] STC behavior unchanged (STC owns trees)
 - [ ] TCSS patches do not apply
 - [ ] Log shows: "[TCSS] Both TCSS and STC found; STC takes authority"
 - [ ] No double handling or conflicts
 
 ### Edge Cases
+
 - [ ] No errors in log
 - [ ] Minimal compat smoke messages (only when compat logging enabled)
 - [ ] Save/load works correctly
@@ -132,6 +144,7 @@ If both STC and TCSS are detected:
 ## Logging & Debug
 
 Enable compat logging in ST settings to see:
+
 - Detection smoke test: "[TCSS] Detected: Active=true, Authority=true"
 - Patch application: "[TCSS] Detected, applying compatibility patches"
 - WorkGiver removal summary: "[TCSS] Removed ST FellTree WGs under TCSS authority: PlantCutting(2->1)"
@@ -142,6 +155,7 @@ All logging respects cooldown limits to avoid spam.
 ## Future Enhancements
 
 Potential improvements if needed:
+
 - [ ] Add TCSS-specific stat mapping for chopping speed bonuses
 - [ ] Coordinate with TCSS on shared research/tech gates
 - [ ] Optimize authority detection (currently requires multiple enum checks)

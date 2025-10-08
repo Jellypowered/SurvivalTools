@@ -208,7 +208,7 @@ namespace SurvivalTools.UI.RightClickRescue
                 // Check which system has authority
                 if (IsSTCAuthorityActive())
                     return "Separate Tree Chopping";
-                
+
                 if (IsTCSSAuthorityActive())
                     return "TCSS";
 
@@ -332,7 +332,7 @@ namespace SurvivalTools.UI.RightClickRescue
                                       == SurvivalTools.Compatibility.TreeStack.TreeAuthority.TreeChoppingSpeedStat ||
                                         SurvivalTools.Compatibility.TreeStack.TreeSystemArbiter.Authority
                                       == SurvivalTools.Compatibility.TreeStack.TreeAuthority.PrimitiveTools_TCSS;
-                    
+
                     if (externalTree && __result.Count > 0)
                     {
                         for (int i = __result.Count - 1; i >= 0; i--)
