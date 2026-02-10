@@ -102,11 +102,13 @@ namespace SurvivalTools
                                                // Right-click rescue float menu (Hardcore/Nightmare) toggle
         public bool enableRightClickRescue = true;
 
+        /* BATTERY SYSTEM DISABLED - Phase 12 settings removed
         // Phase 12: Powered tool battery system
         public bool enablePoweredTools = true; // Enable battery system for powered tools
         public bool enableNuclearHazards = false; // Enable nuclear battery explosion hazards
         public bool autoSwapBatteries = true; // Automatically swap batteries when low
         public float autoSwapThreshold = 0.15f; // Threshold for auto-swap (15% charge)
+        */
 
         // Cached availability of optional tool types
         private bool? _hasCleaningToolsCache = null;
@@ -204,11 +206,13 @@ namespace SurvivalTools
             Scribe_Values.Look(ref enforceOnModeChange, nameof(enforceOnModeChange), true);
             Scribe_Values.Look(ref enableRightClickRescue, nameof(enableRightClickRescue), true);
 
+            /* BATTERY SYSTEM DISABLED - Phase 12 save/load removed
             // Phase 12: Powered tools
             Scribe_Values.Look(ref enablePoweredTools, nameof(enablePoweredTools), true);
             Scribe_Values.Look(ref enableNuclearHazards, nameof(enableNuclearHazards), false);
             Scribe_Values.Look(ref autoSwapBatteries, nameof(autoSwapBatteries), true);
             Scribe_Values.Look(ref autoSwapThreshold, nameof(autoSwapThreshold), 0.15f);
+            */
 
             // Phase 11.10: workSpeedGlobalJobGating serialization removed
 
@@ -530,12 +534,7 @@ namespace SurvivalTools
                 GUI.color = prevColor;
                 Text.Font = prevFont;
 
-                bool debugLoggingBefore = debugLogging;
                 listing.CheckboxLabeled("Settings_DebugLogging".Translate(), ref debugLogging, "Settings_DebugLogging_Tooltip".Translate());
-                if (debugLogging != debugLoggingBefore)
-                {
-                    InvalidateDebugLoggingCache();
-                }
 
                 // Show compatibility logging option only when debug logging is enabled
                 if (debugLogging)
@@ -865,6 +864,7 @@ namespace SurvivalTools
                 listing.GapLine();
                 listing.Gap(12f);
 
+                /* BATTERY SYSTEM DISABLED - Phase 12 UI removed
                 // Phase 12: Powered tools settings
                 listing.Label("Powered Tools (Battery System)");
                 listing.Gap(4f);
@@ -908,6 +908,7 @@ namespace SurvivalTools
 
                 listing.GapLine();
                 listing.Gap(12f);
+                */
             }
 
             // Add some spacing after the job table to prevent Close button overlap

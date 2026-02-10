@@ -34,7 +34,9 @@ namespace SurvivalTools.HarmonyStuff
 
         static ST_PatchGuard()
         {
+#if DEBUG
             Log.Message("[SurvivalTools.PatchGuard] Starting patch cleanup...");
+#endif
 
             // Job start / ordered job hotspots (nullable + fallback signatures)
             SweepWithFallback<Pawn_JobTracker>("TryTakeOrderedJob",
@@ -90,8 +92,10 @@ namespace SurvivalTools.HarmonyStuff
             // Additional namespace-prefix based optional sweep for any lingering ST-owned HasJobOnThing patches
             OptionalNamespacePrefixHasJobOnThingSweep();
 
+#if DEBUG
             Log.Message("[SurvivalTools.PatchGuard] Patch cleanup complete.");
             LogAllowlistSummary();
+#endif
         }
 
         static void SweepWithFallback<TDecl>(string name, Type[] primarySig, Type[] fallbackSig, Type[] allowedTypes)
@@ -105,8 +109,10 @@ namespace SurvivalTools.HarmonyStuff
             }
 
             // Fall back to alternate signature
+#if DEBUG
             if (Prefs.DevMode)
                 Log.Message($"[SurvivalTools.PatchGuard] (Dev) Primary signature not found for {typeof(TDecl).Name}.{name}, trying fallback");
+#endif
             Sweep<TDecl>(name, fallbackSig, allowedTypes);
         }
 
@@ -115,19 +121,25 @@ namespace SurvivalTools.HarmonyStuff
             var orig = AccessTools.Method(typeof(TDecl), name, sig);
             if (orig == null)
             {
+#if DEBUG
                 if (Prefs.DevMode)
                     Log.Message($"[SurvivalTools.PatchGuard] (Dev) Method {typeof(TDecl).Name}.{name} not present (expected on this version?)");
+#endif
                 return;
             }
 
             var info = Harmony.GetPatchInfo(orig);
             if (info == null)
             {
+#if DEBUG
                 Log.Message($"[SurvivalTools.PatchGuard] No patches found on {typeof(TDecl).Name}.{name}");
+#endif
                 return;
             }
 
+#if DEBUG
             Log.Message($"[SurvivalTools.PatchGuard] Checking {typeof(TDecl).Name}.{name} - {info.Prefixes.Count} prefixes, {info.Postfixes.Count} postfixes");
+#endif
 
             int removedCount = 0;
 
@@ -143,6 +155,7 @@ namespace SurvivalTools.HarmonyStuff
                     removedCount++;
             }
 
+#if DEBUG
             if (removedCount > 0)
             {
                 Log.Message($"[SurvivalTools.PatchGuard] Removed {removedCount} legacy patches from {typeof(TDecl).Name}.{name}");
@@ -151,6 +164,7 @@ namespace SurvivalTools.HarmonyStuff
             {
                 Log.Message($"[SurvivalTools.PatchGuard] No legacy patches to remove from {typeof(TDecl).Name}.{name}");
             }
+#endif
         }
 
         static bool TryUnpatchIfLegacy(MethodBase original, Patch patch, Type[] allowedTypes)
@@ -168,14 +182,18 @@ namespace SurvivalTools.HarmonyStuff
 
             if (ours && !allowed)
             {
+#if DEBUG
                 Log.Message($"[SurvivalTools.PatchGuard] Removing legacy patch: {dt.FullName}.{m.Name} (owner: {patch.owner})");
+#endif
                 // Unpatch by method (works regardless of harmonyId)
                 _harmony.Unpatch(original: original, patch: m);
                 return true;
             }
             else if (ours && allowed)
             {
+#if DEBUG
                 Log.Message($"[SurvivalTools.PatchGuard] Keeping allowed patch: {dt.FullName}.{m.Name} (owner: {patch.owner})");
+#endif
             }
 
             return false;
@@ -192,8 +210,10 @@ namespace SurvivalTools.HarmonyStuff
             foreach (var p in info.Prefixes) if (TryUnpatchIfLegacy(orig, p, _allowlistedTypes)) removed++;
             foreach (var p in info.Postfixes) if (TryUnpatchIfLegacy(orig, p, _allowlistedTypes)) removed++;
             foreach (var p in info.Transpilers) if (TryUnpatchIfLegacy(orig, p, _allowlistedTypes)) removed++;
+#if DEBUG
             if (removed > 0)
                 Log.Message($"[SurvivalTools.PatchGuard] Optional sweep removed {removed} legacy patches from {typeof(TDecl).Name}.{name}");
+#endif
         }
 
         static void LogAllowlistSummary()
@@ -217,8 +237,10 @@ namespace SurvivalTools.HarmonyStuff
             foreach (var p in info.Prefixes) if (TryUnpatchIfLegacy(orig, p, _allowlistedTypes)) removed++;
             foreach (var p in info.Postfixes) if (TryUnpatchIfLegacy(orig, p, _allowlistedTypes)) removed++;
             foreach (var p in info.Transpilers) if (TryUnpatchIfLegacy(orig, p, _allowlistedTypes)) removed++;
+#if DEBUG
             if (removed > 0)
                 Log.Message($"[SurvivalTools.PatchGuard] Optional sweep removed {removed} legacy patches from {declType.Name}.{name}");
+#endif
         }
 
         // Sweep for legacy HasJobOnThing / HasJobOnCell prefixes owned by prior gating systems.
@@ -268,8 +290,10 @@ namespace SurvivalTools.HarmonyStuff
                         catch { }
                     }
                 }
+#if DEBUG
                 if (totalRemoved > 0)
                     Log.Message($"[SurvivalTools.PatchGuard] Legacy HasJob* sweep removed {totalRemoved} obsolete gating prefix(es).");
+#endif
             }
             catch (Exception e)
             {
@@ -319,6 +343,7 @@ namespace SurvivalTools.HarmonyStuff
                 foreach (var p in info.Postfixes) Consider(p);
                 foreach (var p in info.Transpilers) Consider(p);
 
+#if DEBUG
                 if (removedTypes.Count > 0)
                 {
                     try
@@ -328,6 +353,7 @@ namespace SurvivalTools.HarmonyStuff
                     }
                     catch { Log.Message("[SurvivalTools.PatchGuard] Namespace sweep removed HasJobOnThing patches (types list unavailable)"); }
                 }
+#endif
             }
             catch (Exception e)
             {

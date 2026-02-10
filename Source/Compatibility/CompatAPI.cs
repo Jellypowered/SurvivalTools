@@ -219,6 +219,7 @@ namespace SurvivalTools.Compat
                 // Core (vanilla) right-click eligibility registrations (non-tree). Tree workers handled above.
                 SurvivalTools.Compatibility.RightClick.RightClickEligibilityBootstrap.Initialize();
                 // Diagnostic: tree authority summary (safe guarded)
+#if DEBUG
                 try
                 {
                     Log.Message($"[SurvivalTools Compat] TreeAuthority: {TreeSystemArbiter.Authority} (STC={TreeSystemArbiter.STC_Active}, PT={TreeSystemArbiter.PT_Active}, TCSS={TreeSystemArbiter.TCSS_Active}, PC={TreeSystemArbiter.PrimitiveCore_Active})");
@@ -227,6 +228,7 @@ namespace SurvivalTools.Compat
                 {
                     Log.Message("[SurvivalTools Compat] TreeAuthority line failed: " + e.Message);
                 }
+#endif
             }
             catch (Exception e)
             {
@@ -565,11 +567,9 @@ namespace SurvivalTools.Compat
                 }
                 set.Add(to);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-#if DEBUG
-                Log.Warning("[SurvivalTools][CompatAPI] RegisterStatAlias failed: " + e.Message);
-#endif
+                // Silently ignore registration failures
             }
         }
 
@@ -761,8 +761,10 @@ namespace SurvivalTools.Compat
             return lines;
         }
 
+#if DEBUG
         [DebugAction("Survival Tools", "Dump compatibility status")]
         public static void DumpCompatibilityStatus() => CompatibilityRegistry.DumpCompatibilityStatus();
+#endif
 
         // Hot reload helper if you ever need to re-init on game load changes.
         public static void ReinitializeRegistryForDebug()

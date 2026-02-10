@@ -131,6 +131,8 @@ namespace SurvivalTools.Helpers
                 return false;
 
             // Check if this is a powered tool
+            // DISABLED: Battery system turned off
+            /*
             var powerComp = tool.TryGetComp<CompPowerTool>();
             if (powerComp != null)
             {
@@ -140,6 +142,7 @@ namespace SurvivalTools.Helpers
                     return false;
                 }
             }
+            */
 
             // Tool has charge, isn't powered, or stat isn't power-dependent - it satisfies
             return true;

@@ -139,6 +139,7 @@ namespace SurvivalTools.HarmonyStuff
             try { PreWork_AutoEquip.ApplyStartJobHook(H); } catch { }
 
             // Confirm presence of post-add enforcement hooks (optional diagnostics)
+#if DEBUG
             try
             {
                 var addMeth = AccessTools.Method(typeof(Pawn_InventoryTracker), nameof(Pawn_InventoryTracker.TryAddAndUnforbid), new Type[] { typeof(Thing) });
@@ -146,8 +147,10 @@ namespace SurvivalTools.HarmonyStuff
                 LogWarning($"[SurvivalTools.Harmony] PostAddHooks targets present? TryAddAndUnforbid={(addMeth != null)} TryTransferToContainer={(txMeth != null)}");
             }
             catch { }
+#endif
 
             // IMMEDIATE VERIFICATION - Check if our PreWork patch was applied
+#if DEBUG
             try
             {
                 var methods = AccessTools.GetDeclaredMethods(typeof(Verse.AI.Pawn_JobTracker)).Where(m => m.Name == "TryTakeOrderedJob").ToList();
@@ -176,6 +179,7 @@ namespace SurvivalTools.HarmonyStuff
             {
                 Log.Error($"[SurvivalTools.Harmony] Failed enumerating TryTakeOrderedJob prefixes: {ex}");
             }
+#endif
 
             // -------- Vanilla --------
             // Mining: reset pick hit uses DiggingSpeed instead of MiningSpeed + degrade on entry
@@ -363,6 +367,8 @@ namespace SurvivalTools.HarmonyStuff
                 var list = __result != null ? __result.ToList() : new List<Gizmo>();
 
                 // Phase 12: Add battery management gizmos for powered tools
+                // DISABLED: Battery system turned off
+                /*
                 if (__instance != null && __instance.IsColonistPlayerControlled && Find.Selector.IsSelected(__instance))
                 {
                     var settings = SurvivalToolsMod.Settings;
@@ -371,6 +377,7 @@ namespace SurvivalTools.HarmonyStuff
                         AddBatteryGizmos(__instance, list);
                     }
                 }
+                */
 
                 // Dev mode debug gizmos
                 if (Prefs.DevMode && __instance != null && Find.Selector.IsSelected(__instance))
@@ -392,6 +399,8 @@ namespace SurvivalTools.HarmonyStuff
         /// <summary>
         /// Phase 12: Add unified power tool management gizmo
         /// </summary>
+        // DISABLED: Battery system turned off
+        /*
         private static void AddBatteryGizmos(Pawn pawn, List<Gizmo> gizmos)
         {
             if (pawn?.equipment?.Primary == null)
@@ -411,6 +420,7 @@ namespace SurvivalTools.HarmonyStuff
             };
             gizmos.Add(managerGizmo);
         }
+        */
 
         public static IEnumerable<CodeInstruction> Transpile_JobDriver_PlantWork_MakeNewToils(IEnumerable<CodeInstruction> instructions)
         {

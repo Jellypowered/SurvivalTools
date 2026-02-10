@@ -44,7 +44,9 @@ namespace SurvivalTools.Assign
         {
             try
             {
+#if DEBUG
                 Log.Warning("[SurvivalTools.PreWork] PreWork_AutoEquip static constructor called - class is being loaded");
+#endif
             }
             catch (Exception ex)
             {
@@ -224,8 +226,10 @@ namespace SurvivalTools.Assign
                 if (exact != null)
                 {
                     h.Patch(exact, prefix: prefix);
+#if DEBUG
                     ST_Logging.LogInfo("[SurvivalTools.Harmony] PreWork_AutoEquip AI StartJob prefix applied (exact).");
                     Log.Message("[PreWork] StartJob prefix: OK");
+#endif
                     return;
                 }
 
@@ -245,8 +249,10 @@ namespace SurvivalTools.Assign
                 if (candidate != null)
                 {
                     h.Patch(candidate, prefix: prefix);
+#if DEBUG
                     ST_Logging.LogInfo("[SurvivalTools.Harmony] PreWork_AutoEquip AI StartJob prefix applied (fallback).");
                     Log.Message("[PreWork] StartJob prefix: OK (fallback)");
+#endif
                 }
                 else
                 {
@@ -354,6 +360,8 @@ namespace SurvivalTools.Assign
             var workStat = GetRelevantWorkStat(job); // may be null for non‑supported jobs (still enforce carry limit)
 
             // Phase 12: Battery auto-swap check (before upgrade attempts)
+            // DISABLED: Battery system turned off
+            /*
             if (workStat != null && settings?.autoSwapBatteries == true && GetEnableAssignments(settings))
             {
                 bool swapped = TryAutoSwapBattery(pawn, workStat, settings);
@@ -372,6 +380,7 @@ namespace SurvivalTools.Assign
                     return false;
                 }
             }
+            */
 
             // Attempt upgrade only if job has a relevant stat and assignments enabled
             // Skip if JobGate already queued an acquisition (to avoid competing systems)
@@ -498,10 +507,12 @@ namespace SurvivalTools.Assign
                 if (!_nmLogCooldown.TryGetValue(pid, out var until) || nowTick >= until)
                 {
                     _nmLogCooldown[pid] = nowTick + 200;
+#if DEBUG
                     if (Prefs.DevMode)
                     {
                         LogInfo($"[PreWork] pawn={pawn.LabelShort} job={newJob?.def?.defName} carried={carriedNow} allowed={allowed} enq={enq} compliant={ok} keeper={(keeper != null ? keeper.LabelShort : "(auto)")} (playerForced={newJob?.playerForced == true})");
                     }
+#endif
                 }
                 if (!ok)
                 {
@@ -1052,6 +1063,8 @@ namespace SurvivalTools.Assign
             return job?.def?.defName ?? "Work";
         }
 
+        // DISABLED: Battery system turned off
+        /*
         /// <summary>
         /// Phase 12: Try to auto-swap battery in current tool if charge is low.
         /// Returns true if battery swap was queued.
@@ -1169,6 +1182,7 @@ namespace SurvivalTools.Assign
 
             return bestBattery;
         }
+        */
 
         /// <summary>
         /// Phase 12: Clear transient state to prevent Job reference warnings on save.

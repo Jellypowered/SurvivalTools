@@ -36,8 +36,10 @@ namespace SurvivalTools.Helpers
                 ResolverVersion = resolverVersion;
 
                 // Phase 12: Include charge bucket in cache key
-                var powerComp = tool?.TryGetComp<CompPowerTool>();
-                ChargeBucket = powerComp?.GetChargeBucket5() ?? -1;
+                // DISABLED: Battery system turned off
+                //var powerComp = tool?.TryGetComp<CompPowerTool>();
+                //ChargeBucket = powerComp?.GetChargeBucket5() ?? -1;
+                ChargeBucket = -1;
             }
 
             public bool Equals(CacheKey other)

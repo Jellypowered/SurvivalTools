@@ -34,25 +34,19 @@ namespace SurvivalTools
         }
         #region Settings & flags
 
-        private static bool? _debugLoggingCache;
-
         internal static bool IsDebugLoggingEnabled
         {
             get
             {
 #if DEBUG
-                if (_debugLoggingCache == null)
+                try
                 {
-                    try
-                    {
-                        _debugLoggingCache = SurvivalToolsMod.Settings?.debugLogging ?? false;
-                    }
-                    catch
-                    {
-                        return false;
-                    }
+                    return SurvivalToolsMod.Settings?.debugLogging ?? false;
                 }
-                return _debugLoggingCache.Value;
+                catch
+                {
+                    return false;
+                }
 #else
                 return false;
 #endif
@@ -67,8 +61,6 @@ namespace SurvivalTools
             return false;
 #endif
         }
-
-        internal static void InvalidateDebugLoggingCache() => _debugLoggingCache = null;
 
         // Enable dedup only in DevMode and when at least one toggle is active
         private static bool DedupEnabled =>

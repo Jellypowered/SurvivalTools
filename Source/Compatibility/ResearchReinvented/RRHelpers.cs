@@ -77,10 +77,12 @@ namespace SurvivalTools.Compat.ResearchReinvented
                 if (IsCompatLogging() && IsDebugLoggingEnabled)
                     Log.Message("[SurvivalTools Compat] RRHelpers.Initialize() completed (external harmony instance).");
                 // Lightweight smoke (dev builds / compat logging only) so we know active RR mode
+#if DEBUG
                 if (ShouldLogModeOnce())
                 {
                     try { Log.Message("[SurvivalTools Compat][RR] Active RR mode: " + Mode()); } catch { }
                 }
+#endif
             }
             catch (Exception e)
             {

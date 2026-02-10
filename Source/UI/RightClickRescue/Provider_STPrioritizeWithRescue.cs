@@ -306,6 +306,7 @@ namespace SurvivalTools.UI.RightClickRescue
             }
             if (!suppress)
             {
+#if DEBUG
                 if (effMs == 0)
                 {
                     // Ultra-short form for effectively free clicks; omit ms and gating counters
@@ -315,6 +316,7 @@ namespace SurvivalTools.UI.RightClickRescue
                 {
                     Log.Message($"[RightClick] Summary | pawn={pawn.LabelShort} | cell={context.ClickedCell} | considered={considered} | added={list.Count} | ms={elapsedMs} | gateYes={counters.gatingNeeded} | gateNo={counters.gatingNotNeeded}");
                 }
+#endif
             }
 
             // Only produce detail line(s) for empty result sets OR slow clicks OR if something was considered but dropped.
@@ -344,6 +346,7 @@ namespace SurvivalTools.UI.RightClickRescue
             int workTypeDisabled = counters.workTypeDisabled;
             int described = counters.described;
 
+#if DEBUG
             _sb.Clear();
             _sb.Append("[RightClick] Detail | reasons=")
                .Append("CanHandleFalse:").Append(canHandleFalse).Append(',')
@@ -378,6 +381,7 @@ namespace SurvivalTools.UI.RightClickRescue
                 if (emitted < scans.Count) _sb.Append(",+").Append(scans.Count - emitted).Append("more");
                 Log.Message(_sb.ToString());
             }
+#endif
 
             // Sow-specific context snapshot (only when sow failed to describe) with cooldown.
             // Suppress noisy 'NoZone' failures (these are extremely common when mousing over non-growing cells).

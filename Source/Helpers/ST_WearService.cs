@@ -151,11 +151,14 @@ namespace SurvivalTools.Helpers
             ApplyHpLoss(pawn, actualThing, whole, stat);
 
             // Phase 12: Discharge powered tools during work
+            // DISABLED: Battery system turned off
+            /*
             var powerComp = actualThing.TryGetComp<CompPowerTool>();
             if (powerComp != null)
             {
                 powerComp.NotifyWorkTick(stat);
             }
+            */
 
             // Record global pulse tick (successful application only)
             _lastGlobalPulseTick = now;

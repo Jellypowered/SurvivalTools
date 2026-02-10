@@ -57,7 +57,9 @@ namespace SurvivalTools.Assign
                     Log.Warning("[SurvivalTools.PostAddHooks] Method ThingOwner.TryTransferToContainer not found; Nightmare post-add enforcement (path B) skipped.");
                 }
 
+#if DEBUG
                 Log.Message("[SurvivalTools.PostAddHooks] Initialized (TryAddAndUnforbid + TryTransferToContainer postfixes).");
+#endif
             }
             catch (Exception ex)
             {

@@ -131,12 +131,15 @@ namespace SurvivalTools.Stats
             float toolFactor = ToolStatResolver.GetToolStatFactor(effectiveTool.def, effectiveTool.Stuff, parentStat);
 
             // Phase 12: Apply powered tool multiplier when tool is charged
+            // DISABLED: Battery system turned off
+            /*
             var powerComp = effectiveTool.TryGetComp<CompPowerTool>();
             if (powerComp != null && powerComp.HasCharge)
             {
                 float poweredMultiplier = powerComp.GetPoweredMultiplier(parentStat);
                 toolFactor *= poweredMultiplier;
             }
+            */
 
             val *= toolFactor;
 
@@ -199,6 +202,8 @@ namespace SurvivalTools.Stats
                 float toolFactor = ToolStatResolver.GetToolStatFactor(effectiveTool.def, effectiveTool.Stuff, parentStat);
 
                 // Phase 12: Include powered multiplier if tool is charged
+                // DISABLED: Battery system turned off
+                /*
                 var powerComp = effectiveTool.TryGetComp<CompPowerTool>();
                 if (powerComp != null && powerComp.HasCharge)
                 {
@@ -219,6 +224,8 @@ namespace SurvivalTools.Stats
                 {
                     _explanationBuilder.AppendLine("ST_StatPart_ToolApplied".Translate(effectiveTool.LabelCap, toolFactor.ToStringPercent()));
                 }
+                */
+                _explanationBuilder.AppendLine("ST_StatPart_ToolApplied".Translate(effectiveTool.LabelCap, toolFactor.ToStringPercent()));
 
                 // Top contributors
                 var contributors = ToolScoring.TopContributors(effectiveTool, pawn, parentStat, 2);

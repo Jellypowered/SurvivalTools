@@ -62,23 +62,35 @@ namespace SurvivalTools
             var settings = SurvivalToolsMod.Settings;
             if (settings == null || pawn == null) return false;
 
-            var stats = settings.hardcoreMode
-                ? pawn.AssignedToolRelevantWorkGiversStatDefsForAlerts()
-                : pawn.AssignedToolRelevantWorkGiversStatDefs();
+            // Get work givers and check if their work types are actually enabled
+            var givers = pawn.AssignedToolRelevantWorkGivers();
+            if (givers == null) return false;
 
             bool anyMissingRequired = false;
+            var ws = pawn.workSettings;
 
-            if (stats != null)
+            foreach (var giver in givers)
             {
-                for (int i = 0; i < stats.Count; i++)
+                if (giver?.def == null) continue;
+                var workType = giver.def.workType;
+                if (workType == null) continue;
+
+                // Skip if this work type is disabled for the pawn
+                if (pawn.WorkTypeIsDisabled(workType)) continue;
+                if (ws != null && !ws.WorkIsActive(workType)) continue;
+
+                var ext = giver.def.GetModExtension<WorkGiverExtension>();
+                if (ext?.requiredStats == null) continue;
+
+                foreach (var stat in ext.requiredStats)
                 {
-                    var stat = stats[i];
                     if (stat == null) continue;
                     if (!settings.hardcoreMode && StatFilters.IsOptionalStat(stat)) continue;
                     if (!SurvivalToolUtility.ToolsExistForStat(stat)) continue;
                     if (!ShouldShowAlertForStat(pawn, stat, settings)) continue;
                     if (!HasToolImprovingStat(pawn, stat)) { anyMissingRequired = true; break; }
                 }
+                if (anyMissingRequired) break;
             }
 
             bool globalPenalty = false;
@@ -129,10 +141,18 @@ namespace SurvivalTools
             {
                 var givers = pawn.AssignedToolRelevantWorkGivers();
                 if (givers == null) continue;
+                var ws = pawn.workSettings;
 
                 foreach (var giver in givers)
                 {
-                    var ext = giver?.def?.GetModExtension<WorkGiverExtension>();
+                    if (giver?.def == null) continue;
+                    var workType = giver.def.workType;
+
+                    // Skip if this work type is disabled for the pawn
+                    if (workType != null && pawn.WorkTypeIsDisabled(workType)) continue;
+                    if (workType != null && ws != null && !ws.WorkIsActive(workType)) continue;
+
+                    var ext = giver.def.GetModExtension<WorkGiverExtension>();
                     if (ext?.requiredStats == null) continue;
 
                     foreach (var stat in ext.requiredStats)
@@ -245,9 +265,21 @@ namespace SurvivalTools
             if (CompatAPI.IsResearchReinventedActive)
             {
                 bool hasRRNeeds = culprits.Any(p =>
-                    p.AssignedToolRelevantWorkGivers()?.Any(g =>
-                        g.def.GetModExtension<WorkGiverExtension>()?.requiredStats?
-                        .Any(s => s?.defName == "ResearchSpeed" || s?.defName == "FieldResearchSpeedMultiplier") == true) == true);
+                {
+                    var givers = p.AssignedToolRelevantWorkGivers();
+                    if (givers == null) return false;
+                    var ws = p.workSettings;
+                    return givers.Any(g =>
+                    {
+                        if (g?.def == null) return false;
+                        var workType = g.def.workType;
+                        // Only count if work type is enabled
+                        if (workType != null && p.WorkTypeIsDisabled(workType)) return false;
+                        if (workType != null && ws != null && !ws.WorkIsActive(workType)) return false;
+                        return g.def.GetModExtension<WorkGiverExtension>()?.requiredStats?
+                            .Any(s => s?.defName == "ResearchSpeed" || s?.defName == "FieldResearchSpeedMultiplier") == true;
+                    });
+                });
 
                 if (hasRRNeeds)
                 {

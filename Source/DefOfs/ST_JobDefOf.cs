@@ -26,11 +26,14 @@ public static class ST_JobDefOf
     /// <summary>Job: Drop a carried survival tool.</summary>
     public static JobDef DropSurvivalTool;
 
+    // DISABLED: Battery system turned off
+    /*
     /// <summary>Job: Swap battery in a powered tool (Phase 12).</summary>
     public static JobDef ST_SwapBattery;
 
     /// <summary>Job: Insert battery into charger (Phase 12.2).</summary>
     public static JobDef ST_ChargeBattery;
+    */
 
     static ST_JobDefOf()
     {

@@ -32,7 +32,9 @@ namespace SurvivalTools
 
             var enabled = SurvivalToolsMod.Settings?.enableSurvivalToolTreeFelling ?? true;
 
+#if DEBUG
             ST_Logging.LogInfo($"[SurvivalTools] Applying tree felling conditionals: enabled={enabled}");
+#endif
 
             if (!enabled)
             {

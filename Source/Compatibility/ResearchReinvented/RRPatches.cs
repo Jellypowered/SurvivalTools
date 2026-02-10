@@ -13,6 +13,10 @@ namespace SurvivalTools.Compat.ResearchReinvented
     // Pacifist equip handled centrally in Patch_EquipmentUtility_CanEquip_PacifistTools.cs
     internal static class RRPatches
     {
+        // --- Need check tracking (periodic interruption for basic needs) ---
+        private static readonly System.Collections.Generic.Dictionary<int, int> _lastNeedCheckTick = new System.Collections.Generic.Dictionary<int, int>();
+        private const int NeedCheckIntervalTicks = 18000; // ~5 minutes @ 60 TPS - infrequent enough to not be annoying
+
         // --- Nightmare skip log dedupe (15s cooldown) -----------------------
         private struct SkipLogEntry { public int lastTick; public int suppressed; }
         private static readonly System.Collections.Generic.Dictionary<string, SkipLogEntry> _skipLog = new System.Collections.Generic.Dictionary<string, SkipLogEntry>();
@@ -218,6 +222,7 @@ namespace SurvivalTools.Compat.ResearchReinvented
         /// <summary>
         /// Backup patch for tick-based progress (called during work ticks)
         /// In Nightmare mode, skip the entire method to prevent any processing
+        /// Also periodically check for critical needs to allow interruptions
         /// </summary>
         private static bool Prefix_ResearchOpportunity_ResearchTickPerformed(Pawn researcher)
         {
@@ -225,6 +230,24 @@ namespace SurvivalTools.Compat.ResearchReinvented
             {
                 if (!RRHelpers.IsActive()) return true;
                 if (researcher == null) return true;
+
+                // Periodic need check - allow interruption for critical needs
+                int currentTick = Find.TickManager?.TicksGame ?? 0;
+                if (!_lastNeedCheckTick.TryGetValue(researcher.thingIDNumber, out int lastCheck) ||
+                    currentTick - lastCheck >= NeedCheckIntervalTicks)
+                {
+                    _lastNeedCheckTick[researcher.thingIDNumber] = currentTick;
+
+                    // Check if pawn has critical needs (very hungry, very tired, etc.)
+                    if (researcher.needs?.food != null && researcher.needs.food.CurLevelPercentage < 0.15f) // Below 15% food
+                        return false; // Allow job interruption for eating
+
+                    if (researcher.needs?.rest != null && researcher.needs.rest.CurLevelPercentage < 0.15f) // Below 15% rest
+                        return false; // Allow job interruption for sleeping
+
+                    if (researcher.needs?.mood != null && researcher.needs.mood.CurLevelPercentage < 0.10f) // Below 10% mood (extreme break risk)
+                        return false; // Allow job interruption for mood recovery
+                }
 
                 // In Nightmare mode, block the entire tick if lacking tool
                 if (RRHelpers.Mode() == RRHelpers.RRMode.Nightmare)

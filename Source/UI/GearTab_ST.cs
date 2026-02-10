@@ -196,15 +196,16 @@ namespace SurvivalTools.UI
             var line2Rect = new Rect(rect.x + 10f, rect.y + 26f, rect.width - 20f, 18f);
 
             // Phase 12: Check for powered tool and show charge bar
-            var powerComp = toolInfo.Tool?.TryGetComp<CompPowerTool>();
-            bool hasPowerComp = powerComp != null;
-            float chargeBarHeight = 0f;
+            // DISABLED: Battery system turned off
+            //var powerComp = toolInfo.Tool?.TryGetComp<CompPowerTool>();
+            //bool hasPowerComp = powerComp != null;
+            //float chargeBarHeight = 0f;
 
-            if (hasPowerComp)
-            {
-                chargeBarHeight = 4f;
-                line2Rect.y += chargeBarHeight + 2f;
-            }
+            //if (hasPowerComp)
+            //{
+            //    chargeBarHeight = 4f;
+            //    line2Rect.y += chargeBarHeight + 2f;
+            //}
 
             // Line 1: Tool label + scores
             Text.Font = GameFont.Small;
@@ -232,11 +233,12 @@ namespace SurvivalTools.UI
             GUI.color = Color.white;
 
             // Phase 12: Draw charge bar if powered tool
-            if (hasPowerComp)
-            {
-                var chargeBarRect = new Rect(line1Rect.x, line1Rect.yMax + 2f, line1Rect.width, chargeBarHeight);
-                DrawChargeBar(chargeBarRect, powerComp);
-            }
+            // DISABLED: Battery system turned off
+            //if (hasPowerComp)
+            //{
+            //    var chargeBarRect = new Rect(line1Rect.x, line1Rect.yMax + 2f, line1Rect.width, chargeBarHeight);
+            //    DrawChargeBar(chargeBarRect, powerComp);
+            //}
 
             // Line 2: Why text with better styling
             Text.Anchor = TextAnchor.MiddleLeft;
@@ -256,6 +258,8 @@ namespace SurvivalTools.UI
         }
 
         // Phase 12: Draw charge bar for powered tools
+        // DISABLED: Battery system turned off
+        /*
         private static void DrawChargeBar(Rect rect, CompPowerTool powerComp)
         {
             if (powerComp == null) return;
@@ -277,6 +281,7 @@ namespace SurvivalTools.UI
             // Border
             Widgets.DrawBox(rect, 1);
         }
+        */
 
         private static float GetAverageScore(string scoreText)
         {
@@ -461,6 +466,8 @@ namespace SurvivalTools.UI
             info.WhyText = whyBuilder.Length > 0 ? whyBuilder.ToString() : "ST_GearTab_BaseValues".Translate().ToString();
 
             // Phase 12: Add charge status to tooltip
+            // DISABLED: Battery system turned off
+            /*
             var powerComp = tool?.TryGetComp<CompPowerTool>();
             if (powerComp != null)
             {
@@ -475,6 +482,7 @@ namespace SurvivalTools.UI
                     _tooltipBuilder.AppendLine("ST_GearTab_PowerEmpty".Translate());
                 }
             }
+            */
 
             info.TooltipText = _tooltipBuilder.ToString();
 

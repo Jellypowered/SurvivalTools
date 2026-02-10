@@ -34,12 +34,16 @@ namespace SurvivalTools.Compatibility.TreeStack
                 else
                     Authority = TreeAuthority.Internal;
 
+#if DEBUG
                 Log.Message($"[ST] TreeSystemArbiter → {Authority} (STC={STC_Active}, PT={PT_Active}, TCSS={TCSS_Active}, PC={PrimitiveCore_Active})");
+#endif
 
                 if (Authority != TreeAuthority.Internal && SurvivalToolsMod.Settings != null && SurvivalToolsMod.Settings.enableSurvivalToolTreeFelling)
                 {
                     SurvivalToolsMod.Settings.enableSurvivalToolTreeFelling = false;
+#if DEBUG
                     Log.Message("[ST] Internal tree felling disabled (external authority present).");
+#endif
                 }
             }
             catch (Exception e)

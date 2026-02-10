@@ -43,6 +43,7 @@ namespace SurvivalTools.Assign
 
         private const int HysteresisTicksNormal = 5000;
         private const float HysteresisExtraGainPct = 0.05f; // +5% for re-upgrade
+        private const float SameToolFamilyExtraGainPct = 0.20f; // +20% required for same family (e.g., hammer → hammer)
         private const float GatingEpsilon = 0.001f;
         private const int FocusTicksWindow = 600; // 10 seconds: prefer current work stat, avoid thrash
                                                   // Cooldown after performing tool management so we don't immediately re-enter assignment logic
@@ -60,6 +61,11 @@ namespace SurvivalTools.Assign
 
         // Recently acquired protection: pawnID -> (untilTick, lastAcquiredThingID)
         private static readonly Dictionary<int, RecentAcqData> _recentAcquisitions = new Dictionary<int, RecentAcqData>(64);
+
+        // Recently dropped tools cooldown: prevents immediate re-pickup of just-dropped tools
+        // Key: "pawnID_toolID" -> untilTick
+        private static readonly Dictionary<string, int> _recentlyDroppedTools = new Dictionary<string, int>(64);
+        private const int DroppedToolCooldownTicks = 1500; // 25 seconds @ 60 TPS - balance between preventing loops and minimizing idle time
 
         private struct FocusData
         {
@@ -258,8 +264,20 @@ namespace SurvivalTools.Assign
                     return false;
                 }
 
-                LogDebug($"Found candidate tool for {pawn.LabelShort}: {candidate.tool.LabelShort} (score: {candidate.score:F3}, gain: {candidate.gainPct:P1}, location: {candidate.location})", "AssignmentSearch.FoundCandidate");
+                LogDebug($"Found candidate tool for {pawn.LabelShort}: {candidate.tool?.LabelShort ?? "null"} (score: {candidate.score:F3}, gain: {candidate.gainPct:P1}, location: {candidate.location})", "AssignmentSearch.FoundCandidate");
                 // Hot path: don't log job queue state before queueing
+
+                // ANTI-THRASHING: Check if candidate is same tool family as current tool
+                // Require much higher gain to swap within same family (e.g., hammer → hammer)
+                if (currentTool != null && candidate.tool != null && IsSameToolFamily(currentTool, candidate.tool))
+                {
+                    float requiredGain = minGainPct + SameToolFamilyExtraGainPct;
+                    if (candidate.gainPct < requiredGain)
+                    {
+                        LogDebug($"Rejecting {candidate.tool.LabelShort} - same family as {currentTool.LabelShort}, gain {candidate.gainPct:P1} < required {requiredGain:P1}", "AssignmentSearch.SameFamilyBlock");
+                        return false;
+                    }
+                }
 
                 // Apply hysteresis AFTER selecting a concrete candidate so we can use its gain and def
                 // Use cached currentTick from method entry
@@ -276,13 +294,13 @@ namespace SurvivalTools.Assign
                 {
                     if (acquisitionEnqueued)
                     {
-                        LogDebug($"Successfully queued acquisition job for {pawn.LabelShort}: {candidate.tool.LabelShort}", "AssignmentSearch.QueueSuccess");
+                        LogDebug($"Successfully queued acquisition job for {pawn.LabelShort}: {candidate.tool?.LabelShort ?? "null"}", "AssignmentSearch.QueueSuccess");
 
                         // Update hysteresis only when we actually enqueued an acquisition
                         _hysteresisData[pawn.thingIDNumber] = new HysteresisData
                         {
                             lastUpgradeTick = currentTick,
-                            lastEquippedDefName = candidate.tool.def.defName
+                            lastEquippedDefName = candidate.tool?.def?.defName ?? string.Empty
                         };
 
                         // Set a short focus window on this stat to prevent other stats from thrashing
@@ -300,7 +318,7 @@ namespace SurvivalTools.Assign
                     else
                     {
                         // We queued a drop and deferred acquisition; report handled but don't update hysteresis yet
-                        LogDebug($"Queued drop for {pawn.LabelShort} and deferred acquisition of {candidate.tool.LabelShort}", "AssignmentSearch.DeferredAfterDrop");
+                        LogDebug($"Queued drop for {pawn.LabelShort} and deferred acquisition of {candidate.tool?.LabelShort ?? "null"}", "AssignmentSearch.DeferredAfterDrop");
                         // Set a short focus window to prioritize this stat; this avoids cross-stat thrashing.
                         SetFocus(pawn, workStat);
                         // Hot path: don't log job queue state after every enqueue
@@ -310,7 +328,7 @@ namespace SurvivalTools.Assign
                 }
                 else
                 {
-                    LogDebug($"Failed to queue acquisition job for {pawn.LabelShort}: {candidate.tool.LabelShort}", "AssignmentSearch.QueueFailed");
+                    LogDebug($"Failed to queue acquisition job for {pawn.LabelShort}: {candidate.tool?.LabelShort ?? "null"}", "AssignmentSearch.QueueFailed");
                 }
 
                 return false;
@@ -452,17 +470,17 @@ namespace SurvivalTools.Assign
             }
 
             // Check if tool still exists and is not destroyed
-            if (tool.Destroyed)
+            if (tool == null || tool.Destroyed)
             {
-                LogDebug($"ValidateToolStateForAcquisition: {tool.LabelShort} is destroyed", "AssignmentSearch.ValidationDestroyed");
+                LogDebug($"ValidateToolStateForAcquisition: {tool?.LabelShort ?? "null"} is destroyed or null", "AssignmentSearch.ValidationDestroyed");
                 return false;
             }
 
             // Check if tool is on same map
             if (tool.Map != pawn.Map)
             {
-                LogDebug($"ValidateToolStateForAcquisition: {tool.LabelShort} is on different map", "AssignmentSearch.ValidationDifferentMap");
-                SetCandidateCooldown(tool);
+                LogDebug($"ValidateToolStateForAcquisition: {tool?.LabelShort ?? "null"} is on different map", "AssignmentSearch.ValidationDifferentMap");
+                if (tool != null) SetCandidateCooldown(tool);
                 return false;
             }
 
@@ -472,8 +490,8 @@ namespace SurvivalTools.Assign
             if (parentHolder is Pawn_InventoryTracker inventoryTracker &&
                 inventoryTracker.pawn != pawn)
             {
-                LogDebug($"ValidateToolStateForAcquisition: {tool.LabelShort} is held by another pawn ({inventoryTracker.pawn.LabelShort})", "AssignmentSearch.ValidationHeldByPawn");
-                SetCandidateCooldown(tool);
+                LogDebug($"ValidateToolStateForAcquisition: {tool?.LabelShort ?? "null"} is held by another pawn ({inventoryTracker.pawn?.LabelShort ?? "null"})", "AssignmentSearch.ValidationHeldByPawn");
+                if (tool != null) SetCandidateCooldown(tool);
                 return false;
             }
 
@@ -481,28 +499,28 @@ namespace SurvivalTools.Assign
             if (parentHolder is Pawn_EquipmentTracker equipmentTracker &&
                 equipmentTracker.pawn != pawn)
             {
-                LogDebug($"ValidateToolStateForAcquisition: {tool.LabelShort} is equipped by another pawn ({equipmentTracker.pawn.LabelShort})", "AssignmentSearch.ValidationEquippedByPawn");
-                SetCandidateCooldown(tool);
+                LogDebug($"ValidateToolStateForAcquisition: {tool?.LabelShort ?? "null"} is equipped by another pawn ({equipmentTracker.pawn?.LabelShort ?? "null"})", "AssignmentSearch.ValidationEquippedByPawn");
+                if (tool != null) SetCandidateCooldown(tool);
                 return false;
             }
 
             // Check if pawn can reserve and reach the tool (legacy approach)
             if (!pawn.CanReserveAndReach(tool, PathEndMode.OnCell, pawn.NormalMaxDanger()))
             {
-                LogDebug($"ValidateToolStateForAcquisition: {pawn.LabelShort} cannot reserve and reach {tool.LabelShort}", "AssignmentSearch.ValidationCannotReserveAndReach");
-                SetCandidateCooldown(tool);
+                LogDebug($"ValidateToolStateForAcquisition: {pawn.LabelShort} cannot reserve and reach {tool?.LabelShort ?? "null"}", "AssignmentSearch.ValidationCannotReserveAndReach");
+                if (tool != null) SetCandidateCooldown(tool);
                 return false;
             }
 
             // Check if tool is forbidden
             if (tool.IsForbidden(pawn))
             {
-                LogDebug($"ValidateToolStateForAcquisition: {tool.LabelShort} is forbidden for {pawn.LabelShort}", "AssignmentSearch.ValidationForbidden");
-                SetCandidateCooldown(tool);
+                LogDebug($"ValidateToolStateForAcquisition: {tool?.LabelShort ?? "null"} is forbidden for {pawn.LabelShort}", "AssignmentSearch.ValidationForbidden");
+                if (tool != null) SetCandidateCooldown(tool);
                 return false;
             }
 
-            LogDebug($"[SurvivalTools.Assignment] Tool validation PASSED for {pawn.LabelShort} acquiring {tool.LabelShort}", $"Assign.ToolValidation.Acq|{pawn.ThingID}|{tool.thingIDNumber}");
+            LogDebug($"[SurvivalTools.Assignment] Tool validation PASSED for {pawn.LabelShort} acquiring {tool?.LabelShort ?? "null"}", $"Assign.ToolValidation.Acq|{pawn.ThingID}|{tool?.thingIDNumber ?? -1}");
             return true;
         }
 
@@ -519,16 +537,16 @@ namespace SurvivalTools.Assign
             }
 
             // Check if tool still exists and is not destroyed
-            if (tool.Destroyed)
+            if (tool == null || tool.Destroyed)
             {
-                LogDebug($"ValidateToolStateForDrop: {tool.LabelShort} is destroyed", "AssignmentSearch.DropValidationDestroyed");
+                LogDebug($"ValidateToolStateForDrop: {tool?.LabelShort ?? "null"} is destroyed or null", "AssignmentSearch.DropValidationDestroyed");
                 return false;
             }
 
             // Check if tool is on same map (allow null for carried items)
             if (tool.Map != null && tool.Map != pawn.Map)
             {
-                LogDebug($"ValidateToolStateForDrop: {tool.LabelShort} is on different map", "AssignmentSearch.DropValidationDifferentMap");
+                LogDebug($"ValidateToolStateForDrop: {tool?.LabelShort ?? "null"} is on different map", "AssignmentSearch.DropValidationDifferentMap");
                 return false;
             }
 
@@ -538,7 +556,7 @@ namespace SurvivalTools.Assign
 
             if (!isInInventory && !isEquipped)
             {
-                LogDebug($"ValidateToolStateForDrop: {tool.LabelShort} is not carried by {pawn.LabelShort}", "AssignmentSearch.DropValidationNotCarried");
+                LogDebug($"ValidateToolStateForDrop: {tool?.LabelShort ?? "null"} is not carried by {pawn.LabelShort}", "AssignmentSearch.DropValidationNotCarried");
                 return false;
             }
 
@@ -549,7 +567,7 @@ namespace SurvivalTools.Assign
                 return false;
             }
 
-            LogDebug($"[SurvivalTools.Assignment] Drop validation PASSED for {pawn.LabelShort} dropping {tool.LabelShort}", $"Assign.ToolValidation.Drop|{pawn.ThingID}|{tool.thingIDNumber}");
+            LogDebug($"[SurvivalTools.Assignment] Drop validation PASSED for {pawn.LabelShort} dropping {tool?.LabelShort ?? "null"}", $"Assign.ToolValidation.Drop|{pawn.ThingID}|{tool?.thingIDNumber ?? -1}");
             return true;
         }
 
@@ -725,7 +743,7 @@ namespace SurvivalTools.Assign
                     {
                         var queueList = jq as System.Collections.IList;
                         if (queueList != null) queueList.RemoveAt(i);
-                        LogDebug($"Removed duplicate queued {j.def.defName} for {pawn?.LabelShort} targeting {tool.LabelShort}", "AssignmentSearch.DedupeRemove");
+                        LogDebug($"Removed duplicate queued {j.def.defName} for {pawn?.LabelShort} targeting {tool?.LabelShort ?? "null"}", "AssignmentSearch.DedupeRemove");
                     }
                 }
             }
@@ -948,6 +966,14 @@ namespace SurvivalTools.Assign
                 var tool = candidates[i];
                 if (ShouldSkipCandidate(pawn, tool))
                     continue;
+
+                // EARLY MAP CHECK: Fail fast if tool is on different map
+                if (tool?.Map != pawn?.Map)
+                {
+                    LogDebug($"Skipping {tool?.LabelShort} - different map (tool: {tool?.Map?.Index ?? -1}, pawn: {pawn?.Map?.Index ?? -1})", "AssignmentSearch.MapMismatch");
+                    continue;
+                }
+
                 if (!CanPawnReserveAndReach(pawn, tool))
                     continue;
 
@@ -979,6 +1005,14 @@ namespace SurvivalTools.Assign
                 var tool = candidates[i];
                 if (ShouldSkipCandidate(pawn, tool))
                     continue;
+
+                // EARLY MAP CHECK: Fail fast if tool is on different map
+                if (tool?.Map != pawn?.Map)
+                {
+                    LogDebug($"Skipping {tool?.LabelShort} - different map (tool: {tool?.Map?.Index ?? -1}, pawn: {pawn?.Map?.Index ?? -1})", "AssignmentSearch.MapMismatch");
+                    continue;
+                }
+
                 if (!CanPawnReserveAndReach(pawn, tool))
                     continue;
 
@@ -1020,20 +1054,24 @@ namespace SurvivalTools.Assign
         private static bool QueueAcquisitionJob(Pawn pawn, ToolCandidate candidate, StatDef requestedStat, QueuePriority priority, out bool acquisitionEnqueued)
         {
             acquisitionEnqueued = false;
-            if (candidate.tool == null)
+
+            // CRITICAL: Cache tool reference immediately to prevent race conditions
+            // The tool can become null/destroyed at any point during this method
+            var tool = candidate.tool;
+            if (tool == null)
             {
                 LogDebug($"QueueAcquisitionJob: candidate.tool is null for {pawn?.LabelShort}", "AssignmentSearch.NullTool");
                 return false;
             }
 
-            LogDebug($"QueueAcquisitionJob: attempting to queue job for {pawn.LabelShort} to acquire {candidate.tool.LabelShort} from {candidate.location} (priority={priority})", "AssignmentSearch.QueueAttempt");
+            LogDebug($"QueueAcquisitionJob: attempting to queue job for {pawn.LabelShort} to acquire {tool.LabelShort} from {candidate.location} (priority={priority})", "AssignmentSearch.QueueAttempt");
 
             // If an equivalent queued acquisition job exists and pawn is idle, start it instead of creating a new one
-            if (TryStartQueuedToolJobFor(pawn, candidate.tool, JobDefOf.Equip, JobDefOf.TakeInventory))
+            if (TryStartQueuedToolJobFor(pawn, tool, JobDefOf.Equip, JobDefOf.TakeInventory))
             {
                 acquisitionEnqueued = true;
                 // Purge any other duplicates for the same target
-                RemoveQueuedToolJobsFor(pawn, candidate.tool, JobDefOf.Equip, JobDefOf.TakeInventory);
+                RemoveQueuedToolJobsFor(pawn, tool, JobDefOf.Equip, JobDefOf.TakeInventory);
                 return true;
             }
 
@@ -1059,9 +1097,9 @@ namespace SurvivalTools.Assign
             }
 
             // ENHANCED VALIDATION: Real-time tool state check before any job creation
-            if (!ValidateToolStateForAcquisition(pawn, candidate.tool))
+            if (!ValidateToolStateForAcquisition(pawn, tool))
             {
-                LogDebug($"Tool validation failed for {candidate.tool.LabelShort} and {pawn.LabelShort}", "AssignmentSearch.ToolValidationFailed");
+                LogDebug($"Tool validation failed for {tool.LabelShort} and {pawn.LabelShort}", "AssignmentSearch.ToolValidationFailed");
                 return false;
             }
 
@@ -1070,9 +1108,9 @@ namespace SurvivalTools.Assign
             {
                 try
                 {
-                    if (NightmarePurgeBeforeAcquire(pawn, candidate.tool))
+                    if (NightmarePurgeBeforeAcquire(pawn, tool))
                     {
-                        LogDebug($"[Nightmare] Full purge queued for {pawn.LabelShort}; deferring acquisition of {candidate.tool.LabelShort}", "Nightmare.PurgeBeforeAcquire");
+                        LogDebug($"[Nightmare] Full purge queued for {pawn.LabelShort}; deferring acquisition of {tool.LabelShort}", "Nightmare.PurgeBeforeAcquire");
                         acquisitionEnqueued = false;
                         return true; // handled (we *did* something: queued drops)
                     }
@@ -1084,7 +1122,7 @@ namespace SurvivalTools.Assign
             }
 
             // Check carry limits BEFORE creating jobs and try to make room
-            if (!CanCarryAdditionalTool(pawn, candidate.tool))
+            if (!CanCarryAdditionalTool(pawn, tool))
             {
                 LogDebug($"Carry limit reached for {pawn.LabelShort}, need to drop worst tool first", "AssignmentSearch.CarryLimit");
 
@@ -1112,12 +1150,12 @@ namespace SurvivalTools.Assign
                     return false;
                 }
 
-                LogDebug($"Found worst tool to drop: {worstTool.LabelShort} for {pawn.LabelShort}", "AssignmentSearch.FoundWorstTool");
+                LogDebug($"Found worst tool to drop: {worstTool?.LabelShort ?? "null"} for {pawn.LabelShort}", "AssignmentSearch.FoundWorstTool");
 
                 // Validate worst tool before trying to drop it
                 if (!ValidateToolStateForDrop(pawn, worstTool))
                 {
-                    LogDebug($"Worst tool validation failed for {worstTool.LabelShort} and {pawn.LabelShort}", "AssignmentSearch.WorstToolValidationFailed");
+                    LogDebug($"Worst tool validation failed for {worstTool?.LabelShort ?? "null"} and {pawn.LabelShort}", "AssignmentSearch.WorstToolValidationFailed");
                     return false;
                 }
 
@@ -1132,38 +1170,45 @@ namespace SurvivalTools.Assign
                 // Queue drop job ONLY – acquisition will be re-attempted on next tick/job pass
                 if (!QueueDropJob(pawn, worstTool))
                 {
-                    LogDebug($"Failed to queue drop job for {worstTool.LabelShort} by {pawn.LabelShort}", "AssignmentSearch.DropJobFailed");
+                    LogDebug($"Failed to queue drop job for {worstTool?.LabelShort ?? "null"} by {pawn.LabelShort}", "AssignmentSearch.DropJobFailed");
                     return false;
                 }
 
-                LogDebug($"Successfully queued drop job for {worstTool.LabelShort} by {pawn.LabelShort}", "AssignmentSearch.DropJobSuccess");
+                LogDebug($"Successfully queued drop job for {worstTool?.LabelShort ?? "null"} by {pawn.LabelShort}", "AssignmentSearch.DropJobSuccess");
                 // Defer acquisition until after drop completes to avoid queue ordering issues
                 acquisitionEnqueued = false;
                 return true;
             }
 
+            // SAFETY: Final validation that tool is still valid before creating job
+            if (tool == null || tool.Destroyed)
+            {
+                LogDebug($"Tool became null or destroyed before job creation for {pawn.LabelShort}", "AssignmentSearch.ToolInvalidBeforeJob");
+                return false;
+            }
+
             Job job = null;
 
-            LogDebug($"[SurvivalTools.Assignment] Creating acquisition job for {candidate.tool.LabelShort} at {candidate.location}", $"Assign.CreateJob.Acq|{pawn.ThingID}|{candidate.tool.thingIDNumber}");
+            LogDebug($"[SurvivalTools.Assignment] Creating acquisition job for {tool.LabelShort} at {candidate.location}", $"Assign.CreateJob.Acq|{pawn.ThingID}|{tool.thingIDNumber}");
 
             switch (candidate.location)
             {
                 case ToolLocation.Inventory:
                     // Already in inventory, just equip
-                    job = JobMaker.MakeJob(JobDefOf.Equip, candidate.tool);
+                    job = JobMaker.MakeJob(JobDefOf.Equip, tool);
                     LogDebug($"Created Equip job for {pawn.LabelShort} (tool in inventory)", "AssignmentSearch.EquipInventory");
                     break;
 
                 case ToolLocation.Equipment:
                 case ToolLocation.SameCell:
                     // Pick up and equip
-                    job = JobMaker.MakeJob(JobDefOf.Equip, candidate.tool);
+                    job = JobMaker.MakeJob(JobDefOf.Equip, tool);
                     LogDebug($"Created Equip job for {pawn.LabelShort} (tool at {candidate.location})", "AssignmentSearch.EquipLocation");
                     break;
 
                 default:
                     // Haul to inventory first
-                    job = JobMaker.MakeJob(JobDefOf.TakeInventory, candidate.tool);
+                    job = JobMaker.MakeJob(JobDefOf.TakeInventory, tool);
                     job.count = 1;
                     LogDebug($"Created TakeInventory job for {pawn.LabelShort} (tool at {candidate.location})", "AssignmentSearch.TakeInventory");
                     break;
@@ -1175,10 +1220,30 @@ namespace SurvivalTools.Assign
                 return false;
             }
 
-            // ENHANCED VALIDATION: Use JobUtils to validate job before queuing
-            if (!JobUtils.IsJobStillValid(job, pawn))
+            // CRITICAL: Verify tool is still valid immediately after job creation
+            // Tool can despawn between JobMaker.MakeJob and here
+            if (tool == null || tool.Destroyed || tool.Map != pawn?.Map)
             {
-                LogDebug($"Acquisition job {job.def.defName} is invalid for {pawn.LabelShort}, not queuing", "AssignmentSearch.AcquisitionJobInvalid");
+                LogDebug($"Tool became invalid immediately after job creation for {pawn.LabelShort}", "AssignmentSearch.ToolInvalidPostJobCreate");
+                return false;
+            }
+
+            // ENHANCED VALIDATION: Use JobUtils to validate job before queuing
+            // Wrap in try-catch as this internally accesses job.targetA.Thing
+            bool jobValid = false;
+            try
+            {
+                jobValid = JobUtils.IsJobStillValid(job, pawn);
+            }
+            catch (NullReferenceException)
+            {
+                LogDebug($"NullRef during IsJobStillValid - tool became invalid for {pawn.LabelShort}", "AssignmentSearch.JobValidationNullRef");
+                return false;
+            }
+
+            if (!jobValid)
+            {
+                LogDebug($"Acquisition job {job?.def?.defName ?? "unknown"} is invalid for {pawn?.LabelShort ?? "unknown"}, not queuing", "AssignmentSearch.AcquisitionJobInvalid");
                 return false;
             }
 
@@ -1186,39 +1251,67 @@ namespace SurvivalTools.Assign
             {
                 // SAFETY: Clone job for queue to prevent reference issues
                 var clonedJob = JobUtils.CloneJobForQueue(job);
+                if (clonedJob == null)
+                {
+                    LogDebug($"CloneJobForQueue returned null for {pawn.LabelShort}", "AssignmentSearch.CloneJobNull");
+                    return false;
+                }
+
                 // Make this behave like a player-forced ordered job so it starts immediately when idle
                 clonedJob.playerForced = true;
 
                 // ENHANCED VALIDATION: Double-check tool state right before reservation
-                if (!ValidateToolStateForAcquisition(pawn, candidate.tool))
+                if (!ValidateToolStateForAcquisition(pawn, tool))
                 {
-                    LogDebug($"Tool validation failed right before reservation for {candidate.tool.LabelShort} and {pawn.LabelShort}", "AssignmentSearch.PreReservationValidationFailed");
+                    LogDebug($"Tool validation failed right before reservation for {tool?.LabelShort ?? "null"} and {pawn?.LabelShort ?? "unknown"}", "AssignmentSearch.PreReservationValidationFailed");
+                    return false;
+                }
+
+                // CRITICAL: Final null check immediately before Reserve to catch race conditions
+                if (tool == null || tool.Destroyed)
+                {
+                    LogDebug($"Tool became null/destroyed immediately before Reserve for {pawn.LabelShort}", "AssignmentSearch.ToolNullBeforeReserve");
                     return false;
                 }
 
                 // Reserve using the cloned job instance that will actually run
-                if (!pawn.Reserve(candidate.tool, clonedJob, 1, -1, null, true))
+                // Wrap in try-catch as Reserve might access tool properties internally
+                bool reserveSuccess = false;
+                try
                 {
-                    LogDebug($"Failed to reserve {candidate.tool.LabelShort} for {pawn.LabelShort}", "AssignmentSearch.ReserveFailed");
+                    reserveSuccess = pawn.Reserve(tool, clonedJob, 1, -1, null, true);
+                }
+                catch (NullReferenceException)
+                {
+                    LogDebug($"NullReferenceException during Reserve for {pawn.LabelShort} - tool likely became invalid", "AssignmentSearch.ReserveNullRef");
+                    return false;
+                }
+
+                if (!reserveSuccess)
+                {
+                    LogDebug($"Failed to reserve {tool?.LabelShort ?? "null"} for {pawn?.LabelShort ?? "unknown"}", "AssignmentSearch.ReserveFailed");
                     return false;
                 }
 
                 // If pawn is idle, start immediately to avoid queue starvation
-                if (pawn.jobs?.curJob == null)
+                if (pawn.jobs?.curJob == null && pawn.jobs != null)
                 {
                     bool taken = pawn.jobs.TryTakeOrderedJob(clonedJob);
                     if (taken)
                     {
-                        LogDebug($"[SurvivalTools.Assignment] Started {clonedJob.def.defName} immediately for {pawn.LabelShort} targeting {candidate.tool.LabelShort}", $"Assign.StartImmediate|{pawn.ThingID}|{candidate.tool.thingIDNumber}|{clonedJob.def?.defName}");
+                        LogDebug($"[SurvivalTools.Assignment] Started {clonedJob?.def?.defName ?? "unknown"} immediately for {pawn?.LabelShort ?? "unknown"} targeting {tool?.LabelShort ?? "null"}", $"Assign.StartImmediate|{pawn?.ThingID ?? "unknown"}|{tool?.thingIDNumber ?? -1}|{clonedJob?.def?.defName ?? "unknown"}");
                         // Remove any duplicate queued acquisition jobs for this target
-                        RemoveQueuedToolJobsFor(pawn, candidate.tool, JobDefOf.Equip, JobDefOf.TakeInventory);
+                        RemoveQueuedToolJobsFor(pawn, tool, JobDefOf.Equip, JobDefOf.TakeInventory);
                         // Protect the just-acquired tool from being dropped immediately
                         try
                         {
                             // Cache tick access
                             int nowTick = Find.TickManager?.TicksGame ?? 0;
-                            _recentAcquisitions[pawn.thingIDNumber] = new RecentAcqData { untilTick = nowTick + FocusTicksWindow, thingID = candidate.tool.thingIDNumber };
-                            LogDebug($"Set recent-acquisition protect for {pawn.LabelShort} on {candidate.tool.LabelShort} for {FocusTicksWindow} ticks", "AssignmentSearch.SetRecentAcq");
+                            if (tool != null)
+                            {
+                                _recentAcquisitions[pawn.thingIDNumber] = new RecentAcqData { untilTick = nowTick + FocusTicksWindow, thingID = tool.thingIDNumber };
+                                LogDebug($"Set recent-acquisition protect for {pawn?.LabelShort ?? "unknown"} on {tool?.LabelShort ?? "null"} for {FocusTicksWindow} ticks", "AssignmentSearch.SetRecentAcq");
+                            }
                         }
                         catch { /* best-effort */ }
                         acquisitionEnqueued = true;
@@ -1227,28 +1320,50 @@ namespace SurvivalTools.Assign
                     // If failed to start now, fall back to enqueue with priority
                 }
 
+                // CRITICAL: Final validation before enqueue - tool must still be valid
+                // Use null-safe checks to prevent NullRef during validation itself
+                var toolMap = tool?.Map;
+                if (tool == null || tool.Destroyed || (toolMap != null && toolMap != pawn.Map))
+                {
+                    LogDebug($"Tool became invalid before enqueue for {pawn.LabelShort}", "AssignmentSearch.ToolInvalidBeforeEnqueue");
+                    return false;
+                }
+
                 // Enqueue according to requested priority to avoid preempting AI-selected jobs
-                if (priority == QueuePriority.Front)
+                // Wrap in try-catch as enqueue operations may internally access tool properties
+                try
                 {
-                    // Avoid enqueueing duplicates
-                    if (!TryStartQueuedToolJobFor(pawn, candidate.tool, JobDefOf.Equip, JobDefOf.TakeInventory) && !HasQueuedAcquisitionFor(pawn, candidate.tool))
-                        pawn.jobs?.jobQueue?.EnqueueFirst(clonedJob, JobTag.Misc);
+                    if (priority == QueuePriority.Front)
+                    {
+                        // Avoid enqueueing duplicates
+                        if (!TryStartQueuedToolJobFor(pawn, tool, JobDefOf.Equip, JobDefOf.TakeInventory) && !HasQueuedAcquisitionFor(pawn, tool))
+                            pawn.jobs?.jobQueue?.EnqueueFirst(clonedJob, JobTag.Misc);
+                    }
+                    else
+                    {
+                        // For Append and idle=false case we should never reach here due to early return.
+                        // Still avoid enqueueing duplicates in case of future changes
+                        if (!HasQueuedAcquisitionFor(pawn, tool))
+                            pawn.jobs?.jobQueue?.EnqueueLast(clonedJob, JobTag.Misc);
+                    }
                 }
-                else
+                catch (NullReferenceException)
                 {
-                    // For Append and idle=false case we should never reach here due to early return.
-                    // Still avoid enqueueing duplicates in case of future changes
-                    if (!HasQueuedAcquisitionFor(pawn, candidate.tool))
-                        pawn.jobs?.jobQueue?.EnqueueLast(clonedJob, JobTag.Misc);
+                    LogDebug($"NullReferenceException during enqueue for {pawn.LabelShort} - tool likely became invalid", "AssignmentSearch.EnqueueNullRef");
+                    return false;
                 }
-                LogDebug($"[SurvivalTools.Assignment] Successfully enqueued {clonedJob.def.defName} job for {pawn.LabelShort} targeting {candidate.tool.LabelShort}", $"Assign.Enqueued|{pawn.ThingID}|{candidate.tool.thingIDNumber}|{clonedJob.def?.defName}");
+
+                LogDebug($"[SurvivalTools.Assignment] Successfully enqueued {clonedJob?.def?.defName ?? "unknown"} job for {pawn?.LabelShort ?? "unknown"} targeting {tool?.LabelShort ?? "null"}", $"Assign.Enqueued|{pawn?.ThingID ?? "unknown"}|{tool?.thingIDNumber ?? -1}|{clonedJob?.def?.defName ?? "unknown"}");
                 // Protect the just-enqueued acquisition target as "recently acquired" to avoid immediate drop
                 try
                 {
                     // Cache tick access
                     int nowTick2 = Find.TickManager?.TicksGame ?? 0;
-                    _recentAcquisitions[pawn.thingIDNumber] = new RecentAcqData { untilTick = nowTick2 + FocusTicksWindow, thingID = candidate.tool.thingIDNumber };
-                    LogDebug($"Set recent-acquisition protect (enqueued) for {pawn.LabelShort} on {candidate.tool.LabelShort} for {FocusTicksWindow} ticks", "AssignmentSearch.SetRecentAcq.Enqueued");
+                    if (tool != null)
+                    {
+                        _recentAcquisitions[pawn.thingIDNumber] = new RecentAcqData { untilTick = nowTick2 + FocusTicksWindow, thingID = tool.thingIDNumber };
+                        LogDebug($"Set recent-acquisition protect (enqueued) for {pawn?.LabelShort ?? "unknown"} on {tool?.LabelShort ?? "null"} for {FocusTicksWindow} ticks", "AssignmentSearch.SetRecentAcq.Enqueued");
+                    }
                 }
                 catch { /* best-effort */ }
                 acquisitionEnqueued = true;
@@ -1262,13 +1377,15 @@ namespace SurvivalTools.Assign
                 // Check if the tool is reserved by this pawn before attempting release
                 try
                 {
-                    if (candidate.tool != null && pawn?.Map?.reservationManager != null)
+                    // Cache tool reference to prevent race conditions during cleanup
+                    var toolForCleanup = tool;
+                    if (toolForCleanup != null && !toolForCleanup.Destroyed && pawn?.Map?.reservationManager != null)
                     {
                         var resMan = pawn.Map.reservationManager;
-                        if (resMan.ReservedBy(candidate.tool, pawn))
+                        if (resMan.ReservedBy(toolForCleanup, pawn))
                         {
                             // Release with null job (reservation cleanup doesn't require the job reference)
-                            resMan.Release(candidate.tool, pawn, null);
+                            resMan.Release(toolForCleanup, pawn, null);
                         }
                     }
                 }
@@ -1279,9 +1396,20 @@ namespace SurvivalTools.Assign
 
                 // FALLBACK: Try direct tool swapping if job queuing fails
                 LogWarning($"[SurvivalTools.Assignment] Job queuing failed, attempting direct tool swap fallback");
-                var swap = TryDirectToolSwap(pawn, candidate);
-                acquisitionEnqueued = swap;
-                return swap;
+                // Cache tool reference to prevent race conditions during fallback attempt
+                var toolForFallback = tool;
+                if (toolForFallback != null && !toolForFallback.Destroyed)
+                {
+                    var swap = TryDirectToolSwap(pawn, candidate);
+                    acquisitionEnqueued = swap;
+                    return swap;
+                }
+                else
+                {
+                    LogWarning($"[SurvivalTools.Assignment] Cannot attempt direct swap - tool is null or destroyed");
+                    acquisitionEnqueued = false;
+                    return false;
+                }
             }
         }
 
@@ -1368,7 +1496,7 @@ namespace SurvivalTools.Assign
             // If the candidate tool is already carried, we're not adding a NEW tool
             if (candidateTool != null && IsToolAlreadyCarried(pawn, candidateTool))
             {
-                LogDebug($"CanCarryAdditionalTool for {pawn.LabelShort}: candidate {candidateTool.LabelShort} is already carried, no drop needed", "AssignmentSearch.CarryCheck.AlreadyCarried");
+                LogDebug($"CanCarryAdditionalTool for {pawn.LabelShort}: candidate {candidateTool?.LabelShort ?? "null"} is already carried, no drop needed", "AssignmentSearch.CarryCheck.AlreadyCarried");
                 return true;
             }
 
@@ -1554,6 +1682,9 @@ namespace SurvivalTools.Assign
 
             try
             {
+                int now = Find.TickManager?.TicksGame ?? 0;
+                string droppedKey = $"{pawn.thingIDNumber}_{toolToDrop.thingIDNumber}";
+
                 // SAFETY: Clone job for queue to prevent reference issues
                 var clonedJob = JobUtils.CloneJobForQueue(dropJob);
                 clonedJob.playerForced = true;
@@ -1564,6 +1695,9 @@ namespace SurvivalTools.Assign
                     bool taken = pawn.jobs.TryTakeOrderedJob(clonedJob);
                     if (taken)
                     {
+                        // Track dropped tool to prevent immediate re-acquisition
+                        _recentlyDroppedTools[droppedKey] = now + DroppedToolCooldownTicks;
+
                         Log.Message($"[SurvivalTools.Assignment] Started {clonedJob.def.defName} immediately for {pawn.LabelShort} to drop {toolToDrop.LabelShort}");
                         // Remove any duplicate queued drop jobs for this target
                         RemoveQueuedToolJobsFor(pawn, toolToDrop, ST_JobDefOf.DropSurvivalTool, JobDefOf.DropEquipment);
@@ -1588,6 +1722,10 @@ namespace SurvivalTools.Assign
                 {
                     pawn.jobs?.jobQueue?.EnqueueFirst(clonedJob, JobTag.Misc);
                 }
+
+                // Track dropped tool to prevent immediate re-acquisition
+                _recentlyDroppedTools[droppedKey] = now + DroppedToolCooldownTicks;
+
                 LogDebug($"[SurvivalTools.Assignment] Successfully queued {clonedJob.def.defName} job for {pawn.LabelShort} to drop {toolToDrop.LabelShort}", $"Assign.EnqueuedDrop|{pawn.ThingID}|{toolToDrop.thingIDNumber}|{clonedJob.def?.defName}");
                 return true;
             }
@@ -1651,7 +1789,7 @@ namespace SurvivalTools.Assign
 
             if (worstTool != null)
             {
-                LogDebug($"FindWorstCarriedTool for {pawn.LabelShort}: {worstTool.LabelShort} (score: {worstScore:F3})", "AssignmentSearch.WorstTool");
+                LogDebug($"FindWorstCarriedTool for {pawn.LabelShort}: {worstTool?.LabelShort ?? "null"} (score: {worstScore:F3})", "AssignmentSearch.WorstTool");
             }
             else
             {
@@ -1728,7 +1866,7 @@ namespace SurvivalTools.Assign
 
             if (worstTool != null)
             {
-                LogDebug($"FindWorstCarriedToolRespectingFocus for {pawn.LabelShort}: {worstTool.LabelShort} (score: {worstScore:F3})", "AssignmentSearch.WorstTool.RespectingFocus");
+                LogDebug($"FindWorstCarriedToolRespectingFocus for {pawn.LabelShort}: {worstTool?.LabelShort ?? "null"} (score: {worstScore:F3})", "AssignmentSearch.WorstTool.RespectingFocus");
             }
             else
             {
@@ -1832,13 +1970,47 @@ namespace SurvivalTools.Assign
         private static bool ShouldSkipCandidate(Pawn pawn, Thing tool)
         {
             if (tool == null) return true;
-            // Cooldown check
+
             int now = Find.TickManager?.TicksGame ?? 0;
+
+            // Cooldown check for failed candidates
             if (_candidateCooldownTicks.TryGetValue(tool.thingIDNumber, out int until) && now < until)
                 return true;
+
+            // Check if this pawn recently dropped this tool
+            if (pawn != null)
+            {
+                string droppedKey = $"{pawn.thingIDNumber}_{tool.thingIDNumber}";
+                if (_recentlyDroppedTools.TryGetValue(droppedKey, out int dropUntil) && now < dropUntil)
+                {
+                    LogDebug($"Skipping {tool.LabelShort} - recently dropped by {pawn.LabelShort}", "AssignmentSearch.DroppedCooldown");
+                    return true;
+                }
+
+                // NIGHTMARE MODE COORDINATION: Check if another pawn recently acquired this tool
+                // This prevents pawns from fighting over the same tool
+                if (SurvivalToolsMod.Settings?.CurrentMode == DifficultyMode.Nightmare)
+                {
+                    foreach (var kvp in _recentAcquisitions)
+                    {
+                        // Skip if it's this pawn's own acquisition
+                        if (kvp.Key == pawn.thingIDNumber)
+                            continue;
+
+                        // Check if another pawn recently acquired this exact tool
+                        if (kvp.Value.thingID == tool.thingIDNumber && now < kvp.Value.untilTick)
+                        {
+                            LogDebug($"Skipping {tool.LabelShort} - recently acquired by another pawn (Nightmare coordination)", "AssignmentSearch.NightmareConflict");
+                            return true;
+                        }
+                    }
+                }
+            }
+
             // Forbidden fast-path
             if (pawn != null && tool.IsForbidden(pawn))
                 return true;
+
             return false;
         }
 
@@ -1906,6 +2078,26 @@ namespace SurvivalTools.Assign
 
             return false;
         }
+
+        /// <summary>
+        /// Check if two tools are in the same family (e.g., both hammers, both axes)
+        /// Used to prevent frequent micro-optimization swaps within the same tool type
+        /// </summary>
+        private static bool IsSameToolFamily(Thing tool1, Thing tool2)
+        {
+            if (tool1 == null || tool2 == null) return false;
+            if (tool1 == tool2) return true; // Same exact tool
+
+            // Use existing ToolUtility to check if both have the same ToolKind
+            var kind1 = ToolUtility.ToolKindOf(tool1);
+            var kind2 = ToolUtility.ToolKindOf(tool2);
+
+            if (kind1 != STToolKind.None && kind2 != STToolKind.None && kind1 == kind2)
+                return true;
+
+            return false;
+        }
+
         internal static float GetOverallToolScore(Pawn pawn, Thing tool)
         {
             // Simple heuristic: average score across common work stats
@@ -2034,7 +2226,7 @@ namespace SurvivalTools.Assign
         /// </summary>
         private static bool TryDirectToolSwap(Pawn pawn, ToolCandidate candidate)
         {
-            Log.Warning($"[SurvivalTools.Assignment] Attempting DIRECT tool swap for {pawn.LabelShort} with {candidate.tool.LabelShort}");
+            Log.Warning($"[SurvivalTools.Assignment] Attempting DIRECT tool swap for {pawn.LabelShort} with {candidate.tool?.LabelShort ?? "null"}");
 
             try
             {
@@ -2054,7 +2246,7 @@ namespace SurvivalTools.Assign
                 // Validate tool state once more
                 if (!ValidateToolStateForAcquisition(pawn, candidate.tool))
                 {
-                    Log.Warning($"[SurvivalTools.Assignment] Direct swap validation failed for {candidate.tool.LabelShort}");
+                    Log.Warning($"[SurvivalTools.Assignment] Direct swap validation failed for {candidate.tool?.LabelShort ?? "null"}");
                     return false;
                 }
 
@@ -2064,10 +2256,10 @@ namespace SurvivalTools.Assign
                     Thing worstTool = FindWorstCarriedTool(pawn);
                     if (worstTool != null && ValidateToolStateForDrop(pawn, worstTool))
                     {
-                        Log.Warning($"[SurvivalTools.Assignment] Direct drop of worst tool: {worstTool.LabelShort}");
+                        Log.Warning($"[SurvivalTools.Assignment] Direct drop of worst tool: {worstTool?.LabelShort ?? "null"}");
                         if (!TryDirectDropTool(pawn, worstTool))
                         {
-                            Log.Warning($"[SurvivalTools.Assignment] Direct drop failed for {worstTool.LabelShort}");
+                            Log.Warning($"[SurvivalTools.Assignment] Direct drop failed for {worstTool?.LabelShort ?? "null"}");
                             return false;
                         }
                     }
@@ -2090,7 +2282,7 @@ namespace SurvivalTools.Assign
                     case ToolLocation.Equipment:
                         // Already equipped, no action needed
                         success = true;
-                        Log.Warning($"[SurvivalTools.Assignment] Tool {candidate.tool.LabelShort} already equipped");
+                        Log.Warning($"[SurvivalTools.Assignment] Tool {candidate.tool?.LabelShort ?? "null"} already equipped");
                         break;
 
                     case ToolLocation.SameCell:
@@ -2106,14 +2298,14 @@ namespace SurvivalTools.Assign
 
                 if (success)
                 {
-                    Log.Message($"[SurvivalTools.Assignment] DIRECT tool swap succeeded for {pawn.LabelShort} with {candidate.tool.LabelShort}");
+                    Log.Message($"[SurvivalTools.Assignment] DIRECT tool swap succeeded for {pawn.LabelShort} with {candidate.tool?.LabelShort ?? "null"}");
 
                     // Update hysteresis
                     int currentTick = Find.TickManager?.TicksGame ?? 0;
                     _hysteresisData[pawn.thingIDNumber] = new HysteresisData
                     {
                         lastUpgradeTick = currentTick,
-                        lastEquippedDefName = candidate.tool.def.defName
+                        lastEquippedDefName = candidate.tool?.def?.defName ?? string.Empty
                     };
 
                     // Notify score cache
@@ -2124,7 +2316,7 @@ namespace SurvivalTools.Assign
                 }
                 else
                 {
-                    Log.Warning($"[SurvivalTools.Assignment] DIRECT tool swap failed for {pawn.LabelShort} with {candidate.tool.LabelShort}");
+                    Log.Warning($"[SurvivalTools.Assignment] DIRECT tool swap failed for {pawn.LabelShort} with {candidate.tool?.LabelShort ?? "null"}");
                     return false;
                 }
             }
@@ -2148,7 +2340,7 @@ namespace SurvivalTools.Assign
                     ThingWithComps droppedEq = null;
                     if (pawn.equipment?.TryDropEquipment(equipmentTool, out droppedEq, pawn.Position) == true)
                     {
-                        Log.Message($"[SurvivalTools.Assignment] Directly dropped equipment: {tool.LabelShort}");
+                        Log.Message($"[SurvivalTools.Assignment] Directly dropped equipment: {tool?.LabelShort ?? "null"}");
                         try { droppedEq?.SetForbidden(false, false); } catch { }
                         // Enqueue haul to storage if available
                         try
@@ -2174,7 +2366,7 @@ namespace SurvivalTools.Assign
                     var dropped = pawn.inventory?.innerContainer?.TryDrop(tool, pawn.Position, pawn.Map, ThingPlaceMode.Near, out droppedInv);
                     if (dropped == true)
                     {
-                        Log.Message($"[SurvivalTools.Assignment] Directly dropped from inventory: {tool.LabelShort}");
+                        Log.Message($"[SurvivalTools.Assignment] Directly dropped from inventory: {tool?.LabelShort ?? "null"}");
                         try { droppedInv?.SetForbidden(false, false); } catch { }
                         // Enqueue haul to storage if available
                         try
@@ -2213,7 +2405,7 @@ namespace SurvivalTools.Assign
                     var transferred = pawn.equipment?.TryTransferEquipmentToContainer(equipmentTool, pawn.inventory.innerContainer);
                     if (transferred == true)
                     {
-                        Log.Message($"[SurvivalTools.Assignment] Directly equipped from inventory: {tool.LabelShort}");
+                        Log.Message($"[SurvivalTools.Assignment] Directly equipped from inventory: {tool?.LabelShort ?? "null"}");
                         return true;
                     }
                 }
@@ -2237,7 +2429,7 @@ namespace SurvivalTools.Assign
                     var added = pawn.inventory?.innerContainer?.TryAdd(tool);
                     if (added == true)
                     {
-                        Log.Message($"[SurvivalTools.Assignment] Directly picked up to inventory: {tool.LabelShort}");
+                        Log.Message($"[SurvivalTools.Assignment] Directly picked up to inventory: {tool?.LabelShort ?? "null"}");
                         return TryDirectEquipFromInventory(pawn, tool);
                     }
                 }
@@ -2256,7 +2448,7 @@ namespace SurvivalTools.Assign
             {
                 // For distant tools, we might not be able to do direct manipulation
                 // This is a limitation of the direct approach
-                Log.Warning($"[SurvivalTools.Assignment] Direct haul not supported for distant tool {tool.LabelShort}");
+                Log.Warning($"[SurvivalTools.Assignment] Direct haul not supported for distant tool {tool?.LabelShort ?? "null"}");
                 return false;
             }
             catch (Exception ex)

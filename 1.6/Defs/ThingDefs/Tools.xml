@@ -389,7 +389,7 @@
             </li>
         </tools>
         <recipeMaker>
-            <researchPrerequisite>Stonecutting</researchPrerequisite>
+            <!-- No research prerequisite - needed for tribal starts to begin researching -->
             <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
             <workSkill>Crafting</workSkill>
             <effectWorking>Smith</effectWorking>
@@ -819,26 +819,6 @@
                 <toolWearFactor>0.9</toolWearFactor>
             </li>
         </modExtensions>
-        <comps>
-            <li Class="SurvivalTools.CompProperties_PowerTool">
-                <capacity>6000</capacity>
-                <dischargePerWorkTick>1.0</dischargePerWorkTick>
-                <poweredMultipliers>
-                    <li>
-                        <stat>ConstructionSpeed</stat>
-                        <factor>1.25</factor>
-                    </li>
-                    <li>
-                        <stat>MaintenanceSpeed</stat>
-                        <factor>1.20</factor>
-                    </li>
-                    <li>
-                        <stat>DiggingSpeed</stat>
-                        <factor>1.20</factor>
-                    </li>
-                </poweredMultipliers>
-            </li>
-        </comps>
         <tools>
             <li>
                 <label>body</label>
@@ -939,46 +919,6 @@
                 <toolWearFactor>0.15</toolWearFactor>
             </li>
         </modExtensions>
-        <comps>
-            <li Class="SurvivalTools.CompProperties_PowerTool">
-                <capacity>10000</capacity>
-                <dischargePerWorkTick>0.8</dischargePerWorkTick>
-                <poweredMultipliers>
-                    <li>
-                        <stat>TreeFellingSpeed</stat>
-                        <factor>1.20</factor>
-                    </li>
-                    <li>
-                        <stat>PlantHarvestingSpeed</stat>
-                        <factor>1.20</factor>
-                    </li>
-                    <li>
-                        <stat>SowingSpeed</stat>
-                        <factor>1.20</factor>
-                    </li>
-                    <li>
-                        <stat>DiggingSpeed</stat>
-                        <factor>1.20</factor>
-                    </li>
-                    <li>
-                        <stat>ConstructionSpeed</stat>
-                        <factor>1.20</factor>
-                    </li>
-                    <li>
-                        <stat>MaintenanceSpeed</stat>
-                        <factor>1.20</factor>
-                    </li>
-                    <li>
-                        <stat>DeconstructionSpeed</stat>
-                        <factor>1.20</factor>
-                    </li>
-                    <li>
-                        <stat>ResearchSpeed</stat>
-                        <factor>1.25</factor>
-                    </li>
-                </poweredMultipliers>
-            </li>
-        </comps>
         <tools>
             <li>
                 <label>handle</label>
@@ -1303,6 +1243,7 @@
             </li>
         </tools>
         <recipeMaker>
+            <!-- No research prerequisite - tribal starts need basic tools available -->
             <workSpeedStat>WorkSpeedGlobal</workSpeedStat>
             <workSkill>Crafting</workSkill>
             <effectWorking>Smith</effectWorking>
@@ -1312,7 +1253,6 @@
                 <li>FueledSmithy</li>
                 <li>ElectricSmithy</li>
             </recipeUsers>
-            <researchPrerequisite>Stonecutting</researchPrerequisite>
             <skillRequirements>
                 <Crafting>1</Crafting>
             </skillRequirements>
@@ -1643,18 +1583,6 @@
                 <toolWearFactor>0.50</toolWearFactor>
             </li>
         </modExtensions>
-        <comps>
-            <li Class="SurvivalTools.CompProperties_PowerTool">
-                <capacity>8000</capacity>
-                <dischargePerWorkTick>1.5</dischargePerWorkTick>
-                <poweredMultipliers>
-                    <li>
-                        <stat>WorkSpeedGlobal</stat>
-                        <factor>1.30</factor>
-                    </li>
-                </poweredMultipliers>
-            </li>
-        </comps>
         <recipeMaker>
             <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
             <workSkill>Crafting</workSkill>
@@ -1725,18 +1653,6 @@
                 <toolWearFactor>0.30</toolWearFactor>
             </li>
         </modExtensions>
-        <comps>
-            <li Class="SurvivalTools.CompProperties_PowerTool">
-                <capacity>15000</capacity>
-                <dischargePerWorkTick>0.5</dischargePerWorkTick>
-                <poweredMultipliers>
-                    <li>
-                        <stat>WorkSpeedGlobal</stat>
-                        <factor>1.30</factor>
-                    </li>
-                </poweredMultipliers>
-            </li>
-        </comps>
         <recipeMaker>
             <workSpeedStat>WorkSpeedGlobal</workSpeedStat>
             <workSkill>Crafting</workSkill>
@@ -1789,18 +1705,6 @@
                 <toolWearFactor>0.10</toolWearFactor>
             </li>
         </modExtensions>
-        <comps>
-            <li Class="SurvivalTools.CompProperties_PowerTool">
-                <capacity>20000</capacity>
-                <dischargePerWorkTick>0.3</dischargePerWorkTick>
-                <poweredMultipliers>
-                    <li>
-                        <stat>WorkSpeedGlobal</stat>
-                        <factor>1.35</factor>
-                    </li>
-                </poweredMultipliers>
-            </li>
-        </comps>
         <tools>
             <li>
                 <label>emitter housing</label>
