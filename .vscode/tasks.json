@@ -31,10 +31,10 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "BuildWindowsDLL: Debug",
+      "label": "BuildWindowsDLL: Release",
       "type": "shell",
       "command": "${workspaceFolder}/.vscode/build.bat",
-      "args": ["Debug"],
+      "args": ["Release"],
       "group": { "kind": "build", "isDefault": true },
       "problemMatcher": []
     }

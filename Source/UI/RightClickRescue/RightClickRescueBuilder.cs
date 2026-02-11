@@ -113,7 +113,14 @@ namespace SurvivalTools.UI.RightClickRescue
             {
                 if (pawn == null || wg == null) return false;
                 var wt = wg.workType; if (wt == null) return true; // no work type = assume allowed
-                return !pawn.WorkTypeIsDisabled(wt);
+                if (pawn.WorkTypeIsDisabled(wt)) return false; // incapable
+                // Check if pawn is assigned to this work (has priority > 0)
+                if (pawn.workSettings != null)
+                {
+                    int priority = pawn.workSettings.GetPriority(wt);
+                    if (priority == 0) return false; // not assigned
+                }
+                return true;
             }
             catch { return true; }
         }
@@ -172,6 +179,16 @@ namespace SurvivalTools.UI.RightClickRescue
             try { return PlantUtility.AdjacentSowBlocker(plant, c, map); } catch { return null; }
         }
 
+        // Track feedback reason for disabled options
+        private struct FeedbackReason
+        {
+            public bool anyScannersRan;
+            public bool allWorkTypesDisabled;
+            public bool noToolsAvailable;
+            public bool notBlocked; // job doesn't need rescue (has tool already)
+        }
+        private static FeedbackReason _feedbackThisClick;
+
         internal static void TryAddRescueOptions(Pawn pawn, FloatMenuContext ctx, List<FloatMenuOption> options)
         {
             if (pawn == null || ctx == null || options == null) return;
@@ -180,6 +197,11 @@ namespace SurvivalTools.UI.RightClickRescue
             if (s == null) return;
             if (!s.enableRightClickRescue) return; // feature gate
             if (!(s.hardcoreMode || s.extraHardcoreMode)) return; // Hardcore / Nightmare only per design
+            // Prevent duplicate calls (Provider + Harmony patch)
+            if (Provider_STPrioritizeWithRescue.AlreadySatisfiedThisClick()) return;
+
+            // Reset feedback tracking
+            _feedbackThisClick = new FeedbackReason();
             bool stcExternal = TreeSystemArbiter.Authority == TreeAuthority.SeparateTreeChopping; // external tree authority means suppress tree felling rescue entirely
             // Determine primary thing (first clicked valid thing) for scoring context
             Thing primaryThing = null;
@@ -252,14 +274,16 @@ namespace SurvivalTools.UI.RightClickRescue
                     // Direct stat list (avoid reflection / heuristics on first click)
                     var stats = _sowStatsFast;
                     if (stats == null || stats.Count == 0) goto fastRecordFail;
-                    if (!PawnCanEverDo(pawn, wg)) goto fastRecordFail; // work type disabled
+                    if (!PawnCanEverDo(pawn, wg)) { _feedbackThisClick.anyScannersRan = true; _feedbackThisClick.allWorkTypesDisabled = true; goto fastRecordFail; } // work type disabled
                     if (stcExternal && stats.Exists(rs => rs == ST_StatDefOf.TreeFellingSpeed || ToolStatResolver.IsAliasOf(rs, ST_StatDefOf.TreeFellingSpeed))) goto fastRecordFail;
-                    if (!JobGate.ShouldBlock(pawn, wg, job, false, out var rkFast, out var aFast1, out var aFast2)) { _gatingNotNeeded++; goto fastPathDone; }
+                    if (!JobGate.ShouldBlock(pawn, wg, job, false, out var rkFast, out var aFast1, out var aFast2)) { _gatingNotNeeded++; _feedbackThisClick.anyScannersRan = true; _feedbackThisClick.notBlocked = true; goto fastPathDone; }
                     _gatingNeeded++;
                     var firstRequired = stats[0]; if (firstRequired == null) goto fastRecordFail;
                     string toolName; bool canUpgrade = AssignmentSearchPreview.CanUpgradePreview(pawn, firstRequired, out toolName);
                     if (!canUpgrade)
                     {
+                        _feedbackThisClick.anyScannersRan = true;
+                        _feedbackThisClick.noToolsAvailable = true;
                         var suffix = "ST_GenericToolSuffix".Translate().ToStringSafe() ?? "tool";
                         toolName = (firstRequired.label ?? "tool").CapitalizeFirst() + " " + suffix;
                     }
@@ -295,6 +319,11 @@ namespace SurvivalTools.UI.RightClickRescue
                     if (timing && swFast != null) { swFast.Stop(); _scannerRecords.Add(new ScannerRecord { Name = nameof(SowScanner), Ms = swFast.ElapsedMilliseconds, Reason = "DescribeFailed(Fast)", Described = false }); }
                 fastPathDone:
                     _lastConsideredCount = 1; // we only considered sow
+                    // Add disabled feedback if fast path considered but didn't add option
+                    if (_feedbackThisClick.anyScannersRan)
+                    {
+                        AddDisabledFeedbackOption(pawn, options, _feedbackThisClick);
+                    }
                     return; // fast path ends irrespective of success (success added option above)
                 }
                 catch (Exception exFast)
@@ -399,22 +428,29 @@ namespace SurvivalTools.UI.RightClickRescue
             // Pass 2: unfiltered original order fallback (only if nothing succeeded)
             if (!success)
             {
+                int workTypeDisabledCount = 0;
+                int notBlockedCount = 0;
+                int noToolCount = 0;
+                int scannersRan = 0;
+
                 foreach (var scanner in Scanners)
                 {
                     if (Provider_STPrioritizeWithRescue.AlreadySatisfiedThisClick()) break;
                     try
                     {
                         if (!scanner.CanHandle(ctx)) continue;
+                        scannersRan++;
                         if (!scanner.TryDescribeTarget(pawn, ctx, out var desc)) continue;
-                        if (!PawnCanEverDo(pawn, desc.WorkGiverDef)) continue;
+                        if (!PawnCanEverDo(pawn, desc.WorkGiverDef)) { workTypeDisabledCount++; continue; }
                         if (desc.RequiredStats == null || desc.RequiredStats.Count == 0) continue;
                         if (stcExternal && desc.RequiredStats.Exists(rs => rs == ST_StatDefOf.TreeFellingSpeed || ToolStatResolver.IsAliasOf(rs, ST_StatDefOf.TreeFellingSpeed))) continue; // suppress tree option
-                        if (!JobGate.ShouldBlock(pawn, desc.WorkGiverDef, desc.JobDef, false, out var rk, out var a1, out var a2)) { _gatingNotNeeded++; continue; }
+                        if (!JobGate.ShouldBlock(pawn, desc.WorkGiverDef, desc.JobDef, false, out var rk, out var a1, out var a2)) { _gatingNotNeeded++; notBlockedCount++; continue; }
                         _gatingNeeded++;
                         var firstRequired = desc.RequiredStats[0]; if (firstRequired == null) continue;
                         string toolName; bool canUpgrade = AssignmentSearchPreview.CanUpgradePreview(pawn, firstRequired, out toolName);
                         if (!canUpgrade)
                         {
+                            noToolCount++;
                             var suffix = "ST_GenericToolSuffix".Translate().ToStringSafe() ?? "tool";
                             toolName = (firstRequired.label ?? "tool").CapitalizeFirst() + " " + suffix;
                         }
@@ -433,9 +469,55 @@ namespace SurvivalTools.UI.RightClickRescue
                     }
                     catch (Exception ex) { Log.Warning("[SurvivalTools.RightClickRescue] Scanner (fallback) exception: " + ex); }
                 }
+
+                // Add disabled feedback if scanners ran but nothing added
+                _feedbackThisClick.anyScannersRan = scannersRan > 0;
+                _feedbackThisClick.allWorkTypesDisabled = workTypeDisabledCount > 0 && notBlockedCount == 0 && noToolCount == 0;
+                _feedbackThisClick.noToolsAvailable = noToolCount > 0 && workTypeDisabledCount == 0 && notBlockedCount == 0;
+                _feedbackThisClick.notBlocked = notBlockedCount > 0 && workTypeDisabledCount == 0 && noToolCount == 0;
+            }
+
+            // Add disabled feedback option if rescue was considered but couldn't be added
+            if (!success && _feedbackThisClick.anyScannersRan)
+            {
+                AddDisabledFeedbackOption(pawn, options, _feedbackThisClick);
             }
 
             // (Timing logged by provider; instrumentation captured above.)
+        }
+
+        private static void AddDisabledFeedbackOption(Pawn pawn, List<FloatMenuOption> options, FeedbackReason reason)
+        {
+            string label;
+            try
+            {
+                if (reason.allWorkTypesDisabled)
+                {
+                    label = $"{pawn.LabelShort} is not assigned to any work types that could be performed here. Check the Work tab.";
+                }
+                else if (reason.noToolsAvailable)
+                {
+                    label = $"No suitable tools are available for {pawn.LabelShort} to pick up. Craft or buy the required tools.";
+                }
+                else if (reason.notBlocked)
+                {
+                    label = $"{pawn.LabelShort} already has the required tool or doesn't need one for this job.";
+                }
+                else
+                {
+                    return; // No feedback to show
+                }
+
+                var disabledOption = new FloatMenuOption(label, null)
+                {
+                    Disabled = true,
+                    autoTakeable = false
+                };
+                options.Add(disabledOption);
+                // Notify so duplicate calls are prevented
+                Provider_STPrioritizeWithRescue.NotifyOptionAdded();
+            }
+            catch { }
         }
 
         private static string BuildOptionLabel(string priorityLabel, string toolName)

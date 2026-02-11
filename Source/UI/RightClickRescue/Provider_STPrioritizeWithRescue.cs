@@ -319,10 +319,11 @@ namespace SurvivalTools.UI.RightClickRescue
 #endif
             }
 
-            // Only produce detail line(s) for empty result sets OR slow clicks OR if something was considered but dropped.
+            // Only produce detail line(s) when there's actual information (not all zeros, or slow, or considered but failed)
+            bool hasUsefulInfo = counters.canHandleFalse > 0 || counters.describeFailed > 0 || counters.treeSuppressed > 0 ||
+                                 counters.workTypeDisabled > 0 || counters.described > 0 || counters.gatingNeeded > 0;
             bool needDetail =
-                (considered == 0 && list.Count == 0) || // nothing to say but empty result
-                (considered > 0 && list.Count == 0) ||   // all filtered out
+                (considered > 0 && list.Count == 0 && hasUsefulInfo) ||   // scanners ran but nothing added - useful to see why
                 (elapsedMs >= 80 && counters.gatingNeeded > 0); // only slow if actual gating evaluated
             if (!needDetail) return;
             // 'now' already computed above

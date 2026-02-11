@@ -1,38 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
-    <packageId>jellypowered.survivaltools</packageId>
-    <name>Survival Tools Reborn</name>
+    <packageId>jellypowered.survivaltools.testing</packageId>
+    <name>Survival Tools Reborn (testing branch)</name>
     <author>Jellypowered</author>
-    <url>https://github.com/Jellypowered/SurvivalTools/</url>
+    <url>https://github.com/Jellypowered/SurvivalTools/tree/Refactor/1.6</url>
     <supportedVersions>
         <li>1.6</li>
     </supportedVersions>
     <description><![CDATA[
-Current version: v1.6 (September 2025)
+Current version: v2.1 (February 2026)
 
 Transforms RimWorld into a challenging tool-dependent survival experience where proper equipment becomes essential for colony success.
 
+⚠️ REFACTOR BRANCH - TESTING BUILD ⚠️
+This is a complete rewrite with major improvements but may contain bugs. Please report issues you encounter.
+
 KEY FEATURES:
-• Smart Tool System: Colonists automatically acquire optimal tools before starting work
+• Smart Tool Assignment: Automated system finds and equips optimal tools before work begins
+• Right-Click Rescue: Prioritize actions by acquiring needed tools with a single click
 • Hardcore Mode: Tools become essential - most work impossible without proper equipment
-• Extra Hardcore Mode: Ultimate difficulty with 87.5% faster tool wear and strict tool requirements
+• Nightmare Mode: Ultimate challenge with carry limit 1 and strict tool requirements
 • Granular Controls: Choose exactly which tasks require tools (cleaning, butchery, medical)
-• Intelligent Management: Advanced tool optimization and automatic swapping systems
+• Anti-Thrashing Logic: Prevents excessive tool swapping for minor stat gains
 • Realistic Degradation: Tools wear down with use and must be maintained or replaced
 • Early Game Survival: Find tools in ruins or craft them to establish your colony
 
 DIFFICULTY MODES:
 • Normal: Tools improve efficiency but work remains possible without them
-• Hardcore: Most tasks become impossible without proper tools, 50% faster wear
-• Extra Hardcore: Maximum challenge - strict tool requirements, 87.5% faster wear
+• Hardcore: Most tasks require proper tools, penalties for working without them
+• Nightmare: Strict carry limits and mandatory tool requirements
 
-QUALITY OF LIFE:
-• Automatic tool pickup before jobs begin
-• Smart tool swapping for optimal efficiency
-• Detailed alerts for missing or worn tools
-• Comprehensive mod compatibility patches
-• Extensive debugging and logging options
+WHAT'S NEW IN REFACTOR:
+• Complete architecture rewrite with deterministic tool decisions
+• Fixed crashes and infinite tool-swap loops from earlier versions
+• 97% reduction in log spam through intelligent throttling
+• Research jobs now respect critical needs (food, rest, mood)
+• Alert system only shows for work actually assigned to pawns
+• Better mod compatibility with automatic tool detection
+• Significant performance improvements with optimized hot paths
+• Virtual tool support (cloth/wool for cleaning, medical work)
 
-Originally by XeoNovaDan. Rebuilt and enhanced for RimWorld 1.6 with improvements to tool mechanics, hardcore survival features, and intelligent automation systems.
+COMPATIBILITY:
+• Works with Separate Tree Chopping, Combat Extended, and other major mods
+• Automatic tool detection for modded items
+• Tree chopping integration with multiple tree-related mods
+
+Originally by XeoNovaDan. Completely rebuilt for RimWorld 1.6 with modern architecture, intelligent automation, and focus on stability. This test branch represents a systematic ground-up refactor.
+
+Report bugs with your log file and reproduction steps!
     ]]>    </description>
 </ModMetaData>

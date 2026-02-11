@@ -14,6 +14,7 @@ using System.Linq;
 using RimWorld;
 using Verse;
 using Verse.AI;
+using SurvivalTools.Game;
 using SurvivalTools.Scoring;
 using SurvivalTools.Helpers;
 using static SurvivalTools.ST_Logging;
@@ -2010,6 +2011,13 @@ namespace SurvivalTools.Assign
             // Forbidden fast-path
             if (pawn != null && tool.IsForbidden(pawn))
                 return true;
+
+            // Check if tool is tracked as dropped for repair/disassembly
+            if (GameComponent_DroppedToolTracker.IsBlockedFromAutoEquip(tool))
+            {
+                LogDebug($"Skipping {tool.LabelShort} - marked as dropped for repair/disassembly", "AssignmentSearch.DroppedTracker");
+                return true;
+            }
 
             return false;
         }

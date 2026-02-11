@@ -23,7 +23,7 @@ namespace SurvivalTools
     {
         private int enforceAtTick = -1;
 
-        public ST_GameComponent(Game game) { }
+        public ST_GameComponent(Verse.Game game) { }
 
         public override void StartedNewGame()
         {

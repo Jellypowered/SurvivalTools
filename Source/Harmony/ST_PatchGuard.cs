@@ -28,8 +28,7 @@ namespace SurvivalTools.HarmonyStuff
             typeof(SurvivalTools.Assign.PostAddHooks),
             typeof(SurvivalTools.Assign.PostEquipHooks_AddEquipment),
             typeof(SurvivalTools.Assign.PostEquipHooks_AddEquipment.PostEquipHooks_NotifyAdded),
-            typeof(SurvivalTools.UI.RightClickRescue.FloatMenu_PrioritizeWithRescue),
-            typeof(SurvivalTools.UI.RightClickRescue.Patch_FloatMenuMakerMap_GetOptions)
+            typeof(SurvivalTools.UI.RightClickRescue.FloatMenu_PrioritizeWithRescue)
         };
 
         static ST_PatchGuard()

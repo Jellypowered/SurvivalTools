@@ -32,9 +32,14 @@ namespace SurvivalTools.Helpers
             if (stat == ST_StatDefOf.CleaningSpeed || stat == ST_StatDefOf.WorkSpeedGlobal)
                 return false;
 
-            // Core work stats (mining, construction, etc.) always gate in hardcore.
+            // Core work stats (mining, construction, etc.) gate in hardcore/nightmare mode only.
+            // In Normal mode, pawns can work without tools but suffer penalties via StatPart_SurvivalTool.
             if (StatFilters.ShouldBlockJobForMissingStat(stat))
             {
+                // Only block jobs in Hardcore or Nightmare mode
+                if (!settings.hardcoreMode && !settings.extraHardcoreMode)
+                    return false;
+
                 bool result = pawn == null || !pawn.HasSurvivalToolFor(stat);
                 // Debug logging for deconstruction decisions
                 if (ST_Logging.IsDebugLoggingEnabled && stat == ST_StatDefOf.DeconstructionSpeed)

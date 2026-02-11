@@ -695,7 +695,7 @@ namespace SurvivalTools
 
     public sealed class ST_LogRunner : GameComponent
     {
-        public ST_LogRunner(Game game) : base() { }
+        public ST_LogRunner(Verse.Game game) : base() { }
 
         public override void GameComponentUpdate()
         {

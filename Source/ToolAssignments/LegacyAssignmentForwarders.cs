@@ -25,7 +25,7 @@ namespace SurvivalTools
         private bool initialized = false;
         private List<SurvivalToolAssignment> survivalToolAssignments = new List<SurvivalToolAssignment>();
 
-        public SurvivalToolAssignmentDatabase(Game game) { }
+        public SurvivalToolAssignmentDatabase(Verse.Game game) { }
 
         public override void FinalizeInit()
         {

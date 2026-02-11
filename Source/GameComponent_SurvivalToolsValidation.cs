@@ -20,7 +20,7 @@ namespace SurvivalTools
         private bool hasValidatedThisSession = false;
         private int scheduledValidationTick = -1;
 
-        public GameComponent_SurvivalToolsValidation(Game game) : base()
+        public GameComponent_SurvivalToolsValidation(Verse.Game game) : base()
         {
         }
 

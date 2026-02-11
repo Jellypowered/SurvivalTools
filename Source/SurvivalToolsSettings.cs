@@ -57,6 +57,10 @@ namespace SurvivalTools
         public bool debugLogging = false;
         public bool compatLogging = false;
 
+        // Performance profiling (Debug mode only)
+        public bool profileFloatMenuPerformance = false; // Log timing for float menu patches
+        public bool enableModTagging = false; // Enable expensive mod name tagging in float menus (debug feature)
+
         public bool pickupFromStorageOnly = false;
         public bool allowPacifistEquip = true;
         public bool extraHardcoreMode = false;
@@ -184,6 +188,8 @@ namespace SurvivalTools
             Scribe_Values.Look(ref toolOptimization, nameof(toolOptimization), true); // legacy
             Scribe_Values.Look(ref debugLogging, nameof(debugLogging), false);
             Scribe_Values.Look(ref compatLogging, nameof(compatLogging), false);
+            Scribe_Values.Look(ref profileFloatMenuPerformance, nameof(profileFloatMenuPerformance), false);
+            Scribe_Values.Look(ref enableModTagging, nameof(enableModTagging), false);
             Scribe_Values.Look(ref pickupFromStorageOnly, nameof(pickupFromStorageOnly), false);
             Scribe_Values.Look(ref allowPacifistEquip, nameof(allowPacifistEquip), true);
             Scribe_Values.Look(ref autoTool, nameof(autoTool), true); // legacy
@@ -541,6 +547,16 @@ namespace SurvivalTools
                 {
                     listing.CheckboxLabeled("Settings_CompatLogging".Translate(), ref compatLogging, "Settings_CompatLogging_Tooltip".Translate());
                 }
+
+                // Performance profiling settings
+                listing.Gap();
+                GUI.color = Color.cyan;
+                listing.Label("Performance Profiling (Dev Mode Only):");
+                GUI.color = prevColor;
+                listing.CheckboxLabeled("Profile float menu performance", ref profileFloatMenuPerformance,
+                    "Log timing for all float menu patches. Logs warnings when patches take > 1ms. Use this to diagnose right-click lag.");
+                listing.CheckboxLabeled("Enable mod source tagging (EXPENSIVE)", ref enableModTagging,
+                    "Append mod names to float menu options using reflection. This is VERY SLOW and disabled by default. Only enable for debugging to see which mod created each option.");
             }
 
             listing.GapLine();

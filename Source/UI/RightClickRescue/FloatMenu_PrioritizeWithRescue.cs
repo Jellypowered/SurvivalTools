@@ -263,22 +263,37 @@ namespace SurvivalTools.UI.RightClickRescue
         // Postfix signature (1.6) – context passed by ref
         static void Postfix(List<Pawn> selectedPawns, Vector3 clickPos, ref FloatMenuContext context, ref List<FloatMenuOption> __result)
         {
+            System.Diagnostics.Stopwatch _profilerWatch = null;
             try
             {
                 var s = SurvivalToolsMod.Settings;
+                // ULTRA-FAST EARLY EXITS
                 if (context == null || __result == null || selectedPawns == null || selectedPawns.Count == 0) return;
                 if (s == null || !s.enableRightClickRescue) return;
+
+                // Start profiling if enabled
+                if (s.profileFloatMenuPerformance && Prefs.DevMode)
+                {
+                    _profilerWatch = System.Diagnostics.Stopwatch.StartNew();
+                }
+
                 bool rrActive = RRHelpers.IsActive();
                 // Allow pass-through even in Normal mode when RR active (research-only rescue). Otherwise we would return too early.
                 if (!(s.hardcoreMode || s.extraHardcoreMode) && !rrActive) return;
                 if (context.IsMultiselect) return; // keep v1 simple
 
-                // Duplicate guard: if provider (or another pass) already added a rescue option, skip.
+                // Duplicate guard: if provider (or another pass) already added a rescue or feedback option, skip.
                 for (int i = 0; i < __result.Count; i++)
                 {
                     var lab0 = __result[i]?.Label;
-                    if (!string.IsNullOrEmpty(lab0) && lab0.IndexOf("(will fetch", StringComparison.OrdinalIgnoreCase) >= 0)
-                        return;
+                    if (!string.IsNullOrEmpty(lab0))
+                    {
+                        // Check for rescue options or disabled feedback options
+                        if (lab0.IndexOf("(will fetch", StringComparison.OrdinalIgnoreCase) >= 0) return;
+                        if (lab0.IndexOf("not assigned to", StringComparison.OrdinalIgnoreCase) >= 0) return;
+                        if (lab0.IndexOf("No suitable tools", StringComparison.OrdinalIgnoreCase) >= 0) return;
+                        if (lab0.IndexOf("already has the required tool", StringComparison.OrdinalIgnoreCase) >= 0) return;
+                    }
                 }
 
                 var pawn = context.FirstSelectedPawn;
@@ -394,28 +409,32 @@ namespace SurvivalTools.UI.RightClickRescue
                 catch { }
 
                 // Append mod source tags to prioritized options (post-dedup).
+                // NOTE: This is EXPENSIVE (reflection) and disabled by default. Enable via "enableModTagging" setting.
                 try
                 {
-                    bool debug = Prefs.DevMode && s.debugLogging;
-                    if (_fiLabelInt != null)
+                    if (s.enableModTagging) // Only run if explicitly enabled
                     {
-                        for (int i = 0; i < __result.Count; i++)
+                        bool debug = Prefs.DevMode && s.debugLogging;
+                        if (_fiLabelInt != null)
                         {
-                            var opt = __result[i]; if (opt == null) continue;
-                            var lab = opt.Label; if (string.IsNullOrEmpty(lab)) continue;
-                            if (!lab.StartsWith("Prioritize", StringComparison.OrdinalIgnoreCase)) continue;
+                            for (int i = 0; i < __result.Count; i++)
+                            {
+                                var opt = __result[i]; if (opt == null) continue;
+                                var lab = opt.Label; if (string.IsNullOrEmpty(lab)) continue;
+                                if (!lab.StartsWith("Prioritize", StringComparison.OrdinalIgnoreCase)) continue;
 
-                            string modName = ResolveModNameForOption(opt);
-                            if (string.IsNullOrEmpty(modName)) continue; // don't append "(Core)" by default
+                                string modName = ResolveModNameForOption(opt);
+                                if (string.IsNullOrEmpty(modName)) continue; // don't append "(Core)" by default
 
-                            string suffix = " (" + modName + ")";
-                            if (lab.EndsWith(suffix, StringComparison.Ordinal)) continue;
+                                string suffix = " (" + modName + ")";
+                                if (lab.EndsWith(suffix, StringComparison.Ordinal)) continue;
 
-                            string newLabel = lab + suffix;
-                            _fiLabelInt.SetValue(opt, newLabel);
+                                string newLabel = lab + suffix;
+                                _fiLabelInt.SetValue(opt, newLabel);
 
-                            if (ENABLE_MODTAG_LOGS && debug && ShouldDebugLog("ModTagAppended:" + modName))
-                                Log.Message($"[RightClick] ModTagAppended | label='{lab}' -> '{newLabel}'");
+                                if (ENABLE_MODTAG_LOGS && debug && ShouldDebugLog("ModTagAppended:" + modName))
+                                    Log.Message($"[RightClick] ModTagAppended | label='{lab}' -> '{newLabel}'");
+                            }
                         }
                     }
                 }
@@ -454,7 +473,20 @@ namespace SurvivalTools.UI.RightClickRescue
             }
             catch (Exception ex)
             {
-                Log.Warning("[SurvivalTools.RightClickRescue] Postfix exception: " + ex);
+                Log.Error($"[SurvivalTools.RightClickRescue] Exception in float menu postfix: {ex}");
+            }
+            finally
+            {
+                // Profile timing
+                if (_profilerWatch != null)
+                {
+                    _profilerWatch.Stop();
+                    var elapsed = _profilerWatch.Elapsed.TotalMilliseconds;
+                    if (elapsed > 1.0) // Only log if > 1ms
+                    {
+                        Log.Warning($"[FloatMenu.Perf] RightClickRescue took {elapsed:F2}ms");
+                    }
+                }
             }
         }
     }
