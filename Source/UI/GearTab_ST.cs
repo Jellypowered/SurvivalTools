@@ -20,7 +20,7 @@ namespace SurvivalTools.UI
     {
         // UI constants
         private const float HEADER_HEIGHT = 30f;
-        private const float TOOL_ROW_HEIGHT = 48f; // Two lines with better spacing
+        private const float TOOL_ROW_HEIGHT = 66f; // Three lines: tool name, stats, recommendation
         private const float SCROLL_BAR_WIDTH = 16f;
         private const float MARGIN = 8f;
 
@@ -43,6 +43,9 @@ namespace SurvivalTools.UI
         private static StringBuilder _tooltipBuilder = new StringBuilder();
         private static Vector2 _scrollPos = Vector2.zero;
 
+        // Panel expand/collapse state
+        private static bool _panelExpanded = false;
+
         // Pooled arrays for performance
         private static readonly StatDef[] KeyWorkStats = {
             ST_StatDefOf.DiggingSpeed,
@@ -58,12 +61,18 @@ namespace SurvivalTools.UI
             public string ScoreText;
             public string WhyText;
             public string TooltipText;
+            public string Recommendation;
+            public Color RecommendationColor;
         }
 
         public static float DesiredWidth
         {
             get
             {
+                // Return minimal width when collapsed (just the button), full width when expanded
+                if (!_panelExpanded)
+                    return 32f; // Just enough for a toggle button
+
                 float baseWidth = 380f;
                 return baseWidth * Prefs.UIScale;
             }
@@ -76,19 +85,49 @@ namespace SurvivalTools.UI
             // Update cache if needed
             UpdateCacheIfNeeded(pawn);
 
-            // Draw layered background with subtle gradient effect
-            Widgets.DrawBoxSolid(hostRect, PanelBgColor);
+            // Hide completely if no tools
+            bool hasTools = _cachedToolInfo.Count > 0;
+            if (!hasTools)
+                return;
 
-            // Draw border with corner accents
+            // If collapsed, only show a small expand button
+            if (!_panelExpanded)
+            {
+                // Draw small button with right arrow
+                var buttonSize = 28f;
+                var buttonRect = new Rect(hostRect.x + 2f, hostRect.y + 10f, buttonSize, buttonSize);
+
+                if (Widgets.ButtonText(buttonRect, "►"))
+                {
+                    _panelExpanded = true;
+                }
+
+                TooltipHandler.TipRegion(buttonRect, "Show tool efficiency panel");
+                return;
+            }
+
+            // Draw full panel when expanded
+            Widgets.DrawBoxSolid(hostRect, PanelBgColor);
             Widgets.DrawBox(hostRect, 2);
 
             var contentRect = hostRect.ContractedBy(MARGIN);
             var curY = contentRect.y;
 
-            // Header with background
+            // Header with background and collapse button
             var headerRect = new Rect(contentRect.x, curY, contentRect.width, HEADER_HEIGHT);
             Widgets.DrawBoxSolid(headerRect, HeaderBgColor);
-            DrawHeader(headerRect);
+
+            // Draw collapse button in header
+            var collapseButtonRect = new Rect(headerRect.x + 4f, headerRect.y + 3f, 24f, 24f);
+            if (Widgets.ButtonText(collapseButtonRect, "◄"))
+            {
+                _panelExpanded = false;
+            }
+            TooltipHandler.TipRegion(collapseButtonRect, "Hide tool panel");
+
+            // Draw rest of header (shifted right to make room for button)
+            var headerContentRect = new Rect(headerRect.x + 32f, headerRect.y, headerRect.width - 32f, headerRect.height);
+            DrawHeader(headerContentRect);
             curY += HEADER_HEIGHT + 6f;
 
             // Tool list with scroll view
@@ -193,7 +232,8 @@ namespace SurvivalTools.UI
             }
 
             var line1Rect = new Rect(rect.x + 10f, rect.y + 6f, rect.width - 20f, 20f);
-            var line2Rect = new Rect(rect.x + 10f, rect.y + 26f, rect.width - 20f, 18f);
+            var line2Rect = new Rect(rect.x + 10f, rect.y + 26f, rect.width - 20f, 16f);
+            var line3Rect = new Rect(rect.x + 10f, rect.y + 44f, rect.width - 20f, 16f);
 
             // Phase 12: Check for powered tool and show charge bar
             // DISABLED: Battery system turned off
@@ -222,11 +262,12 @@ namespace SurvivalTools.UI
             var scoreRect = new Rect(labelRect.xMax + 8f, line1Rect.y, line1Rect.width - labelWidth - 8f, line1Rect.height);
             Text.Anchor = TextAnchor.MiddleRight;
 
-            // Color score based on average value
-            var avgScore = GetAverageScore(toolInfo.ScoreText);
-            var scoreColor = avgScore >= 1.5f ? ScoreGoodColor :
-                            avgScore >= 1.0f ? ScoreMediumColor :
-                            new Color(0.8f, 0.6f, 0.4f);
+            // Color score based on whether it shows bonuses or penalties
+            var scoreColor = ScoreMediumColor; // Default neutral
+            if (toolInfo.ScoreText.Contains("+") && !toolInfo.ScoreText.Contains("±"))
+                scoreColor = ScoreGoodColor; // Has bonuses
+            else if (toolInfo.ScoreText.Contains("-"))
+                scoreColor = new Color(0.9f, 0.5f, 0.3f); // Has penalties
 
             GUI.color = scoreColor;
             Widgets.Label(scoreRect, toolInfo.ScoreText);
@@ -247,6 +288,17 @@ namespace SurvivalTools.UI
             Widgets.Label(line2Rect, toolInfo.WhyText);
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
+
+            // Line 3: Recommendation with icon/color
+            if (!string.IsNullOrEmpty(toolInfo.Recommendation))
+            {
+                Text.Anchor = TextAnchor.MiddleLeft;
+                Text.Font = GameFont.Tiny;
+                GUI.color = toolInfo.RecommendationColor;
+                Widgets.Label(line3Rect, $"\u2022 {toolInfo.Recommendation}");
+                GUI.color = Color.white;
+                Text.Font = GameFont.Small;
+            }
 
             // Tooltip with better formatting
             if (allowTooltip && Mouse.IsOver(rect) && !string.IsNullOrEmpty(toolInfo.TooltipText))
@@ -437,33 +489,55 @@ namespace SurvivalTools.UI
                 var score = Scoring.ToolScoring.Score(tool, pawn, stat);
                 if (score > 0.001f)
                 {
-                    if (scoreBuilder.Length > 0) scoreBuilder.Append(" ");
-                    scoreBuilder.Append($"{GetStatAbbreviation(stat)}:{score:F2}");
+                    // Format as percentage bonus/penalty
+                    var percentChange = (score - 1f) * 100f;
+                    string percentStr;
+                    if (percentChange > 0.5f)
+                        percentStr = $"+{percentChange:F0}%";
+                    else if (percentChange < -0.5f)
+                        percentStr = $"{percentChange:F0}%";
+                    else
+                        percentStr = "±0%";
 
-                    // Get top contributors for "why" text
+                    if (scoreBuilder.Length > 0) scoreBuilder.Append(" ");
+                    scoreBuilder.Append($"{GetStatAbbreviation(stat)}: {percentStr}");
+
+                    // Build clearer tooltip and why text using ToolStatInfo
+                    var statInfo = Helpers.ToolStatResolver.GetToolStatInfo(tool.def, tool.Stuff, stat);
+                    var toolBonus = (statInfo.Factor - 1f) * 100f;
+
+                    // Get source description for why text
                     if (whyBuilder.Length == 0) // Only show for first stat
                     {
-                        var contributors = Scoring.ToolScoring.TopContributors(tool, pawn, stat, 2);
-                        if (contributors.Length > 0)
-                        {
-                            var topContrib = contributors[0];
-                            var pct = (topContrib.Item2 - 1f) * 100f;
-                            whyBuilder.Append("ST_GearTab_Why".Translate(stat.LabelCap, pct.ToString("F0")));
-                        }
+                        string sourceDesc = "tool";
+                        if (statInfo.Source.Contains("Explicit")) sourceDesc = "tool stats";
+                        else if (statInfo.Source.Contains("Stuff")) sourceDesc = "material";
+                        else if (statInfo.Source.Contains("Implicit")) sourceDesc = "tool type";
+
+                        if (Math.Abs(toolBonus) > 0.5f)
+                            whyBuilder.Append($"Bonus from {sourceDesc}: {(toolBonus > 0 ? "+" : "")}{toolBonus:F0}%");
+                        else if (!string.IsNullOrEmpty(statInfo.QuirkSummary))
+                            whyBuilder.Append($"Special: {statInfo.QuirkSummary}");
                     }
 
-                    // Build tooltip using ToolStatInfo
-                    var statInfo = Helpers.ToolStatResolver.GetToolStatInfo(tool.def, tool.Stuff, stat);
-                    _tooltipBuilder.AppendLine($"{stat.LabelCap}: {statInfo.Factor:F3} ({statInfo.Source})");
+                    // Build detailed tooltip
+                    if (Math.Abs(toolBonus) > 0.5f)
+                        _tooltipBuilder.AppendLine($"{stat.LabelCap}: {(toolBonus > 0 ? "+" : "")}{toolBonus:F0}% boost (from {statInfo.Source.ToLower()})");
+                    else
+                        _tooltipBuilder.AppendLine($"{stat.LabelCap}: No direct bonus");
+
                     if (!string.IsNullOrEmpty(statInfo.QuirkSummary))
                     {
-                        _tooltipBuilder.AppendLine($"  Quirks: {statInfo.QuirkSummary}");
+                        _tooltipBuilder.AppendLine($"  \u2022 {statInfo.QuirkSummary}");
                     }
                 }
             }
 
             info.ScoreText = scoreBuilder.ToString();
-            info.WhyText = whyBuilder.Length > 0 ? whyBuilder.ToString() : "ST_GearTab_BaseValues".Translate().ToString();
+            info.WhyText = whyBuilder.Length > 0 ? whyBuilder.ToString() : "Base tool performance";
+
+            // Generate recommendation
+            GenerateRecommendation(ref info, tool, pawn, relevantStats);
 
             // Phase 12: Add charge status to tooltip
             // DISABLED: Battery system turned off
@@ -487,6 +561,102 @@ namespace SurvivalTools.UI
             info.TooltipText = _tooltipBuilder.ToString();
 
             return info;
+        }
+
+        private static void GenerateRecommendation(ref ToolDisplayInfo info, Thing tool, Pawn pawn, List<StatDef> relevantStats)
+        {
+            if (tool == null || relevantStats == null || relevantStats.Count == 0)
+            {
+                info.Recommendation = "";
+                info.RecommendationColor = Color.gray;
+                return;
+            }
+
+            var settings = SurvivalToolsMod.Settings;
+
+            // Check durability/condition
+            if (tool.def.useHitPoints && tool.MaxHitPoints > 0)
+            {
+                float hpPercent = tool.HitPoints / (float)tool.MaxHitPoints;
+
+                // Critical: needs repair NOW
+                if (hpPercent < 0.3f)
+                {
+                    info.Recommendation = "Critical: Repair immediately!";
+                    info.RecommendationColor = new Color(0.9f, 0.2f, 0.2f); // Red
+                    return;
+                }
+                // Low: should repair soon
+                else if (hpPercent < 0.6f)
+                {
+                    info.Recommendation = "Low durability - consider repairing";
+                    info.RecommendationColor = new Color(0.9f, 0.6f, 0.2f); // Orange
+                    return;
+                }
+            }
+
+            // Check quality (if quality scaling is enabled)
+            if (settings?.useQualityToolScaling == true && tool is ThingWithComps twc)
+            {
+                var qualityComp = twc.TryGetComp<CompQuality>();
+                if (qualityComp != null && (int)qualityComp.Quality < 3) // Below Good quality
+                {
+                    info.Recommendation = "Upgrade to higher quality for better performance";
+                    info.RecommendationColor = new Color(0.6f, 0.7f, 0.9f); // Blue
+                    return;
+                }
+            }
+
+            // Check material (suggest better materials)
+            if (tool.Stuff != null)
+            {
+                var currentStuff = tool.Stuff;
+                var statInfo = Helpers.ToolStatResolver.GetToolStatInfo(tool.def, currentStuff, relevantStats[0]);
+
+                // If current material gives poor results, suggest upgrade
+                if (statInfo.Factor < 1.2f) // Less than 20% bonus
+                {
+                    // Check if better materials exist
+                    var betterMaterials = new[] { "Plasteel", "Steel", "Uranium" };
+                    foreach (var matName in betterMaterials)
+                    {
+                        var betterStuff = DefDatabase<ThingDef>.GetNamedSilentFail(matName);
+                        if (betterStuff != null && betterStuff != currentStuff)
+                        {
+                            var betterStatInfo = Helpers.ToolStatResolver.GetToolStatInfo(tool.def, betterStuff, relevantStats[0]);
+                            if (betterStatInfo.Factor > statInfo.Factor + 0.1f)
+                            {
+                                info.Recommendation = $"Craft with {betterStuff.label} for better results";
+                                info.RecommendationColor = new Color(0.4f, 0.8f, 0.5f); // Green
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Check if tool provides minimal benefit
+            bool hasGoodBonus = false;
+            foreach (var stat in relevantStats)
+            {
+                var score = Scoring.ToolScoring.Score(tool, pawn, stat);
+                if (score > 0.3f) // More than 30% improvement
+                {
+                    hasGoodBonus = true;
+                    break;
+                }
+            }
+
+            if (!hasGoodBonus)
+            {
+                info.Recommendation = "Consider crafting a specialized tool";
+                info.RecommendationColor = new Color(0.7f, 0.7f, 0.4f); // Yellow
+                return;
+            }
+
+            // Tool is in good shape
+            info.Recommendation = "Performing well";
+            info.RecommendationColor = new Color(0.4f, 0.8f, 0.5f); // Green
         }
 
         private static string GetStatAbbreviation(StatDef stat)

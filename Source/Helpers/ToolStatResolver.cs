@@ -60,6 +60,14 @@ namespace SurvivalTools.Helpers
             }
         }
 
+        /// <summary>
+        /// Public helper so UI/patches can verify if a stat is a tool-relevant work stat.
+        /// </summary>
+        public static bool IsRegisteredWorkStat(StatDef stat)
+        {
+            return stat != null && RegisteredWorkStats.Contains(stat);
+        }
+
         // Tool quirks registry with deterministic ordering
         private static readonly List<ToolQuirk> _toolQuirks = new List<ToolQuirk>();
         private static int _quirkSequence = 0;

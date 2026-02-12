@@ -9,6 +9,7 @@ using System.Linq;
 using HarmonyLib;
 using RimWorld;
 using Verse;
+using SurvivalTools.Helpers;
 
 namespace SurvivalTools.HarmonyStuff
 {
@@ -19,6 +20,10 @@ namespace SurvivalTools.HarmonyStuff
         public static void Postfix(ThingDef __instance, ref IEnumerable<StatDrawEntry> __result, StatRequest req)
         {
             if (__instance == null)
+                return;
+
+            // Fast exit: only show for tool-like defs (actual survival tools, tool-stuff, or defs with registered work stats)
+            if (!IsToolLike(__instance))
                 return;
 
             // always work against a real list we control
@@ -79,7 +84,7 @@ namespace SurvivalTools.HarmonyStuff
                     for (int i = 0; i < extMods.Count; i++)
                     {
                         var m = extMods[i];
-                        if (m?.stat != null && m.value != 0f)
+                        if (m?.stat != null && ToolStatResolver.IsRegisteredWorkStat(m.stat) && m.value != 0f)
                             result.Add(new StatModifier { stat = m.stat, value = m.value });
                     }
                 }
@@ -91,7 +96,7 @@ namespace SurvivalTools.HarmonyStuff
                     for (int i = 0; i < bases.Count; i++)
                     {
                         var m = bases[i];
-                        if (m?.stat != null && m.value != 0f)
+                        if (m?.stat != null && ToolStatResolver.IsRegisteredWorkStat(m.stat) && m.value != 0f)
                             result.Add(new StatModifier { stat = m.stat, value = m.value });
                     }
                 }
@@ -107,7 +112,7 @@ namespace SurvivalTools.HarmonyStuff
                         for (int i = 0; i < stuffExt.toolStatFactors.Count; i++)
                         {
                             var m = stuffExt.toolStatFactors[i];
-                            if (m?.stat != null && m.value > 1f)
+                            if (m?.stat != null && ToolStatResolver.IsRegisteredWorkStat(m.stat) && m.value > 1f)
                                 result.Add(new StatModifier { stat = m.stat, value = m.value });
                         }
                     }
@@ -170,6 +175,30 @@ namespace SurvivalTools.HarmonyStuff
 
                 existing.Add(key);
             }
+        }
+
+        private static bool IsToolLike(ThingDef def)
+        {
+            if (def == null) return false;
+
+            // Has explicit survival tool properties
+            var ext = def.GetModExtension<SurvivalToolProperties>();
+            if (ext?.baseWorkStatFactors != null && ext.baseWorkStatFactors.Any(m => m?.stat != null && ToolStatResolver.IsRegisteredWorkStat(m.stat)))
+                return true;
+
+            // Tool-stuff with tool stat factors
+            if (def.IsStuff)
+            {
+                var stuffExt = def.GetModExtension<StuffPropsTool>();
+                if (stuffExt?.toolStatFactors != null && stuffExt.toolStatFactors.Any(m => m?.stat != null && ToolStatResolver.IsRegisteredWorkStat(m.stat)))
+                    return true;
+            }
+
+            // statBases containing registered work stats (likely injected by ToolResolver)
+            if (def.statBases != null && def.statBases.Any(m => m?.stat != null && ToolStatResolver.IsRegisteredWorkStat(m.stat)))
+                return true;
+
+            return false;
         }
     }
 }

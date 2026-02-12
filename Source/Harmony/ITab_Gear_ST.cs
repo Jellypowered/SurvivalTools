@@ -29,7 +29,7 @@ namespace SurvivalTools.HarmonyStuff
         }
 
         /// <summary>
-        /// Expand the gear tab width to accommodate our panel
+        /// Expand the gear tab width to accommodate our panel/button
         /// </summary>
         [HarmonyPatch(typeof(ITab_Pawn_Gear), MethodType.Constructor)]
         [HarmonyPostfix]
@@ -38,9 +38,9 @@ namespace SurvivalTools.HarmonyStuff
         {
             try
             {
-                // Always expand each instance (remove the global flag)
+                // Set initial size with space for at least the button
                 var currentSize = GetTabSize(__instance);
-                var additionalWidth = UI.GearTab_ST.DesiredWidth + 12f; // Panel width + margin
+                var additionalWidth = UI.GearTab_ST.DesiredWidth + 12f; // Panel/button width + margin
                 var newSize = new Vector2(currentSize.x + additionalWidth, currentSize.y);
                 SetTabSize(__instance, newSize);
             }
@@ -51,7 +51,7 @@ namespace SurvivalTools.HarmonyStuff
         }
 
         /// <summary>
-        /// Intercept vanilla FillTab to constrain its drawing area
+        /// Intercept vanilla FillTab to constrain its drawing area and adjust tab size
         /// </summary>
         [HarmonyPatch(typeof(ITab_Pawn_Gear), "FillTab")]
         [HarmonyPrefix]
@@ -65,16 +65,17 @@ namespace SurvivalTools.HarmonyStuff
                 var pawn = GetSelPawn(__instance);
                 if (pawn == null || HasLegacyUIActive()) return;
 
-                // Store the original tab size and set a constrained size for vanilla drawing
-                var currentTabSize = GetTabSize(__instance);
-                var constrainedWidth = 425f; // Leave space for our panel
+                // Dynamically adjust tab width based on panel state
+                var panelWidth = UI.GearTab_ST.DesiredWidth;
+                var vanillaWidth = 425f;
+                var totalWidth = vanillaWidth + panelWidth + 12f; // vanilla + panel/button + margin
 
-                // Only constrain if we have a wide tab
-                if (currentTabSize.x > constrainedWidth + 50f) // Some buffer
-                {
-                    var constrainedSize = new Vector2(constrainedWidth, currentTabSize.y);
-                    SetTabSize(__instance, constrainedSize);
-                }
+                var newSize = new Vector2(totalWidth, GetTabSize(__instance).y);
+                SetTabSize(__instance, newSize);
+
+                // Set constrained size for vanilla drawing
+                var constrainedSize = new Vector2(vanillaWidth, newSize.y);
+                SetTabSize(__instance, constrainedSize);
             }
             catch (System.Exception ex)
             {
@@ -83,7 +84,7 @@ namespace SurvivalTools.HarmonyStuff
         }
 
         /// <summary>
-        /// Draw our panel alongside the vanilla gear list
+        /// Draw our panel/button alongside the vanilla gear list
         /// </summary>
         [HarmonyPatch(typeof(ITab_Pawn_Gear), "FillTab")]
         [HarmonyPostfix]
@@ -106,25 +107,21 @@ namespace SurvivalTools.HarmonyStuff
                 // Restore the full tab size for our drawing
                 var currentTabSize = GetTabSize(__instance);
                 var panelWidth = UI.GearTab_ST.DesiredWidth;
-                var requiredTabWidth = 430f + panelWidth + 12f; // vanilla width + panel + margin
+                var requiredTabWidth = 430f + panelWidth + 12f; // vanilla width + panel/button + margin
 
-                // Restore full size if it was constrained
-                if (currentTabSize.x < requiredTabWidth)
-                {
-                    var expandedSize = new Vector2(requiredTabWidth, currentTabSize.y);
-                    SetTabSize(__instance, expandedSize);
-                    currentTabSize = expandedSize;
-                }
+                // Restore full size
+                var expandedSize = new Vector2(requiredTabWidth, currentTabSize.y);
+                SetTabSize(__instance, expandedSize);
 
-                // Position the panel to the right of vanilla content (at x=430, vanilla area is 0-425)
+                // Position the panel/button to the right of vanilla content
                 var panelRect = new Rect(
-                    430f,  // Start right after vanilla content
+                    430f,  // Start right after vanilla content  
                     10f,   // Standard top margin
                     panelWidth,
-                    currentTabSize.y - 20f  // Full height minus margins
+                    expandedSize.y - 20f  // Full height minus margins
                 );
 
-                // Draw our tool efficiency panel
+                // Draw our tool efficiency panel/button
                 UI.GearTab_ST.Draw(panelRect, pawn);
             }
             catch (System.Exception ex)
