@@ -750,7 +750,9 @@ namespace SurvivalTools.Assign
             // Tree cutting/harvesting - CHECK IF IT'S ACTUALLY A TREE!
             if (jobDef == JobDefOf.CutPlant ||
                 string.Equals(jobDef.defName, "FellTree", StringComparison.Ordinal) ||
-                string.Equals(jobDef.defName, "HarvestTree", StringComparison.Ordinal))
+                string.Equals(jobDef.defName, "FellTreeDesignated", StringComparison.Ordinal) ||
+                string.Equals(jobDef.defName, "HarvestTree", StringComparison.Ordinal) ||
+                string.Equals(jobDef.defName, "HarvestTreeDesignated", StringComparison.Ordinal))
             {
                 // For CutPlant, verify the target is actually a tree
                 if (jobDef == JobDefOf.CutPlant)

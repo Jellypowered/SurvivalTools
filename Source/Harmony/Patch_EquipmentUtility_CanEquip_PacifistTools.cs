@@ -165,7 +165,7 @@ namespace SurvivalTools.HarmonyStuff
                 };
                 yield return FloatMenuUtility.DecoratePrioritizedTask(
                     new FloatMenuOption(label, act, MenuOptionPriority.High, null, t),
-                    pawn, t.Position);
+                    pawn, t);
             }
 
             // --- Take to inventory option (let pacifists carry without equipping) ---
@@ -192,7 +192,7 @@ namespace SurvivalTools.HarmonyStuff
 
                 yield return FloatMenuUtility.DecoratePrioritizedTask(
                     new FloatMenuOption(invLabel, actInv, MenuOptionPriority.Default, null, t),
-                    pawn, t.Position);
+                    pawn, t);
             }
         }
     }
