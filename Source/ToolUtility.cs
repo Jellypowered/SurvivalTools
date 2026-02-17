@@ -223,6 +223,12 @@ namespace SurvivalTools
             if (t.def.IsToolStuff())
                 return true;
 
+            // Check if the def has been enhanced with tool properties (e.g., third-party mod tools)
+            var props = t.def.GetModExtension<SurvivalToolProperties>();
+            if (props != null && props != SurvivalToolProperties.defaultValues &&
+                props.baseWorkStatFactors != null && props.baseWorkStatFactors.Count > 0)
+                return true;
+
             return ToolKindOf(t) != STToolKind.None;
         }
 

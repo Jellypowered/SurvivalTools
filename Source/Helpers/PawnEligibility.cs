@@ -11,8 +11,8 @@ namespace SurvivalTools.Helpers
         {
             if (p == null) return false;
             if (p.Dead || p.Destroyed) return false;
-            // Exclude player-owned mechanoids entirely (colony mechs). Works even if Biotech not present by null-safe props.
-            if ((p.RaceProps?.IsMechanoid ?? false) && p.Faction == Faction.OfPlayer) return false;
+            // Exclude player-owned mechanoids entirely (colony mechs). Comprehensive check catches modded mechanoids.
+            if (PawnToolValidator.IsMechanoidOrInherited(p) && p.Faction == Faction.OfPlayer) return false;
             if (!(p.RaceProps?.Humanlike ?? false)) return false;
             return p.IsColonistPlayerControlled; // includes slaves / recruited guests under player control
         }

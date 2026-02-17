@@ -20,6 +20,12 @@ if defined _CONFIG_ARG (
 )
 set "_CONFIG_ARG="
 
+REM Check for --no-version flag to skip version increment (for local testing)
+set "SKIP_VERSION="
+if "%~2"=="--no-version" set "SKIP_VERSION=1"
+if "%~2"=="--noversion" set "SKIP_VERSION=1"
+if "%~2"=="/noversion" set "SKIP_VERSION=1"
+
 REM Local mirror output (second output)
 set "BASE=.\%CURRENTVER%\Assemblies"
 
@@ -113,6 +119,26 @@ if exist "%BASE%\*.dll" (
     del /q "%BASE%\*.dll"
 ) else (
     echo No existing DLLs in BASE mirror.
+)
+
+REM ================================
+REM Version Management
+REM ================================
+if defined SKIP_VERSION (
+    echo Skipping version increment [--no-version flag set]
+    if exist "Source\VersionInfo.cs" (
+        echo Using existing version info...
+    ) else (
+        echo WARNING: VersionInfo.cs does not exist. Generating without increment...
+        powershell -NoProfile -ExecutionPolicy Bypass -File ".vscode\update-version.ps1" -Config "%CONFIG%" -SkipIncrement
+    )
+) else (
+    echo Updating version...
+    powershell -NoProfile -ExecutionPolicy Bypass -File ".vscode\update-version.ps1" -Config "%CONFIG%"
+    if errorlevel 1 (
+        echo Version update failed. Aborting.
+        exit /b 1
+    )
 )
 
 REM ================================

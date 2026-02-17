@@ -42,12 +42,24 @@ namespace SurvivalTools
             if (tool == null || stat == null) return GetNoToolBaseline(stat);
             try
             {
-                foreach (var m in tool.WorkStatFactors)
+                // Access WorkStatFactors property - for VirtualTools, this accesses the shadowing
+                // property; for SurvivalTools, it accesses the base property (which triggers lazy init).
+                // The VirtualTool constructor pre-initializes the base field to prevent issues.
+                var factors = tool.WorkStatFactors;
+                if (factors == null) return GetNoToolBaseline(stat);
+
+                foreach (var m in factors)
                 {
                     if (m?.stat == stat) return m.value;
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // Defensive: log and return baseline if factor access fails
+                if (IsDebugLoggingEnabled)
+                    LogDebug($"[SurvivalTools] GetToolProvidedFactor exception for {tool?.def?.defName ?? "null"}/{stat?.defName ?? "null"}: {ex.Message}", $"GetFactor_Error_{tool?.GetHashCode() ?? 0}_{stat?.shortHash ?? 0}");
+                return GetNoToolBaseline(stat);
+            }
             // IMPORTANT: Returning 1f here incorrectly implied an improvement over the baseline
             // no-tool penalty (e.g. 0.4 normal mode) even when the tool does NOT cover this stat.
             // That caused any unrelated tool to appear to "improve" every penalized stat, blocking
@@ -60,11 +72,20 @@ namespace SurvivalTools
         public static bool ToolImprovesAny(SurvivalTool tool, List<StatDef> stats)
         {
             if (tool == null || stats == null) return false;
-            for (int i = 0; i < stats.Count; i++)
+            // Defensive: catch any exceptions during factor access to prevent CTD during enumeration
+            try
             {
-                var s = stats[i];
-                if (s == null) continue;
-                if (GetToolProvidedFactor(tool, s) > GetNoToolBaseline(s) + 0.001f) return true;
+                for (int i = 0; i < stats.Count; i++)
+                {
+                    var s = stats[i];
+                    if (s == null) continue;
+                    if (GetToolProvidedFactor(tool, s) > GetNoToolBaseline(s) + 0.001f) return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                if (IsDebugLoggingEnabled)
+                    LogDebug($"[SurvivalTools] ToolImprovesAny exception for {tool?.def?.defName ?? "null"}: {ex.Message}", $"ToolImprovesAny_Error_{tool?.GetHashCode() ?? 0}");
             }
             return false;
         }
@@ -1237,7 +1258,17 @@ namespace SurvivalTools
 
             var invTools = invRaw
                 .Where(t => t != null && t.def != null && (t.def.IsSurvivalTool() || t.def.IsToolStuff()))
-                .Select(t => t.def.IsToolStuff() ? (Thing)VirtualTool.FromThing(t) : t)
+                .Select(t =>
+                {
+                    // Defensive: wrap VirtualTool creation in try-catch to prevent crashes during
+                    // enumeration when state is partially initialized (e.g., just after save load)
+                    if (t.def.IsToolStuff())
+                    {
+                        try { return (Thing)VirtualTool.FromThing(t); }
+                        catch { return null; }
+                    }
+                    return t;
+                })
                 .Where(t => t != null);
 
             return eqTools.Concat(invTools);

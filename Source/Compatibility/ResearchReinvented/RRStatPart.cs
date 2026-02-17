@@ -18,7 +18,7 @@ namespace SurvivalTools.Compat.RR
                 var pawn = req.Thing as Pawn;
                 if (pawn == null) return;
                 if (!pawn.RaceProps.Humanlike) return;               // animals
-                if (pawn.RaceProps.IsMechanoid) return;               // mechs/colonist mechs
+                if (SurvivalTools.Helpers.PawnToolValidator.IsMechanoidOrInherited(pawn)) return; // mechs/colonist mechs (comprehensive check)
                 if (!RRHelpers.IsActive()) return;                    // RR not present
                 if (!RRHelpers.ShouldApplyNormalPenalty()) return;    // only Normal
                 if (RRHelpers.PawnHasResearchTool(pawn)) return;      // has tool => no penalty
@@ -35,7 +35,7 @@ namespace SurvivalTools.Compat.RR
                 var pawn = req.Thing as Pawn;
                 if (pawn == null) return null;
                 if (!pawn.RaceProps.Humanlike) return null;
-                if (pawn.RaceProps.IsMechanoid) return null;
+                if (SurvivalTools.Helpers.PawnToolValidator.IsMechanoidOrInherited(pawn)) return null; // comprehensive mech check
                 if (!RRHelpers.IsActive()) return null;
                 if (!RRHelpers.ShouldApplyNormalPenalty()) return null;
                 if (RRHelpers.PawnHasResearchTool(pawn)) return null;

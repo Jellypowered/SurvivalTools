@@ -22,6 +22,9 @@ namespace SurvivalTools
         {
             try
             {
+                // Log version info
+                Log.Message($"[SurvivalTools] Version {BuildVersion.Version} - Build: {BuildVersion.BuildTimestamp}");
+
                 if (IsDebugLoggingEnabled)
                     LogInfo("[SurvivalTools] Starting static constructor initialization...");
 

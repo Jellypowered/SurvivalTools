@@ -54,17 +54,42 @@ namespace SurvivalTools
             // Present as the same def for labeling/inspection consistency.
             if (SourceDef != null)
                 def = SourceDef;
+            // CRITICAL FIX: Initialize the base class's _workStatFactors field to prevent
+            // lazy initialization when accessed via SurvivalTool reference. The base class
+            // property is not virtual, so when code accesses ((SurvivalTool)this).WorkStatFactors,
+            // it calls the base getter which checks for null and triggers InitializeWorkStatFactors().
+            // During game load this can access uninitialized state and crash.
+            try
+            {
+                var baseField = typeof(SurvivalTool).GetField("_workStatFactors",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (baseField != null)
+                    baseField.SetValue(this, _workStatFactors);
+            }
+            catch
+            {
+                // Fail silently - the VirtualTool's own property will still work correctly
+            }
         }
 
         /// <summary>
         /// Factory method that wraps a physical Thing (like cloth or hyperweave) into a VirtualSurvivalTool.
         /// Returns null if the Thing's def does not declare SurvivalToolProperties.
+        /// Defensive: returns null on any exception during construction to prevent CTD during enumeration.
         /// </summary>
         public static VirtualTool FromThing(Thing thing)
         {
             if (thing?.def == null) return null;
-            if (!EligibleTextile(thing.def)) return null;
-            return new VirtualTool(thing);
+            try
+            {
+                if (!EligibleTextile(thing.def)) return null;
+                return new VirtualTool(thing);
+            }
+            catch
+            {
+                // Fail gracefully during construction - better to skip this item than crash
+                return null;
+            }
         }
 
         #endregion

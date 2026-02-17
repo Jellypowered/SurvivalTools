@@ -802,8 +802,14 @@ namespace SurvivalTools.Assign
                 return bestCandidate; // Same cell, excellent
 
             SearchStockpiles(pawn, workStat, currentScore, minGainPct, needsGatingRescue, radius, pathCostBudget, ref bestCandidate);
-            SearchHomeArea(pawn, workStat, currentScore, minGainPct, needsGatingRescue, radius, pathCostBudget, ref bestCandidate);
-            SearchNearby(pawn, workStat, currentScore, minGainPct, needsGatingRescue, radius, pathCostBudget, ref bestCandidate);
+
+            // Only search home area and nearby if pickupFromStorageOnly is disabled
+            var settings = SurvivalToolsMod.Settings;
+            if (settings == null || !settings.pickupFromStorageOnly)
+            {
+                SearchHomeArea(pawn, workStat, currentScore, minGainPct, needsGatingRescue, radius, pathCostBudget, ref bestCandidate);
+                SearchNearby(pawn, workStat, currentScore, minGainPct, needsGatingRescue, radius, pathCostBudget, ref bestCandidate);
+            }
 
             return bestCandidate;
         }

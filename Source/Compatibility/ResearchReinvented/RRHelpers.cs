@@ -302,7 +302,7 @@ namespace SurvivalTools.Compat.ResearchReinvented
         {
             if (p == null) return false;
             if (!p.RaceProps?.Humanlike ?? true) return false;
-            if (p.RaceProps.IsMechanoid) return false;
+            if (SurvivalTools.Helpers.PawnToolValidator.IsMechanoidOrInherited(p)) return false; // comprehensive mech check
             if (p.Faction == null || !p.Faction.IsPlayer) return false;
             return true;
         }

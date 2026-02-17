@@ -96,6 +96,17 @@ namespace SurvivalTools
 
         private void InitializeWorkStatFactors()
         {
+            // SAFETY: VirtualTools manage their own _workStatFactors and should not trigger this.
+            // If we're a VirtualTool, its constructor should have already initialized both its own
+            // field and the base class field via reflection. Skip to avoid double-init with wrong state.
+            if (this is VirtualTool)
+            {
+                // VirtualTool manages its own factors; don't re-initialize
+                if (_workStatFactors == null)
+                    _workStatFactors = new List<StatModifier>();
+                return;
+            }
+
             // Use the centralized ToolFactorCache for fast, safe caching. The cache implements
             // delayed activation so we avoid using it too early during PostLoad init which
             // previously led to CTDs. Before activation the cache computes results on-the-fly

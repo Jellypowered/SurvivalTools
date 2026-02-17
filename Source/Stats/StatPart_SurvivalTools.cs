@@ -248,7 +248,7 @@ namespace SurvivalTools.Stats
         private static bool CanUseSurvivalTools(Pawn pawn)
         {
             if (pawn?.RaceProps == null) return false;
-            if (pawn.RaceProps.Animal || pawn.RaceProps.IsMechanoid) return false;
+            if (pawn.RaceProps.Animal || PawnToolValidator.IsMechanoidOrInherited(pawn)) return false;
             if (pawn.IsQuestLodger() || pawn.Downed) return false;
 
             return pawn.health?.capacities?.CapableOf(PawnCapacityDefOf.Manipulation) == true;

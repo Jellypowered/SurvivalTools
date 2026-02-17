@@ -62,7 +62,7 @@ namespace SurvivalTools.Gating
             reasonKey = null; a1 = null; a2 = null;
 
             // Early-outs (do not gate these)
-            if (pawn == null || pawn.Dead || pawn.Downed || pawn.IsPrisoner || pawn.RaceProps == null || pawn.RaceProps.Animal || pawn.RaceProps.IsMechanoid)
+            if (pawn == null || pawn.Dead || pawn.Downed || pawn.IsPrisoner || pawn.RaceProps == null || pawn.RaceProps.Animal || PawnToolValidator.IsMechanoidOrInherited(pawn))
             {
                 // Hot path: don't log routine allow decisions
                 return false;

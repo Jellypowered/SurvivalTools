@@ -1,4 +1,4 @@
-/*{
+{
     "version": "2.0.0",
     "tasks": [
         {
@@ -10,7 +10,8 @@
             },
             "command": ".vscode/build.bat",
             "args": [
-                "${input:buildConfig}"
+                "${input:buildConfig}",
+                "${input:versionIncrement}"
             ]
         }
     ],
@@ -24,20 +25,32 @@
                 "Release"
             ],
             "default": "Debug"
+        },
+        {
+            "id": "versionIncrement",
+            "type": "pickString",
+            "description": "Increment version number?",
+            "options": [
+                "",
+                "--no-version"
+            ],
+            "default": ""
         }
     ]
-}*/
-{
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "BuildWindowsDLL: Release",
-      "type": "shell",
-      "command": "${workspaceFolder}/.vscode/build.bat",
-      "args": ["Release"],
-      "group": { "kind": "build", "isDefault": true },
-      "problemMatcher": []
-    }
-  ]
 }
-
+/* {
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "BuildWindowsDLL: Release",
+			"type": "shell",
+			"command": "${workspaceFolder}/.vscode/build.bat",
+			"args": ["Release"],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": []
+		}
+	]
+} */
