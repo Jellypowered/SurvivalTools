@@ -489,18 +489,18 @@ namespace SurvivalTools.UI
                 var score = Scoring.ToolScoring.Score(tool, pawn, stat);
                 if (score > 0.001f)
                 {
-                    // Format as percentage bonus/penalty
+                    // Format as clear speed change with direction
                     var percentChange = (score - 1f) * 100f;
-                    string percentStr;
+                    string speedText;
                     if (percentChange > 0.5f)
-                        percentStr = $"+{percentChange:F0}%";
+                        speedText = $"{percentChange:F0}% faster";
                     else if (percentChange < -0.5f)
-                        percentStr = $"{percentChange:F0}%";
+                        speedText = $"{Math.Abs(percentChange):F0}% slower";
                     else
-                        percentStr = "±0%";
+                        speedText = "no change";
 
-                    if (scoreBuilder.Length > 0) scoreBuilder.Append(" ");
-                    scoreBuilder.Append($"{GetStatAbbreviation(stat)}: {percentStr}");
+                    if (scoreBuilder.Length > 0) scoreBuilder.Append(", ");
+                    scoreBuilder.Append($"{GetStatShortName(stat)}: {speedText}");
 
                     // Build clearer tooltip and why text using ToolStatInfo
                     var statInfo = Helpers.ToolStatResolver.GetToolStatInfo(tool.def, tool.Stuff, stat);
@@ -659,13 +659,13 @@ namespace SurvivalTools.UI
             info.RecommendationColor = new Color(0.4f, 0.8f, 0.5f); // Green
         }
 
-        private static string GetStatAbbreviation(StatDef stat)
+        private static string GetStatShortName(StatDef stat)
         {
-            if (stat == ST_StatDefOf.DiggingSpeed) return "Min";
-            if (stat == StatDefOf.ConstructionSpeed) return "Con";
-            if (stat == ST_StatDefOf.TreeFellingSpeed) return "Tree";
-            if (stat == ST_StatDefOf.PlantHarvestingSpeed) return "Plant";
-            return stat.defName.Substring(0, Math.Min(4, stat.defName.Length));
+            if (stat == ST_StatDefOf.DiggingSpeed) return "Mining";
+            if (stat == StatDefOf.ConstructionSpeed) return "Building";
+            if (stat == ST_StatDefOf.TreeFellingSpeed) return "Woodcutting";
+            if (stat == ST_StatDefOf.PlantHarvestingSpeed) return "Harvesting";
+            return stat.LabelCap;
         }
 
         private static List<StatDef> GetRelevantStatsForTool(Thing tool)
