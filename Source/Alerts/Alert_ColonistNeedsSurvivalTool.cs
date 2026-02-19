@@ -193,7 +193,8 @@ namespace SurvivalTools
             }
 
             // ALSO include the global work-speed stat if applicable — it isn't tied to a specific WorkGiver
-            if (Stat_WorkSpeedGlobal != null)
+            // Can be disabled via hideGlobalStatInAlert setting to reduce alert noise
+            if (Stat_WorkSpeedGlobal != null && !settings.hideGlobalStatInAlert)
             {
                 string globalLabel = NormalizeStatLabel(Stat_WorkSpeedGlobal);
                 foreach (var pawn in culprits)

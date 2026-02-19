@@ -17,6 +17,8 @@
     <!-- Settings UI -->
     <Settings_ShowGatingAlert>Show 'Tool gating' alert</Settings_ShowGatingAlert>
     <Settings_ShowGatingAlert_Tooltip>When enabled, shows an alert when pawns are unable to work due to missing required tools in Hardcore/Nightmare modes.</Settings_ShowGatingAlert_Tooltip>
+    <Settings_HideGlobalStatInAlert>Hide 'Global' stat from missing tools alert</Settings_HideGlobalStatInAlert>
+    <Settings_HideGlobalStatInAlert_Tooltip>When enabled, filters out the WorkSpeedGlobal stat from the "Colonists lack essential tools" alert. This reduces alert clutter since the Global stat (multipurpose stone tools, carved bone implements, artisan's toolkit, etc.) can be persistently missing and less actionable than specific work stats. Enable this for a cleaner alert focused on specific tool requirements.</Settings_HideGlobalStatInAlert_Tooltip>
     <Settings_EnforceOnModeChange>Cancel now-invalid jobs when difficulty changes</Settings_EnforceOnModeChange>
     <Settings_EnforceOnModeChange_Tooltip>When enabled, automatically cancels running jobs that would be blocked by tool gating when switching to Hardcore or Nightmare mode.</Settings_EnforceOnModeChange_Tooltip>
 

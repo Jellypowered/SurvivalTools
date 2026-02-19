@@ -93,6 +93,7 @@ namespace SurvivalTools
         // Gating alert settings  
         public bool showGatingAlert = true; // Show alert when pawns are blocked by tool gating
         public int toolGateAlertMinTicks = 1500; // Phase 8: minimum visibility duration for gating alert
+        public bool hideGlobalStatInAlert = true; // Hide WorkSpeedGlobal stat from missing tools alert (reduces alert noise)
 
         // Gating enforcer settings
         public bool enforceOnModeChange = true; // Cancel now-invalid jobs when difficulty changes
@@ -215,6 +216,7 @@ namespace SurvivalTools
             sb.AppendLine($"  showDenialMotes: {showDenialMotes}");
             sb.AppendLine($"  showGatingAlert: {showGatingAlert}");
             sb.AppendLine($"  toolGateAlertMinTicks: {toolGateAlertMinTicks}");
+            sb.AppendLine($"  hideGlobalStatInAlert: {hideGlobalStatInAlert}");
             sb.AppendLine("");
 
             sb.AppendLine("Compatibility:");
@@ -282,6 +284,7 @@ namespace SurvivalTools
             Scribe_Values.Look(ref showDenialMotes, nameof(showDenialMotes), false);
             Scribe_Values.Look(ref showGatingAlert, nameof(showGatingAlert), true);
             Scribe_Values.Look(ref toolGateAlertMinTicks, nameof(toolGateAlertMinTicks), 1500);
+            Scribe_Values.Look(ref hideGlobalStatInAlert, nameof(hideGlobalStatInAlert), true);
             Scribe_Values.Look(ref enforceOnModeChange, nameof(enforceOnModeChange), true);
             Scribe_Values.Look(ref enableRightClickRescue, nameof(enableRightClickRescue), true);
 
@@ -542,6 +545,7 @@ namespace SurvivalTools
                 listing.Label("Settings_ToolGateAlertMinTicks_Tooltip".Translate());
                 GUI.color = prevColor; Text.Font = GameFont.Small;
             }
+            listing.CheckboxLabeled("Settings_HideGlobalStatInAlert".Translate(), ref hideGlobalStatInAlert, "Settings_HideGlobalStatInAlert_Tooltip".Translate());
             listing.CheckboxLabeled("Settings_EnforceOnModeChange".Translate(), ref enforceOnModeChange, "Settings_EnforceOnModeChange_Tooltip".Translate());
             // Right-click rescue toggle (only relevant / shown during Hardcore or Nightmare)
             if (hardcoreMode || extraHardcoreMode)
