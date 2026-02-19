@@ -75,6 +75,13 @@ namespace SurvivalTools.Helpers
         {
             LogDebug($"[SurvivalTools.JobValidation] ValidateExistingJobs called with reason: {reason}", $"JobValidation_Validate_{reason}");
 
+            // Early exit if no game is active (e.g., on main menu or during load)
+            if (Current.Game == null || Current.ProgramState != ProgramState.Playing)
+            {
+                LogDebug($"[SurvivalTools.JobValidation] Skipping validation - no active game (reason: {reason})", $"JobValidation_NoGame_{reason}");
+                return;
+            }
+
             var settings = SurvivalToolsMod.Settings;
             LogDebug($"[SurvivalTools.JobValidation] Settings state - hardcoreMode: {settings?.hardcoreMode}, extraHardcoreMode: {settings?.extraHardcoreMode}", $"JobValidation_Settings_{settings?.hardcoreMode}_{settings?.extraHardcoreMode}");
 

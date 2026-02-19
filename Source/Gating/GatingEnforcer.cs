@@ -29,6 +29,10 @@ namespace SurvivalTools.Gating
 
         public static int EnforceAllRunningJobs(bool fromSettingsChange, string reasonKey = "ST_Gate_ModeChanged")
         {
+            // Early exit if no game is active (e.g., on main menu or during load)
+            if (Current.Game == null || Current.ProgramState != ProgramState.Playing)
+                return 0;
+
             var settings = SurvivalToolsMod.Settings;
             if (settings == null) return 0;
 
