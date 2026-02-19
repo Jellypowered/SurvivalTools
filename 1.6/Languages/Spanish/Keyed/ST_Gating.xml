@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <!-- Job gating failure message -->
+    <ST_Gate_MissingToolStat>Requiere una herramienta para {0} para hacer {1}.</ST_Gate_MissingToolStat>
+
+    <!-- Tool gating alert -->
+    <ST_Alert_ToolGating_Label>Restricción de herramientas</ST_Alert_ToolGating_Label>
+    <ST_Alert_ToolGating_AndMore>y {0} más</ST_Alert_ToolGating_AndMore>
+
+    <!-- Work type labels for alert -->
+    <ST_Alert_WorkType_Mining>Minería</ST_Alert_WorkType_Mining>
+    <ST_Alert_WorkType_Construction>Construcción</ST_Alert_WorkType_Construction>
+    <ST_Alert_WorkType_PlantCutting>Tala de plantas</ST_Alert_WorkType_PlantCutting>
+    <ST_Alert_WorkType_PlantHarvest>Cosecha de plantas</ST_Alert_WorkType_PlantHarvest>
+    <ST_Alert_WorkType_Smithing>Herrería</ST_Alert_WorkType_Smithing>
+
+    <!-- Settings UI -->
+    <Settings_ShowGatingAlert>Mostrar alerta de 'Restricción de herramientas'</Settings_ShowGatingAlert>
+    <Settings_ShowGatingAlert_Tooltip>Cuando está activado, muestra una alerta cuando los colonos no pueden trabajar debido a la falta de herramientas requeridas en los modos Difícil/Pesadilla.</Settings_ShowGatingAlert_Tooltip>
+    <Settings_HideGlobalStatInAlert>Ocultar estadística 'Global' en la alerta de herramientas faltantes</Settings_HideGlobalStatInAlert>
+    <Settings_HideGlobalStatInAlert_Tooltip>Cuando está activado, filtra la estadística WorkSpeedGlobal de la alerta "Los colonos necesitan herramientas esenciales". Esto reduce el desorden de alertas ya que la estadística Global (herramientas de piedra multiuso, herramientas de hueso talladas, kit de herramientas artesanal, etc.) puede faltar persistentemente y ser menos accionable que las estadísticas de trabajo específicas. Active esto para una alerta más clara centrada en requisitos de herramientas específicos.</Settings_HideGlobalStatInAlert_Tooltip>
+    <Settings_EnforceOnModeChange>Cancelar trabajos ahora inválidos al cambiar la dificultad</Settings_EnforceOnModeChange>
+    <Settings_EnforceOnModeChange_Tooltip>Cuando está activado, cancela automáticamente los trabajos en ejecución que serían bloqueados por la restricción de herramientas al cambiar al modo Difícil o Pesadilla.</Settings_EnforceOnModeChange_Tooltip>
+
+    <!-- Gating enforcer messages -->
+    <ST_Gate_ModeChanged>Modo de dificultad cambiado</ST_Gate_ModeChanged>
+</LanguageData>

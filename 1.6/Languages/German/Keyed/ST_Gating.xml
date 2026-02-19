@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <!-- Job gating failure message -->
+    <ST_Gate_MissingToolStat>Benötigt ein Werkzeug für {0}, um {1} auszuführen.</ST_Gate_MissingToolStat>
+
+    <!-- Tool gating alert -->
+    <ST_Alert_ToolGating_Label>Werkzeugbeschränkung</ST_Alert_ToolGating_Label>
+    <ST_Alert_ToolGating_AndMore>und {0} mehr</ST_Alert_ToolGating_AndMore>
+
+    <!-- Work type labels for alert -->
+    <ST_Alert_WorkType_Mining>Bergbau</ST_Alert_WorkType_Mining>
+    <ST_Alert_WorkType_Construction>Konstruktion</ST_Alert_WorkType_Construction>
+    <ST_Alert_WorkType_PlantCutting>Pflanzen fällen</ST_Alert_WorkType_PlantCutting>
+    <ST_Alert_WorkType_PlantHarvest>Pflanzen ernten</ST_Alert_WorkType_PlantHarvest>
+    <ST_Alert_WorkType_Smithing>Schmieden</ST_Alert_WorkType_Smithing>
+
+    <!-- Settings UI -->
+    <Settings_ShowGatingAlert>Zeige 'Werkzeugbeschränkung' Warnung</Settings_ShowGatingAlert>
+    <Settings_ShowGatingAlert_Tooltip>Wenn aktiviert, wird eine Warnung angezeigt, wenn Kolonisten aufgrund fehlender erforderlicher Werkzeuge nicht arbeiten können (Hardcore/Albtraum-Modi).</Settings_ShowGatingAlert_Tooltip>
+    <Settings_HideGlobalStatInAlert>Verstecke 'Globale' Statistik in der Warnung für fehlende Werkzeuge</Settings_HideGlobalStatInAlert>
+    <Settings_HideGlobalStatInAlert_Tooltip>Wenn aktiviert, wird die WorkSpeedGlobal-Statistik aus der Warnung "Kolonisten benötigen unverzichtbare Werkzeuge" herausgefiltert. Dies reduziert Warnungs-Unordnung, da die globale Statistik (Mehrzweck-Steinwerkzeuge, geschnitzte Knochengeräte, Handwerker-Werkzeugkasten usw.) dauerhaft fehlen kann und weniger umsetzbar ist als spezifische Arbeitsstatistiken. Aktivieren Sie dies für eine klarere Warnung, die sich auf spezifische Werkzeuganforderungen konzentriert.</Settings_HideGlobalStatInAlert_Tooltip>
+    <Settings_EnforceOnModeChange>Ungültige Aufträge bei Schwierigkeitsänderung abbrechen</Settings_EnforceOnModeChange>
+    <Settings_EnforceOnModeChange_Tooltip>Wenn aktiviert, werden laufende Aufträge automatisch abgebrochen, die beim Wechsel in den Hardcore- oder Albtraum-Modus durch Werkzeugbeschränkung blockiert würden.</Settings_EnforceOnModeChange_Tooltip>
+
+    <!-- Gating enforcer messages -->
+    <ST_Gate_ModeChanged>Schwierigkeitsgrad geändert</ST_Gate_ModeChanged>
+</LanguageData>

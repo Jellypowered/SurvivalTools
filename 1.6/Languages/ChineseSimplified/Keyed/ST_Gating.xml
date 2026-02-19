@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <!-- Job gating failure message -->
+    <ST_Gate_MissingToolStat>需要{0}工具才能执行{1}。</ST_Gate_MissingToolStat>
+
+    <!-- Tool gating alert -->
+    <ST_Alert_ToolGating_Label>工具限制</ST_Alert_ToolGating_Label>
+    <ST_Alert_ToolGating_AndMore>还有{0}个</ST_Alert_ToolGating_AndMore>
+
+    <!-- Work type labels for alert -->
+    <ST_Alert_WorkType_Mining>采矿</ST_Alert_WorkType_Mining>
+    <ST_Alert_WorkType_Construction>建造</ST_Alert_WorkType_Construction>
+    <ST_Alert_WorkType_PlantCutting>砍伐植物</ST_Alert_WorkType_PlantCutting>
+    <ST_Alert_WorkType_PlantHarvest>收获植物</ST_Alert_WorkType_PlantHarvest>
+    <ST_Alert_WorkType_Smithing>锻造</ST_Alert_WorkType_Smithing>
+
+    <!-- Settings UI -->
+    <Settings_ShowGatingAlert>显示"工具限制"警报</Settings_ShowGatingAlert>
+    <Settings_ShowGatingAlert_Tooltip>启用后，当殖民者因缺少必需工具而无法工作时（困难/噩梦模式），会显示警报。</Settings_ShowGatingAlert_Tooltip>
+    <Settings_HideGlobalStatInAlert>在缺少工具警报中隐藏"全局"属性</Settings_HideGlobalStatInAlert>
+    <Settings_HideGlobalStatInAlert_Tooltip>启用后，会从"殖民者缺少必要工具"警报中过滤掉工作速度全局属性。这会减少警报混乱，因为全局属性（多用途石器工具、雕刻的骨制工具、工匠工具包等）可能持续缺失且不如特定工作属性那么可操作。启用此选项可获得更清晰、专注于特定工具需求的警报。</Settings_HideGlobalStatInAlert_Tooltip>
+    <Settings_EnforceOnModeChange>难度更改时取消现在无效的工作</Settings_EnforceOnModeChange>
+    <Settings_EnforceOnModeChange_Tooltip>启用后，切换到困难或噩梦模式时会自动取消因工具限制而被阻止的正在进行的工作。</Settings_EnforceOnModeChange_Tooltip>
+
+    <!-- Gating enforcer messages -->
+    <ST_Gate_ModeChanged>难度模式已更改</ST_Gate_ModeChanged>
+</LanguageData>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <!-- Job gating failure message -->
+    <ST_Gate_MissingToolStat>Требуется инструмент для {0}, чтобы выполнить {1}.</ST_Gate_MissingToolStat>
+
+    <!-- Tool gating alert -->
+    <ST_Alert_ToolGating_Label>Ограничение инструментов</ST_Alert_ToolGating_Label>
+    <ST_Alert_ToolGating_AndMore>и ещё {0}</ST_Alert_ToolGating_AndMore>
+
+    <!-- Work type labels for alert -->
+    <ST_Alert_WorkType_Mining>Добыча</ST_Alert_WorkType_Mining>
+    <ST_Alert_WorkType_Construction>Строительство</ST_Alert_WorkType_Construction>
+    <ST_Alert_WorkType_PlantCutting>Рубка растений</ST_Alert_WorkType_PlantCutting>
+    <ST_Alert_WorkType_PlantHarvest>Сбор растений</ST_Alert_WorkType_PlantHarvest>
+    <ST_Alert_WorkType_Smithing>Кузнечное дело</ST_Alert_WorkType_Smithing>
+
+    <!-- Settings UI -->
+    <Settings_ShowGatingAlert>Показывать предупреждение 'Ограничение инструментов'</Settings_ShowGatingAlert>
+    <Settings_ShowGatingAlert_Tooltip>Если включено, показывает предупреждение, когда колонисты не могут работать из-за отсутствия необходимых инструментов в режимах Хардкор/Кошмар.</Settings_ShowGatingAlert_Tooltip>
+    <Settings_HideGlobalStatInAlert>Скрыть характеристику 'Общая' в предупреждении о недостающих инструментах</Settings_HideGlobalStatInAlert>
+    <Settings_HideGlobalStatInAlert_Tooltip>Если включено, фильтрует характеристику WorkSpeedGlobal из предупреждения "Колонистам не хватает необходимых инструментов". Это уменьшает беспорядок в предупреждениях, поскольку общая характеристика (многофункциональные каменные инструменты, резные костяные инструменты, набор инструментов ремесленника и т.д.) может постоянно отсутствовать и быть менее практичной, чем конкретные рабочие характеристики. Включите это для более чистого предупреждения, сосредоточенного на конкретных требованиях к инструментам.</Settings_HideGlobalStatInAlert_Tooltip>
+    <Settings_EnforceOnModeChange>Отменять недействительные задания при изменении сложности</Settings_EnforceOnModeChange>
+    <Settings_EnforceOnModeChange_Tooltip>Если включено, автоматически отменяет выполняемые задания, которые будут заблокированы ограничением инструментов при переключении в режим Хардкор или Кошмар.</Settings_EnforceOnModeChange_Tooltip>
+
+    <!-- Gating enforcer messages -->
+    <ST_Gate_ModeChanged>Режим сложности изменён</ST_Gate_ModeChanged>
+</LanguageData>

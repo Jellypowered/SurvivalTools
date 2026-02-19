@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <!-- Job gating failure message -->
+    <ST_Gate_MissingToolStat>{1}を行うには{0}用の道具が必要です。</ST_Gate_MissingToolStat>
+
+    <!-- Tool gating alert -->
+    <ST_Alert_ToolGating_Label>道具制限</ST_Alert_ToolGating_Label>
+    <ST_Alert_ToolGating_AndMore>他{0}件</ST_Alert_ToolGating_AndMore>
+
+    <!-- Work type labels for alert -->
+    <ST_Alert_WorkType_Mining>採掘</ST_Alert_WorkType_Mining>
+    <ST_Alert_WorkType_Construction>建設</ST_Alert_WorkType_Construction>
+    <ST_Alert_WorkType_PlantCutting>植物伐採</ST_Alert_WorkType_PlantCutting>
+    <ST_Alert_WorkType_PlantHarvest>植物収穫</ST_Alert_WorkType_PlantHarvest>
+    <ST_Alert_WorkType_Smithing>鍛冶</ST_Alert_WorkType_Smithing>
+
+    <!-- Settings UI -->
+    <Settings_ShowGatingAlert>「道具制限」アラートを表示</Settings_ShowGatingAlert>
+    <Settings_ShowGatingAlert_Tooltip>有効にすると、ハードコア/ナイトメアモードで入植者が必要な道具を持っていないため作業できない場合にアラートが表示されます。</Settings_ShowGatingAlert_Tooltip>
+    <Settings_HideGlobalStatInAlert>道具不足アラートから「全般」ステータスを非表示</Settings_HideGlobalStatInAlert>
+    <Settings_HideGlobalStatInAlert_Tooltip>有効にすると、「入植者が必要なツールを欠いている」アラートからWorkSpeedGlobalステータスがフィルタリングされます。全般ステータス（多目的石器、彫刻された骨製道具、職人の道具箱など）は持続的に不足していて、特定の作業ステータスよりも実行可能性が低いため、これによりアラートの煩雑さが軽減されます。特定の道具要件に焦点を当てたより明確なアラートを得るには、これを有効にしてください。</Settings_HideGlobalStatInAlert_Tooltip>
+    <Settings_EnforceOnModeChange>難易度変更時に無効になったジョブをキャンセル</Settings_EnforceOnModeChange>
+    <Settings_EnforceOnModeChange_Tooltip>有効にすると、ハードコアまたはナイトメアモードに切り替えたときに、道具制限によってブロックされる実行中のジョブが自動的にキャンセルされます。</Settings_EnforceOnModeChange_Tooltip>
+
+    <!-- Gating enforcer messages -->
+    <ST_Gate_ModeChanged>難易度モードが変更されました</ST_Gate_ModeChanged>
+</LanguageData>

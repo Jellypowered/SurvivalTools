@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+    <!-- Job gating failure message -->
+    <ST_Gate_MissingToolStat>Nécessite un outil pour {0} pour faire {1}.</ST_Gate_MissingToolStat>
+
+    <!-- Tool gating alert -->
+    <ST_Alert_ToolGating_Label>Restriction d'outils</ST_Alert_ToolGating_Label>
+    <ST_Alert_ToolGating_AndMore>et {0} de plus</ST_Alert_ToolGating_AndMore>
+
+    <!-- Work type labels for alert -->
+    <ST_Alert_WorkType_Mining>Minage</ST_Alert_WorkType_Mining>
+    <ST_Alert_WorkType_Construction>Construction</ST_Alert_WorkType_Construction>
+    <ST_Alert_WorkType_PlantCutting>Coupe de plantes</ST_Alert_WorkType_PlantCutting>
+    <ST_Alert_WorkType_PlantHarvest>Récolte de plantes</ST_Alert_WorkType_PlantHarvest>
+    <ST_Alert_WorkType_Smithing>Forge</ST_Alert_WorkType_Smithing>
+
+    <!-- Settings UI -->
+    <Settings_ShowGatingAlert>Afficher l'alerte 'Restriction d'outils'</Settings_ShowGatingAlert>
+    <Settings_ShowGatingAlert_Tooltip>Lorsqu'activé, affiche une alerte lorsque les colons ne peuvent pas travailler en raison d'outils requis manquants en modes Difficile/Cauchemar.</Settings_ShowGatingAlert_Tooltip>
+    <Settings_HideGlobalStatInAlert>Masquer la statistique 'Globale' dans l'alerte d'outils manquants</Settings_HideGlobalStatInAlert>
+    <Settings_HideGlobalStatInAlert_Tooltip>Lorsqu'activé, filtre la statistique WorkSpeedGlobal de l'alerte "Les colons manquent d'outils essentiels". Cela réduit l'encombrement des alertes car la statistique Globale (outils en pierre multifonctions, outils en os sculptés, boîte à outils d'artisan, etc.) peut manquer de manière persistante et être moins actionnable que les statistiques de travail spécifiques. Activez ceci pour une alerte plus claire axée sur les besoins en outils spécifiques.</Settings_HideGlobalStatInAlert_Tooltip>
+    <Settings_EnforceOnModeChange>Annuler les travaux désormais invalides lors du changement de difficulté</Settings_EnforceOnModeChange>
+    <Settings_EnforceOnModeChange_Tooltip>Lorsqu'activé, annule automatiquement les travaux en cours qui seraient bloqués par la restriction d'outils lors du passage en mode Difficile ou Cauchemar.</Settings_EnforceOnModeChange_Tooltip>
+
+    <!-- Gating enforcer messages -->
+    <ST_Gate_ModeChanged>Le mode de difficulté a changé</ST_Gate_ModeChanged>
+</LanguageData>
