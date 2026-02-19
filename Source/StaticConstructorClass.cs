@@ -47,6 +47,9 @@ namespace SurvivalTools
                 // 5) Warm settings cache (optional/perf)
                 SurvivalToolsMod.InitializeSettings();
 
+                // 5a) Log all settings for troubleshooting
+                SurvivalToolsMod.Settings?.LogAllSettings();
+
                 // 6) Apply conditional feature registration
                 ConditionalRegistration.ApplyTreeFellingConditionals();
 

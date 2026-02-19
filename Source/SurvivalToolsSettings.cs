@@ -157,6 +157,79 @@ namespace SurvivalTools
             _cacheInitialized = false;
         }
 
+        /// <summary>
+        /// Log all current mod settings to help diagnose issues.
+        /// Always logs to console regardless of debug settings to help users troubleshoot.
+        /// </summary>
+        public void LogAllSettings()
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("=== [SurvivalTools] Current Settings ===");
+            sb.AppendLine($"Difficulty Mode: {CurrentMode}");
+            sb.AppendLine($"  hardcoreMode: {hardcoreMode}");
+            sb.AppendLine($"  extraHardcoreMode: {extraHardcoreMode}");
+            sb.AppendLine("");
+
+            sb.AppendLine("Core Settings:");
+            sb.AppendLine($"  toolMapGen: {toolMapGen}");
+            sb.AppendLine($"  toolLimit: {toolLimit}");
+            sb.AppendLine($"  toolDegradationFactor: {toolDegradationFactor}");
+            sb.AppendLine($"  pickupFromStorageOnly: {pickupFromStorageOnly}");
+            sb.AppendLine($"  allowPacifistEquip: {allowPacifistEquip}");
+            sb.AppendLine("");
+
+            sb.AppendLine("Logging (DEBUG only):");
+            sb.AppendLine($"  debugLogging: {debugLogging}");
+            sb.AppendLine($"  compatLogging: {compatLogging}");
+            sb.AppendLine($"  profileFloatMenuPerformance: {profileFloatMenuPerformance}");
+            sb.AppendLine($"  enableModTagging: {enableModTagging}");
+            sb.AppendLine("");
+
+            sb.AppendLine("Normal Mode Settings:");
+            sb.AppendLine($"  enableNormalModePenalties: {enableNormalModePenalties}");
+            sb.AppendLine($"  noToolStatFactorNormal: {noToolStatFactorNormal}");
+            sb.AppendLine($"  useQualityToolScaling: {useQualityToolScaling}");
+            sb.AppendLine("");
+
+            sb.AppendLine("Tree Felling:");
+            sb.AppendLine($"  enableSurvivalToolTreeFelling: {enableSurvivalToolTreeFelling}");
+            sb.AppendLine("");
+
+            sb.AppendLine("Optional Tool Requirements:");
+            sb.AppendLine($"  requireCleaningTools: {requireCleaningTools}");
+            sb.AppendLine($"  requireButcheryTools: {requireButcheryTools}");
+            sb.AppendLine($"  requireMedicalTools: {requireMedicalTools}");
+            sb.AppendLine("");
+
+            sb.AppendLine("Assignment System:");
+            sb.AppendLine($"  enableAssignments: {enableAssignments}");
+            sb.AppendLine($"  assignMinGainPct: {assignMinGainPct}");
+            sb.AppendLine($"  assignSearchRadius: {assignSearchRadius}");
+            sb.AppendLine($"  assignPathCostBudget: {assignPathCostBudget}");
+            sb.AppendLine($"  assignRescueOnGate: {assignRescueOnGate}");
+            sb.AppendLine($"  enableRightClickRescue: {enableRightClickRescue}");
+            sb.AppendLine("");
+
+            sb.AppendLine("UI/QoL:");
+            sb.AppendLine($"  showUpgradeSuggestions: {showUpgradeSuggestions}");
+            sb.AppendLine($"  showDenialMotes: {showDenialMotes}");
+            sb.AppendLine($"  showGatingAlert: {showGatingAlert}");
+            sb.AppendLine($"  toolGateAlertMinTicks: {toolGateAlertMinTicks}");
+            sb.AppendLine("");
+
+            sb.AppendLine("Compatibility:");
+            sb.AppendLine($"  enableRRCompatibility: {enableRRCompatibility}");
+            sb.AppendLine($"  rrResearchRequiredInExtraHardcore: {rrResearchRequiredInExtraHardcore}");
+            sb.AppendLine($"  rrFieldResearchRequiredInExtraHardcore: {rrFieldResearchRequiredInExtraHardcore}");
+            sb.AppendLine("");
+
+            sb.AppendLine("Other:");
+            sb.AppendLine($"  enforceOnModeChange: {enforceOnModeChange}");
+            sb.AppendLine("=====================================");
+
+            Log.Message(sb.ToString());
+        }
+
         public bool HasCleaningTools => _hasCleaningToolsCache ?? false;
         public bool HasButcheryTools => _hasButcheryToolsCache ?? false;
         public bool HasMedicalTools => _hasMedicalToolsCache ?? false;
@@ -211,6 +284,13 @@ namespace SurvivalTools
             Scribe_Values.Look(ref toolGateAlertMinTicks, nameof(toolGateAlertMinTicks), 1500);
             Scribe_Values.Look(ref enforceOnModeChange, nameof(enforceOnModeChange), true);
             Scribe_Values.Look(ref enableRightClickRescue, nameof(enableRightClickRescue), true);
+
+            // Phase 6: Assignment system settings
+            Scribe_Values.Look(ref enableAssignments, nameof(enableAssignments), true);
+            Scribe_Values.Look(ref assignMinGainPct, nameof(assignMinGainPct), 0.1f);
+            Scribe_Values.Look(ref assignSearchRadius, nameof(assignSearchRadius), 25f);
+            Scribe_Values.Look(ref assignPathCostBudget, nameof(assignPathCostBudget), 500);
+            Scribe_Values.Look(ref assignRescueOnGate, nameof(assignRescueOnGate), true);
 
             /* BATTERY SYSTEM DISABLED - Phase 12 save/load removed
             // Phase 12: Powered tools
