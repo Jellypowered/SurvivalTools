@@ -887,8 +887,9 @@ namespace SurvivalTools.Assign
 
                 foreach (var thing in zone.AllContainedThings)
                 {
-                    // Skip forbidden items up front to avoid wasted evaluation
-                    if (thing != null && !thing.IsForbidden(pawn) && IsValidTool(thing, workStat) &&
+                    // Skip forbidden items UNLESS pawn is being gated (can't work without tool)
+                    // In gating rescue, automatically unforbid tools so pawn can work
+                    if (thing != null && (needsGatingRescue || !thing.IsForbidden(pawn)) && IsValidTool(thing, workStat) &&
                         IsWithinRadius(pawn.Position, thing.Position, radius))
                     {
                         _stockpileBuffer.Add(thing);
@@ -908,20 +909,23 @@ namespace SurvivalTools.Assign
             var homeArea = pawn.Map.areaManager.Home;
             var listerThings = pawn.Map.listerThings;
 
-            // Search tools in home area
-            var toolDefs = GetRelevantToolDefs(workStat);
+            // Search ALL survival tool defs (not just stat-specific ones)
+            // This ensures we find all tools on the map, matching SearchStockpiles behavior
+            var allToolDefs = GetAllSurvivalToolDefs();
             _candidateBuffer.Clear();
 
-            for (int i = 0; i < toolDefs.Count; i++)
+            for (int i = 0; i < allToolDefs.Count; i++)
             {
-                var toolDef = toolDefs[i];
+                var toolDef = allToolDefs[i];
                 var thingsOfDef = listerThings.ThingsOfDef(toolDef);
 
                 for (int j = 0; j < thingsOfDef.Count; j++)
                 {
                     var thing = thingsOfDef[j];
-                    // Skip forbidden items up front to avoid wasted evaluation
-                    if (thing != null && !thing.IsForbidden(pawn) && homeArea[thing.Position] &&
+
+                    // Skip forbidden items UNLESS pawn is being gated (can't work without tool)
+                    // In gating rescue, automatically unforbid tools so pawn can work
+                    if (thing != null && (needsGatingRescue || !thing.IsForbidden(pawn)) && homeArea[thing.Position] &&
                         IsWithinRadius(pawn.Position, thing.Position, radius) &&
                         IsValidTool(thing, workStat))
                     {
@@ -940,19 +944,23 @@ namespace SurvivalTools.Assign
                 return;
 
             var listerThings = pawn.Map.listerThings;
-            var toolDefs = GetRelevantToolDefs(workStat);
 
+            // Search ALL survival tool defs (not just stat-specific ones)
+            // This ensures we find all tools on the map, matching SearchStockpiles behavior
+            var allToolDefs = GetAllSurvivalToolDefs();
             _candidateBuffer.Clear();
-            for (int i = 0; i < toolDefs.Count; i++)
+
+            for (int i = 0; i < allToolDefs.Count; i++)
             {
-                var toolDef = toolDefs[i];
+                var toolDef = allToolDefs[i];
                 var thingsOfDef = listerThings.ThingsOfDef(toolDef);
 
                 for (int j = 0; j < thingsOfDef.Count; j++)
                 {
                     var thing = thingsOfDef[j];
-                    // Skip forbidden items up front to avoid wasted evaluation
-                    if (thing != null && !thing.IsForbidden(pawn) && IsWithinRadius(pawn.Position, thing.Position, radius) &&
+                    // Skip forbidden items UNLESS pawn is being gated (can't work without tool)
+                    // In gating rescue, automatically unforbid tools so pawn can work
+                    if (thing != null && (needsGatingRescue || !thing.IsForbidden(pawn)) && IsWithinRadius(pawn.Position, thing.Position, radius) &&
                         IsValidTool(thing, workStat))
                     {
                         _candidateBuffer.Add(thing);
@@ -1192,6 +1200,22 @@ namespace SurvivalTools.Assign
             {
                 LogDebug($"Tool became null or destroyed before job creation for {pawn.LabelShort}", "AssignmentSearch.ToolInvalidBeforeJob");
                 return false;
+            }
+
+            // GATING RESCUE: If tool is forbidden and assignRescueOnGate is enabled, automatically unforbid it
+            // This handles the case where map-gen tools spawn as forbidden and prevent pawns from working
+            if (settings?.assignRescueOnGate == true && tool.IsForbidden(pawn.Faction))
+            {
+                try
+                {
+                    tool.SetForbidden(false, false);
+                    LogDebug($"[SurvivalTools.GatingRescue] Automatically unforbid {tool.LabelShort} to enable {pawn.LabelShort} to work", "AssignmentSearch.UnforbidForGating");
+                }
+                catch (Exception ex)
+                {
+                    LogWarning($"[SurvivalTools.GatingRescue] Failed to unforbid {tool?.LabelShort ?? "null"}: {ex.Message}");
+                    // Continue anyway - pawn might still be able to use it
+                }
             }
 
             Job job = null;
@@ -2142,6 +2166,7 @@ namespace SurvivalTools.Assign
 
         // Cache for GetRelevantToolDefs to avoid repeated DefDatabase queries
         private static readonly Dictionary<StatDef, List<ThingDef>> _relevantToolDefsCache = new Dictionary<StatDef, List<ThingDef>>();
+        private static List<ThingDef> _allSurvivalToolDefs = new List<ThingDef>();
         private static bool _relevantToolDefsCacheBuilt = false;
 
         /// <summary>
@@ -2155,6 +2180,18 @@ namespace SurvivalTools.Assign
                 BuildRelevantToolDefsCache();
                 _relevantToolDefsCacheBuilt = true;
             }
+        }
+
+        private static List<ThingDef> GetAllSurvivalToolDefs()
+        {
+            // Build cache on first use (fallback if pre-warming didn't run)
+            if (!_relevantToolDefsCacheBuilt)
+            {
+                BuildRelevantToolDefsCache();
+                _relevantToolDefsCacheBuilt = true;
+            }
+
+            return _allSurvivalToolDefs;
         }
 
         private static List<ThingDef> GetRelevantToolDefs(StatDef workStat)
@@ -2189,6 +2226,9 @@ namespace SurvivalTools.Assign
                     allToolDefs.Add(toolDef);
                 }
             }
+
+            // Store the complete list for search functions
+            _allSurvivalToolDefs = allToolDefs;
 
             // Build cache for each registered work stat
             var workStats = new[]
