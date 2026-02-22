@@ -13,7 +13,6 @@ namespace SurvivalTools
     public class JobDriver_DropSurvivalTool : JobDriver
     {
         private const int DurationTicks = 15;
-        private IntVec3 _preferredDropCell = IntVec3.Invalid;
 
         private Thing ToolToDrop => job?.targetA.Thing;
 
@@ -22,18 +21,19 @@ namespace SurvivalTools
         protected override IEnumerable<Toil> MakeNewToils()
         {
             this.FailOnDestroyedOrNull(TargetIndex.A);
+            
+            // Fix: Add standard fail conditions to prevent pawns getting stuck
+            this.FailOn(() => pawn.Downed);
+            this.FailOn(() => pawn.Drafted);
+            this.FailOn(() => pawn.InMentalState);
 
             // Cache map reference for performance
             var map = pawn?.Map;
 
-            // Determine where to drop: storage → stockpile → home area → current position
-            ComputePreferredDropCell();
-
-            // Move to preferred drop cell if needed
-            if (_preferredDropCell.IsValid && _preferredDropCell != pawn.Position)
-            {
-                yield return Toils_Goto.GotoCell(_preferredDropCell, PathEndMode.OnCell);
-            }
+            // Fix: Simplified drop logic - always drop at current position, then haul to storage
+            // This prevents pathfinding failures from causing pawns to freeze
+            // Original complex logic: try to path to storage/home cell before dropping
+            // New simple logic: drop here, THEN enqueue haul job if storage exists
 
             yield return Toils_General.Wait(DurationTicks, TargetIndex.None);
 
@@ -216,8 +216,9 @@ namespace SurvivalTools
                 }
                 catch { }
 
-                // Try to find storage cell and enqueue haul job if appropriate (only if we didn't drop into storage already)
-                if (TryFindStorageForTool(droppedTool, out IntVec3 storageCell) && (!_preferredDropCell.IsValid || storageCell != _preferredDropCell))
+                // Fix: Simplified haul logic - try to find storage and enqueue haul job
+                // This happens AFTER dropping, so we never get stuck pathing to storage
+                if (TryFindStorageForTool(droppedTool, out IntVec3 storageCell))
                 {
                     var haulJob = JobMaker.MakeJob(JobDefOf.HaulToCell, droppedTool, storageCell);
                     haulJob.count = 1;
@@ -225,50 +226,6 @@ namespace SurvivalTools
                         pawn.jobs.jobQueue.EnqueueFirst(haulJob);
                 }
             });
-        }
-
-        private void ComputePreferredDropCell()
-        {
-            _preferredDropCell = pawn.Position;
-            if (pawn?.Map == null) return;
-
-            var tool = ToolToDrop ?? (job?.targetA.Thing);
-            // 1) Storage
-            if (TryFindStorageForTool(tool, out var storageCell))
-            {
-                _preferredDropCell = storageCell; return;
-            }
-            // 2) Home area near pawn
-            if (TryFindNearbyHomeCell(out var homeCell))
-            {
-                _preferredDropCell = homeCell; return;
-            }
-            // 3) Fallback: current position
-            _preferredDropCell = pawn.Position;
-        }
-
-        private bool TryFindNearbyHomeCell(out IntVec3 cell)
-        {
-            cell = IntVec3.Invalid;
-            var map = pawn.Map;
-            var home = map?.areaManager?.Home;
-            if (home == null) return false;
-
-            // Search a small radius for a standable, reachable home cell
-            int maxRadius = 12;
-            for (int r = 0; r <= maxRadius; r++)
-            {
-                var ring = GenRadial.RadialCellsAround(pawn.Position, r, true);
-                foreach (var c in ring)
-                {
-                    if (!c.InBounds(map)) continue;
-                    if (!home[c]) continue;
-                    if (!c.Standable(map)) continue;
-                    if (!pawn.CanReserveAndReach(c, PathEndMode.OnCell, Danger.Deadly)) continue;
-                    cell = c; return true;
-                }
-            }
-            return false;
         }
 
         private bool TryFindStorageForTool(Thing tool, out IntVec3 storageCell)
@@ -279,12 +236,14 @@ namespace SurvivalTools
             var map = pawn.Map;
             var faction = pawn.Faction;
 
+            // 1) Try to find proper storage
             if (StoreUtility.TryFindBestBetterStoreCellFor(tool, pawn, map, StoreUtility.CurrentStoragePriorityOf(tool), faction, out storageCell))
                 return true;
 
             if (StoreUtility.TryFindBestBetterStoreCellFor(tool, pawn, map, StoragePriority.Unstored, faction, out storageCell))
                 return true;
 
+            // 2) Try to find a stockpile that accepts this tool
             var stockpiles = map.zoneManager.AllZones.OfType<Zone_Stockpile>();
             foreach (var stockpile in stockpiles)
             {
@@ -299,6 +258,27 @@ namespace SurvivalTools
                 {
                     storageCell = validCell;
                     return true;
+                }
+            }
+
+            // 3) Fallback: if no storage/stockpile, at least haul to nearby home area
+            var home = map.areaManager?.Home;
+            if (home != null)
+            {
+                // Search a small radius for a standable, reachable home cell
+                int maxRadius = 12;
+                for (int r = 0; r <= maxRadius; r++)
+                {
+                    var ring = GenRadial.RadialCellsAround(pawn.Position, r, true);
+                    foreach (var c in ring)
+                    {
+                        if (!c.InBounds(map)) continue;
+                        if (!home[c]) continue;
+                        if (!c.Standable(map)) continue;
+                        if (!pawn.CanReserveAndReach(c, PathEndMode.OnCell, Danger.Deadly)) continue;
+                        storageCell = c;
+                        return true;
+                    }
                 }
             }
 
