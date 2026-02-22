@@ -137,14 +137,16 @@ namespace SurvivalTools.Assign
                     continue;
                 }
                 // If keeper list already full and keeperOrNull consumed slot ensure total size==allowed
-                if (_keepers.Count > allowed) TrimKeepers(allowed, pawn);
+                if (_keepers.Count > allowed) TrimKeepers(allowed, pawn, keeperOrNull);
                 if (_keepers.Count < allowed) { _keepers.Add(t); continue; }
-                // compare with worst
-                int worstIdx = FindWorstKeeperIndex(pawn);
+                // compare with worst, but never replace the explicitly specified keeperOrNull
+                int worstIdx = FindWorstKeeperIndex(pawn, keeperOrNull);
                 var worst = _keepers[worstIdx];
+                // BUGFIX: Don't replace keeperOrNull - it's locked in
+                if (worst == keeperOrNull) continue;
                 if (BetterThan(pawn, t, worst)) _keepers[worstIdx] = t;
             }
-            if (_keepers.Count > allowed) TrimKeepers(allowed, pawn);
+            if (_keepers.Count > allowed) TrimKeepers(allowed, pawn, keeperOrNull);
         }
 
         private static bool BetterThan(Pawn pawn, Thing a, Thing b)
@@ -157,22 +159,25 @@ namespace SurvivalTools.Assign
             return a.thingIDNumber < b.thingIDNumber; // lower id deterministic
         }
 
-        private static int FindWorstKeeperIndex(Pawn pawn)
+        private static int FindWorstKeeperIndex(Pawn pawn, Thing keeperOrNull)
         {
             int idx = 0; Thing worst = _keepers[0];
+            // Skip keeperOrNull when finding worst
+            if (worst == keeperOrNull && _keepers.Count > 1) { idx = 1; worst = _keepers[1]; }
             for (int i = 1; i < _keepers.Count; i++)
             {
                 var t = _keepers[i];
-                if (BetterThan(pawn, worst, t)) { idx = i; worst = t; }
+                if (t == keeperOrNull) continue; // Never select keeperOrNull as worst
+                if (worst == keeperOrNull || BetterThan(pawn, worst, t)) { idx = i; worst = t; }
             }
             return idx;
         }
 
-        private static void TrimKeepers(int allowed, Pawn pawn)
+        private static void TrimKeepers(int allowed, Pawn pawn, Thing keeperOrNull)
         {
             while (_keepers.Count > allowed)
             {
-                int worst = FindWorstKeeperIndex(pawn);
+                int worst = FindWorstKeeperIndex(pawn, keeperOrNull);
                 _keepers.RemoveAt(worst);
             }
         }

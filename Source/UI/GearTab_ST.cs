@@ -73,7 +73,7 @@ namespace SurvivalTools.UI
                 if (!_panelExpanded)
                     return 32f; // Just enough for a toggle button
 
-                float baseWidth = 380f;
+                float baseWidth = 480f; // Increased width to prevent text cutoff
                 return baseWidth * Prefs.UIScale;
             }
         }
@@ -254,12 +254,12 @@ namespace SurvivalTools.UI
             // Draw tool label with slight emphasis
             GUI.color = new Color(0.95f, 0.95f, 1f);
             var labelWidth = Text.CalcSize(toolInfo.Label).x + 10f;
-            var labelRect = new Rect(line1Rect.x, line1Rect.y, labelWidth, line1Rect.height);
+            var labelRect = new Rect(line1Rect.x, line1Rect.y, Mathf.Min(labelWidth, line1Rect.width * 0.4f), line1Rect.height);
             Widgets.Label(labelRect, toolInfo.Label);
             GUI.color = Color.white;
 
-            // Draw scores with color based on quality
-            var scoreRect = new Rect(labelRect.xMax + 8f, line1Rect.y, line1Rect.width - labelWidth - 8f, line1Rect.height);
+            // Draw scores with color based on quality (use remaining width)
+            var scoreRect = new Rect(labelRect.xMax + 8f, line1Rect.y, line1Rect.xMax - labelRect.xMax - 8f, line1Rect.height);
             Text.Anchor = TextAnchor.MiddleRight;
 
             // Color score based on whether it shows bonuses or penalties
@@ -489,21 +489,17 @@ namespace SurvivalTools.UI
                 var score = Scoring.ToolScoring.Score(tool, pawn, stat);
                 if (score > 0.001f)
                 {
-                    // Format as clear speed change with direction
-                    var percentChange = (score - 1f) * 100f;
-                    string speedText;
-                    if (percentChange > 0.5f)
-                        speedText = $"{percentChange:F0}% faster";
-                    else if (percentChange < -0.5f)
-                        speedText = $"{Math.Abs(percentChange):F0}% slower";
-                    else
-                        speedText = "no change";
+                    // Get tool stat info for absolute efficiency display
+                    var statInfo = Helpers.ToolStatResolver.GetToolStatInfo(tool.def, tool.Stuff, stat);
+                    
+                    // Show absolute efficiency as percentage
+                    float efficiencyPercent = statInfo.Factor * 100f;
+                    string efficiencyText = $"{efficiencyPercent:F0}% efficiency";
 
                     if (scoreBuilder.Length > 0) scoreBuilder.Append(", ");
-                    scoreBuilder.Append($"{GetStatShortName(stat)}: {speedText}");
+                    scoreBuilder.Append($"{GetStatShortName(stat)}: {efficiencyText}");
 
                     // Build clearer tooltip and why text using ToolStatInfo
-                    var statInfo = Helpers.ToolStatResolver.GetToolStatInfo(tool.def, tool.Stuff, stat);
                     var toolBonus = (statInfo.Factor - 1f) * 100f;
 
                     // Get source description for why text

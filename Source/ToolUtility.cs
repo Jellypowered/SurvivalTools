@@ -150,6 +150,14 @@ namespace SurvivalTools
         {
             if (t == null || t.def == null) return STToolKind.None;
 
+            // If it's an actual SurvivalTool instance, check its WorkStatFactors first
+            if (t is SurvivalTool st && st.WorkStatFactors != null)
+            {
+                var stats = st.WorkStatFactors.Where(m => m?.stat != null).Select(m => m.stat).ToList();
+                var kindFromStats = KindForStats(stats);
+                if (kindFromStats != STToolKind.None) return kindFromStats;
+            }
+
             // Tool-stuff: infer kind from provided stats
             if (t.def.IsToolStuff())
             {

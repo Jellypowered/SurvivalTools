@@ -21,7 +21,7 @@ namespace SurvivalTools
         protected override IEnumerable<Toil> MakeNewToils()
         {
             this.FailOnDestroyedOrNull(TargetIndex.A);
-            
+
             // Fix: Add standard fail conditions to prevent pawns getting stuck
             this.FailOn(() => pawn.Downed);
             this.FailOn(() => pawn.Drafted);

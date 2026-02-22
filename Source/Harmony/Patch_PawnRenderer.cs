@@ -12,7 +12,7 @@
 //   - Skips portrait / invisible renders and invalid pawn states.
 //   - Skips drafted pawns unless they're actually performing a work job (i.e., relevant stats exist).
 //   - Avoids double-drawing if the same physical item is already shown as Primary.
-//   - Uses a small JobDef â†’ required-stats cache to reduce allocations.
+
 //
 // Future ideas (comments only, not implemented):
 //   - Animated tools (e.g., swinging pick/axe, wrench turning, microscope oscillation).
@@ -34,20 +34,8 @@ namespace SurvivalTools.HarmonyStuff
 {
     [HarmonyPatch(typeof(PawnRenderUtility), nameof(PawnRenderUtility.DrawEquipmentAndApparelExtras))]
     [HarmonyPriority(Priority.Last)] // draw last so our overlay isn't hidden by other mods
-    [StaticConstructorOnStartup]     // ensure our type gets initialized at load
     public static class ShowWhileWorking_Draw_Postfix
     {
-        // Cache: JobDef -> required stats to avoid repeat lookups/allocations.
-        private static readonly Dictionary<JobDef, List<StatDef>> _jobStatCache =
-            new Dictionary<JobDef, List<StatDef>>();
-
-        // Optional: static ctor (no reload hook in 1.6 â€” we just start empty)
-        static ShowWhileWorking_Draw_Postfix()
-        {
-            _jobStatCache.Clear();
-            // If you later add a reload hook, clear the cache there as well.
-        }
-
         [HarmonyPostfix]
         public static void Postfix(Pawn pawn, Vector3 drawPos, Rot4 facing, PawnRenderFlags flags)
         {
@@ -208,12 +196,8 @@ namespace SurvivalTools.HarmonyStuff
             if (pawn == null || job == null || !PawnToolValidator.CanUseSurvivalTools(pawn))
                 return (null, null);
 
-            // Cache lookup
-            if (!_jobStatCache.TryGetValue(job.def, out var requiredStats))
-            {
-                requiredStats = SurvivalToolUtility.RelevantStatsFor(job.workGiverDef, job) ?? new List<StatDef>();
-                _jobStatCache[job.def] = requiredStats;
-            }
+            // Get required stats (don't cache - workGiverDef can vary for same JobDef)
+            var requiredStats = SurvivalToolUtility.RelevantStatsFor(job.workGiverDef, job) ?? new List<StatDef>();
 
             // If no relevant stats, nothing to draw (also filters out most drafted non-work jobs).
             if (requiredStats == null || requiredStats.Count == 0)
