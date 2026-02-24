@@ -50,7 +50,7 @@ namespace SurvivalTools
             if (dn.Contains("hoe")) return STToolKind.Hoe;
             if (dn.Contains("saw")) return STToolKind.Saw;
             if (dn.Contains("knife")) return STToolKind.Knife;
-
+            if (dn.Contains("flintscraper")) return STToolKind.Knife;
             return STToolKind.None;
         }
 
