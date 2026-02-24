@@ -88,58 +88,65 @@ namespace SurvivalTools.HarmonyStuff
             // Tint virtual tools by work-type (green medical, red butchery, etc.)
             Color virtualTint = GetTintForVirtualTool(toolThing, requiredStats);
 
-            if (canAim)
+            try
             {
-                // --- Aiming-style draw (reuses vanilla orientation logic) ---
-                Vector3 target = stanceBusy.focusTarg.HasThing
-                    ? (stanceBusy.focusTarg.Thing?.DrawPos ?? pawn.DrawPos)
-                    : stanceBusy.focusTarg.Cell.ToVector3Shifted();
-
-                float aimAngle = 0f;
-                Vector3 delta = target - pawn.DrawPos;
-                if (delta.sqrMagnitude > 0.001f)
-                    aimAngle = delta.AngleFlat();
-
-                var verb = pawn.CurrentEffectiveVerb;
-                if (verb != null && verb.AimAngleOverride.HasValue)
-                    aimAngle = verb.AimAngleOverride.Value;
-
-                float eqOffset = toolThing.def?.equippedDistanceOffset ?? 0f;
-                drawPos += new Vector3(0f, 0f, 0.4f + eqOffset).RotatedBy(aimAngle) * distFactor;
-
-                if (toolThing is VirtualTool)
+                if (canAim)
                 {
-                    DrawVirtualTool(toolThing, drawPos, Quaternion.AngleAxis(aimAngle, Vector3.up), virtualTint);
+                    // --- Aiming-style draw (reuses vanilla orientation logic) ---
+                    Vector3 target = stanceBusy.focusTarg.HasThing
+                        ? (stanceBusy.focusTarg.Thing?.DrawPos ?? pawn.DrawPos)
+                        : stanceBusy.focusTarg.Cell.ToVector3Shifted();
 
-                    // Animation hook (future):
-                    //  - For â€œswingingâ€ tools, vary a small extra rotation (e.g., +/- 10Â°) with a sin wave
-                    //    tied to pawn tick: float wobble = Mathf.Sin(Time.time * 6f) * 10f;
-                    //  - Apply to 'aimAngle' before building the Quaternion.
+                    float aimAngle = 0f;
+                    Vector3 delta = target - pawn.DrawPos;
+                    if (delta.sqrMagnitude > 0.001f)
+                        aimAngle = delta.AngleFlat();
+
+                    var verb = pawn.CurrentEffectiveVerb;
+                    if (verb != null && verb.AimAngleOverride.HasValue)
+                        aimAngle = verb.AimAngleOverride.Value;
+
+                    float eqOffset = toolThing.def?.equippedDistanceOffset ?? 0f;
+                    drawPos += new Vector3(0f, 0f, 0.4f + eqOffset).RotatedBy(aimAngle) * distFactor;
+
+                    if (toolThing is VirtualTool)
+                    {
+                        DrawVirtualTool(toolThing, drawPos, Quaternion.AngleAxis(aimAngle, Vector3.up), virtualTint);
+
+                        // Animation hook (future):
+                        //  - For â€œswingingâ€ tools, vary a small extra rotation (e.g., +/- 10Â°) with a sin wave
+                        //    tied to pawn tick: float wobble = Mathf.Sin(Time.time * 6f) * 10f;
+                        //  - Apply to 'aimAngle' before building the Quaternion.
+                    }
+                    else if (toolThing is ThingWithComps twc && twc.def != null && !twc.Destroyed)
+                    {
+                        PawnRenderUtility.DrawEquipmentAiming(twc, drawPos, aimAngle);
+                    }
                 }
-                else if (toolThing is ThingWithComps twc)
+                else
                 {
-                    PawnRenderUtility.DrawEquipmentAiming(twc, drawPos, aimAngle);
+                    // --- Carried-style draw (when not aiming) ---
+                    if (toolThing is VirtualTool)
+                    {
+                        DrawVirtualTool(toolThing, drawPos, Quaternion.identity, virtualTint);
+
+                        // Animation hook (future):
+                        //  - Subtle bobbing while working: offset drawPos.y or Z by a small sin wave.
+                        //  - Slight rotation oscillation to suggest use.
+                    }
+                    else if (toolThing is ThingWithComps twc && twc.def != null && !twc.Destroyed)
+                    {
+                        PawnRenderUtility.DrawCarriedWeapon(twc, drawPos, facing, distFactor);
+
+                        // Animation hook (future):
+                        //  - For hammers/saws, consider small periodic rotation around local Z.
+                        //  - Could keyframe based on job progress if available.
+                    }
                 }
             }
-            else
+            catch
             {
-                // --- Carried-style draw (when not aiming) ---
-                if (toolThing is VirtualTool)
-                {
-                    DrawVirtualTool(toolThing, drawPos, Quaternion.identity, virtualTint);
-
-                    // Animation hook (future):
-                    //  - Subtle bobbing while working: offset drawPos.y or Z by a small sin wave.
-                    //  - Slight rotation oscillation to suggest use.
-                }
-                else if (toolThing is ThingWithComps twc)
-                {
-                    PawnRenderUtility.DrawCarriedWeapon(twc, drawPos, facing, distFactor);
-
-                    // Animation hook (future):
-                    //  - For hammers/saws, consider small periodic rotation around local Z.
-                    //  - Could keyframe based on job progress if available.
-                }
+                // Suppress rendering errors - better to skip drawing than crash
             }
         }
 
