@@ -41,6 +41,15 @@
     <Settings_AutoTool>Intelligente Werkzeugaufnahme vor der Arbeit</Settings_AutoTool>
     <Settings_AutoTool_Tooltip>Revolutioniert die Workflow-Effizienz, indem Kolonisten automatisch das optimale Werkzeug erhalten, bevor sie mit einer Arbeit beginnen. Sie tauschen intelligent Werkzeuge aus, upgraden zu besseren Varianten und sorgen dafür, dass sie die richtige Ausrüstung für maximale Produktivität haben. Die Grundlagenfunktion für nahtloses werkzeugbasiertes Gameplay.</Settings_AutoTool_Tooltip>
 
+    <Settings_NoToolPenalty>Arbeitsgeschwindigkeit ohne Werkzeuge</Settings_NoToolPenalty>
+    <Settings_NoToolPenalty_Tooltip>Steuert, wie effektiv Kolonisten sind, wenn sie ohne geeignete Werkzeuge im normalen Modus (nicht Hardcore) arbeiten. Bei 50% arbeiten Kolonisten mit halber Geschwindigkeit ohne Werkzeuge, was die Werkzeugnutzung fördert und das Spiel spielbar hält. Bei 100% wird keine Strafe angewendet (Vanilla-Verhalten). Bei 0% ist die Arbeit ohne Werkzeuge nahezu unmöglich (ähnlich wie Hardcore-Modus).</Settings_NoToolPenalty_Tooltip>
+
+    <Settings_ExcludeTemporaryPawns>Temporäre Kolonisten von Werkzeugaufnahme ausschließen</Settings_ExcludeTemporaryPawns>
+    <Settings_ExcludeTemporaryPawns_Tooltip>Verhindert, dass temporäre Kolonisten (Quest-Belohnungen, Besucher usw.) automatisch Werkzeuge aufheben. Dies stoppt sie daran, Ihre Werkzeuge zu stehlen, wenn sie gehen. Es wird empfohlen, dies aktiviert zu lassen, um den Verlust wertvoller Ausrüstung zu vermeiden.</Settings_ExcludeTemporaryPawns_Tooltip>
+
+    <Settings_AllowPacifistEquip>Pazifisten das Ausrüsten von Überlebenswerkzeugen erlauben</Settings_AllowPacifistEquip>
+    <Settings_AllowPacifistEquip_Tooltip>Ermöglicht pazifistischen Kolonisten (denen mit deaktivierter Gewaltarbeit), Überlebenswerkzeuge auszurüsten und zu verwenden, auch wenn viele Werkzeuge technisch als Waffen klassifiziert sind. Pazifisten können Spitzhacken zum Bergbau, Äxte zum Holzfällen und andere Arbeitswerkzeuge verwenden, ohne ihre gewaltfreien Prinzipien zu verletzen. Erlaubt ihnen nicht, diese Werkzeuge im Kampf zu verwenden.</Settings_AllowPacifistEquip_Tooltip>
+
     <!-- Alerts -->
     <ColonistNeedsSurvivalTool>Kolonist benötigt unverzichtbare Werkzeuge</ColonistNeedsSurvivalTool>
     <ColonistsNeedSurvivalTool>Kolonisten benötigen unverzichtbare Werkzeuge</ColonistsNeedSurvivalTool>

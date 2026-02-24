@@ -1,23 +1,42 @@
+tasks.json
+
 {
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "BuildWindowsDLL",
+            "label": "BuildWindowsDLL: Debug",
             "type": "shell",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
             "command": ".vscode/build.bat",
+            "args": [
+                "${input:buildConfig}",
+                "${input:versionIncrement}"
+            ]
+        }
+    ],
+    "inputs": [
+        {
+            "id": "buildConfig",
+            "type": "pickString",
+            "description": "Select build configuration",
+            "options": [
+                "Debug",
+                "Release"
+            ],
+            "default": "Debug"
         },
         {
-            "label": "BuildLinuxDLL",
-            "type": "shell",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "command": ".vscode/build",
+            "id": "versionIncrement",
+            "type": "pickString",
+            "description": "Increment version number?",
+            "options": [
+                "",
+                "--no-version"
+            ],
+            "default": ""
         }
     ]
 }

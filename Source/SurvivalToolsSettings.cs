@@ -17,6 +17,15 @@ namespace SurvivalTools
         public bool debugLogging = false;
         public bool pickupFromStorageOnly = false;
 
+        // No-tool penalty multiplier (normal mode)
+        public float noToolStatFactor = 0.5f;
+
+        // Exclude temporary pawns (quest rewards, etc.) from auto tool pickup
+        public bool excludeTemporaryPawns = true;
+
+        // Allow pacifists to equip survival tools (even if IsWeapon)
+        public bool allowPacifistEquip = true;
+
         // Extra Hardcore Mode - requires tools for all work
         public bool extraHardcoreMode = false;
 
@@ -120,6 +129,9 @@ namespace SurvivalTools
             Scribe_Values.Look(ref debugLogging, nameof(debugLogging), false);
             Scribe_Values.Look(ref pickupFromStorageOnly, nameof(pickupFromStorageOnly), false);
             Scribe_Values.Look(ref autoTool, nameof(autoTool), true);
+            Scribe_Values.Look(ref noToolStatFactor, nameof(noToolStatFactor), 0.5f);
+            Scribe_Values.Look(ref excludeTemporaryPawns, nameof(excludeTemporaryPawns), true);
+            Scribe_Values.Look(ref allowPacifistEquip, nameof(allowPacifistEquip), true);
 
             // Extra Hardcore Mode settings
             Scribe_Values.Look(ref extraHardcoreMode, nameof(extraHardcoreMode), false);
@@ -222,6 +234,14 @@ namespace SurvivalTools
                 listing.Gap();
                 listing.CheckboxLabeled("Settings_PickupFromStorageOnly".Translate(), ref pickupFromStorageOnly, "Settings_PickupFromStorageOnly_Tooltip".Translate());
                 listing.Gap();
+
+                // No-tool penalty slider
+                var noToolLabel = "Settings_NoToolPenalty".Translate();
+                listing.Label(noToolLabel + ": " + noToolStatFactor.ToStringPercent());
+                noToolStatFactor = listing.Slider(noToolStatFactor, 0f, 1f);
+                noToolStatFactor = Mathf.Clamp(Mathf.Round(noToolStatFactor * 100f) / 100f, 0f, 1f);
+
+                listing.Gap();
                 // Degradation slider
                 var degrLabel = "Settings_ToolDegradationRate".Translate();
                 listing.Label(degrLabel + ": " + toolDegradationFactor.ToStringByStyle(ToStringStyle.FloatTwo, ToStringNumberSense.Factor));
@@ -230,6 +250,10 @@ namespace SurvivalTools
 
                 listing.Gap();
                 listing.CheckboxLabeled("Settings_AutoTool".Translate(), ref autoTool, "Settings_AutoTool_Tooltip".Translate());
+                listing.Gap();
+                listing.CheckboxLabeled("Settings_ExcludeTemporaryPawns".Translate(), ref excludeTemporaryPawns, "Settings_ExcludeTemporaryPawns_Tooltip".Translate());
+                listing.Gap();
+                listing.CheckboxLabeled("Settings_AllowPacifistEquip".Translate(), ref allowPacifistEquip, "Settings_AllowPacifistEquip_Tooltip".Translate());
                 listing.GapLine();
 
                 listing.Gap(6f);
@@ -257,6 +281,10 @@ namespace SurvivalTools
             toolOptimization = true;
             autoTool = true;
             debugLogging = false;
+            pickupFromStorageOnly = false;
+            noToolStatFactor = 0.5f;
+            excludeTemporaryPawns = true;
+            allowPacifistEquip = true;
 
             // Extra hardcore settings
             extraHardcoreMode = false;

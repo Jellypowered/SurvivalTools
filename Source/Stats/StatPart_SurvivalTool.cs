@@ -29,10 +29,11 @@ namespace SurvivalTools
         }
 
         public float NoToolStatFactor =>
-            SurvivalToolUtility.IsHardcoreModeEnabled ? noToolStatFactorHardcore : noToolStatFactor;
+            SurvivalToolUtility.IsHardcoreModeEnabled ? noToolStatFactorHardcore : (SurvivalTools.Settings?.noToolStatFactor ?? noToolStatFactor);
 
         // Default factor when no tool is used (non-hardcore).
-        private float noToolStatFactor = 0.3f;
+        // This is now configurable in settings, but kept as fallback
+        private float noToolStatFactor = 0.5f;
 
         // Factor when no tool is used in hardcore mode (usually 0).
         private float noToolStatFactorHardcore = 0f;

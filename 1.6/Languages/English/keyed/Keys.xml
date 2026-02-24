@@ -29,6 +29,9 @@
 
     <Settings_ToolDegradationRate>Tool degradation rate</Settings_ToolDegradationRate>
 
+    <Settings_NoToolPenalty>Work speed without tools</Settings_NoToolPenalty>
+    <Settings_NoToolPenalty_Tooltip>Controls how effective colonists are when working without proper tools in normal mode (not hardcore). At 50%, colonists work at half speed without tools, encouraging tool use while keeping the game playable. At 100%, no penalty is applied (vanilla behavior). At 0%, working without tools is nearly impossible (similar to hardcore mode).</Settings_NoToolPenalty_Tooltip>
+
     <Settings_ToolOptimization>Automatic tool optimization</Settings_ToolOptimization>
     <Settings_ToolOptimization_Tooltip>Enables intelligent tool management where colonists automatically select and carry the most effective tools for their assigned work. They'll upgrade to better tools and drop inferior ones as needed. Disable this if you prefer manual tool control or experience performance issues with modded materials.</Settings_ToolOptimization_Tooltip>
     <Settings_PickupFromStorageOnly>Restrict tool pickup to storage areas</Settings_PickupFromStorageOnly>
@@ -37,6 +40,12 @@
     <Settings_DebugLogging_Tooltip>Activates comprehensive logging of tool selection decisions, automatic pickup behavior, and job-tool matching logic. Essential for troubleshooting tool issues or understanding why colonists choose specific tools. Recommended only for mod development or when experiencing tool-related problems. May impact performance with extensive logging output.</Settings_DebugLogging_Tooltip>
     <Settings_AutoTool>Smart pre-work tool pickup</Settings_AutoTool>
     <Settings_AutoTool_Tooltip>Revolutionizes workflow efficiency by having colonists automatically acquire the optimal tool before starting any job. They'll intelligently swap tools, upgrade to better variants, and ensure they have the right equipment for maximum productivity. The cornerstone feature for seamless tool-based gameplay.</Settings_AutoTool_Tooltip>
+
+    <Settings_ExcludeTemporaryPawns>Exclude temporary pawns from tool pickup</Settings_ExcludeTemporaryPawns>
+    <Settings_ExcludeTemporaryPawns_Tooltip>Prevents temporary colonists (quest rewards, visitors, etc.) from automatically picking up tools. This stops them from stealing your tools when they leave. Recommended to keep enabled to avoid losing valuable equipment.</Settings_ExcludeTemporaryPawns_Tooltip>
+
+    <Settings_AllowPacifistEquip>Allow pacifists to equip survival tools</Settings_AllowPacifistEquip>
+    <Settings_AllowPacifistEquip_Tooltip>Enables pacifist colonists (those with violence work disabled) to equip and use survival tools, even though many tools are technically classified as weapons. Pacifists can use pickaxes for mining, axes for woodcutting, and other work tools without violating their non-violent principles. Does not allow them to use these tools in combat.</Settings_AllowPacifistEquip_Tooltip>
 
     <!-- Alerts -->
     <ColonistNeedsSurvivalTool>Colonist lacks essential tools</ColonistNeedsSurvivalTool>

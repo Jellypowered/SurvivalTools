@@ -29,6 +29,16 @@
   <Settings_DebugLogging_Tooltip>激活工具选择决策、自动拾取行为和工作-工具匹配逻辑的全面日志记录。对于故障排除工具问题或了解殖民者为什么选择特定工具至关重要。仅建议用于模组开发或遇到工具相关问题时使用。大量日志输出可能影响性能。</Settings_DebugLogging_Tooltip>
   <Settings_AutoTool>智能工作前工具拾取</Settings_AutoTool>
   <Settings_AutoTool_Tooltip>通过让殖民者在开始任何工作前自动获取最优工具来革命性地提高工作流程效率。他们会智能地交换工具、升级到更好的变体，并确保拥有合适的设备以实现最大生产力。基于工具的无缝游戏体验的核心功能。</Settings_AutoTool_Tooltip>
+
+  <Settings_NoToolPenalty>无工具工作速度</Settings_NoToolPenalty>
+  <Settings_NoToolPenalty_Tooltip>控制殖民者在普通模式（非极限模式）下没有合适工具时的工作效率。在50%时，殖民者无工具时以一半速度工作，鼓励使用工具同时保持游戏可玩性。在100%时，不施加惩罚（原版行为）。在0%时，无工具工作几乎不可能（类似极限模式）。</Settings_NoToolPenalty_Tooltip>
+
+  <Settings_ExcludeTemporaryPawns>排除临时殖民者自动获取工具</Settings_ExcludeTemporaryPawns>
+  <Settings_ExcludeTemporaryPawns_Tooltip>防止临时殖民者（任务奖励、访客等）自动拾取工具。这可以阻止他们离开时偷走你的工具。建议保持启用以避免失去宝贵的设备。</Settings_ExcludeTemporaryPawns_Tooltip>
+
+  <Settings_AllowPacifistEquip>允许和平主义者装备生存工具</Settings_AllowPacifistEquip>
+  <Settings_AllowPacifistEquip_Tooltip>允许和平主义殖民者（禁用暴力工作的人）装备和使用生存工具，即使许多工具在技术上被归类为武器。和平主义者可以使用镐进行采矿、斧头进行伐木以及其他工作工具，而不违反其非暴力原则。不允许他们在战斗中使用这些工具。</Settings_AllowPacifistEquip_Tooltip>
+
   <!-- Alerts -->
   <ColonistNeedsSurvivalTool>殖民者缺乏必要工具</ColonistNeedsSurvivalTool>
   <ColonistsNeedSurvivalTool>殖民者们缺乏必要工具</ColonistsNeedSurvivalTool>

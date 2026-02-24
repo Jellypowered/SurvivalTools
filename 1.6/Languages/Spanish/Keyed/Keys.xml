@@ -41,6 +41,15 @@
     <Settings_AutoTool>Recogida inteligente de herramientas pre-trabajo</Settings_AutoTool>
     <Settings_AutoTool_Tooltip>Revoluciona la eficiencia del flujo de trabajo haciendo que los colonos automáticamente adquieran la herramienta óptima antes de comenzar cualquier trabajo. Intercambian herramientas inteligentemente, mejoran a mejores variantes y aseguran tener el equipo correcto para máxima productividad. La función fundamental para gameplay basado en herramientas sin costuras.</Settings_AutoTool_Tooltip>
 
+    <Settings_NoToolPenalty>Velocidad de trabajo sin herramientas</Settings_NoToolPenalty>
+    <Settings_NoToolPenalty_Tooltip>Controla qué tan efectivos son los colonos cuando trabajan sin herramientas adecuadas en modo normal (no hardcore). Al 50%, los colonos trabajan a media velocidad sin herramientas, alentando el uso de herramientas mientras mantiene el juego jugable. Al 100%, no se aplica penalización (comportamiento vanilla). Al 0%, trabajar sin herramientas es casi imposible (similar al modo hardcore).</Settings_NoToolPenalty_Tooltip>
+
+    <Settings_ExcludeTemporaryPawns>Excluir colonos temporales de recogida de herramientas</Settings_ExcludeTemporaryPawns>
+    <Settings_ExcludeTemporaryPawns_Tooltip>Evita que los colonos temporales (recompensas de misiones, visitantes, etc.) recojan automáticamente herramientas. Esto evita que roben tus herramientas cuando se van. Se recomienda mantenerlo habilitado para evitar perder equipo valioso.</Settings_ExcludeTemporaryPawns_Tooltip>
+
+    <Settings_AllowPacifistEquip>Permitir a pacifistas equipar herramientas de supervivencia</Settings_AllowPacifistEquip>
+    <Settings_AllowPacifistEquip_Tooltip>Permite a los colonos pacifistas (aquellos con trabajo de violencia deshabilitado) equipar y usar herramientas de supervivencia, aunque muchas herramientas están técnicamente clasificadas como armas. Los pacifistas pueden usar picos para minar, hachas para talar madera y otras herramientas de trabajo sin violar sus principios no violentos. No les permite usar estas herramientas en combate.</Settings_AllowPacifistEquip_Tooltip>
+
     <!-- Alerts -->
     <ColonistNeedsSurvivalTool>El colono necesita herramientas esenciales</ColonistNeedsSurvivalTool>
     <ColonistsNeedSurvivalTool>Los colonos necesitan herramientas esenciales</ColonistsNeedSurvivalTool>

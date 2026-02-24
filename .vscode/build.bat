@@ -5,7 +5,26 @@ REM ================================
 REM Config
 REM ================================
 set "CURRENTVER=1.6"
-set "CONFIG=Release"
+REM Determine build configuration from arg/env/MSBuild (default: Release)
+set "_CONFIG_ARG=%~1"
+if defined _CONFIG_ARG (
+    set "CONFIG=%_CONFIG_ARG%"
+) else if defined Configuration (
+    REM Provided by MSBuild/VS (e.g., Debug/Release)
+    set "CONFIG=%Configuration%"
+) else if defined ConfigurationName (
+    REM Alternate MSBuild var
+    set "CONFIG=%ConfigurationName%"
+) else if not defined CONFIG (
+    set "CONFIG=Release"
+)
+set "_CONFIG_ARG="
+
+REM Check for --no-version flag to skip version increment (for local testing)
+set "SKIP_VERSION="
+if "%~2"=="--no-version" set "SKIP_VERSION=1"
+if "%~2"=="--noversion" set "SKIP_VERSION=1"
+if "%~2"=="/noversion" set "SKIP_VERSION=1"
 
 REM Local mirror output (second output)
 set "BASE=.\%CURRENTVER%\Assemblies"
@@ -50,7 +69,6 @@ if not defined MODS_PATH (
 
 echo RimWorld Mods path is: "%MODS_PATH%"
 
-
 REM ================================
 REM Read mod name from About/About.xml
 REM ================================
@@ -78,8 +96,8 @@ if exist "%OUTDIR%" (
     rmdir /s /q "%OUTDIR%"
 )
 if not exist "%OUTDIR%" (
-echo Creating output dir: "%OUTDIR%"
-mkdir "%OUTDIR%"
+    echo Creating output dir: "%OUTDIR%"
+    mkdir "%OUTDIR%"
 )
 if not exist "%BASE%" (
     echo Creating local mirror dir: "%BASE%"
@@ -104,10 +122,30 @@ if exist "%BASE%\*.dll" (
 )
 
 REM ================================
+REM Version Management
+REM ================================
+if defined SKIP_VERSION (
+    echo Skipping version increment [--no-version flag set]
+    if exist "Source\VersionInfo.cs" (
+        echo Using existing version info...
+    ) else (
+        echo WARNING: VersionInfo.cs does not exist. Generating without increment...
+        powershell -NoProfile -ExecutionPolicy Bypass -File ".vscode\update-version.ps1" -Config "%CONFIG%" -SkipIncrement
+    )
+) else (
+    echo Updating version...
+    powershell -NoProfile -ExecutionPolicy Bypass -File ".vscode\update-version.ps1" -Config "%CONFIG%"
+    if errorlevel 1 (
+        echo Version update failed. Aborting.
+        exit /b 1
+    )
+)
+
+REM ================================
 REM Build
 REM ================================
-echo Building %MODNAME%...
-dotnet build .vscode -c Release -o "%OUTDIR%"
+echo Building %MODNAME% with configuration: %CONFIG% ...
+dotnet build .vscode -c %CONFIG% -o "%OUTDIR%"
 if errorlevel 1 (
     echo Build failed. Aborting.
     exit /b %errorlevel%
@@ -128,13 +166,25 @@ if exist "%BASE%\0Harmony.dll" (
 REM Mirror build to BASE
 echo Mirroring build to BASE...
 xcopy /Y /E "%OUTDIR%\*" "%BASE%\" >nul
+
 setlocal EnableExtensions EnableDelayedExpansion
+
 REM ================================
 REM Copy assets into Mod folder
 REM ================================
 for %%V in (1.0 1.1 1.2 1.3 1.4 1.5 1.6) do if exist "%%V" (
     echo Copying version folder %%V...
+    if exist "!MODROOT!\%%V" (
+        echo Cleaning existing version folder %%V in mod root...
+        rmdir /s /q "!MODROOT!\%%V"
+    )
     xcopy "%%V" "!MODROOT!\%%V" /E /I /Y >nul
+)
+
+REM Remove any quarantined XML files that should not load (keep .xml.off only)
+if exist "!MODROOT!\%CURRENTVER%\Patches\_removed\*.xml" (
+    echo Removing quarantined XML files from _removed directory...
+    del /q "!MODROOT!\%CURRENTVER%\Patches\_removed\*.xml" >nul 2>&1
 )
 
 if exist "About" (
@@ -159,7 +209,9 @@ for %%D in ("Languages" "Textures" "Defs" "Patches") do if exist "%%~fD" (
 
 setlocal EnableExtensions EnableDelayedExpansion
 
-set "ZIPNAME=!MODNAME!_!CURRENTVER!.zip"
+REM Always include configuration in zip name (e.g., -Release or -Debug)
+set "ZIPSUFFIX=-!CONFIG!"
+set "ZIPNAME=!MODNAME!_!CURRENTVER!!ZIPSUFFIX!.zip"
 set "ZIPSOURCE=!MODROOT!"
 set "ZIPDEST=%CD%\!ZIPNAME!"
 

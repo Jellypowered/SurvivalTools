@@ -395,7 +395,7 @@
         <modExtensions>
             <li Class="SurvivalTools.SurvivalToolProperties">
                 <baseWorkStatFactors>
-                    <ResearchSpeed>0.7</ResearchSpeed>
+                    <ResearchSpeed>1.1</ResearchSpeed>
                 </baseWorkStatFactors>
                 <defaultSurvivalToolAssignmentTags>
                     <li>Researcher</li>

@@ -393,6 +393,8 @@ namespace SurvivalTools
 
         public static bool CanUseSurvivalTools(this Pawn pawn) =>
             pawn.RaceProps.intelligence >= Intelligence.ToolUser &&
+            pawn.RaceProps.Humanlike &&  // Exclude mechanoids - they have built-in tools
+            !pawn.RaceProps.IsMechanoid &&
             pawn.Faction == Faction.OfPlayer &&
             (pawn.equipment != null || pawn.inventory != null) &&
             pawn.TraderKind == null;

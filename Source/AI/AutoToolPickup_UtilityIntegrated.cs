@@ -87,6 +87,12 @@ namespace SurvivalTools.HarmonyStuff
                 return false;
             }
 
+            // Exclude temporary pawns if setting is enabled
+            if (SurvivalTools.Settings?.excludeTemporaryPawns == true && IsTemporaryPawn(pawn))
+            {
+                return false;
+            }
+
             // Special case: if this is a tree felling job (FellTree or tree CutPlant), use TreeFellingSpeed
             if (job.def == ST_JobDefOf.FellTree || job.def == ST_JobDefOf.FellTreeDesignated ||
                 (job.def == JobDefOf.CutPlant && job.targetA.Thing?.def?.plant?.IsTree == true))
@@ -460,6 +466,25 @@ namespace SurvivalTools.HarmonyStuff
                    stat == ST_StatDefOf.ButcheryFleshEfficiency ||
                    stat == ST_StatDefOf.MedicalOperationSpeed ||
                    stat == ST_StatDefOf.MedicalSurgerySuccessChance;
+        }
+
+        /// <summary>
+        /// Checks if a pawn is temporary (quest reward, guest, etc.) and shouldn't pick up tools
+        /// </summary>
+        private static bool IsTemporaryPawn(Pawn pawn)
+        {
+            if (pawn == null || pawn.Faction != Faction.OfPlayer)
+                return true;
+
+            // Check if pawn is a guest (quest reward waiting to leave)
+            if (pawn.guest != null && pawn.guest.GuestStatus != GuestStatus.Prisoner)
+                return true;
+
+            // Check if pawn is marked as temporary in quests
+            if (pawn.IsQuestLodger())
+                return true;
+
+            return false;
         }
 
         private static readonly SimpleCurve LifespanDaysToOptimalityMultiplierCurve = new SimpleCurve

@@ -32,11 +32,15 @@ namespace SurvivalTools.HarmonyStuff
             if (requiredStats.NullOrEmpty())
                 return true;
 
-            // EXCEPTION: Cleaning and butchery jobs are always allowed (just less effective without tools)
+            // EXCEPTION: Cleaning, research, medical, and butchery jobs are always allowed (just less effective without tools)
+            // This prevents blocking critical colony functions and allows tribal progression
             bool isCleaningJob = requiredStats.Contains(ST_StatDefOf.CleaningSpeed);
+            bool isResearchJob = requiredStats.Contains(ST_StatDefOf.ResearchSpeed);
+            bool isMedicalJob = requiredStats.Contains(ST_StatDefOf.MedicalOperationSpeed) ||
+                              requiredStats.Contains(ST_StatDefOf.MedicalSurgerySuccessChance);
             bool isButcheryJob = requiredStats.Contains(ST_StatDefOf.ButcheryFleshSpeed) ||
                                requiredStats.Contains(ST_StatDefOf.ButcheryFleshEfficiency);
-            if (isCleaningJob || isButcheryJob)
+            if (isCleaningJob || isResearchJob || isMedicalJob || isButcheryJob)
                 return true;
 
             if (pawn.MeetsWorkGiverStatRequirements(requiredStats, instance.def))

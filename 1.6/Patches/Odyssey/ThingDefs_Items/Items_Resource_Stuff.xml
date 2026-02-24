@@ -1,0 +1,51 @@
+<Patch>
+    <Operation Class="PatchOperationFindMod">
+        <mods>
+            <li>Ludeon.RimWorld.Odyssey</li>
+        </mods>
+        <match Class="PatchOperationSequence">
+            <operations>
+                <!-- BlocksVacstone -->
+                <li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="BlocksVacstone"]</xpath>
+                    <value>
+                        <li Class="SurvivalTools.StuffPropsTool">
+                            <toolStatFactors>
+                                <TreeFellingSpeed>1.0</TreeFellingSpeed>
+                                <PlantHarvestingSpeed>1.0</PlantHarvestingSpeed>
+                                <DiggingSpeed>1.0</DiggingSpeed>
+                                <MiningYieldDigging>1.0</MiningYieldDigging>
+                                <ConstructionSpeed>1.0</ConstructionSpeed>
+                            </toolStatFactors>
+                        </li>
+                    </value>
+                </li>
+
+                <!-- Obsidian (if you want to buff/nerf it too) -->
+                <li Class="PatchOperationAddModExtension">
+                    <xpath>Defs/ThingDef[defName="Obsidian"]</xpath>
+                    <value>
+                        <li Class="SurvivalTools.StuffPropsTool">
+                            <toolStatFactors>
+                                <TreeFellingSpeed>1.05</TreeFellingSpeed>
+                                <PlantHarvestingSpeed>1.10</PlantHarvestingSpeed>
+                                <DiggingSpeed>1.05</DiggingSpeed>
+                                <MiningYieldDigging>1.05</MiningYieldDigging>
+                                <ConstructionSpeed>1.05</ConstructionSpeed>
+                                <MaintenanceSpeed>1.05</MaintenanceSpeed>
+                                <DeconstructionSpeed>1.05</DeconstructionSpeed>
+                                <ResearchSpeed>1.05</ResearchSpeed>
+                                <CleaningSpeed>1.10</CleaningSpeed>
+                                <MedicalOperationSpeed>1.25</MedicalOperationSpeed>
+                                <MedicalSurgerySuccessChance>1.20</MedicalSurgerySuccessChance>
+                                <ButcheryFleshSpeed>1.35</ButcheryFleshSpeed>
+                                <ButcheryFleshEfficiency>1.20</ButcheryFleshEfficiency>
+                                <SowingSpeed>1.10</SowingSpeed>
+                            </toolStatFactors>
+                        </li>
+                    </value>
+                </li>
+            </operations>
+        </match>
+    </Operation>
+</Patch>

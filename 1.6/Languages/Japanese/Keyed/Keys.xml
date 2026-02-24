@@ -41,6 +41,15 @@
     <Settings_AutoTool>スマート作業前ツール取得</Settings_AutoTool>
     <Settings_AutoTool_Tooltip>入植者が任意の仕事を始める前に自動的に最適なツールを取得することで、ワークフロー効率を革命的に改善します。ツールをインテリジェントに交換し、より良いバリエーションにアップグレードし、最大生産性のために適切な機器を確保します。シームレスなツールベースのゲームプレイの基盤機能です。</Settings_AutoTool_Tooltip>
 
+    <Settings_NoToolPenalty>ツールなしでの作業速度</Settings_NoToolPenalty>
+    <Settings_NoToolPenalty_Tooltip>通常モード（ハードコアではない）で適切なツールなしで作業する際の入植者の効率を制御します。50%では、入植者はツールなしで半分の速度で作業し、ゲームをプレイ可能に保ちながらツール使用を奨励します。100%では、ペナルティは適用されません（バニラの動作）。0%では、ツールなしでの作業はほぼ不可能です（ハードコアモードに類似）。</Settings_NoToolPenalty_Tooltip>
+
+    <Settings_ExcludeTemporaryPawns>一時的な入植者をツール取得から除外</Settings_ExcludeTemporaryPawns>
+    <Settings_ExcludeTemporaryPawns_Tooltip>一時的な入植者（クエスト報酬、訪問者など）が自動的にツールを拾うのを防ぎます。これにより、彼らが去る際にツールを盗むのを防ぎます。貴重な装備を失わないために、有効にしておくことを推奨します。</Settings_ExcludeTemporaryPawns_Tooltip>
+
+    <Settings_AllowPacifistEquip>平和主義者がサバイバルツールを装備することを許可</Settings_AllowPacifistEquip>
+    <Settings_AllowPacifistEquip_Tooltip>平和主義の入植者（暴力作業が無効になっている人）が、多くのツールが技術的に武器として分類されているにもかかわらず、サバイバルツールを装備して使用できるようにします。平和主義者は、非暴力の原則に違反することなく、採掘用のつるはし、木こり用の斧、その他の作業ツールを使用できます。戦闘でこれらのツールを使用することは許可されません。</Settings_AllowPacifistEquip_Tooltip>
+
     <!-- Alerts -->
     <ColonistNeedsSurvivalTool>入植者が必要なツールを欠いている</ColonistNeedsSurvivalTool>
     <ColonistsNeedSurvivalTool>入植者が必要なツールを欠いている</ColonistsNeedSurvivalTool>

@@ -41,6 +41,15 @@
     <Settings_AutoTool>Collecte d'outils intelligente pré-travail</Settings_AutoTool>
     <Settings_AutoTool_Tooltip>Révolutionne l'efficacité du flux de travail en faisant que les colons acquièrent automatiquement l'outil optimal avant de commencer tout travail. Ils échangent intelligemment les outils, améliorent vers de meilleures variantes et s'assurent d'avoir l'équipement approprié pour une productivité maximale. La fonctionnalité fondamentale pour un gameplay basé sur les outils sans faille.</Settings_AutoTool_Tooltip>
 
+    <Settings_NoToolPenalty>Vitesse de travail sans outils</Settings_NoToolPenalty>
+    <Settings_NoToolPenalty_Tooltip>Contrôle l'efficacité des colons lorsqu'ils travaillent sans outils appropriés en mode normal (pas hardcore). À 50%, les colons travaillent à mi-vitesse sans outils, encourageant l'utilisation d'outils tout en gardant le jeu jouable. À 100%, aucune pénalité n'est appliquée (comportement vanilla). À 0%, travailler sans outils est presque impossible (similaire au mode hardcore).</Settings_NoToolPenalty_Tooltip>
+
+    <Settings_ExcludeTemporaryPawns>Exclure les colons temporaires de la collecte d'outils</Settings_ExcludeTemporaryPawns>
+    <Settings_ExcludeTemporaryPawns_Tooltip>Empêche les colons temporaires (récompenses de quêtes, visiteurs, etc.) de ramasser automatiquement des outils. Ceci les empêche de voler vos outils lorsqu'ils partent. Il est recommandé de garder cette option activée pour éviter de perdre un équipement précieux.</Settings_ExcludeTemporaryPawns_Tooltip>
+
+    <Settings_AllowPacifistEquip>Autoriser les pacifistes à équiper des outils de survie</Settings_AllowPacifistEquip>
+    <Settings_AllowPacifistEquip_Tooltip>Permet aux colons pacifistes (ceux ayant le travail de violence désactivé) d'équiper et d'utiliser des outils de survie, même si de nombreux outils sont techniquement classés comme armes. Les pacifistes peuvent utiliser des pioches pour miner, des haches pour couper du bois et d'autres outils de travail sans violer leurs principes non-violents. Ne leur permet pas d'utiliser ces outils au combat.</Settings_AllowPacifistEquip_Tooltip>
+
     <!-- Alerts -->
     <ColonistNeedsSurvivalTool>Le colon manque d'outils essentiels</ColonistNeedsSurvivalTool>
     <ColonistsNeedSurvivalTool>Les colons manquent d'outils essentiels</ColonistsNeedSurvivalTool>
