@@ -49,6 +49,9 @@ namespace SurvivalTools
         public static readonly bool DubsBadHygiene =
             HasAny("Dubwise.DubsBadHygiene", "Dubs Bad Hygiene");
 
+        public static readonly bool NiceInventoryTab =
+            HasAny("andromedah.niceinventorytab", "NiceInventoryTab", "Nice Inventory Tab");
+
         // Useful aggregate
         public static readonly bool OtherInventoryModsActive = CombatExtended || PickUpAndHaul;
     }

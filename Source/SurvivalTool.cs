@@ -55,6 +55,32 @@ namespace SurvivalTools
             }
         }
 
+        public override string GetInspectString()
+        {
+            var baseString = base.GetInspectString();
+
+            // Add "in use" status to tooltips (especially important for Nice Inventory Tab compatibility)
+            if (InUse)
+            {
+                var inUseText = "ToolInUse".Translate();
+
+                // Add debug info if enabled
+                if (SurvivalToolUtility.IsDebugLoggingEnabled && HoldingPawn?.jobs?.curJob != null)
+                {
+                    var job = HoldingPawn.jobs.curJob;
+                    inUseText += $" ({job.def.defName})";
+                }
+
+                if (!string.IsNullOrEmpty(baseString))
+                {
+                    return baseString + "\n" + inUseText;
+                }
+                return inUseText;
+            }
+
+            return baseString;
+        }
+
         public override void ExposeData()
         {
             base.ExposeData();
