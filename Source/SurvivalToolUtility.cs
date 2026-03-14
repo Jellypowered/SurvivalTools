@@ -1732,13 +1732,37 @@ namespace SurvivalTools
             return true;
         }
 
+        /// <summary>
+        /// Checks if a pawn can fell trees based on work assignment and tool requirements.
+        /// This prevents pawns from attempting tree felling jobs when they're not assigned to PlantCutting.
+        /// </summary>
         // This should be disabled if STC is active so that we don't accidentally call tree felling.
         public static bool CanFellTrees(this Pawn pawn)
         {
             // STC authority: never allow SurvivalTools felling logic to engage
             if (Helpers.TreeSystemArbiterActiveHelper.IsSTCAuthorityActive()) return false;
+            if (pawn?.workSettings == null) return false;
+
             var fellWG = ST_WorkGiverDefOf.FellTrees;
-            var req = fellWG?.GetModExtension<WorkGiverExtension>()?.requiredStats;
+            if (fellWG == null) return false;
+
+            // Check if pawn is assigned to a work type that includes the FellTrees workgiver
+            // This prevents construction workers from attempting to cut blocking trees when they don't have PlantCutting enabled
+            bool isAssignedToFellTrees = pawn.workSettings.WorkGiversInOrderNormal
+                .Any(wg => wg.def == fellWG);
+
+            if (!isAssignedToFellTrees)
+            {
+                if (IsDebugLoggingEnabled && ShouldLogWithCooldown($"NotAssignedToFellTrees_{pawn.ThingID}"))
+                {
+                    Log.Message($"[SurvivalTools] {pawn.LabelShort} cannot fell trees: not assigned to PlantCutting work type");
+                }
+                return false;
+            }
+
+            // Check tool requirements
+            var ext = fellWG.GetModExtension<WorkGiverExtension>();
+            var req = ext?.requiredStats;
             if (req == null || req.Count == 0) return true;
             return pawn.MeetsWorkGiverStatRequirements(req);
         }
