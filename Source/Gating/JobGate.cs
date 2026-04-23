@@ -46,18 +46,19 @@ namespace SurvivalTools.Gating
 
         // hot path: LINQ-free
         // Overload: accepts Job instance for target-aware stat resolution (trees vs plants)
-        public static bool ShouldBlock(Pawn pawn, WorkGiverDef wg, Job jobInstance, bool forced, out string reasonKey, out string a1, out string a2)
+        // queryOnly=true: skip TryUpgradeFor side effects (use when building UI/menus, not executing jobs)
+        public static bool ShouldBlock(Pawn pawn, WorkGiverDef wg, Job jobInstance, bool forced, out string reasonKey, out string a1, out string a2, bool queryOnly = false)
         {
-            return ShouldBlockInternal(pawn, wg, jobInstance?.def, jobInstance, forced, out reasonKey, out a1, out a2);
+            return ShouldBlockInternal(pawn, wg, jobInstance?.def, jobInstance, forced, out reasonKey, out a1, out a2, queryOnly);
         }
 
         // Original: accepts JobDef for backward compatibility
-        public static bool ShouldBlock(Pawn pawn, WorkGiverDef wg, JobDef job, bool forced, out string reasonKey, out string a1, out string a2)
+        public static bool ShouldBlock(Pawn pawn, WorkGiverDef wg, JobDef job, bool forced, out string reasonKey, out string a1, out string a2, bool queryOnly = false)
         {
-            return ShouldBlockInternal(pawn, wg, job, null, forced, out reasonKey, out a1, out a2);
+            return ShouldBlockInternal(pawn, wg, job, null, forced, out reasonKey, out a1, out a2, queryOnly);
         }
 
-        private static bool ShouldBlockInternal(Pawn pawn, WorkGiverDef wg, JobDef job, Job jobInstance, bool forced, out string reasonKey, out string a1, out string a2)
+        private static bool ShouldBlockInternal(Pawn pawn, WorkGiverDef wg, JobDef job, Job jobInstance, bool forced, out string reasonKey, out string a1, out string a2, bool queryOnly = false)
         {
             reasonKey = null; a1 = null; a2 = null;
 
@@ -171,6 +172,12 @@ namespace SurvivalTools.Gating
                         return false;
                     }
                 }
+                // queryOnly: skip TryUpgradeFor when building menus/UI — it does a map-wide
+                // pathfinding search and queues jobs, causing ~500-1000ms freezes on every right-click.
+                // Right-click rescue uses queryOnly=true and calls TryUpgradeFor only when the
+                // user actually clicks the rescue option (in ExecuteRescue).
+                if (!queryOnly)
+                {
                 bool anyQueued = false;
                 for (int i = 0; i < requiredStatsPre.Length; i++)
                 {
@@ -217,6 +224,7 @@ namespace SurvivalTools.Gating
                         return true;
                     }
                 }
+                } // end !queryOnly
             }
 
             // Hardcore/Nightmare block only if missing a required tool for ANY required stat

@@ -383,7 +383,7 @@ namespace SurvivalTools.UI
                 var testWorkGiver = DefDatabase<WorkGiverDef>.GetNamedSilentFail("Mine");
                 if (testWorkGiver != null)
                 {
-                    isGated = Gating.JobGate.ShouldBlock(pawn, testWorkGiver, (JobDef)null, false, out var _, out var _, out var _);
+                    isGated = Gating.JobGate.ShouldBlock(pawn, testWorkGiver, (JobDef)null, false, out var _, out var _, out var _, queryOnly: true);
                 }
             }
             _cachedGatingText = isGated ? "ST_Gear_Gated".Translate().ToString() : "";

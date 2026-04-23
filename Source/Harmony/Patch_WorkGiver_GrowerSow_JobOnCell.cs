@@ -26,7 +26,7 @@ namespace SurvivalTools.HarmonyStuff
                 {
                     var wgFinish = DefDatabase<WorkGiverDef>.GetNamedSilentFail("ConstructFinishFrames");
                     if (wgFinish != null)
-                        SurvivalTools.Gating.JobGate.ShouldBlock(pawn, wgFinish, job.def, pawn.CurJob != null && pawn.CurJob.playerForced, out var _, out var _, out var _);
+                        SurvivalTools.Gating.JobGate.ShouldBlock(pawn, wgFinish, job.def, pawn.CurJob != null && pawn.CurJob.playerForced, out var _, out var _, out var _, queryOnly: true);
                 }
                 catch { }
                 // Do NOT return here; let tree intercept continue if this is actually a CutPlant (handled below)
@@ -38,7 +38,7 @@ namespace SurvivalTools.HarmonyStuff
                 {
                     var wgGrowerSow = DefDatabase<WorkGiverDef>.GetNamedSilentFail("GrowerSow");
                     if (wgGrowerSow != null)
-                        SurvivalTools.Gating.JobGate.ShouldBlock(pawn, wgGrowerSow, job.def, pawn.CurJob != null && pawn.CurJob.playerForced, out var _, out var _, out var _);
+                        SurvivalTools.Gating.JobGate.ShouldBlock(pawn, wgGrowerSow, job.def, pawn.CurJob != null && pawn.CurJob.playerForced, out var _, out var _, out var _, queryOnly: true);
                 }
                 catch { }
                 return; // nothing else to do for pure sow jobs
@@ -78,7 +78,7 @@ namespace SurvivalTools.HarmonyStuff
                     {
                         bool forced = pawn.CurJob != null && pawn.CurJob.playerForced;
                         // Invoke JobGate.ShouldBlock only for logging; we already modified result above if needed.
-                        SurvivalTools.Gating.JobGate.ShouldBlock(pawn, wgGrowerSow, job.def, forced, out var _, out var _, out var _);
+                        SurvivalTools.Gating.JobGate.ShouldBlock(pawn, wgGrowerSow, job.def, forced, out var _, out var _, out var _, queryOnly: true);
                     }
                 }
             }

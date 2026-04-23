@@ -276,7 +276,7 @@ namespace SurvivalTools.UI.RightClickRescue
                     if (stats == null || stats.Count == 0) goto fastRecordFail;
                     if (!PawnCanEverDo(pawn, wg)) { _feedbackThisClick.anyScannersRan = true; _feedbackThisClick.allWorkTypesDisabled = true; goto fastRecordFail; } // work type disabled
                     if (stcExternal && stats.Exists(rs => rs == ST_StatDefOf.TreeFellingSpeed || ToolStatResolver.IsAliasOf(rs, ST_StatDefOf.TreeFellingSpeed))) goto fastRecordFail;
-                    if (!JobGate.ShouldBlock(pawn, wg, job, false, out var rkFast, out var aFast1, out var aFast2)) { _gatingNotNeeded++; _feedbackThisClick.anyScannersRan = true; _feedbackThisClick.notBlocked = true; goto fastPathDone; }
+                    if (!JobGate.ShouldBlock(pawn, wg, job, false, out var rkFast, out var aFast1, out var aFast2, queryOnly: true)) { _gatingNotNeeded++; _feedbackThisClick.anyScannersRan = true; _feedbackThisClick.notBlocked = true; goto fastPathDone; }
                     _gatingNeeded++;
                     var firstRequired = stats[0]; if (firstRequired == null) goto fastRecordFail;
                     string toolName; bool canUpgrade = AssignmentSearchPreview.CanUpgradePreview(pawn, firstRequired, out toolName);
@@ -400,7 +400,7 @@ namespace SurvivalTools.UI.RightClickRescue
                     if (!PawnCanEverDo(pawn, desc.WorkGiverDef)) continue; // work type disabled now
                     if (desc.RequiredStats == null || desc.RequiredStats.Count == 0) continue;
                     if (stcExternal && desc.RequiredStats.Exists(rs => rs == ST_StatDefOf.TreeFellingSpeed || ToolStatResolver.IsAliasOf(rs, ST_StatDefOf.TreeFellingSpeed))) continue; // suppress tree option
-                    if (!JobGate.ShouldBlock(pawn, desc.WorkGiverDef, desc.JobDef, false, out var rk, out var a1, out var a2)) { _gatingNotNeeded++; continue; }
+                    if (!JobGate.ShouldBlock(pawn, desc.WorkGiverDef, desc.JobDef, false, out var rk, out var a1, out var a2, queryOnly: true)) { _gatingNotNeeded++; continue; }
                     _gatingNeeded++;
                     var firstRequired = desc.RequiredStats[0]; if (firstRequired == null) continue;
                     string toolName; bool canUpgrade = AssignmentSearchPreview.CanUpgradePreview(pawn, firstRequired, out toolName);
@@ -444,7 +444,7 @@ namespace SurvivalTools.UI.RightClickRescue
                         if (!PawnCanEverDo(pawn, desc.WorkGiverDef)) { workTypeDisabledCount++; continue; }
                         if (desc.RequiredStats == null || desc.RequiredStats.Count == 0) continue;
                         if (stcExternal && desc.RequiredStats.Exists(rs => rs == ST_StatDefOf.TreeFellingSpeed || ToolStatResolver.IsAliasOf(rs, ST_StatDefOf.TreeFellingSpeed))) continue; // suppress tree option
-                        if (!JobGate.ShouldBlock(pawn, desc.WorkGiverDef, desc.JobDef, false, out var rk, out var a1, out var a2)) { _gatingNotNeeded++; notBlockedCount++; continue; }
+                        if (!JobGate.ShouldBlock(pawn, desc.WorkGiverDef, desc.JobDef, false, out var rk, out var a1, out var a2, queryOnly: true)) { _gatingNotNeeded++; notBlockedCount++; continue; }
                         _gatingNeeded++;
                         var firstRequired = desc.RequiredStats[0]; if (firstRequired == null) continue;
                         string toolName; bool canUpgrade = AssignmentSearchPreview.CanUpgradePreview(pawn, firstRequired, out toolName);
