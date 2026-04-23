@@ -255,3 +255,33 @@ A: < 5ms total is acceptable. Humans perceive < 100ms as "instant".
 
 **Q: Should I always enable profiling?**  
 A: No - minimal overhead, but only useful when diagnosing lag. Enable when needed, disable when fixed.
+
+
+Changes in last commit:
+## Summary
+
+I've identified and fixed the right-click freeze issue. Here's what was found:
+
+### **The Problem**
+Right-clicking tiles with rock rubble caused 2-10 second freezes (worse with multiple objects or haul orders). This happened because the previous performance fix from commit 278ca24 was incomplete.
+
+### **Root Cause**
+Two `ShouldBlock` calls in WorkGiver_Gates.cs were missing the `queryOnly: true` parameter:
+- `Pre_HasJobOnThing()` (line 69)
+- `Pre_HasJobOnCell()` (line 85)
+
+These prefixes fire during float menu building when RimWorld checks each WorkGiver for applicable work. **Without `queryOnly: true`, each call triggers `AssignmentSearch.TryUpgradeFor()` — a map-wide pathfinding search (~500-1000ms per WorkGiver).** On a single right-click with N WorkGivers checking the tile, this multiplied into 2-10+ seconds of UI freeze.
+
+### **The Fix**
+Added `queryOnly: true` to both calls. These are read-only checks during menu generation — they should never trigger tool acquisition side effects. That belongs only in:
+- ExecuteRescue (when user clicks the rescue option)
+- GatingEnforcer / PreWork_AutoEquip (during AI job execution)
+
+The postfix patches correctly keep `queryOnly: false` since they run during actual job creation, not menu building.
+
+### **Commit**
+```
+583f443 fix: prevent ~2-10s right-click freeze on rubble tiles by adding queryOnly=true to WorkGiver_Gates prefixes
+```
+
+Changes pushed to `origin/Refactor`.
