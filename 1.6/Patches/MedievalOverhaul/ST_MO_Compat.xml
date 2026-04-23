@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Patch>
+
+    <!--
+        MEDIEVAL OVERHAUL COMPATIBILITY
+
+        Problem:
+          MO's "Wood Chain" system replaces tree-drop WoodLog with DankPyon_RawWood (raw logs).
+          WoodLog is renamed "wood plank" (the refined form) and is now ONLY obtainable by
+          processing raw logs at a Trestle — which requires the DankPyon_Lumber research to build.
+
+          Our SurvivalToolBasic accepts [Woody, Stony, Metallic] stuff. Woody = WoodLog = "wood plank"
+          = behind a research gate. On day 1 you have raw logs but can't make any tools from them,
+          creating a softlock where you can't bootstrap research without tools and can't get tools
+          without refined materials.
+
+          Note: MO's woodChain patch *attempts* to add DankPyon_RawWood to Neolithic+Woody ThingDefs,
+          but targeting abstract ThingDefs across mods via XML patch can be unreliable depending on
+          load order and inheritance resolution timing. Our explicit patch is the safe guarantee.
+
+        Fix:
+          Add DankPyon_RawWood as an accepted stuff for SurvivalToolBasic. Raw logs can now be used
+          directly to craft wooden tools at the CraftingSpot — no Trestle or research gate needed.
+          Behavior is identical when MO is not loaded (PatchOperationFindMod is a no-op).
+    -->
+
+    <!-- Add raw logs as a valid crafting material for all basic tools -->
+    <Operation Class="PatchOperationFindMod">
+        <mods>
+            <li>Medieval Overhaul</li>
+        </mods>
+        <match Class="PatchOperationAdd">
+            <xpath>Defs/ThingDef[@Name="SurvivalToolBasic"]/stuffCategories</xpath>
+            <value>
+                <li>DankPyon_RawWood</li>
+            </value>
+        </match>
+    </Operation>
+
+    <!--
+        Add MO's Anvil as a recipe station for all SurvivalToolBasic tools.
+        The Anvil is MO's core smithing bench (no research needed, costs Metallic stuff + skill 4).
+        Without this, MO players must use the vanilla CraftingSpot (ground spot) or ElectricSmithy
+        with no medieval-appropriate intermediate option.
+    -->
+    <Operation Class="PatchOperationFindMod">
+        <mods>
+            <li>Medieval Overhaul</li>
+        </mods>
+        <match Class="PatchOperationAdd">
+            <xpath>Defs/ThingDef[@Name="SurvivalToolBasic"]/recipeMaker/recipeUsers</xpath>
+            <value>
+                <li>DankPyon_Anvil</li>
+            </value>
+        </match>
+    </Operation>
+
+</Patch>
