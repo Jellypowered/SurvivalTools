@@ -65,8 +65,12 @@ namespace SurvivalTools.HarmonyStuff
                 return true; // Normal mode: allow vanilla to proceed
 
             // Quick check: would this WorkGiver be blocked for this pawn?
-            // We use null for the Job since we don't have it yet, but we can check the WorkGiver's stats
-            if (JobGate.ShouldBlock(pawn, __instance.def, (JobDef)null, forced, out var key, out var a1, out var a2))
+            // We use null for the Job since we don't have it yet, but we can check the WorkGiver's stats.
+            // queryOnly: true — HasJobOnThing is a read-only check called during float menu building and AI
+            // work scanning. TryUpgradeFor must NOT fire here; it belongs in ExecuteRescue (player action)
+            // and GatingEnforcer / PreWork_AutoEquip (AI tick). Calling it here caused the ~2-10 second
+            // right-click freeze on rubble tiles (one TryUpgradeFor per WorkGiver per right-click).
+            if (JobGate.ShouldBlock(pawn, __instance.def, (JobDef)null, forced, out var key, out var a1, out var a2, queryOnly: true))
             {
                 // Block: tell vanilla there's no work here
                 return false;
@@ -81,8 +85,8 @@ namespace SurvivalTools.HarmonyStuff
             if (settings == null || (!settings.hardcoreMode && !settings.extraHardcoreMode))
                 return true; // Normal mode: allow vanilla to proceed
 
-            // Quick check: would this WorkGiver be blocked for this pawn?
-            if (JobGate.ShouldBlock(pawn, __instance.def, (JobDef)null, forced, out var key, out var a1, out var a2))
+            // queryOnly: true — same reasoning as Pre_HasJobOnThing above.
+            if (JobGate.ShouldBlock(pawn, __instance.def, (JobDef)null, forced, out var key, out var a1, out var a2, queryOnly: true))
             {
                 // Block: tell vanilla there's no work here
                 return false;

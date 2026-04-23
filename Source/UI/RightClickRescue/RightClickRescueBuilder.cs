@@ -334,8 +334,8 @@ namespace SurvivalTools.UI.RightClickRescue
                 }
             }
 
-            // Build temporary list of (scanner, provisional WGDef, score)
-            var scored = new List<(IRescueTargetScanner scanner, WorkGiverDef wg, int score)>();
+            // Build temporary list of (scanner, description, score) - cache description to avoid redundant TryDescribeTarget calls
+            var scored = new List<(IRescueTargetScanner scanner, RescueTarget desc, int score)>();
             if (Prefs.DevMode && s.debugLogging) ResetInstrumentation();
             foreach (var scanner in Scanners)
             {
@@ -372,7 +372,7 @@ namespace SurvivalTools.UI.RightClickRescue
                             else
                             {
                                 var wg = desc.WorkGiverDef; int sc = Provider_STPrioritizeWithRescue.ScoreWGForClick(wg, primaryThing, cell, map);
-                                scored.Add((scanner, wg, sc)); described = true; reason = "Described"; _scanDescribed++;
+                                scored.Add((scanner, desc, sc)); described = true; reason = "Described"; _scanDescribed++;
                             }
                         }
                     }
@@ -390,13 +390,13 @@ namespace SurvivalTools.UI.RightClickRescue
             _lastConsideredCount = scored.Count;
 
             bool success = false;
-            // Pass 1: prioritized order
+            // Pass 1: prioritized order - use cached descriptions, NO redundant TryDescribeTarget calls
             foreach (var entry in scored)
             {
                 if (Provider_STPrioritizeWithRescue.AlreadySatisfiedThisClick()) break;
                 try
                 {
-                    if (!entry.scanner.TryDescribeTarget(pawn, ctx, out var desc)) continue;
+                    var desc = entry.desc;
                     if (!PawnCanEverDo(pawn, desc.WorkGiverDef)) continue; // work type disabled now
                     if (desc.RequiredStats == null || desc.RequiredStats.Count == 0) continue;
                     if (stcExternal && desc.RequiredStats.Exists(rs => rs == ST_StatDefOf.TreeFellingSpeed || ToolStatResolver.IsAliasOf(rs, ST_StatDefOf.TreeFellingSpeed))) continue; // suppress tree option
@@ -432,6 +432,13 @@ namespace SurvivalTools.UI.RightClickRescue
                 int notBlockedCount = 0;
                 int noToolCount = 0;
                 int scannersRan = 0;
+                
+                // Build map of already-scanned scanners for quick lookup
+                var alreadyScanned = new Dictionary<Type, (IRescueTargetScanner scanner, RescueTarget desc)>(scored.Count);
+                foreach (var entry in scored)
+                {
+                    alreadyScanned[entry.scanner.GetType()] = (entry.scanner, entry.desc);
+                }
 
                 foreach (var scanner in Scanners)
                 {
@@ -440,7 +447,20 @@ namespace SurvivalTools.UI.RightClickRescue
                     {
                         if (!scanner.CanHandle(ctx)) continue;
                         scannersRan++;
-                        if (!scanner.TryDescribeTarget(pawn, ctx, out var desc)) continue;
+                        
+                        // Try to use cached description instead of calling TryDescribeTarget again
+                        RescueTarget desc;
+                        var scannerType = scanner.GetType();
+                        if (alreadyScanned.TryGetValue(scannerType, out var cached))
+                        {
+                            desc = cached.desc;
+                        }
+                        else
+                        {
+                            // Not in cache - must call TryDescribeTarget (scanner was filtered out initially)
+                            if (!scanner.TryDescribeTarget(pawn, ctx, out desc)) continue;
+                        }
+                        
                         if (!PawnCanEverDo(pawn, desc.WorkGiverDef)) { workTypeDisabledCount++; continue; }
                         if (desc.RequiredStats == null || desc.RequiredStats.Count == 0) continue;
                         if (stcExternal && desc.RequiredStats.Exists(rs => rs == ST_StatDefOf.TreeFellingSpeed || ToolStatResolver.IsAliasOf(rs, ST_StatDefOf.TreeFellingSpeed))) continue; // suppress tree option
