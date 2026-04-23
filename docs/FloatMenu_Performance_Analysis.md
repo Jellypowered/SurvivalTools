@@ -285,3 +285,67 @@ The postfix patches correctly keep `queryOnly: false` since they run during actu
 ```
 
 Changes pushed to `origin/Refactor`.
+
+## Additional Incident: Bootstrap Deadlock in Hardcore/Nightmare (Plant Cutting)
+
+**Date:** April 23, 2026  
+**Reported Symptom:** Players can see an enabled right-click rescue option like "Prioritize cutting plant (will fetch Plant harvesting speed tool)", but cannot actually bootstrap resource acquisition for first tool crafting in some starts/modlists.
+
+### Player-Facing Behavior
+
+- Right-click menu shows an enabled rescue action that implies tool acquisition will happen.
+- On click, pawn still fails to proceed when no valid upgrade/tool source exists.
+- Early-game progression can deadlock when plant cutting is tool-gated and no alternate resource path exists.
+
+### Root Cause (Code Path)
+
+This is a logic/UX mismatch in right-click rescue option generation:
+
+1. Rescue option generation currently remains enabled even when preview says no upgrade is available.
+    - Pass 1 path: `RightClickRescueBuilder.TryAddRescueOptions` creates option regardless of `canUpgrade` false.
+    - Fallback path does the same.
+
+2. Rescue execution (`ExecuteRescue`) calls `AssignmentSearch.TryUpgradeFor(...)`.
+    - If no upgrade is found (`upgradeQueued == false`), code still proceeds to build/enqueue forced job.
+
+3. Job gating still blocks missing required stats in Hardcore/Nightmare.
+    - End result: visible actionable command that can never complete in this context.
+
+### Why It Matters for Compatibility (Medieval Overhaul / low-tech starts)
+
+- Starts with narrow early resource loops are sensitive to hard gating on plant/tree jobs.
+- If plant cutting (or related harvesting path) is hard-blocked before first tool materials can be acquired, progression may soft-lock.
+- The current rescue text suggests automatic recovery, but may fail to provide one when no candidate tool exists.
+
+### Confirmed Related Components
+
+- `RightClickRescueBuilder`:
+   - Builds enabled labels even when `CanUpgradePreview(...)` returns false.
+   - Uses fallback tool-name suffix and still adds enabled option.
+- `ExecuteRescue`:
+   - `TryUpgradeFor(...)` failure does not prevent forced job enqueue.
+- `JobGate`:
+   - Continues to block work when required stat/tool is missing.
+- `StatFilters.ShouldBlockJobForMissingStat(...)`:
+   - Includes `PlantHarvestingSpeed` and `TreeFellingSpeed` in hard-block set.
+
+### Reproduction Notes
+
+1. Hardcore or Nightmare mode enabled.
+2. Pawn has no suitable tool and no reachable upgrade candidate.
+3. Right-click cuttable plant tile.
+4. Observe enabled rescue option text promising tool fetch.
+5. Select option; action cannot resolve into successful work start due to missing tool path.
+
+### Suggested Fix Direction (No Code Change Applied Here)
+
+- Option-generation truthfulness:
+   - Only create enabled rescue option when upgrade path is actually available.
+   - Otherwise emit existing disabled feedback row ("No suitable tools are available...").
+- Preserve existing behavior where upgrade exists.
+- Keep hardcore identity intact while avoiding false-positive actionable UI.
+
+### Tracking Note
+
+This incident is separate from the rubble freeze fix in commit `583f443`.
+That commit resolved right-click stutter by adding `queryOnly: true` to `WorkGiver_Gates` prefix checks; it did not address bootstrap deadlock semantics.
