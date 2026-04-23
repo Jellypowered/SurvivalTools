@@ -80,7 +80,7 @@ namespace SurvivalTools
                 var inUseText = "ToolInUse".Translate();
 
                 // Add debug info if enabled
-                if (SurvivalToolUtility.IsDebugLoggingEnabled && HoldingPawn?.jobs?.curJob != null)
+                if (ST_Logging.IsDebugLoggingEnabled && HoldingPawn?.jobs?.curJob != null)
                 {
                     var job = HoldingPawn.jobs.curJob;
                     inUseText += $" ({job.def.defName})";
@@ -221,58 +221,6 @@ namespace SurvivalTools
                 double ticksPerHp = (lifespanDays * GenDate.TicksPerDay) / (double)hp;
                 return (int)Math.Floor(ticksPerHp);
             }
-        }
-
-        #endregion
-
-        #region Inspect String (hardcoded English labels)
-
-        public override string GetInspectString()
-        {
-            var sb = new StringBuilder();
-
-            // Held by
-            var holder = HoldingPawn;
-            if (holder != null)
-                sb.AppendLine($"Held by {holder.LabelShort}");
-
-            // In use
-            if (InUse)
-                sb.AppendLine("In use");
-
-            // Condition / lifespan
-            if (def?.useHitPoints == true)
-            {
-                float hpFrac = MaxHitPoints > 0 ? (float)HitPoints / MaxHitPoints : 0f;
-                float lifespanDays = this.GetStatValue(ST_StatDefOf.ToolEstimatedLifespan);
-
-                sb.AppendLine($"Condition: {HitPoints}/{MaxHitPoints} ({(hpFrac * 100f):F0}%)");
-                sb.AppendLine($"Estimated lifespan: {lifespanDays:F1}d");
-            }
-
-            // Append base inspect string (if any)
-            var baseStr = base.GetInspectString();
-            if (!baseStr.NullOrEmpty())
-            {
-                if (sb.Length > 0) sb.AppendLine();
-                sb.Append(baseStr);
-            }
-
-            return SanitizeInspectString(sb.ToString());
-        }
-
-        private static string SanitizeInspectString(string s)
-        {
-            if (string.IsNullOrEmpty(s)) return s;
-
-            s = s.Replace("\r\n", "\n").Replace('\r', '\n');
-
-            var lines = s
-                .Split('\n')
-                .Select(line => line?.Trim())
-                .Where(line => !string.IsNullOrEmpty(line));
-
-            return string.Join("\n", lines).TrimEnd();
         }
 
         #endregion

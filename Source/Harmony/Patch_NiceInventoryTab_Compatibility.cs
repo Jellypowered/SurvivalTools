@@ -55,7 +55,7 @@ namespace SurvivalTools.HarmonyStuff
             {
                 __result = true;
 
-                if (SurvivalToolUtility.IsDebugLoggingEnabled)
+                if (ST_Logging.IsDebugLoggingEnabled)
                 {
                     Log.Message($"[SurvivalTools] Nice Inventory Tab: Blacklisted {def.defName} (survival tool)");
                 }
