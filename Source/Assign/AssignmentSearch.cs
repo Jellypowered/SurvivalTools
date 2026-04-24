@@ -163,6 +163,33 @@ namespace SurvivalTools.Assign
             return TryUpgradeForInternal(pawn, workStat, minGainPct, radius, pathCostBudget, priority, caller);
         }
 
+        /// <summary>
+        /// Read-only preview for UI: uses the same candidate search as TryUpgradeFor but never
+        /// mutates pawn state, queue state, focus, hysteresis, or cooldowns.
+        /// Returns the best reachable improving tool label if one exists on the pawn or map.
+        /// </summary>
+        public static bool TryFindUpgradeCandidate(Pawn pawn, StatDef workStat, float minGainPct, float radius, int pathCostBudget, out Thing bestTool)
+        {
+            bestTool = null;
+
+            if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn))
+                return false;
+            if (pawn?.CurJobDef == JobDefOf.Ingest)
+                return false;
+            if (workStat == null)
+                return false;
+            if (!CanPawnUpgrade(pawn))
+                return false;
+
+            var currentTool = ToolScoring.GetBestTool(pawn, workStat, out float currentScore);
+            var candidate = FindBestCandidate(pawn, workStat, currentScore, minGainPct, radius, pathCostBudget);
+            if (candidate.tool == null)
+                return false;
+
+            bestTool = candidate.tool;
+            return true;
+        }
+
         private static bool TryUpgradeForInternal(Pawn pawn, StatDef workStat, float minGainPct, float radius, int pathCostBudget, QueuePriority priority, string caller)
         {
             // Hot path: don't log routine entry parameters
@@ -979,7 +1006,7 @@ namespace SurvivalTools.Assign
             for (int i = 0; i < candidates.Count; i++)
             {
                 var tool = candidates[i];
-                if (ShouldSkipCandidate(pawn, tool))
+                if (ShouldSkipCandidate(pawn, tool, needsGatingRescue))
                     continue;
 
                 // EARLY MAP CHECK: Fail fast if tool is on different map
@@ -1018,7 +1045,7 @@ namespace SurvivalTools.Assign
             for (int i = 0; i < candidates.Count; i++)
             {
                 var tool = candidates[i];
-                if (ShouldSkipCandidate(pawn, tool))
+                if (ShouldSkipCandidate(pawn, tool, needsGatingRescue))
                     continue;
 
                 // EARLY MAP CHECK: Fail fast if tool is on different map
@@ -1998,7 +2025,7 @@ namespace SurvivalTools.Assign
         }
 
         // QUICK FILTERS ------------------------------------------------------
-        private static bool ShouldSkipCandidate(Pawn pawn, Thing tool)
+        private static bool ShouldSkipCandidate(Pawn pawn, Thing tool, bool needsGatingRescue)
         {
             if (tool == null) return true;
 
@@ -2038,8 +2065,9 @@ namespace SurvivalTools.Assign
                 }
             }
 
-            // Forbidden fast-path
-            if (pawn != null && tool.IsForbidden(pawn))
+            // Forbidden fast-path. In gating rescue mode, we intentionally allow forbidden tools
+            // so QueueAcquisitionJob can auto-unforbid and recover blocked work.
+            if (pawn != null && !needsGatingRescue && tool.IsForbidden(pawn))
                 return true;
 
             // Check if tool is tracked as dropped for repair/disassembly

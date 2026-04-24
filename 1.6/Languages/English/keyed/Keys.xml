@@ -158,6 +158,7 @@
     <ST_NoSuitableToolFound>No suitable tool found nearby for {0}.</ST_NoSuitableToolFound>
     <ST_DropExtraToolsFirst>Drop extra tools first.</ST_DropExtraToolsFirst>
     <ST_CouldNotCreateJob>Could not create the job.</ST_CouldNotCreateJob>
+    <ST_NoToolAvailable>{0} could not find a suitable tool to fetch. It may have been picked up by another colonist.</ST_NoToolAvailable>
     <ST_GenericToolSuffix>tool</ST_GenericToolSuffix>
     <!-- Option B: Full phrase per action for right-click rescue labels -->
     <ST_Prioritize_Mine>Prioritize mining</ST_Prioritize_Mine>

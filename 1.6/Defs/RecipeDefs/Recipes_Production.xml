@@ -70,4 +70,45 @@
         </defaultIngredientFilter>
     </RecipeDef>
 
+    <RecipeDef>
+        <defName>MakeSurvivalTools_StoneFlake</defName>
+        <label>knap stone flake</label>
+        <description>Strike a sharp flake from a stone chunk. Crude, fragile, and barely effective, but enough to bootstrap basic work until proper tools are crafted.</description>
+        <jobString>Knapping stone flake.</jobString>
+        <workAmount>450</workAmount>
+        <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+        <workSkill>Crafting</workSkill>
+        <effectWorking>CutStone</effectWorking>
+        <soundWorking>Recipe_Smith</soundWorking>
+        <products>
+            <SurvivalTools_StoneFlake>1</SurvivalTools_StoneFlake>
+        </products>
+        <ingredients>
+            <li>
+                <filter>
+                    <categories>
+                        <li>StoneChunks</li>
+                    </categories>
+                </filter>
+                <count>1</count>
+            </li>
+        </ingredients>
+        <fixedIngredientFilter>
+            <categories>
+                <li>StoneChunks</li>
+            </categories>
+        </fixedIngredientFilter>
+        <defaultIngredientFilter>
+            <categories>
+                <li>StoneChunks</li>
+            </categories>
+        </defaultIngredientFilter>
+        <recipeUsers>
+            <li>CraftingSpot</li>
+            <li>FueledSmithy</li>
+            <li>ElectricSmithy</li>
+            <li>TableStonecutter</li>
+        </recipeUsers>
+    </RecipeDef>
+
 </Defs>

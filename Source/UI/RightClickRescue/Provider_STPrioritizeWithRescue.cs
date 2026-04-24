@@ -20,8 +20,9 @@ namespace SurvivalTools.UI.RightClickRescue
     // IMPORTANT: public + non-abstract so RimWorld can construct via reflection.
     public sealed class Provider_STPrioritizeWithRescue : FloatMenuOptionProvider
     {
-        // Offer in both drafted & undrafted states; allow single-select only (rescue builder ignores multiselect currently)
-        protected override bool Drafted => true;
+        // Rescue options are work/prioritize actions and are not relevant for drafted pawns.
+        // Skipping drafted state removes unnecessary provider work during combat right-click menus.
+        protected override bool Drafted => false;
         protected override bool Undrafted => true;
         protected override bool Multiselect => false;
         static Provider_STPrioritizeWithRescue() => ST_Logging.DevOnce("RightClick.ProviderType", "[ST.RightClick] Provider: " + typeof(Provider_STPrioritizeWithRescue).FullName);
@@ -71,6 +72,7 @@ namespace SurvivalTools.UI.RightClickRescue
             }
         }
         private static ClickKey _current;
+        private static ClickKey _lastEvaluated;
         private static int _optionsAddedThisClick;
         private static readonly HashSet<Type> _scannedWorkersThisClick = new HashSet<Type>();
         private static readonly Dictionary<int, int> _lastLogTickByCode = new Dictionary<int, int>();
@@ -189,6 +191,17 @@ namespace SurvivalTools.UI.RightClickRescue
             catch { }
         }
 
+        internal static bool WasEvaluatedThisClick(Pawn pawn, IntVec3 cell)
+        {
+            try
+            {
+                int now = Find.TickManager?.TicksGame ?? 0;
+                var key = new ClickKey { tick = now, pawnId = pawn?.thingIDNumber ?? -1, cell = cell };
+                return key.Equals(_lastEvaluated);
+            }
+            catch { return false; }
+        }
+
         // Helpers used by builder/fallback to count successful adds
         internal static void NotifyOptionAdded() { _optionsAddedThisClick++; }
         internal static bool AlreadySatisfiedThisClick() => _optionsAddedThisClick > 0;
@@ -225,12 +238,27 @@ namespace SurvivalTools.UI.RightClickRescue
             return p != null && p.Spawned && p.Faction == Faction.OfPlayer && p.CanTakeOrder;
         }
 
+        // Per-tick, per-cell throttle for the provider path (mirrors the Postfix guard).
+        // ReverseCommands iterates every free colonist on right-click; we skip the full pipeline
+        // for the 2nd-Nth pawn at the same cell within the same game tick.
+        private static int _providerLastCellTick = -1;
+        private static IntVec3 _providerLastCellPos;
+
         public override IEnumerable<FloatMenuOption> GetOptions(FloatMenuContext context)
         {
             var list = new List<FloatMenuOption>();
             try
             {
                 var pawn = context?.FirstSelectedPawn;
+
+                // Skip full pipeline if another pawn already triggered it for this cell this tick.
+                int nowTick = Find.TickManager?.TicksGame ?? 0;
+                var cell = context?.ClickedCell ?? IntVec3.Invalid;
+                bool isPrimary = (nowTick != _providerLastCellTick || cell != _providerLastCellPos);
+                if (!isPrimary) return list;
+                _providerLastCellTick = nowTick;
+                _providerLastCellPos = cell;
+
                 if (pawn != null)
                     BeginClick(pawn, context.ClickedCell);
                 Prewarm();
@@ -250,6 +278,12 @@ namespace SurvivalTools.UI.RightClickRescue
                         // No need to scan tree-felling options; builder already suppresses but we still allow non-tree rescues.
                     }
                     RightClickRescue.RightClickRescueBuilder.TryAddRescueOptions(pawn, context, list);
+                    try
+                    {
+                        int now = Find.TickManager?.TicksGame ?? 0;
+                        _lastEvaluated = new ClickKey { tick = now, pawnId = pawn.thingIDNumber, cell = context.ClickedCell };
+                    }
+                    catch { }
                     if (list.Count > 0) NotifyOptionAdded();
                     if (timing && sw != null)
                     {

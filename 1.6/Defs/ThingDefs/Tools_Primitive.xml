@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+    <!-- ======================================================= -->
+    <!-- STONE FLAKE — Zero-tier bootstrap tool                   -->
+    <!-- Craftable from stone chunks and occasionally dropped     -->
+    <!-- when rock chunks are destroyed. Just good enough to      -->
+    <!-- lift the tool gate; breaks quickly.                      -->
+    <!-- ======================================================= -->
+
+    <ThingDef ParentName="BaseSurvivalTool">
+        <defName>SurvivalTools_StoneFlake</defName>
+        <label>stone flake</label>
+        <description>A sharp flake of hard stone, knapped naturally from a larger rock. Crude but just barely functional as a cutting or digging implement. It won't last long — but it might get you through the first few days until you can craft something better.</description>
+        <techLevel>Neolithic</techLevel>
+        <graphicData>
+            <texPath>Things/Item/Equipment/Tool/StoneFlake</texPath>
+            <graphicClass>Graphic_Single</graphicClass>
+        </graphicData>
+        <statBases>
+            <MaxHitPoints>15</MaxHitPoints>
+            <DeteriorationRate>8</DeteriorationRate>
+            <Mass>0.3</Mass>
+            <Flammability>0</Flammability>
+            <Beauty>-10</Beauty>
+        </statBases>
+        <!-- Not smeltable — it's just a rock flake -->
+        <smeltable>false</smeltable>
+        <!-- No stuffCategories — not crafted from stuff -->
+        <!-- Crafted via explicit RecipeDef from StoneChunks -->
+        <!-- No CompQuality — quality has no meaning for a scavenged flake -->
+        <thingCategories>
+            <li>SurvivalToolsNeolithic</li>
+        </thingCategories>
+        <tools>
+            <li>
+                <!-- Minimal poke attack — present so the pawn can equip it, but far weaker than
+                     any craftable weapon so AutoEquip never prefers it over real tools. -->
+                <label>flake</label>
+                <capacities>
+                    <li>Poke</li>
+                </capacities>
+                <power>6</power>
+                <cooldownTime>3.5</cooldownTime>
+            </li>
+        </tools>
+        <modExtensions>
+            <li Class="SurvivalTools.SurvivalToolProperties">
+                <!-- 25% speed on all gated stats: lifts the job gate but is very slow.
+                     Players are immediately motivated to craft a proper tool. -->
+                <baseWorkStatFactors>
+                    <TreeFellingSpeed>0.25</TreeFellingSpeed>
+                    <PlantHarvestingSpeed>0.25</PlantHarvestingSpeed>
+                    <DiggingSpeed>0.25</DiggingSpeed>
+                    <ConstructionSpeed>0.25</ConstructionSpeed>
+                    <SowingSpeed>0.25</SowingSpeed>
+                </baseWorkStatFactors>
+            </li>
+        </modExtensions>
+    </ThingDef>
+
+</Defs>

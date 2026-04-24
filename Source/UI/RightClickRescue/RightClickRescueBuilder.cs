@@ -284,8 +284,7 @@ namespace SurvivalTools.UI.RightClickRescue
                     {
                         _feedbackThisClick.anyScannersRan = true;
                         _feedbackThisClick.noToolsAvailable = true;
-                        var suffix = "ST_GenericToolSuffix".Translate().ToStringSafe() ?? "tool";
-                        toolName = (firstRequired.label ?? "tool").CapitalizeFirst() + " " + suffix;
+                        goto fastRecordFail; // no tool on map — show disabled feedback instead of false-positive option
                     }
                     string label = BuildOptionLabel("ST_Prioritize_Sow".Translate().ToStringSafe(), toolName);
                     var plantDefFast = plantDef; // capture for closure
@@ -389,6 +388,10 @@ namespace SurvivalTools.UI.RightClickRescue
             scored.Sort((a, b) => b.score.CompareTo(a.score));
             _lastConsideredCount = scored.Count;
 
+            // Per-click caches: avoid recomputing expensive checks across pass 1 and pass 2.
+            var gateCacheByScanner = new Dictionary<Type, bool>(scored.Count);
+            var previewCacheByStat = new Dictionary<StatDef, (bool canUpgrade, string toolName)>(8);
+
             bool success = false;
             // Pass 1: prioritized order - use cached descriptions, NO redundant TryDescribeTarget calls
             foreach (var entry in scored)
@@ -396,18 +399,36 @@ namespace SurvivalTools.UI.RightClickRescue
                 if (Provider_STPrioritizeWithRescue.AlreadySatisfiedThisClick()) break;
                 try
                 {
+                    var scannerType = entry.scanner.GetType();
                     var desc = entry.desc;
                     if (!PawnCanEverDo(pawn, desc.WorkGiverDef)) continue; // work type disabled now
                     if (desc.RequiredStats == null || desc.RequiredStats.Count == 0) continue;
                     if (stcExternal && desc.RequiredStats.Exists(rs => rs == ST_StatDefOf.TreeFellingSpeed || ToolStatResolver.IsAliasOf(rs, ST_StatDefOf.TreeFellingSpeed))) continue; // suppress tree option
-                    if (!JobGate.ShouldBlock(pawn, desc.WorkGiverDef, desc.JobDef, false, out var rk, out var a1, out var a2, queryOnly: true)) { _gatingNotNeeded++; continue; }
-                    _gatingNeeded++;
+
+                    bool blocked;
+                    if (!gateCacheByScanner.TryGetValue(scannerType, out blocked))
+                    {
+                        blocked = JobGate.ShouldBlock(pawn, desc.WorkGiverDef, desc.JobDef, false, out var rk, out var a1, out var a2, queryOnly: true);
+                        gateCacheByScanner[scannerType] = blocked;
+                        if (blocked) _gatingNeeded++; else _gatingNotNeeded++;
+                    }
+                    if (!blocked) continue;
+
                     var firstRequired = desc.RequiredStats[0]; if (firstRequired == null) continue;
-                    string toolName; bool canUpgrade = AssignmentSearchPreview.CanUpgradePreview(pawn, firstRequired, out toolName);
+                    if (!previewCacheByStat.TryGetValue(firstRequired, out var preview))
+                    {
+                        string previewToolName;
+                        bool previewCanUpgrade = AssignmentSearchPreview.CanUpgradePreview(pawn, firstRequired, out previewToolName);
+                        preview = (previewCanUpgrade, previewToolName);
+                        previewCacheByStat[firstRequired] = preview;
+                    }
+                    string toolName = preview.toolName;
+                    bool canUpgrade = preview.canUpgrade;
                     if (!canUpgrade)
                     {
-                        var suffix = "ST_GenericToolSuffix".Translate().ToStringSafe() ?? "tool";
-                        toolName = (firstRequired.label ?? "tool").CapitalizeFirst() + " " + suffix;
+                        _feedbackThisClick.anyScannersRan = true;
+                        _feedbackThisClick.noToolsAvailable = true;
+                        continue; // no tool on map — show disabled feedback instead of false-positive option
                     }
                     string label = BuildOptionLabel(desc.PriorityLabel, toolName);
                     var capture = desc; var reqStat = firstRequired;
@@ -464,15 +485,29 @@ namespace SurvivalTools.UI.RightClickRescue
                         if (!PawnCanEverDo(pawn, desc.WorkGiverDef)) { workTypeDisabledCount++; continue; }
                         if (desc.RequiredStats == null || desc.RequiredStats.Count == 0) continue;
                         if (stcExternal && desc.RequiredStats.Exists(rs => rs == ST_StatDefOf.TreeFellingSpeed || ToolStatResolver.IsAliasOf(rs, ST_StatDefOf.TreeFellingSpeed))) continue; // suppress tree option
-                        if (!JobGate.ShouldBlock(pawn, desc.WorkGiverDef, desc.JobDef, false, out var rk, out var a1, out var a2, queryOnly: true)) { _gatingNotNeeded++; notBlockedCount++; continue; }
-                        _gatingNeeded++;
+                        bool blocked;
+                        if (!gateCacheByScanner.TryGetValue(scannerType, out blocked))
+                        {
+                            blocked = JobGate.ShouldBlock(pawn, desc.WorkGiverDef, desc.JobDef, false, out var rk, out var a1, out var a2, queryOnly: true);
+                            gateCacheByScanner[scannerType] = blocked;
+                            if (blocked) _gatingNeeded++; else _gatingNotNeeded++;
+                        }
+                        if (!blocked) { notBlockedCount++; continue; }
+
                         var firstRequired = desc.RequiredStats[0]; if (firstRequired == null) continue;
-                        string toolName; bool canUpgrade = AssignmentSearchPreview.CanUpgradePreview(pawn, firstRequired, out toolName);
+                        if (!previewCacheByStat.TryGetValue(firstRequired, out var preview))
+                        {
+                            string previewToolName;
+                            bool previewCanUpgrade = AssignmentSearchPreview.CanUpgradePreview(pawn, firstRequired, out previewToolName);
+                            preview = (previewCanUpgrade, previewToolName);
+                            previewCacheByStat[firstRequired] = preview;
+                        }
+                        string toolName = preview.toolName;
+                        bool canUpgrade = preview.canUpgrade;
                         if (!canUpgrade)
                         {
                             noToolCount++;
-                            var suffix = "ST_GenericToolSuffix".Translate().ToStringSafe() ?? "tool";
-                            toolName = (firstRequired.label ?? "tool").CapitalizeFirst() + " " + suffix;
+                            continue; // no tool on map — defer to disabled feedback row
                         }
                         string label = BuildOptionLabel(desc.PriorityLabel, toolName);
                         var capture = desc; var reqStat = firstRequired;
@@ -590,9 +625,21 @@ namespace SurvivalTools.UI.RightClickRescue
                 settings.assignPathCostBudget,
                 Assign.AssignmentSearch.QueuePriority.Front,
                 "RightClickRescue");
-            if (!upgradeQueued && Prefs.DevMode && SurvivalToolsMod.Settings.debugLogging)
+            if (!upgradeQueued)
             {
-                Log.Message($"[ST.RightClick] No upgrade queued for {pawn.LabelShort} / {stat.defName}; may proceed with existing tools.");
+                if (Prefs.DevMode && settings.debugLogging)
+                    Log.Message($"[ST.RightClick] No upgrade queued for {pawn.LabelShort} / {stat.defName}; checking existing tools.");
+                // Safety guard: if no upgrade was found AND pawn doesn't already have a satisfying tool,
+                // the rescue cannot help — bail out. (Race condition: tool was grabbed by another pawn
+                // between right-click and execution, or CanUpgradePreview had a false positive.)
+                bool alreadySatisfied = false;
+                try { alreadySatisfied = pawn.MeetsWorkGiverStatRequirements(new System.Collections.Generic.List<StatDef> { stat }); }
+                catch { alreadySatisfied = true; } // on error, assume satisfied to preserve original behaviour
+                if (!alreadySatisfied)
+                {
+                    Messages.Message("ST_NoToolAvailable".Translate(pawn.LabelShort), pawn, MessageTypeDefOf.RejectInput);
+                    return;
+                }
             }
 
             // 2) Enforce Nightmare carry invariant. Capture how many drop jobs we enqueued so we can decide
@@ -1304,7 +1351,8 @@ namespace SurvivalTools.UI.RightClickRescue
         }
     }
 
-    // Lightweight preview helper until a richer AssignmentSearch.CanUpgradePreview exists.
+    // UI preview helper. Uses the assignment system's real candidate search so float-menu
+    // truthfulness matches what ExecuteRescue can actually fetch from the map.
     internal static class AssignmentSearchPreview
     {
         public static bool CanUpgradePreview(Pawn pawn, StatDef focusStat, out string friendlyToolName)
@@ -1313,22 +1361,13 @@ namespace SurvivalTools.UI.RightClickRescue
             var settings = SurvivalToolsMod.Settings; if (pawn == null || focusStat == null || settings == null) return false;
             if (!settings.enableAssignments) return false;
 
-            // Simple probe: enumerate held + virtual + equipment and see if any candidate would improve baseline.
-            float baseline = SurvivalToolUtility.GetNoToolBaseline(focusStat);
-            float best = 0f;
-            Thing bestTool = null;
-            foreach (var thing in pawn.GetAllUsableSurvivalTools())
-            {
-                if (thing?.def == null) continue;
-                float factor = ToolStatResolver.GetToolStatFactor(thing.def, thing.Stuff, focusStat);
-                if (factor <= baseline + 0.001f) continue;
-                float score = Scoring.ToolScoring.Score(thing, pawn, focusStat);
-                if (score > best)
-                {
-                    best = score; bestTool = thing;
-                }
-            }
-            if (bestTool != null)
+            if (AssignmentSearch.TryFindUpgradeCandidate(
+                pawn,
+                focusStat,
+                settings.assignMinGainPct,
+                settings.assignSearchRadius,
+                settings.assignPathCostBudget,
+                out Thing bestTool) && bestTool != null)
             {
                 friendlyToolName = bestTool.LabelShortCap;
                 return true;

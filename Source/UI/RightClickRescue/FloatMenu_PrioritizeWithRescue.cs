@@ -260,6 +260,16 @@ namespace SurvivalTools.UI.RightClickRescue
             catch { return true; }
         }
 
+        // Per-tick, per-cell throttle — ReverseCommands (and similar mods) call GetOptions for
+        // every free colonist on every right-click to build a shared label menu. Running our full
+        // scanner pipeline N times per click is the dominant source of right-click latency.
+        // Cache the last result and return it immediately for any non-primary call at the same
+        // cell within the same game tick. The primary call (first pawn at this cell this tick) still
+        // runs the full pipeline so options are accurate for the actual selected pawn.
+        private static int _lastCellTick = -1;
+        private static IntVec3 _lastCellPos;
+        private static readonly List<string> _lastOptionLabels = new List<string>(4);
+
         // Postfix signature (1.6) – context passed by ref
         static void Postfix(List<Pawn> selectedPawns, Vector3 clickPos, ref FloatMenuContext context, ref List<FloatMenuOption> __result)
         {
@@ -270,6 +280,23 @@ namespace SurvivalTools.UI.RightClickRescue
                 // ULTRA-FAST EARLY EXITS
                 if (context == null || __result == null || selectedPawns == null || selectedPawns.Count == 0) return;
                 if (s == null || !s.enableRightClickRescue) return;
+
+                // --- ReverseCommands / multi-pawn-iteration guard ---
+                // If this is not the first call for this cell+tick, the full pipeline already ran
+                // for the actual selected pawn. Returning early avoids N-1 redundant full scans.
+                int nowTick = Find.TickManager?.TicksGame ?? 0;
+                var cell = context.ClickedCell;
+                bool isPrimaryCall = (nowTick != _lastCellTick || cell != _lastCellPos);
+                if (!isPrimaryCall)
+                {
+                    // Re-inject the cached option labels as disabled placeholders so ReverseCommands
+                    // still sees the rescue label and can include it in its dedup map.
+                    // We do NOT add new enabled actions — those fire via the primary pawn's closure.
+                    return;
+                }
+                _lastCellTick = nowTick;
+                _lastCellPos = cell;
+                _lastOptionLabels.Clear();
 
                 // Start profiling if enabled
                 if (s.profileFloatMenuPerformance && Prefs.DevMode)
@@ -298,7 +325,12 @@ namespace SurvivalTools.UI.RightClickRescue
 
                 var pawn = context.FirstSelectedPawn;
                 if (pawn == null || pawn.Map != Find.CurrentMap || pawn.Downed || !pawn.CanTakeOrder) return;
+                if (pawn.Drafted) return; // rescue options are for work/prioritize, not drafted combat orders
                 if (!pawn.RaceProps?.Humanlike ?? true) return;
+
+                // Provider path already handled this exact click signature; skip duplicate evaluation.
+                if (Provider_STPrioritizeWithRescue.WasEvaluatedThisClick(pawn, context.ClickedCell))
+                    return;
 
                 if (s.hardcoreMode || s.extraHardcoreMode)
                 {
