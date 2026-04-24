@@ -7,9 +7,10 @@
     <supportedVersions>
         <li>1.6</li>
     </supportedVersions>
+    <loadAfter>
+        <li>com.yayo.yayoAni.continued</li>
+    </loadAfter>
     <description><![CDATA[
-Current version: v2.1 (February 2026)
-
 Transforms RimWorld into a challenging tool-dependent survival experience where proper equipment becomes essential for colony success.
 
 ⚠️ REFACTOR BRANCH - TESTING BUILD ⚠️
@@ -41,8 +42,8 @@ WHAT'S NEW IN REFACTOR:
 • Virtual tool support (cloth/wool for cleaning, medical work)
 
 COMPATIBILITY:
-• Works with Separate Tree Chopping, Combat Extended, and other major mods
-• Automatic tool detection for modded items
+• Works with Separate Tree Chopping, Combat Extended, and many major mods
+• Best-effort automatic tool detection for many modded items
 • Tree chopping integration with multiple tree-related mods
 
 Originally by XeoNovaDan. Completely rebuilt for RimWorld 1.6 with modern architecture, intelligent automation, and focus on stability. This test branch represents a systematic ground-up refactor.

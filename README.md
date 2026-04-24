@@ -63,7 +63,7 @@ Survival Tools introduces a progression-based tool system with 18 different tool
 ### 🔄 **Tool Assignment System**
 
 - Automatic tool optimization for colonists
-- Manual assignment options for precise control
+- Optional right-click rescue for blocked jobs in Hardcore/Nightmare
 - Tools integrate seamlessly with vanilla work priorities
 
 ### 🌍 **Full Localization Support**
@@ -79,9 +79,9 @@ Survival Tools introduces a progression-based tool system with 18 different tool
 
 ## Compatibility
 
-- **RimWorld Version**: 1.6+
+- **RimWorld Version**: 1.6
 - **Required Mods**: Harmony
-- **Compatible with most mods** including Combat Extended, VGP, and popular overhauls
+- **Compatible with many mods** including Combat Extended, VGP, and popular overhauls (best-effort)
 - Extensive patch system for material and recipe compatibility
 
 ## Development Status

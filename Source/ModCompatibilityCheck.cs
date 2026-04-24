@@ -54,6 +54,9 @@ namespace SurvivalTools
         public static readonly bool NiceInventoryTab =
             HasAny("andromedah.niceinventorytab", "NiceInventoryTab", "Nice Inventory Tab");
 
+        public static readonly bool YayoAnimation =
+            HasAny("com.yayo.yayoAni.continued", "com.yayo.yayoAni", "Yayo's Animation (Continued)", "Yayo's Animation");
+
         // Useful aggregate
         public static readonly bool OtherInventoryModsActive = CombatExtended || PickUpAndHaul;
     }

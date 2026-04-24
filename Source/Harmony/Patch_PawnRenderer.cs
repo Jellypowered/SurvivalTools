@@ -33,6 +33,7 @@ using static SurvivalTools.ST_Logging;
 namespace SurvivalTools.HarmonyStuff
 {
     [HarmonyPatch(typeof(PawnRenderUtility), nameof(PawnRenderUtility.DrawEquipmentAndApparelExtras))]
+    [HarmonyAfter(new[] { "com.yayo.yayoAni", "com.yayo.yayoAni.continued" })]
     [HarmonyPriority(Priority.Last)] // draw last so our overlay isn't hidden by other mods
     public static class ShowWhileWorking_Draw_Postfix
     {
@@ -136,7 +137,12 @@ namespace SurvivalTools.HarmonyStuff
                     }
                     else if (toolThing is ThingWithComps twc && twc.def != null && !twc.Destroyed)
                     {
-                        PawnRenderUtility.DrawCarriedWeapon(twc, drawPos, facing, distFactor);
+                        // Yayo's Animation transpiles DrawCarriedWeapon and may expect a primary weapon.
+                        // When no primary exists, use a local mesh fallback to keep tool visuals stable.
+                        if (ModCompatibilityCheck.YayoAnimation && pawn.equipment?.Primary == null)
+                            DrawThingAsCarriedFallback(twc, drawPos, facing, distFactor);
+                        else
+                            PawnRenderUtility.DrawCarriedWeapon(twc, drawPos, facing, distFactor);
 
                         // Animation hook (future):
                         //  - For hammers/saws, consider small periodic rotation around local Z.
@@ -166,6 +172,23 @@ namespace SurvivalTools.HarmonyStuff
                 MeshPool.plane10,
                 Matrix4x4.TRS(drawPos, rot, new Vector3(scale, 1f, scale)),
                 tinted,
+                0
+            );
+        }
+
+        private static void DrawThingAsCarriedFallback(ThingWithComps toolThing, Vector3 drawPos, Rot4 facing, float distFactor)
+        {
+            var mat = toolThing?.Graphic?.MatSingle;
+            if (mat == null) return;
+
+            const float baseScale = 0.75f;
+            float scale = baseScale * Mathf.Max(0.6f, distFactor);
+            var rot = Quaternion.AngleAxis(facing.AsAngle, Vector3.up);
+
+            Graphics.DrawMesh(
+                MeshPool.plane10,
+                Matrix4x4.TRS(drawPos, rot, new Vector3(scale, 1f, scale)),
+                mat,
                 0
             );
         }
