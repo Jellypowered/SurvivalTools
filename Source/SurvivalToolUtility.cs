@@ -713,16 +713,31 @@ namespace SurvivalTools
                 {
                     if (!pawn.HasSurvivalToolFor(stat))
                     {
+                        bool isOptionalStat = IsOptionalToolStat(stat);
+                        bool blocksInCurrentMode = !isOptionalStat || (s.extraHardcoreMode && s.IsStatRequiredInExtraHardcore(stat));
+
                         if (s.autoTool)
                         {
-                            string logKey = $"AutoTool_Missing_{pawn.ThingID}_{stat.defName}";
-                            if (ShouldLog(logKey))
+                            if (!blocksInCurrentMode)
+                            {
+                                string logKey = $"AutoTool_Missing_{pawn.ThingID}_{stat.defName}";
+                                if (ShouldLog(logKey))
+                                {
+                                    string statCategory = GetStatCategoryDescription(stat);
+                                    string jobContext = GetJobContextDescription(workGiver, jobDef);
+                                    Log.Message($"[SurvivalTools] {pawn.LabelShort} missing optional tool for {statCategory} stat {stat.defName}{jobContext}, but AutoTool will attempt acquisition.");
+                                }
+                                continue;
+                            }
+
+                            string blockingLogKey = $"AutoTool_Blocking_{pawn.ThingID}_{stat.defName}";
+                            if (ShouldLog(blockingLogKey))
                             {
                                 string statCategory = GetStatCategoryDescription(stat);
                                 string jobContext = GetJobContextDescription(workGiver, jobDef);
-                                Log.Message($"[SurvivalTools] {pawn.LabelShort} missing required tool for {statCategory} stat {stat.defName}{jobContext}, but AutoTool will attempt acquisition.");
+                                Log.Message($"[SurvivalTools] {pawn.LabelShort} cannot start job: missing required tool for {statCategory} stat {stat.defName}{jobContext}. AutoTool must equip first.");
                             }
-                            continue;
+                            return false;
                         }
 
                         string logKey2 = $"Missing_Tool_{pawn.ThingID}_{stat.defName}";
@@ -913,6 +928,16 @@ namespace SurvivalTools
                 return "tree felling";
 
             return "tool";
+        }
+
+        private static bool IsOptionalToolStat(StatDef stat)
+        {
+            return stat == ST_StatDefOf.CleaningSpeed ||
+                   stat == ST_StatDefOf.ButcheryFleshSpeed ||
+                   stat == ST_StatDefOf.ButcheryFleshEfficiency ||
+                   stat == ST_StatDefOf.MedicalOperationSpeed ||
+                   stat == ST_StatDefOf.MedicalSurgerySuccessChance ||
+                   stat == ST_StatDefOf.ResearchSpeed;
         }
 
         private static string GetJobContextDescription(WorkGiverDef workGiver, JobDef jobDef)

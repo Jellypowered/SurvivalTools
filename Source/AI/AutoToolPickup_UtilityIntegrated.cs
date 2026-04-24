@@ -118,6 +118,7 @@ namespace SurvivalTools.HarmonyStuff
         private static SurvivalTool FindBestHelpfulTool(Pawn pawn, List<StatDef> requiredStats, bool isDebug)
         {
             var assignment = pawn.TryGetComp<Pawn_SurvivalToolAssignmentTracker>()?.CurrentSurvivalToolAssignment;
+            bool needsGatingRescue = !PawnHasHelpfulTool(pawn, requiredStats);
 
             SurvivalTool bestTool = null;
             float bestScore = 0f;
@@ -130,7 +131,7 @@ namespace SurvivalTools.HarmonyStuff
 
             foreach (var tool in potentialTools)
             {
-                if (!IsViableCandidate(tool, pawn, assignment, requiredStats, out string reason))
+                if (!IsViableCandidate(tool, pawn, assignment, requiredStats, needsGatingRescue, out string reason))
                 {
                     if (isDebug)
                         Log.Message($"[SurvivalTools.AutoTool] Rejecting {tool.def.defName}: {reason}");
@@ -161,14 +162,14 @@ namespace SurvivalTools.HarmonyStuff
             return bestTool;
         }
 
-        private static bool IsViableCandidate(SurvivalTool tool, Pawn pawn, SurvivalToolAssignment assignment, List<StatDef> requiredStats, out string reason)
+        private static bool IsViableCandidate(SurvivalTool tool, Pawn pawn, SurvivalToolAssignment assignment, List<StatDef> requiredStats, bool needsGatingRescue, out string reason)
         {
             reason = null;
             if (!tool.Spawned) { reason = "Not spawned"; return false; }
             if (tool.IsForbidden(pawn)) { reason = "Is forbidden"; return false; }
             if (tool.IsBurning()) { reason = "Is burning"; return false; }
             if (assignment?.filter != null && !assignment.filter.Allows(tool)) { reason = "Disallowed by assignment"; return false; }
-            if (!ToolIsAcquirableByPolicy(pawn, tool)) { reason = "Disallowed by storage policy"; return false; }
+            if (!ToolIsAcquirableByPolicy(pawn, tool, needsGatingRescue)) { reason = "Disallowed by storage policy"; return false; }
             if (!ToolImprovesAnyRequiredStat(tool, requiredStats))
             {
                 string statsNeeded = requiredStats?.Any() == true ? $" ({string.Join(", ", requiredStats.Select(s => s.defName))})" : "";
@@ -381,6 +382,14 @@ namespace SurvivalTools.HarmonyStuff
 
         private static bool ToolIsAcquirableByPolicy(Pawn pawn, SurvivalTool tool)
         {
+            return ToolIsAcquirableByPolicy(pawn, tool, false);
+        }
+
+        private static bool ToolIsAcquirableByPolicy(Pawn pawn, SurvivalTool tool, bool needsGatingRescue)
+        {
+            if (needsGatingRescue)
+                return true;
+
             if (tool.IsInAnyStorage())
                 return true;
 

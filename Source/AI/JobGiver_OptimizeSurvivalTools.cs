@@ -169,6 +169,10 @@ namespace SurvivalTools
             if (SurvivalToolUtility.IsDebugLoggingEnabled)
                 Log.Message($"[SurvivalTools.Optimizer] {pawn.LabelShort}'s best current tool score: {bestScore:F2}");
 
+            // If the pawn has no helpful tool at all, allow rescue scans to include reachable map tools
+            // even when they are outside storage/home-area pickup policy.
+            bool needsGatingRescue = bestScore <= 0f;
+
             var potentialTools = pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableEver);
             for (int i = 0; i < potentialTools.Count; i++)
             {
@@ -177,7 +181,7 @@ namespace SurvivalTools
                     !potentialTool.IsForbidden(pawn) &&
                     !potentialTool.IsBurning() &&
                     curAssignment.filter.Allows(potentialTool) &&
-                    ToolIsAcquirableByPolicy(pawn, potentialTool) &&
+                    ToolIsAcquirableByPolicy(pawn, potentialTool, needsGatingRescue) &&
                     pawn.CanReserveAndReach(potentialTool, PathEndMode.OnCell, pawn.NormalMaxDanger()))
                 {
                     float potentialScore = SurvivalToolScore(potentialTool, workRelevantStats);
@@ -260,6 +264,14 @@ namespace SurvivalTools
 
         private static bool ToolIsAcquirableByPolicy(Pawn pawn, SurvivalTool tool)
         {
+            return ToolIsAcquirableByPolicy(pawn, tool, false);
+        }
+
+        private static bool ToolIsAcquirableByPolicy(Pawn pawn, SurvivalTool tool, bool needsGatingRescue)
+        {
+            if (needsGatingRescue)
+                return true;
+
             if (tool.IsInAnyStorage())
                 return true;
 

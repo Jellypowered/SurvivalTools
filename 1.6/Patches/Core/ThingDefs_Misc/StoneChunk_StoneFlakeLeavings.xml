@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Patch: Stone chunks drop a stone flake when destroyed (killed by damage / explosions).
+     Scope: all ThingDefs in thingCategory StoneChunks.
+     Effect: 1 SurvivalTools_StoneFlake dropped when any stone chunk is killed.
+
+     Design intent: Stone flakes are scavenged from rock debris during combat, map clearing,
+     or any situation where chunks take lethal damage. This gives players a zero-tier tool
+     fallback without requiring a working crafting chain. -->
+<Patch>
+
+    <!-- Add killedLeavings to every stone chunk. Vanilla stone chunks define no killedLeavings,
+         so this is safe. If a mod adds its own killedLeavings to a chunk, the last-loading
+         definition wins, which is acceptable. -->
+    <Operation Class="PatchOperationAdd">
+        <xpath>Defs/ThingDef[thingCategories/li="StoneChunks"]</xpath>
+        <value>
+            <killedLeavings>
+                <SurvivalTools_StoneFlake>1</SurvivalTools_StoneFlake>
+            </killedLeavings>
+        </value>
+    </Operation>
+
+</Patch>

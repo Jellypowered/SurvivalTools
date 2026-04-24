@@ -1,11 +1,9 @@
 <Patch>
-    <Operation Class="PatchOperationFindMod">
-        <mods>
-            <li>Ludeon.RimWorld.Odyssey</li>
-        </mods>
+    <!-- Safe no-op when Odyssey defs are absent -->
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/ThingDef[defName="BlocksVacstone"]</xpath>
         <match Class="PatchOperationSequence">
             <operations>
-                <!-- BlocksVacstone -->
                 <li Class="PatchOperationAddModExtension">
                     <xpath>Defs/ThingDef[defName="BlocksVacstone"]</xpath>
                     <value>
@@ -20,8 +18,14 @@
                         </li>
                     </value>
                 </li>
+            </operations>
+        </match>
+    </Operation>
 
-                <!-- Obsidian (if you want to buff/nerf it too) -->
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/ThingDef[defName="Obsidian"]</xpath>
+        <match Class="PatchOperationSequence">
+            <operations>
                 <li Class="PatchOperationAddModExtension">
                     <xpath>Defs/ThingDef[defName="Obsidian"]</xpath>
                     <value>

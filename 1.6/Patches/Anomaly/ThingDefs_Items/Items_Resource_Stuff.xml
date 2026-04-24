@@ -1,9 +1,7 @@
 <Patch>
-    <!-- Apply StuffPropsTool directly to Bioferrite only if Anomaly is present -->
-    <Operation Class="PatchOperationFindMod">
-        <mods>
-            <li>Anomaly</li>
-        </mods>
+    <!-- Safe no-op when Anomaly or Bioferrite is absent -->
+    <Operation Class="PatchOperationConditional">
+        <xpath>Defs/ThingDef[defName="Bioferrite"]</xpath>
         <match Class="PatchOperationSequence">
             <operations>
                 <li Class="PatchOperationAddModExtension">
