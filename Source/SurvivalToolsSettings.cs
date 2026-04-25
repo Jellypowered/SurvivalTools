@@ -432,10 +432,10 @@ namespace SurvivalTools
 
             // Debug Settings
             height += 35f; // Section header
-            height += 50f; // Debug content area
+            height += 200f; // Debug content area
 
             // Add much more padding to ensure all content is accessible
-            height += 300f; // Increased from 100f to 300f for better scrolling
+            height += 400f; // Increased from 100f to 400f for better scrolling
 
             return height;
         }
