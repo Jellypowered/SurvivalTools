@@ -1530,11 +1530,11 @@ namespace SurvivalTools
             // Scan usable tools (inventory + worn + eq) once, check factor improvement.
             var tools = pawn.GetAllUsableSurvivalTools();
             if (tools == null) return false;
-            float baseline = GetNoToolBaseline(stat);
+            float baseline = GetToolValidationBaseline(stat);
             foreach (var thing in tools)
             {
                 SurvivalTool st = thing as SurvivalTool;
-                if (st == null && thing.def != null && thing.def.IsToolStuff()) st = VirtualTool.FromThing(thing);
+                if (st == null) st = ToolUtility.TryWrapVirtual(thing);
                 if (st == null) continue;
 
                 // Phase 12: Check if tool satisfies stat considering charge
@@ -1564,13 +1564,13 @@ namespace SurvivalTools
         {
             tool = null; statFactor = -1f;
             if (pawn == null || stat == null || !stat.RequiresSurvivalTool()) return false;
-            float baseline = GetNoToolBaseline(stat);
+            float baseline = GetToolValidationBaseline(stat);
             var tools = pawn.GetAllUsableSurvivalTools(); if (tools == null) return false;
             SurvivalTool best = null; float bestFactor = baseline;
             foreach (var thing in tools)
             {
                 SurvivalTool st = thing as SurvivalTool;
-                if (st == null && thing.def != null && thing.def.IsToolStuff()) st = VirtualTool.FromThing(thing);
+                if (st == null) st = ToolUtility.TryWrapVirtual(thing);
                 if (st == null) continue;
 
                 // Phase 12: Check if tool satisfies stat considering charge

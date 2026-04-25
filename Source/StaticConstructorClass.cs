@@ -43,6 +43,9 @@ namespace SurvivalTools
 
                 // 4) Auto-detect and enhance tools
                 ResolveAllTools();
+                // Clear ToolStatResolver cache so any entries populated before ResolveAllTools
+                // (before weapon defs were enhanced) are rebuilt with the correct factors.
+                Helpers.ToolStatResolver.ClearCaches();
 
                 // 5) Warm settings cache (optional/perf)
                 SurvivalToolsMod.InitializeSettings();

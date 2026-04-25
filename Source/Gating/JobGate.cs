@@ -140,7 +140,7 @@ namespace SurvivalTools.Gating
                 var stat = requiredStatsPre[i];
                 float bestScore;
                 var best = Scoring.ToolScoring.GetBestTool(pawn, stat, out bestScore);
-                var baseline = SurvivalToolUtility.GetNoToolBaseline(stat);
+                var baseline = SurvivalToolUtility.GetToolValidationBaseline(stat);
                 if (best == null || bestScore <= baseline + Eps) { hasAllToolsPre = false; break; }
             }
 
@@ -236,7 +236,7 @@ namespace SurvivalTools.Gating
                 float bestScore;
                 var best = Scoring.ToolScoring.GetBestTool(pawn, stat, out bestScore);
                 // Compare against toolless baseline from resolver
-                var baseline = SurvivalToolUtility.GetNoToolBaseline(stat);
+                var baseline = SurvivalToolUtility.GetToolValidationBaseline(stat);
                 if (best == null || bestScore <= baseline + Eps)
                 {
                     // If we arrive here, either rescue was disabled or we couldn't queue any rescue. Provide standard reason.

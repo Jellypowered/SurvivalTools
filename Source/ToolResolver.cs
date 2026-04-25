@@ -313,14 +313,15 @@ namespace SurvivalTools
                 }
             }
 
-            // Add SurvivalToolProperties mod extension if not present
-            EnsureSurvivalToolExtension(thingDef, toolKind);
+            // Add SurvivalToolProperties mod extension WITH populated baseWorkStatFactors so that
+            // VirtualTool wrapping works and GetToolProvidedFactor reads the correct values.
+            EnsureSurvivalToolExtension(thingDef, toolKind, rule, multiplier);
         }
 
         /// <summary>
         /// Ensures a ThingDef has the SurvivalToolProperties mod extension
         /// </summary>
-        private static void EnsureSurvivalToolExtension(ThingDef thingDef, STToolKind toolKind)
+        private static void EnsureSurvivalToolExtension(ThingDef thingDef, STToolKind toolKind, ToolDetectionRule rule = null, float multiplier = 1f)
         {
             // Check if it already has the extension
             if (thingDef.HasModExtension<SurvivalToolProperties>()) return;
@@ -329,8 +330,19 @@ namespace SurvivalTools
             if (thingDef.modExtensions == null)
                 thingDef.modExtensions = new List<DefModExtension>();
 
-            // Add basic SurvivalToolProperties extension
             var toolProps = new SurvivalToolProperties();
+
+            // Populate baseWorkStatFactors from rule so VirtualTool wrapping and GetToolProvidedFactor work.
+            // Without this the extension is empty and the weapon is invisible to the tool scoring system.
+            if (rule != null)
+            {
+                toolProps.baseWorkStatFactors = new List<StatModifier>();
+                foreach (var stat in rule.RequiredStats)
+                    toolProps.baseWorkStatFactors.Add(new StatModifier { stat = stat, value = multiplier });
+                if (rule.SecondaryStats != null)
+                    foreach (var kvp in rule.SecondaryStats)
+                        toolProps.baseWorkStatFactors.Add(new StatModifier { stat = kvp.Key, value = kvp.Value * multiplier });
+            }
 
             thingDef.modExtensions.Add(toolProps);
         }

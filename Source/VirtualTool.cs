@@ -82,6 +82,11 @@ namespace SurvivalTools
             if (thing?.def == null) return null;
             try
             {
+                // Accept anything with a non-empty SurvivalToolProperties (e.g. weapons enhanced by ToolResolver).
+                // EligibleTextile is still used for the textile/cleaning virtual-tool path.
+                var props = thing.def.GetModExtension<SurvivalToolProperties>();
+                if (props?.baseWorkStatFactors != null && props.baseWorkStatFactors.Count > 0)
+                    return new VirtualTool(thing);
                 if (!EligibleTextile(thing.def)) return null;
                 return new VirtualTool(thing);
             }
