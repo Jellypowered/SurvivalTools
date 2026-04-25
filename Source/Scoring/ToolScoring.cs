@@ -77,7 +77,7 @@ namespace SurvivalTools.Scoring
 
             // Get tool stat factor using resolver
             float toolFactor = ToolStatResolver.GetToolStatFactor(tool.def, tool.Stuff, workStat);
-            float baseline = SurvivalToolUtility.GetNoToolBaseline(workStat);
+            float baseline = SurvivalToolUtility.GetToolValidationBaseline(workStat);
 
             // If tool doesn't improve over baseline, score is 0
             // In RimWorld's stat system: higher factor = faster work

@@ -35,6 +35,19 @@ namespace SurvivalTools
             try { return ToolFactorCache.GetOrComputeNoToolPenalty(stat); } catch { return 1f; }
         }
 
+        // In hardcore modes, gating logic should treat any positive stat factor as a valid tool.
+        // Using no-tool penalty here can incorrectly disqualify weak bootstrap tools.
+        public static float GetToolValidationBaseline(StatDef stat)
+        {
+            if (stat == null) return 1f;
+
+            var s = SurvivalToolsMod.Settings;
+            if (s?.hardcoreMode == true || s?.extraHardcoreMode == true)
+                return 0f;
+
+            return GetNoToolBaseline(stat);
+        }
+
         public static float GetToolProvidedFactor(SurvivalTool tool, StatDef stat)
         {
             // If there is no tool instance or stat, return the baseline no-tool factor.
@@ -79,7 +92,7 @@ namespace SurvivalTools
                 {
                     var s = stats[i];
                     if (s == null) continue;
-                    if (GetToolProvidedFactor(tool, s) > GetNoToolBaseline(s) + 0.001f) return true;
+                    if (GetToolProvidedFactor(tool, s) > GetToolValidationBaseline(s) + 0.001f) return true;
                 }
             }
             catch (Exception ex)
@@ -1579,7 +1592,7 @@ namespace SurvivalTools
             if (part == null) return null;
 
             // Unified baseline & scoring path using existing helpers so behavior matches multi-stat overload
-            float baseline = GetNoToolBaseline(stat);
+            float baseline = GetToolValidationBaseline(stat);
             var expectedKind = ToolUtility.ToolKindForStats(new[] { stat });
             SurvivalTool best = null; float bestDelta = 0f; // store delta above baseline not absolute factor
 
