@@ -814,7 +814,17 @@ namespace SurvivalTools
             // detection yields stats, return them. Otherwise fall back to WorkGiver mod-extensions
             // or heuristics.
 
-            // 1) Job-level detection
+            // 1) Instance-based detection first: resolves tree vs. non-tree correctly.
+            //    StatsForJob(Job) checks the actual target, so e.g. CutPlantDesignated/HarvestDesignated
+            //    on a tree returns TreeFellingSpeed rather than PlantHarvestingSpeed.
+            if (job != null)
+            {
+                var instanceStats = StatsForJob(job);
+                if (instanceStats != null && instanceStats.Count > 0)
+                    return instanceStats;
+            }
+
+            // 2) JobDef-level detection (no instance context)
             // Handle explicit common null-workgiver jobs first (defensive)
             if (job?.def == JobDefOf.Clean)
                 return new List<StatDef> { ST_StatDefOf.CleaningSpeed };

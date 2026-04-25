@@ -321,6 +321,13 @@ namespace SurvivalTools.Gating
                 }
                 var statsFromWG = wg != null ? SurvivalToolUtility.RelevantStatsFor(wg, job) : null;
                 if (statsFromWG != null && statsFromWG.Count > 0) return true;
+                // When job is null (e.g. called from HasJobOnThing prefix before a job is created),
+                // RelevantStatsFor can't determine stats from the job. Check the WorkGiver directly.
+                if (wg != null && (job == null || statsFromWG == null || statsFromWG.Count == 0))
+                {
+                    var wgStatsDirect = StatGatingHelper.GetStatsForWorkGiver(wg);
+                    if (wgStatsDirect != null && wgStatsDirect.Count > 0) return true;
+                }
                 var statsFromJob = SurvivalToolUtility.RelevantStatsFor(wg, job); // job instance path
                 if (statsFromJob != null && statsFromJob.Count > 0) return true;
                 if (job != null)

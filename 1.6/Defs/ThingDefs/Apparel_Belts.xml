@@ -14,6 +14,7 @@
             <li>
                 <compClass>CompColorable</compClass>
             </li>
+            <li Class="CompProperties_Styleable" MayRequire="Ludeon.RimWorld.Ideology"/>
             <li>
                 <compClass>CompQuality</compClass>
             </li>

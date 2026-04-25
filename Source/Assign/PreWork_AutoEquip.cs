@@ -813,6 +813,27 @@ namespace SurvivalTools.Assign
                 return ST_StatDefOf.PlantHarvestingSpeed;
             }
 
+            // CutPlantDesignated: used by SeparateTreeChopping's WorkGiver_TreesChop for trees,
+            // and by vanilla WorkGiver_PlantsCut for designated plant cuts.
+            if (string.Equals(jobDef.defName, "CutPlantDesignated", StringComparison.Ordinal))
+            {
+                try
+                {
+                    if (job.targetA.HasThing)
+                    {
+                        var target = job.targetA.Thing;
+                        if (target?.def?.plant?.IsTree == true)
+                        {
+                            LogDebug($"[PreWork] CutPlantDesignated targeting tree '{target.def.defName}' -> TreeFellingSpeed", $"PreWork.CutPlantDesignatedTree_{target.def.defName}");
+                            return ST_StatDefOf.TreeFellingSpeed;
+                        }
+                    }
+                }
+                catch { /* fall through to plant harvesting */ }
+
+                return ST_StatDefOf.PlantHarvestingSpeed;
+            }
+
             // Mining
             if (jobDef == JobDefOf.Mine)
             {
