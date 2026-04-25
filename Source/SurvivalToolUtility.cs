@@ -34,7 +34,9 @@ namespace SurvivalTools
             }
         }
 
-        public static bool IsHardcoreModeEnabled => SurvivalTools.Settings?.hardcoreMode ?? false;
+        public static bool IsHardcoreModeEnabled =>
+            (SurvivalTools.Settings?.hardcoreMode ?? false) ||
+            (SurvivalTools.Settings?.extraHardcoreMode ?? false);
 
         public static bool IsToolDegradationEnabled => (SurvivalTools.Settings?.EffectiveToolDegradationFactor ?? 0f) > 0.001f;
 
@@ -747,7 +749,7 @@ namespace SurvivalTools
 
             var s = SurvivalTools.Settings;
 
-            if (s != null && s.hardcoreMode)
+            if (s != null && (s.hardcoreMode || s.extraHardcoreMode))
             {
                 var toolStats = requiredStats.Where(st => st != null && st.RequiresSurvivalTool()).ToList();
                 if (toolStats.NullOrEmpty()) return true;

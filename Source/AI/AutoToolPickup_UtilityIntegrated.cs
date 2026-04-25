@@ -38,7 +38,7 @@ namespace SurvivalTools.HarmonyStuff
             // In hardcore mode, if no tool is held or can be acquired, cancel the job entirely.
             // EXCEPTION: Cleaning, butchery, and medical jobs are usually allowed (just less effective without tools)
             // EXTRA HARDCORE: Even optional jobs can be blocked if extra hardcore mode is enabled
-            if (SurvivalTools.Settings.hardcoreMode)
+            if (SurvivalToolUtility.IsHardcoreModeEnabled)
             {
                 bool shouldBlockJob = false;
 
