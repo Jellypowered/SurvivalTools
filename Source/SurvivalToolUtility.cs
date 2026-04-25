@@ -40,6 +40,28 @@ namespace SurvivalTools
 
         public static bool IsToolMapGenEnabled => SurvivalTools.Settings?.toolMapGen ?? false;
 
+        public static float GetNoToolBaseline(StatDef stat)
+        {
+            if (stat == null)
+                return 1f;
+
+            var statPart = stat.GetStatPart<StatPart_SurvivalTool>();
+            return statPart?.NoToolStatFactor ?? 1f;
+        }
+
+        // In hardcore modes, validation should accept any positive stat support from a tool.
+        public static float GetToolValidationBaseline(StatDef stat)
+        {
+            if (stat == null)
+                return 1f;
+
+            var s = SurvivalTools.Settings;
+            if (s?.hardcoreMode == true || s?.extraHardcoreMode == true)
+                return 0f;
+
+            return GetNoToolBaseline(stat);
+        }
+
         public static void InvalidateDebugLoggingCache()
         {
             _debugLoggingCache = null;
@@ -549,15 +571,16 @@ namespace SurvivalTools
             float noToolScore = 0f;
             foreach (var stat in stats)
             {
-                var statPart = stat.GetStatPart<StatPart_SurvivalTool>();
-                if (statPart != null)
-                {
-                    noToolScore += statPart.NoToolStatFactor;
-                }
+                noToolScore += GetToolValidationBaseline(stat);
             }
 
             foreach (var tool in pawn.GetAllUsableSurvivalTools().OfType<SurvivalTool>())
             {
+                if (!ToolImprovesAny(tool, stats))
+                {
+                    continue;
+                }
+
                 float currentScore = 0f;
                 var workStatFactors = tool.WorkStatFactors.ToList();
 
@@ -572,11 +595,7 @@ namespace SurvivalTools
                     else
                     {
                         // If tool doesn't have this stat, use the no-tool factor
-                        var statPart = stat.GetStatPart<StatPart_SurvivalTool>();
-                        if (statPart != null)
-                        {
-                            currentScore += statPart.NoToolStatFactor;
-                        }
+                        currentScore += GetToolValidationBaseline(stat);
                     }
                 }
 
@@ -593,6 +612,30 @@ namespace SurvivalTools
         public static float GetStatFactorFromList(this SurvivalTool tool, StatDef stat)
         {
             return tool.WorkStatFactors.GetStatFactorFromList(stat);
+        }
+
+        public static bool ToolImprovesAny(SurvivalTool tool, List<StatDef> stats)
+        {
+            if (tool == null || stats.NullOrEmpty())
+                return false;
+
+            var factors = tool.WorkStatFactors?.ToList();
+            if (factors == null)
+                return false;
+
+            for (int i = 0; i < stats.Count; i++)
+            {
+                var stat = stats[i];
+                if (stat == null)
+                    continue;
+
+                float baseline = GetToolValidationBaseline(stat);
+                var modifier = factors.FirstOrDefault(m => m?.stat == stat);
+                if (modifier != null && modifier.value > baseline + 0.001f)
+                    return true;
+            }
+
+            return false;
         }
 
         #endregion
@@ -620,7 +663,7 @@ namespace SurvivalTools
             if (statPart == null) return null;
 
             SurvivalTool best = null;
-            float bestFactor = statPart.NoToolStatFactor;
+            float bestFactor = GetToolValidationBaseline(stat);
 
             foreach (var thing in pawn.GetAllUsableSurvivalTools())
             {
