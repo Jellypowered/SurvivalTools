@@ -178,9 +178,12 @@ namespace SurvivalTools.Helpers
             var info = ResolveToolStatInfo(toolDef, stuffDef, stat);
             float factor = info.Factor;
 
-            // Clamp: material beats "no tool" baseline on Normal
+            // Clamp: only elevate to no-tool baseline in Normal mode when the tool
+            // actually covers this stat (Source != "Default"). Clamping Default (0f) tools
+            // to 0.4 would make every unrelated carried item appear to satisfy any stat gate.
             var settings = SurvivalToolsMod.Settings;
-            if (settings != null && !settings.hardcoreMode && !settings.extraHardcoreMode)
+            if (settings != null && !settings.hardcoreMode && !settings.extraHardcoreMode
+                && info.Source != "Default" && factor > 0f)
             {
                 float baseline = GetNoToolBaseline();
                 if (factor < baseline)
@@ -541,19 +544,18 @@ namespace SurvivalTools.Helpers
 
         /// <summary>
         /// Create default info when no other resolution works.
-        /// Tools that don't explicitly affect a stat should be neutral (1.0f), not penalized.
-        /// The "no tool baseline" only applies when there's literally no tool equipped.
+        /// Returns 0f — an unrelated tool provides no benefit for a stat it doesn't cover.
+        /// The no-tool baseline (0.4 in Normal mode) is a StatPart penalty for bare-handed work
+        /// and must NOT be returned here, or any random carried item would satisfy any stat gate.
         /// </summary>
         private static ToolStatInfo CreateDefaultInfo(ThingDef toolDef, ThingDef stuffDef, StatDef stat)
         {
-            // Default to the no-tool baseline so unrelated items do not appear
-            // to improve penalized stats (e.g., silver vs DiggingSpeed).
             return new ToolStatInfo
             {
                 ToolDef = toolDef,
                 StuffDef = stuffDef,
                 Stat = stat,
-                Factor = GetNoToolBaseline(),
+                Factor = 0f,
                 Source = "Default",
                 IsClamped = false
             };

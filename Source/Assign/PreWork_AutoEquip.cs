@@ -108,7 +108,10 @@ namespace SurvivalTools.Assign
             // Explicit exclusions (tool-less utility jobs)
             if (jd == JobDefOf.Ingest || jd == JobDefOf.LayDown || jd == JobDefOf.Wait ||
                 jd == JobDefOf.Wait_MaintainPosture || jd == JobDefOf.Goto || jd == JobDefOf.GotoWander)
+            {
+                if (IsGatingLoggingEnabled) LogDebug($"[PreWork.JobUsesTools] {jd.defName} false (hard-skip)", $"PreWork.JUT.HardSkip|{jd.defName}");
                 return false;
+            }
             // Explicit inclusion: research (not normally covered by generic RelevantStats resolver in some setups)
             if (jd == JobDefOf.Research || string.Equals(jd.defName, "Research", StringComparison.Ordinal)) return true;
             try
@@ -116,36 +119,32 @@ namespace SurvivalTools.Assign
                 // Use helper to resolve associated WorkGiver (best-effort) then unified relevant stat resolver.
                 var wg = SurvivalTools.Helpers.JobDefToWorkGiverDefHelper.GetWorkGiverDefForJob(jd);
                 var statsFromJob = SurvivalToolUtility.RelevantStatsFor(wg, job) ?? new System.Collections.Generic.List<StatDef>();
-                if (statsFromJob.Count > 0) return true;
+                if (statsFromJob.Count > 0)
+                {
+                    if (IsGatingLoggingEnabled) LogDebug($"[PreWork.JobUsesTools] {jd.defName} TRUE via job-instance stats=[{string.Join(",", statsFromJob.ConvertAll(s => s.defName))}] wg={wg?.defName}", $"PreWork.JUT.JobInst|{jd.defName}|{wg?.defName}");
+                    return true;
+                }
                 // Fallback: jobDef based (covers patterns where job instance targets differ)
                 var statsFromJobDef = SurvivalToolUtility.RelevantStatsFor(wg, jd) ?? new System.Collections.Generic.List<StatDef>();
                 // If still empty and this is research, force true (ensures pre-work logic runs)
                 if (statsFromJobDef.Count == 0 && (jd == JobDefOf.Research || string.Equals(jd.defName, "Research", StringComparison.Ordinal))) return true;
-                return statsFromJobDef.Count > 0;
+                bool result = statsFromJobDef.Count > 0;
+                if (IsGatingLoggingEnabled) LogDebug($"[PreWork.JobUsesTools] {jd.defName} {(result ? "TRUE" : "FALSE")} via jobDef stats=[{string.Join(",", statsFromJobDef.ConvertAll(s => s.defName))}] wg={wg?.defName}", $"PreWork.JUT.JobDef|{jd.defName}|{wg?.defName}");
+                return result;
             }
-            catch { return true; } // fail open to avoid accidental suppression
+            catch (Exception ex) { if (IsGatingLoggingEnabled) LogDebug($"[PreWork.JobUsesTools] {jd.defName} EX -> fail-open true: {ex.Message}", $"PreWork.JUT.Ex|{jd.defName}"); return true; } // fail open to avoid accidental suppression
         }
 
         // Reentrancy / churn gate
         private static readonly System.Collections.Generic.HashSet<int> _preworkActive = new System.Collections.Generic.HashSet<int>();
-        private static readonly System.Collections.Generic.Dictionary<int, int> _lastStartTick = new System.Collections.Generic.Dictionary<int, int>();
         private static bool EnterPreworkGate(Pawn p, Job j)
         {
             if (p == null) return false;
-            int id = p.thingIDNumber;
-            if (!_preworkActive.Add(id)) return false; // already inside
-            try
-            {
-                int cur = Find.TickManager?.TicksGame ?? 0;
-                if (_lastStartTick.TryGetValue(id, out var last) && (cur - last) < 30) // ~0.5s
-                {
-                    _preworkActive.Remove(id);
-                    return false;
-                }
-                _lastStartTick[id] = cur;
-                return true;
-            }
-            catch { _preworkActive.Remove(id); return false; }
+            // Reentrancy guard only: prevent recursive calls while the gate is already processing for this pawn.
+            // The 900-tick _preworkCancelCD cooldown inside the gating enforcement block handles spam prevention;
+            // a separate time-based gate here was causing jobs to slip through unchecked (~0.5s window).
+            if (!_preworkActive.Add(p.thingIDNumber)) return false; // already inside
+            return true;
         }
         private static void ExitPreworkGate(Pawn p) { if (p != null) _preworkActive.Remove(p.thingIDNumber); }
 
@@ -349,7 +348,21 @@ namespace SurvivalTools.Assign
             if (tracker == null || job?.def == null) return true;
             var pawn = (Pawn)PawnField.GetValue(tracker);
             if (pawn == null) return true;
-            if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn) || !JobUsesTools(pawn, job)) return true; // early skip
+            bool eligible = SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn);
+            bool usesTools = eligible && JobUsesTools(pawn, job);
+            if (!eligible || !usesTools)
+            {
+                if (IsGatingLoggingEnabled && eligible)
+                {
+                    // Only log early-exits for actual colonists (eligible=true); skip animals/mechs silently.
+                    LogDebug($"[PreWork.Enter2] EARLY-EXIT pawn={pawn.LabelShort} job={job.def.defName} eligible={eligible} usesTools={usesTools}", $"PreWork.Enter2.EarlyExit|{pawn.ThingID}|{job.def.defName}");
+                }
+                return true; // early skip
+            }
+            if (IsGatingLoggingEnabled)
+            {
+                LogDebug($"[PreWork.Enter2] pawn={pawn.LabelShort} job={job.def.defName} aiPath={aiPath} forced={job.playerForced}", $"PreWork.Enter2|{pawn.ThingID}|{job.def.defName}");
+            }
             if (pawn.CurJobDef == JobDefOf.Ingest) return true; // do not manage while eating
 
             // Cache settings once at method entry for performance
@@ -401,7 +414,7 @@ namespace SurvivalTools.Assign
                         try { pendingEquip = job.targetA.Thing; } catch { pendingEquip = null; }
                     }
                 }
-                else if (IsDebugLoggingEnabled)
+                else if (IsGatingLoggingEnabled)
                 {
                     LogDebug($"[PreWork] Skipping upgrade for {pawn.LabelShort}: acquisition already queued by JobGate", $"PreWork_SkipDupe_{pawn.ThingID}");
                 }
@@ -413,10 +426,24 @@ namespace SurvivalTools.Assign
             // THROTTLED to prevent micro-stutter from repeated log spam.
             try
             {
+                if (IsGatingLoggingEnabled)
+                {
+                    LogDebug($"[PreWork.EarlyGate] pawn={pawn?.LabelShort} job={job?.def?.defName} upgraded={upgraded} workStat={workStat?.defName ?? "<null>"} gateable={(workStat != null ? IsGateableWorkStat(workStat) : false)}", $"PreWork.EarlyGate.Enter|{pawn?.ThingID}|{job?.def?.defName}");
+                }
                 if (!upgraded && workStat != null && settings != null && IsGateableWorkStat(workStat))
                 {
                     bool shouldGate = StatGatingHelper.ShouldBlockJobForStat(workStat, settings, pawn);
-                    if (shouldGate && !pawn.HasSurvivalToolFor(workStat))
+                    // Use the same scoring path as JobGate so wrong-type tools don't falsely satisfy the check.
+                    // HasSurvivalToolFor uses GetToolProvidedFactor which can return >0 for off-type tools.
+                    float _hasBestScore;
+                    var _hasBestTool = SurvivalTools.Scoring.ToolScoring.GetBestTool(pawn, workStat, out _hasBestScore);
+                    float _hasBaseline = SurvivalToolUtility.GetToolValidationBaseline(workStat);
+                    bool hasTool = _hasBestTool != null && _hasBestScore > _hasBaseline + 0.001f;
+                    if (IsGatingLoggingEnabled)
+                    {
+                        LogDebug($"[PreWork.EarlyGate] pawn={pawn?.LabelShort} job={job?.def?.defName} workStat={workStat.defName} shouldGate={shouldGate} hasTool={hasTool} (best={(  _hasBestTool?.LabelShort ?? "<null>")} score={_hasBestScore:0.###} baseline={_hasBaseline:0.###})", $"PreWork.EarlyGate.Check|{pawn?.ThingID}|{job?.def?.defName}|{workStat.defName}");
+                    }
+                    if (shouldGate && !hasTool)
                     {
                         // Cache tick access for hot path performance
                         int now = Find.TickManager?.TicksGame ?? 0;
@@ -438,7 +465,11 @@ namespace SurvivalTools.Assign
                         if (!bypassThrottle && IsOnCancelCooldown(throttleKey, now))
                         {
                             // Fast-fail: still block the job, but skip heavy work and logging
-                            Gating.GatingEnforcer.CancelCurrentJob(pawn, job, Gating.ST_CancelReason.ST_Gate_MissingToolStat);
+                            bool cancelledThrottled = Gating.GatingEnforcer.CancelCurrentJob(pawn, job, Gating.ST_CancelReason.ST_Gate_MissingToolStat);
+                            if (IsGatingLoggingEnabled)
+                            {
+                                LogDebug($"[PreWork.EarlyGate] THROTTLED-CANCEL pawn={pawn.LabelShort} job={job?.def?.defName} cancelled={cancelledThrottled} (cooldown active)", $"PreWork.EarlyGate.ThrottledCancel|{pawn.ThingID}|{job?.def?.defName}");
+                            }
                             return false;
                         }
 
@@ -455,12 +486,25 @@ namespace SurvivalTools.Assign
                             Log.Message($"[PreWork] Cancel {kind}: missing {workStat.defName} tool and no rescue queued (pawn={pawn.LabelShort})");
                         }
 
-                        Gating.GatingEnforcer.CancelCurrentJob(pawn, job, Gating.ST_CancelReason.ST_Gate_MissingToolStat);
+                        bool cancelledFinal = Gating.GatingEnforcer.CancelCurrentJob(pawn, job, Gating.ST_CancelReason.ST_Gate_MissingToolStat);
+                        if (IsGatingLoggingEnabled)
+                        {
+                            LogDebug($"[PreWork.EarlyGate] CANCEL pawn={pawn.LabelShort} job={job?.def?.defName} stat={workStat.defName} cancelled={cancelledFinal} bypassThrottle={bypassThrottle}", $"PreWork.EarlyGate.Cancel|{pawn.ThingID}|{job?.def?.defName}|{workStat.defName}");
+                        }
                         return false;
                     }
+                    else if (IsGatingLoggingEnabled)
+                    {
+                        LogDebug($"[PreWork.EarlyGate] NO-OP pawn={pawn.LabelShort} job={job?.def?.defName} stat={workStat.defName} shouldGate={shouldGate} hasTool={hasTool}", $"PreWork.EarlyGate.NoOp|{pawn.ThingID}|{job?.def?.defName}|{workStat.defName}");
+                    }
+                }
+                else if (IsGatingLoggingEnabled)
+                {
+                    string why = upgraded ? "upgradeQueued" : (workStat == null ? "noWorkStat" : (settings == null ? "noSettings" : (!IsGateableWorkStat(workStat) ? "notGateable" : "unknown")));
+                    LogDebug($"[PreWork.EarlyGate] SKIP pawn={pawn?.LabelShort} job={job?.def?.defName} reason={why}", $"PreWork.EarlyGate.Skip|{pawn?.ThingID}|{job?.def?.defName}");
                 }
             }
-            catch { }
+            catch (Exception egEx) { LogDebug($"[PreWork.EarlyGate] EXCEPTION pawn={pawn?.LabelShort} job={job?.def?.defName}: {egEx.Message}", $"PreWork.EarlyGate.Ex|{pawn?.ThingID}|{job?.def?.defName}"); }
 
             // Nightmare strict carry enforcement (blocks work until physically compliant)
             if (!EnforceCarryOrBlock(tracker, job, pawn, workStat, pendingEquip)) return false;
@@ -736,6 +780,20 @@ namespace SurvivalTools.Assign
 
             // Map common job types to their primary work stats
             var jobDef = job.def;
+
+            // Butcher bills are executed as DoBill jobs. Keep broad DoBill skipping intact,
+            // but allow this specific path so knife upgrades can be queued before butchery.
+            if (jobDef == JobDefOf.DoBill)
+            {
+                var resolved = SurvivalToolUtility.RelevantStatsFor(job.workGiverDef, job);
+                if (resolved != null && resolved.Count > 0)
+                {
+                    if (resolved.Contains(ST_StatDefOf.ButcheryFleshSpeed))
+                        return ST_StatDefOf.ButcheryFleshSpeed;
+                    if (resolved.Contains(ST_StatDefOf.ButcheryFleshEfficiency))
+                        return ST_StatDefOf.ButcheryFleshEfficiency;
+                }
+            }
 
             // SAFETY: Skip complex jobs that shouldn't be interrupted by tool assignment
             if (jobDef == JobDefOf.DoBill ||

@@ -3,6 +3,7 @@
 // Phase 5: Authoritative WorkGiver-level gating via Harmony patches.
 // Centralizes gating logic, eliminates scattered job checks, and provides clear failure reasons.
 // Refactor code, KEEP.
+using System.Linq;
 using HarmonyLib;
 using RimWorld;
 using Verse;
@@ -24,8 +25,68 @@ namespace SurvivalTools.HarmonyStuff
             TryPatchPostfix(h, typeof(WorkGiver_Scanner), "JobOnThing", new[] { typeof(Pawn), typeof(Thing), typeof(bool) }, nameof(Post_JobOnThing));
             TryPatchPostfix(h, typeof(WorkGiver_Scanner), "JobOnCell", new[] { typeof(Pawn), typeof(IntVec3), typeof(bool) }, nameof(Post_JobOnCell));
 
+            // Patching the base virtual on WorkGiver_Scanner does NOT intercept calls to
+            // overrides declared on derived classes (e.g. WorkGiver_Repair.JobOnThing).
+            // Enumerate all loaded subclasses and patch each declared override too.
+            PatchAllScannerOverrides(h);
+
             // Invalidate caches when resolver bumps/settings change
             Compat.CompatAPI.OnAfterDefsLoaded(() => JobGate.ClearCaches());
+        }
+
+        private static void PatchAllScannerOverrides(HarmonyLib.Harmony h)
+        {
+            int patched = 0;
+            try
+            {
+                var baseType = typeof(WorkGiver_Scanner);
+                System.Type[] allTypes;
+                try
+                {
+                    allTypes = GenTypes.AllTypes.ToArray();
+                }
+                catch
+                {
+                    allTypes = System.AppDomain.CurrentDomain.GetAssemblies()
+                        .SelectMany(a => { try { return a.GetTypes(); } catch { return System.Type.EmptyTypes; } })
+                        .ToArray();
+                }
+                foreach (var t in allTypes)
+                {
+                    if (t == null || t == baseType || t.IsAbstract) continue;
+                    if (!baseType.IsAssignableFrom(t)) continue;
+
+                    patched += TryPatchDeclaredOverride(h, t, "HasJobOnThing", new[] { typeof(Pawn), typeof(Thing), typeof(bool) }, prefix: nameof(Pre_HasJobOnThing));
+                    patched += TryPatchDeclaredOverride(h, t, "HasJobOnCell", new[] { typeof(Pawn), typeof(IntVec3), typeof(bool) }, prefix: nameof(Pre_HasJobOnCell));
+                    patched += TryPatchDeclaredOverride(h, t, "JobOnThing", new[] { typeof(Pawn), typeof(Thing), typeof(bool) }, postfix: nameof(Post_JobOnThing));
+                    patched += TryPatchDeclaredOverride(h, t, "JobOnCell", new[] { typeof(Pawn), typeof(IntVec3), typeof(bool) }, postfix: nameof(Post_JobOnCell));
+                }
+            }
+            catch (System.Exception ex)
+            {
+                ST_Logging.LogWarning("[SurvivalTools.Gates] PatchAllScannerOverrides failed: " + ex.Message);
+            }
+            ST_Logging.LogInfo($"[SurvivalTools.Gates] Patched {patched} WorkGiver_Scanner override method(s).");
+        }
+
+        private static int TryPatchDeclaredOverride(HarmonyLib.Harmony h, System.Type t, string name, System.Type[] sig, string prefix = null, string postfix = null)
+        {
+            try
+            {
+                // Only patch when the method is *declared* on this type (true override).
+                var mi = t.GetMethod(name,
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly,
+                    null, sig, null);
+                if (mi == null) return 0;
+                var pre = prefix != null ? new HarmonyMethod(typeof(WorkGiver_Gates).GetMethod(prefix, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)) : null;
+                var post = postfix != null ? new HarmonyMethod(typeof(WorkGiver_Gates).GetMethod(postfix, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)) : null;
+                h.Patch(mi, prefix: pre, postfix: post);
+                return 1;
+            }
+            catch
+            {
+                return 0;
+            }
         }
 
         static void TryPatchPrefix(HarmonyLib.Harmony h, System.Type t, string name, System.Type[] sig, string prefix)

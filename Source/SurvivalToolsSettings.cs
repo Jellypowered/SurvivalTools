@@ -56,6 +56,7 @@ namespace SurvivalTools
         // Logging toggles (only effective in DEBUG builds)
         public bool debugLogging = false;
         public bool compatLogging = false;
+        public bool debugGatingVerbose = false; // Step-by-step gating pipeline logs (JobGate/PreWork/GatingEnforcer)
 
         // Performance profiling (Debug mode only)
         public bool profileFloatMenuPerformance = false; // Log timing for float menu patches
@@ -70,6 +71,12 @@ namespace SurvivalTools
         // Enable quality-based tool scaling (multiplies tool factors by quality curve)
         public bool useQualityToolScaling = true;
         public bool enableNormalModePenalties = true;
+
+        // Hardcore/Nightmare tool effectiveness multiplier.
+        // Scales tool score AFTER the gate passes — affects how much quality/condition matter to output speed.
+        // 1.0 = default (no change). 0.5 = compressed range (awful ≈ legendary). 1.5 = exaggerated range.
+        // Only applied in Hardcore and Nightmare modes.
+        public float hardcoreToolEffectiveness = 1.0f;
 
         // Tree felling system toggle
         public bool enableSurvivalToolTreeFelling = true;
@@ -182,6 +189,7 @@ namespace SurvivalTools
             sb.AppendLine("Logging (DEBUG only):");
             sb.AppendLine($"  debugLogging: {debugLogging}");
             sb.AppendLine($"  compatLogging: {compatLogging}");
+            sb.AppendLine($"  debugGatingVerbose: {debugGatingVerbose}");
             sb.AppendLine($"  profileFloatMenuPerformance: {profileFloatMenuPerformance}");
             sb.AppendLine($"  enableModTagging: {enableModTagging}");
             sb.AppendLine("");
@@ -190,6 +198,7 @@ namespace SurvivalTools
             sb.AppendLine($"  enableNormalModePenalties: {enableNormalModePenalties}");
             sb.AppendLine($"  noToolStatFactorNormal: {noToolStatFactorNormal}");
             sb.AppendLine($"  useQualityToolScaling: {useQualityToolScaling}");
+            sb.AppendLine($"  hardcoreToolEffectiveness: {hardcoreToolEffectiveness}");
             sb.AppendLine("");
 
             sb.AppendLine("Tree Felling:");
@@ -263,6 +272,7 @@ namespace SurvivalTools
             Scribe_Values.Look(ref toolOptimization, nameof(toolOptimization), true); // legacy
             Scribe_Values.Look(ref debugLogging, nameof(debugLogging), false);
             Scribe_Values.Look(ref compatLogging, nameof(compatLogging), false);
+            Scribe_Values.Look(ref debugGatingVerbose, nameof(debugGatingVerbose), false);
             Scribe_Values.Look(ref profileFloatMenuPerformance, nameof(profileFloatMenuPerformance), false);
             Scribe_Values.Look(ref enableModTagging, nameof(enableModTagging), false);
             Scribe_Values.Look(ref pickupFromStorageOnly, nameof(pickupFromStorageOnly), false);
@@ -277,6 +287,7 @@ namespace SurvivalTools
             Scribe_Values.Look(ref noToolStatFactorNormal, nameof(noToolStatFactorNormal), 0.4f);
             Scribe_Values.Look(ref useQualityToolScaling, nameof(useQualityToolScaling), true);
             Scribe_Values.Look(ref enableNormalModePenalties, nameof(enableNormalModePenalties), true);
+            Scribe_Values.Look(ref hardcoreToolEffectiveness, nameof(hardcoreToolEffectiveness), 1.0f);
             Scribe_Values.Look(ref enableRRCompatibility, nameof(enableRRCompatibility), true);
             Scribe_Values.Look(ref rrResearchRequiredInExtraHardcore, nameof(rrResearchRequiredInExtraHardcore), false);
             Scribe_Values.Look(ref rrFieldResearchRequiredInExtraHardcore, nameof(rrFieldResearchRequiredInExtraHardcore), false);
@@ -607,6 +618,33 @@ namespace SurvivalTools
             // Quality-based tool scaling toggle
             listing.CheckboxLabeled("Settings_QualityToolScaling".Translate(), ref useQualityToolScaling, "Settings_QualityToolScaling_Tooltip".Translate());
 
+            // Hardcore/Nightmare effectiveness slider (only shown when HC/NM active)
+            if (hardcoreMode || extraHardcoreMode)
+            {
+                listing.GapLine();
+                GUI.color = new Color(1f, 0.6f, 0.2f);
+                listing.Label("Tool effectiveness (Hardcore / Nightmare)");
+                GUI.color = prevColor;
+
+                int effectPct = Mathf.RoundToInt(hardcoreToolEffectiveness * 100f);
+                listing.Label($"Tool effectiveness multiplier: {effectPct}%");
+                hardcoreToolEffectiveness = listing.Slider(hardcoreToolEffectiveness, 0.5f, 1.5f);
+                hardcoreToolEffectiveness = Mathf.Clamp(Mathf.Round(hardcoreToolEffectiveness * 20f) / 20f, 0.5f, 1.5f); // snap to 5% steps
+
+                GUI.color = Color.gray;
+                Text.Font = GameFont.Tiny;
+                string effectDesc;
+                if (hardcoreToolEffectiveness < 0.95f)
+                    effectDesc = "Quality and condition matter less — an awful sickle performs closer to a legendary one.";
+                else if (hardcoreToolEffectiveness > 1.05f)
+                    effectDesc = "Quality and condition matter more — there is a larger gap between poor and masterwork tools.";
+                else
+                    effectDesc = "Default: quality and condition affect speed at their normal rates.";
+                listing.Label(effectDesc);
+                GUI.color = prevColor;
+                Text.Font = prevFont;
+            }
+
             // Degradation slider
             var degrLabel = "Settings_ToolDegradationRate".Translate();
             listing.Label(degrLabel + ": " + toolDegradationFactor.ToStringByStyle(ToStringStyle.FloatTwo, ToStringNumberSense.Factor));
@@ -626,10 +664,12 @@ namespace SurvivalTools
 
                 listing.CheckboxLabeled("Settings_DebugLogging".Translate(), ref debugLogging, "Settings_DebugLogging_Tooltip".Translate());
 
-                // Show compatibility logging option only when debug logging is enabled
+                // Sub-options only shown when debug logging is enabled
                 if (debugLogging)
                 {
                     listing.CheckboxLabeled("Settings_CompatLogging".Translate(), ref compatLogging, "Settings_CompatLogging_Tooltip".Translate());
+                    listing.CheckboxLabeled("Verbose gating logs (JobGate / PreWork / Enforcer)", ref debugGatingVerbose,
+                        "Logs every step of the gating pipeline: stat resolution, tool scoring, block/allow decisions. Very noisy — only enable when diagnosing gating bugs.");
                 }
 
                 // Performance profiling settings

@@ -32,7 +32,7 @@ namespace SurvivalTools.Gating
         // One-line decision logger to make outcomes obvious in logs
         static void LogDecisionLine(Pawn pawn, WorkGiverDef wg, JobDef job, bool forced, bool blocked, string reason, StatDef statForDetail = null, float bestScore = -1f, float baseline = -1f)
         {
-            if (!IsDebugLoggingEnabled) return;
+            if (!IsGatingLoggingEnabled) return;
             string outcome = blocked ? "BLOCK" : "ALLOW";
             string ctx = Ctx(wg, job);
             string pawnTag = pawn?.LabelShort ?? "<null>";
@@ -62,30 +62,40 @@ namespace SurvivalTools.Gating
         {
             reasonKey = null; a1 = null; a2 = null;
 
+            // Trace entry to make every ShouldBlock invocation observable
+            if (IsGatingLoggingEnabled)
+            {
+                LogDebug($"[JobGate.Enter] pawn={pawn?.LabelShort ?? "<null>"} ctx={Ctx(wg, job)} forced={forced} queryOnly={queryOnly}", $"JobGate.Enter|{pawn?.ThingID}|{wg?.defName ?? job?.defName}");
+            }
+
             // Early-outs (do not gate these)
             if (pawn == null || pawn.Dead || pawn.Downed || pawn.IsPrisoner || pawn.RaceProps == null || pawn.RaceProps.Animal || PawnToolValidator.IsMechanoidOrInherited(pawn))
             {
-                // Hot path: don't log routine allow decisions
+                LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: "PawnNotEligible_Early");
                 return false;
             }
 
             // Hard scope: only player-controlled humanlikes & tool-using jobs.
             if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn))
             {
+                LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: "NotEligibleColonistHuman");
                 return false;
             }
             if (job == JobDefOf.Ingest)
             {
+                LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: "IngestJob");
                 return false;
             }
             if (!JobLikelyUsesTools(wg, job))
             {
+                LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: "JobLikelyUsesTools=false");
                 return false;
             }
 
             var settings = SurvivalToolsMod.Settings;
             if (settings == null || (!settings.hardcoreMode && !settings.extraHardcoreMode))
             {
+                LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: "NotHardcoreMode");
                 return false; // Normal never blocks here
             }
 
@@ -96,7 +106,7 @@ namespace SurvivalTools.Gating
                 var ws = pawn.workSettings;
                 if (pawn.WorkTypeIsDisabled(wg.workType) || (ws != null && !ws.WorkIsActive(wg.workType)))
                 {
-                    // Hot path: don't log routine skips
+                    LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: $"WorkTypeInactiveOrDisabled:{wg.workType.defName}");
                     return false;
                 }
             }
@@ -104,7 +114,7 @@ namespace SurvivalTools.Gating
             // Phase 8+: Exempt pure delivery WorkGivers (resource hauling to blueprints/frames/variants) from gating & rescue.
             if (wg != null && IsPureDeliveryWorkGiver(wg))
             {
-                // Hot path: don't log routine allows
+                LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: "PureDeliveryWorkGiver");
                 return false;
             }
             // Resolve declared stats once (may include optional ones like MiningYieldDigging)
@@ -113,8 +123,12 @@ namespace SurvivalTools.Gating
             // If no stats, do not gate
             if (declaredStats == null || declaredStats.Length == 0)
             {
-                // Hot path: don't log routine allows
+                LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: "NoDeclaredStats");
                 return false;
+            }
+            if (IsGatingLoggingEnabled)
+            {
+                LogDebug($"[JobGate.Stats] pawn={pawn.LabelShort} ctx={Ctx(wg, job)} declared=[{string.Join(",", declaredStats.Select(s => s.defName))}]", $"JobGate.Stats|{pawn.ThingID}|{wg?.defName ?? job?.defName}");
             }
 
             // Filter to only the stats that should HARD-block under current settings (skip optional stats)
@@ -129,8 +143,16 @@ namespace SurvivalTools.Gating
             var requiredStatsPre = requiredStatsList.ToArray();
             if (requiredStatsPre.Length == 0)
             {
-                // Hot path: don't log routine allows
+                if (IsGatingLoggingEnabled)
+                {
+                    LogDebug($"[JobGate.Filter] pawn={pawn.LabelShort} ctx={Ctx(wg, job)} declared=[{string.Join(",", declaredStats.Select(s => s.defName))}] all filtered out by ShouldBlockJobForStat", $"JobGate.FilterEmpty|{pawn.ThingID}|{wg?.defName ?? job?.defName}");
+                }
+                LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: "NoRequiredStats_AfterFilter");
                 return false;
+            }
+            if (IsGatingLoggingEnabled)
+            {
+                LogDebug($"[JobGate.Required] pawn={pawn.LabelShort} ctx={Ctx(wg, job)} required=[{string.Join(",", requiredStatsPre.Select(s => s.defName))}]", $"JobGate.Required|{pawn.ThingID}|{wg?.defName ?? job?.defName}");
             }
 
             // PHASE 6 INTEGRATION: enforce rescue-first flow
@@ -141,7 +163,15 @@ namespace SurvivalTools.Gating
                 float bestScore;
                 var best = Scoring.ToolScoring.GetBestTool(pawn, stat, out bestScore);
                 var baseline = SurvivalToolUtility.GetToolValidationBaseline(stat);
+                if (IsGatingLoggingEnabled)
+                {
+                    LogDebug($"[JobGate.PreCheck] pawn={pawn.LabelShort} ctx={Ctx(wg, job)} stat={stat.defName} best={(best?.LabelShort ?? "<null>")} score={bestScore:0.###} baseline={baseline:0.###}", $"JobGate.PreCheck|{pawn.ThingID}|{wg?.defName ?? job?.defName}|{stat.defName}");
+                }
                 if (best == null || bestScore <= baseline + Eps) { hasAllToolsPre = false; break; }
+            }
+            if (IsGatingLoggingEnabled)
+            {
+                LogDebug($"[JobGate.PreSummary] pawn={pawn.LabelShort} ctx={Ctx(wg, job)} hasAllToolsPre={hasAllToolsPre}", $"JobGate.PreSummary|{pawn.ThingID}|{wg?.defName ?? job?.defName}");
             }
 
             if (!hasAllToolsPre)
@@ -163,14 +193,15 @@ namespace SurvivalTools.Gating
                     }
                 }
                 catch { }
-                // Nightmare: do NOT auto-allow merely because acquisition is queued; physical carry compliance must hold
-                if (SurvivalToolsMod.Settings?.extraHardcoreMode != true)
+                // If acquisition is already pending/queued, keep blocking gated work until equip/take starts.
+                // Allowing work here can let pawns continue the gated job with no tool actually in hand.
+                if (AssignmentSearch.HasAcquisitionPendingOrQueued(pawn))
                 {
-                    if (AssignmentSearch.HasAcquisitionPendingOrQueued(pawn))
-                    {
-                        // Hot path: don't log routine allows
-                        return false;
-                    }
+                    reasonKey = "ST_Gate_MissingToolStat";
+                    a1 = requiredStatsPre[0]?.label ?? "work";
+                    a2 = wg?.label ?? job?.label ?? "this job";
+                    LogDecisionLine(pawn, wg, job, forced, blocked: true, reason: "RescueQueued_WaitingForAcquisition");
+                    return true;
                 }
                 // queryOnly: skip TryUpgradeFor when building menus/UI — it does a map-wide
                 // pathfinding search and queues jobs, causing ~500-1000ms freezes on every right-click.
@@ -187,7 +218,8 @@ namespace SurvivalTools.Gating
 
                 if (anyQueued)
                 {
-                    // If acquisition is already pending or queued, allow; otherwise block so drops happen before work
+                    // Keep blocking until the pawn actually starts acquisition/equip.
+                    // This prevents gated jobs from running toolless while a rescue sits in queue.
                     if (AssignmentSearch.HasAcquisitionPendingOrQueued(pawn))
                     {
                         if (SurvivalToolsMod.Settings?.extraHardcoreMode == true)
@@ -203,26 +235,25 @@ namespace SurvivalTools.Gating
                                 return true;
                             }
                         }
-                        else
-                        {
-                            // Hot path: don't log routine allows
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        // Block now to ensure we don't start the gated job before we’re ready
-                        if (IsDebugLoggingEnabled)
-                        {
-                            LogDebug($"[JobGate.Phase6] Rescue queued but only drop/dequeue pending for {pawn.LabelShort}; blocking job until acquisition starts.", $"JobGate_RescueBlock_{pawn.ThingID}");
-                            LogJobQueueSummary(pawn, "JobGate.RescueBlock");
-                        }
+
                         reasonKey = "ST_Gate_MissingToolStat";
                         a1 = requiredStatsPre[0]?.label ?? "work";
                         a2 = wg?.label ?? job?.label ?? "this job";
                         LogDecisionLine(pawn, wg, job, forced, blocked: true, reason: "RescueQueued_WaitingForAcquisition");
                         return true;
                     }
+
+                    // Block now to ensure we don't start the gated job before we’re ready
+                    if (IsGatingLoggingEnabled)
+                    {
+                        LogDebug($"[JobGate.Phase6] Rescue queued but only drop/dequeue pending for {pawn.LabelShort}; blocking job until acquisition starts.", $"JobGate_RescueBlock_{pawn.ThingID}");
+                        LogJobQueueSummary(pawn, "JobGate.RescueBlock");
+                    }
+                    reasonKey = "ST_Gate_MissingToolStat";
+                    a1 = requiredStatsPre[0]?.label ?? "work";
+                    a2 = wg?.label ?? job?.label ?? "this job";
+                    LogDecisionLine(pawn, wg, job, forced, blocked: true, reason: "RescueQueued_WaitingForAcquisition");
+                    return true;
                 }
                 } // end !queryOnly
             }
@@ -237,13 +268,17 @@ namespace SurvivalTools.Gating
                 var best = Scoring.ToolScoring.GetBestTool(pawn, stat, out bestScore);
                 // Compare against toolless baseline from resolver
                 var baseline = SurvivalToolUtility.GetToolValidationBaseline(stat);
+                if (IsGatingLoggingEnabled)
+                {
+                    LogDebug($"[JobGate.FinalCheck] pawn={pawn.LabelShort} ctx={Ctx(wg, job)} stat={stat.defName} best={(best?.LabelShort ?? "<null>")} score={bestScore:0.###} baseline={baseline:0.###} willBlock={(best == null || bestScore <= baseline + Eps)}", $"JobGate.FinalCheck|{pawn.ThingID}|{wg?.defName ?? job?.defName}|{stat.defName}");
+                }
                 if (best == null || bestScore <= baseline + Eps)
                 {
                     // If we arrive here, either rescue was disabled or we couldn't queue any rescue. Provide standard reason.
                     reasonKey = "ST_Gate_MissingToolStat"; // "Requires a tool for {0} to do {1}."
                     a1 = stat?.label ?? "work";
                     a2 = wg?.label ?? job?.label ?? "this job";
-                    if (IsDebugLoggingEnabled)
+                    if (IsGatingLoggingEnabled)
                     {
                         LogDebug($"[JobGate] Blocking: missing tool for {stat?.defName} on {pawn.LabelShort} for {wg?.defName ?? job?.defName}", $"JobGate.Block|{pawn?.ThingID}|{wg?.defName ?? job?.defName}|{stat?.defName}");
                         LogJobQueueSummary(pawn, "JobGate.Block.Final");
@@ -252,7 +287,7 @@ namespace SurvivalTools.Gating
                     return true;
                 }
             }
-            // Hot path: don't log routine allows
+            LogDecisionLine(pawn, wg, job, forced, blocked: false, reason: "AllToolsPresent");
             return false;
         }
 
@@ -269,7 +304,7 @@ namespace SurvivalTools.Gating
                 arr = statsList?.ToArray() ?? new StatDef[0];
 
                 // DEBUG: Log what stats we found for this WorkGiver
-                if (IsDebugLoggingEnabled)
+                if (IsGatingLoggingEnabled)
                 {
                     // Annotate smoothing optional bonus if present (ConstructionSpeed + SmoothingSpeed)
                     string list = string.Join(", ", arr.Select(s => s.defName));
@@ -317,27 +352,47 @@ namespace SurvivalTools.Gating
                 {
                     var jd = job;
                     if (jd == JobDefOf.Ingest || jd == JobDefOf.LayDown || jd == JobDefOf.Wait || jd == JobDefOf.Wait_MaintainPosture || jd == JobDefOf.Goto || jd == JobDefOf.GotoWander)
+                    {
+                        if (IsGatingLoggingEnabled) LogDebug($"[JobGate.JLUT] hard-skip {jd.defName}", $"JobGate.JLUT.HardSkip|{jd.defName}");
                         return false;
+                    }
                 }
                 var statsFromWG = wg != null ? SurvivalToolUtility.RelevantStatsFor(wg, job) : null;
-                if (statsFromWG != null && statsFromWG.Count > 0) return true;
+                if (statsFromWG != null && statsFromWG.Count > 0)
+                {
+                    if (IsGatingLoggingEnabled) LogDebug($"[JobGate.JLUT] true via RelevantStatsFor(wg={wg?.defName},job={job?.defName}) count={statsFromWG.Count}", $"JobGate.JLUT.WG|{wg?.defName}|{job?.defName}");
+                    return true;
+                }
                 // When job is null (e.g. called from HasJobOnThing prefix before a job is created),
                 // RelevantStatsFor can't determine stats from the job. Check the WorkGiver directly.
                 if (wg != null && (job == null || statsFromWG == null || statsFromWG.Count == 0))
                 {
                     var wgStatsDirect = StatGatingHelper.GetStatsForWorkGiver(wg);
-                    if (wgStatsDirect != null && wgStatsDirect.Count > 0) return true;
+                    if (wgStatsDirect != null && wgStatsDirect.Count > 0)
+                    {
+                        if (IsGatingLoggingEnabled) LogDebug($"[JobGate.JLUT] true via GetStatsForWorkGiver({wg.defName}) count={wgStatsDirect.Count}", $"JobGate.JLUT.WGDirect|{wg.defName}");
+                        return true;
+                    }
                 }
                 var statsFromJob = SurvivalToolUtility.RelevantStatsFor(wg, job); // job instance path
-                if (statsFromJob != null && statsFromJob.Count > 0) return true;
+                if (statsFromJob != null && statsFromJob.Count > 0)
+                {
+                    if (IsGatingLoggingEnabled) LogDebug($"[JobGate.JLUT] true via RelevantStatsFor 2nd-pass count={statsFromJob.Count}", $"JobGate.JLUT.WG2|{wg?.defName}|{job?.defName}");
+                    return true;
+                }
                 if (job != null)
                 {
                     var wg2 = Helpers.JobDefToWorkGiverDefHelper.GetWorkGiverDefForJob(job);
                     var statsFromJobDef = SurvivalToolUtility.RelevantStatsFor(wg2, job);
-                    if (statsFromJobDef != null && statsFromJobDef.Count > 0) return true;
+                    if (statsFromJobDef != null && statsFromJobDef.Count > 0)
+                    {
+                        if (IsGatingLoggingEnabled) LogDebug($"[JobGate.JLUT] true via JobDefToWG({job.defName})->{wg2?.defName} count={statsFromJobDef.Count}", $"JobGate.JLUT.JobDef|{job.defName}");
+                        return true;
+                    }
                 }
             }
-            catch { return true; }
+            catch (Exception ex) { if (IsGatingLoggingEnabled) LogDebug($"[JobGate.JLUT] exception: {ex.Message} -> fail-open true", $"JobGate.JLUT.Ex|{wg?.defName}|{job?.defName}"); return true; }
+            if (IsGatingLoggingEnabled) LogDebug($"[JobGate.JLUT] FALSE wg={wg?.defName} job={job?.defName}", $"JobGate.JLUT.False|{wg?.defName}|{job?.defName}");
             return false;
         }
 

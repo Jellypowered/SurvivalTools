@@ -140,6 +140,14 @@ namespace SurvivalTools.Scoring
                 score *= conditionFactor;
             }
 
+            // HC/NM effectiveness multiplier — scales score after quality/condition are applied.
+            // Does not affect the gate (score > 0 check); only affects output speed contribution.
+            if (settings != null && (settings.hardcoreMode || settings.extraHardcoreMode))
+            {
+                float eff = Math.Max(0.5f, Math.Min(1.5f, settings.hardcoreToolEffectiveness));
+                score *= eff;
+            }
+
             // Optional carry/mass penalties (read settings, keep defaults identical to current)
             // Current behavior: no mass penalties by default
 

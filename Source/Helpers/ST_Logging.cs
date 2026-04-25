@@ -62,6 +62,31 @@ namespace SurvivalTools
 #endif
         }
 
+        /// <summary>
+        /// Step-by-step gating pipeline logging: JobGate, PreWork_AutoEquip, GatingEnforcer.
+        /// Requires both debugLogging AND debugGatingVerbose to be enabled (DEBUG builds only).
+        /// Very noisy — one entry per ShouldBlock call, per stat, per pawn.
+        /// </summary>
+        internal static bool IsGatingLoggingEnabled
+        {
+            get
+            {
+#if DEBUG
+                try
+                {
+                    var s = SurvivalToolsMod.Settings;
+                    return (s?.debugLogging ?? false) && (s?.debugGatingVerbose ?? false);
+                }
+                catch
+                {
+                    return false;
+                }
+#else
+                return false;
+#endif
+            }
+        }
+
         // Enable dedup only in DevMode and when at least one toggle is active
         private static bool DedupEnabled =>
             Prefs.DevMode && (IsDebugLoggingEnabled || IsCompatLogging());

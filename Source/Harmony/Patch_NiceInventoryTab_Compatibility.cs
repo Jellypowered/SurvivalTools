@@ -54,11 +54,11 @@ namespace SurvivalTools.HarmonyStuff
             if (!__result && def.IsSurvivalTool())
             {
                 __result = true;
-
-                if (ST_Logging.IsDebugLoggingEnabled)
-                {
-                    Log.Message($"[SurvivalTools] Nice Inventory Tab: Blacklisted {def.defName} (survival tool)");
-                }
+                var defName = def?.defName ?? "null";
+                ST_Logging.LogDebug(
+                    $"[SurvivalTools] Nice Inventory Tab: Blacklisted {defName} (survival tool)",
+                    $"NIT.Blacklist.{defName}",
+                    respectCooldown: true);
             }
         }
     }

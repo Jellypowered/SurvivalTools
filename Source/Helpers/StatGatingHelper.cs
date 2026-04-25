@@ -40,48 +40,33 @@ namespace SurvivalTools.Helpers
                 if (!settings.hardcoreMode && !settings.extraHardcoreMode)
                     return false;
 
-                bool result = pawn == null || !pawn.HasSurvivalToolFor(stat);
-                // Debug logging for deconstruction decisions
-                if (ST_Logging.IsDebugLoggingEnabled && stat == ST_StatDefOf.DeconstructionSpeed)
-                {
-                    string pawnId = pawn?.ThingID ?? "null";
-                    string msg = result
-                        ? $"[SurvivalTools.StatGatingHelper] Stat '{stat.defName}' -> BLOCK job for pawn {pawnId} (missing tool)."
-                        : $"[SurvivalTools.StatGatingHelper] Stat '{stat.defName}' -> ALLOW job for pawn {pawnId} (has tool).";
-                    ST_Logging.LogDebug(msg, $"StatGate_Deconstruct_{pawnId}");
-                }
-                return result;
+                // NOTE: Do NOT check pawn.HasSurvivalToolFor here — wrong-type tools can pass that
+                // check because their factor is slightly > 0 for unrelated stats.
+                // Actual tool-presence is checked by the caller (JobGate PreCheck/FinalCheck or
+                // PreWork's scoring-based hasTool check) using GetBestTool + GetToolValidationBaseline.
+                return true;
             }
 
             // Optional families — only hard-gate if explicitly enabled or in extra-hardcore.
             bool xhc = settings.extraHardcoreMode;
 
             if (stat == ST_StatDefOf.CleaningSpeed)
-                return (xhc || settings.requireCleaningTools) && (pawn == null || !pawn.HasSurvivalToolFor(stat));
+                return xhc || settings.requireCleaningTools;
 
             if (stat == ST_StatDefOf.ButcheryFleshSpeed || stat == ST_StatDefOf.ButcheryFleshEfficiency)
-                return (xhc || settings.requireButcheryTools) && (pawn == null || !pawn.HasSurvivalToolFor(stat));
+                return xhc || settings.requireButcheryTools;
 
             if (stat == ST_StatDefOf.MedicalOperationSpeed || stat == ST_StatDefOf.MedicalSurgerySuccessChance)
-                return (xhc || settings.requireMedicalTools) && (pawn == null || !pawn.HasSurvivalToolFor(stat));
+                return xhc || settings.requireMedicalTools;
 
             // Research is **not** hard-blocked in normal hardcore — job may run but progress=~0 via StatPart.
             if (stat == ST_StatDefOf.ResearchSpeed)
-                return xhc && (pawn == null || !pawn.HasSurvivalToolFor(stat));
+                return xhc;
 
             // Extra-hardcore custom rules (RR or future packs)
             if (xhc && settings.IsStatRequiredInExtraHardcore(stat))
             {
-                bool result = pawn == null || !pawn.HasSurvivalToolFor(stat);
-                if (ST_Logging.IsDebugLoggingEnabled && stat == ST_StatDefOf.DeconstructionSpeed)
-                {
-                    string pawnId = pawn?.ThingID ?? "null";
-                    string msg = result
-                        ? $"[SurvivalTools.StatGatingHelper] Extra-hardcore rule: Stat '{stat.defName}' -> BLOCK job for pawn {pawnId} (missing tool)."
-                        : $"[SurvivalTools.StatGatingHelper] Extra-hardcore rule: Stat '{stat.defName}' -> ALLOW job for pawn {pawnId} (has tool).";
-                    ST_Logging.LogDebug(msg, $"StatGate_Deconstruct_XHC_{pawnId}");
-                }
-                return result;
+                return true;
             }
 
             return false;

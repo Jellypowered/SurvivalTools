@@ -139,7 +139,10 @@ namespace SurvivalTools.HarmonyStuff
                     {
                         // Yayo's Animation transpiles DrawCarriedWeapon and may expect a primary weapon.
                         // When no primary exists, use a local mesh fallback to keep tool visuals stable.
-                        if (ModCompatibilityCheck.YayoAnimation && pawn.equipment?.Primary == null)
+                        // Yayo's Animation transpiles DrawCarriedWeapon to always draw pawn.equipment.Primary
+                        // regardless of the 'twc' argument, so our tool would render as the equipped weapon.
+                        // Always use the direct-mesh fallback when Yayo is present.
+                        if (ModCompatibilityCheck.YayoAnimation)
                             DrawThingAsCarriedFallback(twc, drawPos, facing, distFactor);
                         else
                             PawnRenderUtility.DrawCarriedWeapon(twc, drawPos, facing, distFactor);

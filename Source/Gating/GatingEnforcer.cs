@@ -59,7 +59,7 @@ namespace SurvivalTools.Gating
                     var p = pawns[i];
                     if (p == null || p.Dead || p.Downed) continue;
 
-                    if (IsDebugLoggingEnabled)
+                    if (IsGatingLoggingEnabled)
                     {
                         LogDebug($"[GatingEnforcer] Scan {p.LabelShort} curJob={p.jobs?.curJob?.def?.defName ?? "(none)"} queueCount={p.jobs?.jobQueue?.Count ?? 0}", $"GatingEnforcer.Scan|{p.ThingID}");
                         LogJobQueueSummary(p, "GatingEnforcer.Before");
@@ -71,7 +71,7 @@ namespace SurvivalTools.Gating
                     // Prune queued jobs that would be blocked
                     cancelled += PruneQueue(p, reasonKey);
 
-                    if (IsDebugLoggingEnabled)
+                    if (IsGatingLoggingEnabled)
                     {
                         LogJobQueueSummary(p, "GatingEnforcer.After");
                     }
@@ -91,7 +91,7 @@ namespace SurvivalTools.Gating
                 if (pawn?.jobs?.curJob == null) return false;
                 if (job != null && pawn.jobs.curJob != job) return false;
                 var cur = pawn.jobs.curJob;
-                if (Prefs.DevMode && IsDebugLoggingEnabled)
+                if (Prefs.DevMode && IsGatingLoggingEnabled)
                 {
                     LogDebug($"[GatingEnforcer] Cancel current job {cur.def.defName} for {pawn.LabelShort} due to {reason}", $"GatingEnforcer.CancelCur|{pawn.ThingID}|{cur.def.defName}|{reason}");
                 }
@@ -113,10 +113,16 @@ namespace SurvivalTools.Gating
             try
             {
                 if (!SurvivalTools.Helpers.PawnEligibility.IsEligibleColonistHuman(pawn))
+                {
+                    if (IsGatingLoggingEnabled) LogDebug($"[GatingEnforcer.CancelIfBlocked] {pawn.LabelShort} job={cur.def?.defName} skip: NotEligibleColonistHuman", $"GE.Skip.NotEligible|{pawn.ThingID}");
                     return 0;
-                if (cur.def == JobDefOf.Ingest) return 0; // never interfere with eating
-                // Fast tool-using job check (mirrors PreWork JobUsesTools heuristic)
-                if (!LikelyJobUsesTools(cur)) return 0;
+                }
+                if (cur.def == JobDefOf.Ingest) { if (IsGatingLoggingEnabled) LogDebug($"[GatingEnforcer.CancelIfBlocked] {pawn.LabelShort} skip: Ingest", $"GE.Skip.Ingest|{pawn.ThingID}"); return 0; }
+                if (!LikelyJobUsesTools(cur))
+                {
+                    if (IsGatingLoggingEnabled) LogDebug($"[GatingEnforcer.CancelIfBlocked] {pawn.LabelShort} job={cur.def?.defName} skip: LikelyJobUsesTools=false", $"GE.Skip.NotToolJob|{pawn.ThingID}|{cur.def?.defName}");
+                    return 0;
+                }
             }
             catch { }
 
@@ -124,11 +130,12 @@ namespace SurvivalTools.Gating
             if (JobGate.ShouldBlock(pawn, null, cur.def, forced: false, out var k, out var a1, out var a2))
             {
                 // End current job; choose a non-spam condition
-                if (Prefs.DevMode && IsDebugLoggingEnabled)
+                if (IsGatingLoggingEnabled)
                     LogDebug($"[GatingEnforcer] Cancel current job {cur.def.defName} for {pawn.LabelShort} due to {k}", $"GatingEnforcer.CancelCur|{pawn.ThingID}|{cur.def.defName}");
                 jobs.EndCurrentJob(JobCondition.Incompletable, startNewJob: true);
                 return 1;
             }
+            if (IsGatingLoggingEnabled) LogDebug($"[GatingEnforcer.CancelIfBlocked] {pawn.LabelShort} job={cur.def?.defName} JobGate.ShouldBlock=false", $"GE.NoBlock|{pawn.ThingID}|{cur.def?.defName}");
             return 0;
         }
 
@@ -181,7 +188,7 @@ namespace SurvivalTools.Gating
                         {
                             queueList.RemoveAt(qIdx);
                             removed++;
-                            if (Prefs.DevMode && IsDebugLoggingEnabled)
+                            if (Prefs.DevMode && IsGatingLoggingEnabled)
                                 LogDebug($"[GatingEnforcer] Pruned queued job {removedItem.job?.def?.defName ?? "(null)"} for {pawn.LabelShort}", $"GatingEnforcer.Prune|{pawn.ThingID}|{removedItem.job?.def?.defName}");
                             break;
                         }
