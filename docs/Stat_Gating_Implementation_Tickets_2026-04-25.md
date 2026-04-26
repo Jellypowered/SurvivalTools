@@ -161,9 +161,12 @@ Primary files:
 
 Required behavior:
 - User-facing text matches exact mode policy and alert semantics.
+- User-facing text documents bounded HC/XHC auto-enhanced tool tech-multiplier sliders (current values are minimum floors, with capped upper bounds).
+- Notes include runtime caveat that already-resolved defs may need reload/restart to fully reflect changed multipliers.
 
 Acceptance criteria:
 - No contradictory policy statements remain in updated docs/comments.
+- New tuning controls are described consistently across settings text and docs.
 
 ## Cross-Ticket Validation Matrix
 

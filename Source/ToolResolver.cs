@@ -356,20 +356,26 @@ namespace SurvivalTools
         /// </summary>
         private static float GetStatMultiplierForTechLevel(TechLevel techLevel)
         {
+            var settings = SurvivalToolsMod.Settings;
+            if (settings != null)
+            {
+                return settings.GetToolResolverTechMultiplier(techLevel);
+            }
+
             switch (techLevel)
             {
                 case TechLevel.Neolithic:
-                    return 0.75f;
+                    return SurvivalToolsSettings.MinTechMultNeolithic;
                 case TechLevel.Medieval:
-                    return 0.85f;
+                    return SurvivalToolsSettings.MinTechMultMedieval;
                 case TechLevel.Industrial:
-                    return 1.0f;
+                    return SurvivalToolsSettings.MinTechMultIndustrial;
                 case TechLevel.Spacer:
-                    return 1.15f;
+                    return SurvivalToolsSettings.MinTechMultSpacer;
                 case TechLevel.Ultra:
-                    return 1.3f;
+                    return SurvivalToolsSettings.MinTechMultUltra;
                 default:
-                    return 0.85f; // Default for unrecognized tech levels
+                    return SurvivalToolsSettings.MinTechMultMedieval; // Default for unrecognized tech levels
             }
         }
 

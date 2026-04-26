@@ -383,3 +383,15 @@ Main correctness risks are policy/consistency risks rather than catastrophic alg
 - Residual duplicated logic and broad compat patch heuristics that increase integration fragility.
 
 No source files were modified by this audit request.
+
+## 9) Post-Audit Delta (same day quick tuning)
+
+After this audit was completed, a small non-gating tuning change was implemented:
+- Added bounded in-game sliders for ToolResolver tech multipliers used by auto-enhanced non-ST tools in Hardcore/Nightmare flows.
+- Current multipliers are enforced as minimum floors (Neolithic 0.75, Medieval 0.85, Industrial 1.00, Spacer 1.15, Ultra 1.30).
+- Upper bounds are capped to reduce pain without allowing overly easy tuning.
+
+Impact on this audit:
+- No gating-authority findings are invalidated.
+- Ticket priorities and technical risks in sections 4-6 remain applicable.
+- Documentation/UX language should acknowledge these bounded tuning controls and that fully-applied effect on already-resolved defs may require reload/restart.

@@ -114,6 +114,27 @@ namespace SurvivalTools
                                                // Right-click rescue float menu (Hardcore/Nightmare) toggle
         public bool enableRightClickRescue = true;
 
+        // ToolResolver tech multipliers for auto-enhanced tools.
+        // Current values are the minimum allowed to preserve baseline challenge.
+        public const float MinTechMultNeolithic = 0.75f;
+        public const float MinTechMultMedieval = 0.85f;
+        public const float MinTechMultIndustrial = 1.00f;
+        public const float MinTechMultSpacer = 1.15f;
+        public const float MinTechMultUltra = 1.30f;
+
+        // Upper bounds to prevent overtuning into trivial gameplay.
+        public const float MaxTechMultNeolithic = 0.95f;
+        public const float MaxTechMultMedieval = 1.05f;
+        public const float MaxTechMultIndustrial = 1.15f;
+        public const float MaxTechMultSpacer = 1.30f;
+        public const float MaxTechMultUltra = 1.45f;
+
+        public float toolResolverMultNeolithic = MinTechMultNeolithic;
+        public float toolResolverMultMedieval = MinTechMultMedieval;
+        public float toolResolverMultIndustrial = MinTechMultIndustrial;
+        public float toolResolverMultSpacer = MinTechMultSpacer;
+        public float toolResolverMultUltra = MinTechMultUltra;
+
         /* BATTERY SYSTEM DISABLED - Phase 12 settings removed
         // Phase 12: Powered tool battery system
         public bool enablePoweredTools = true; // Enable battery system for powered tools
@@ -140,6 +161,34 @@ namespace SurvivalTools
                 if (extraHardcoreMode) factor *= 1.25f;
                 return factor;
             }
+        }
+
+        public float GetToolResolverTechMultiplier(TechLevel techLevel)
+        {
+            switch (techLevel)
+            {
+                case TechLevel.Neolithic:
+                    return Mathf.Clamp(toolResolverMultNeolithic, MinTechMultNeolithic, MaxTechMultNeolithic);
+                case TechLevel.Medieval:
+                    return Mathf.Clamp(toolResolverMultMedieval, MinTechMultMedieval, MaxTechMultMedieval);
+                case TechLevel.Industrial:
+                    return Mathf.Clamp(toolResolverMultIndustrial, MinTechMultIndustrial, MaxTechMultIndustrial);
+                case TechLevel.Spacer:
+                    return Mathf.Clamp(toolResolverMultSpacer, MinTechMultSpacer, MaxTechMultSpacer);
+                case TechLevel.Ultra:
+                    return Mathf.Clamp(toolResolverMultUltra, MinTechMultUltra, MaxTechMultUltra);
+                default:
+                    return Mathf.Clamp(toolResolverMultMedieval, MinTechMultMedieval, MaxTechMultMedieval);
+            }
+        }
+
+        public void ClampToolResolverMultipliers()
+        {
+            toolResolverMultNeolithic = Mathf.Clamp(toolResolverMultNeolithic, MinTechMultNeolithic, MaxTechMultNeolithic);
+            toolResolverMultMedieval = Mathf.Clamp(toolResolverMultMedieval, MinTechMultMedieval, MaxTechMultMedieval);
+            toolResolverMultIndustrial = Mathf.Clamp(toolResolverMultIndustrial, MinTechMultIndustrial, MaxTechMultIndustrial);
+            toolResolverMultSpacer = Mathf.Clamp(toolResolverMultSpacer, MinTechMultSpacer, MaxTechMultSpacer);
+            toolResolverMultUltra = Mathf.Clamp(toolResolverMultUltra, MinTechMultUltra, MaxTechMultUltra);
         }
 
         public void InitializeOptionalToolCache()
@@ -203,6 +252,11 @@ namespace SurvivalTools
 
             sb.AppendLine("Tree Felling:");
             sb.AppendLine($"  enableSurvivalToolTreeFelling: {enableSurvivalToolTreeFelling}");
+            sb.AppendLine($"  toolResolverMultNeolithic: {toolResolverMultNeolithic:F2}");
+            sb.AppendLine($"  toolResolverMultMedieval: {toolResolverMultMedieval:F2}");
+            sb.AppendLine($"  toolResolverMultIndustrial: {toolResolverMultIndustrial:F2}");
+            sb.AppendLine($"  toolResolverMultSpacer: {toolResolverMultSpacer:F2}");
+            sb.AppendLine($"  toolResolverMultUltra: {toolResolverMultUltra:F2}");
             sb.AppendLine("");
 
             sb.AppendLine("Optional Tool Requirements:");
@@ -298,6 +352,11 @@ namespace SurvivalTools
             Scribe_Values.Look(ref hideGlobalStatInAlert, nameof(hideGlobalStatInAlert), true);
             Scribe_Values.Look(ref enforceOnModeChange, nameof(enforceOnModeChange), true);
             Scribe_Values.Look(ref enableRightClickRescue, nameof(enableRightClickRescue), true);
+            Scribe_Values.Look(ref toolResolverMultNeolithic, nameof(toolResolverMultNeolithic), MinTechMultNeolithic);
+            Scribe_Values.Look(ref toolResolverMultMedieval, nameof(toolResolverMultMedieval), MinTechMultMedieval);
+            Scribe_Values.Look(ref toolResolverMultIndustrial, nameof(toolResolverMultIndustrial), MinTechMultIndustrial);
+            Scribe_Values.Look(ref toolResolverMultSpacer, nameof(toolResolverMultSpacer), MinTechMultSpacer);
+            Scribe_Values.Look(ref toolResolverMultUltra, nameof(toolResolverMultUltra), MinTechMultUltra);
 
             // Phase 6: Assignment system settings
             Scribe_Values.Look(ref enableAssignments, nameof(enableAssignments), true);
@@ -319,6 +378,8 @@ namespace SurvivalTools
             // Initialize showGatingAlert based on mode if not set (first run or reset)
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
+                ClampToolResolverMultipliers();
+
                 // Set default based on current mode - on for Hardcore/Nightmare, off for Normal
                 if (!hardcoreMode && !extraHardcoreMode)
                 {
@@ -643,6 +704,40 @@ namespace SurvivalTools
                 listing.Label(effectDesc);
                 GUI.color = prevColor;
                 Text.Font = prevFont;
+
+                listing.Gap(4f);
+                GUI.color = new Color(1f, 0.85f, 0.45f);
+                listing.Label("Auto-enhanced tool multipliers (balanced range)");
+                GUI.color = prevColor;
+
+                listing.Label($"Neolithic: {toolResolverMultNeolithic:F2}x");
+                toolResolverMultNeolithic = listing.Slider(toolResolverMultNeolithic, MinTechMultNeolithic, MaxTechMultNeolithic);
+                toolResolverMultNeolithic = Mathf.Round(toolResolverMultNeolithic * 100f) / 100f;
+
+                listing.Label($"Medieval: {toolResolverMultMedieval:F2}x");
+                toolResolverMultMedieval = listing.Slider(toolResolverMultMedieval, MinTechMultMedieval, MaxTechMultMedieval);
+                toolResolverMultMedieval = Mathf.Round(toolResolverMultMedieval * 100f) / 100f;
+
+                listing.Label($"Industrial: {toolResolverMultIndustrial:F2}x");
+                toolResolverMultIndustrial = listing.Slider(toolResolverMultIndustrial, MinTechMultIndustrial, MaxTechMultIndustrial);
+                toolResolverMultIndustrial = Mathf.Round(toolResolverMultIndustrial * 100f) / 100f;
+
+                listing.Label($"Spacer: {toolResolverMultSpacer:F2}x");
+                toolResolverMultSpacer = listing.Slider(toolResolverMultSpacer, MinTechMultSpacer, MaxTechMultSpacer);
+                toolResolverMultSpacer = Mathf.Round(toolResolverMultSpacer * 100f) / 100f;
+
+                listing.Label($"Ultra: {toolResolverMultUltra:F2}x");
+                toolResolverMultUltra = listing.Slider(toolResolverMultUltra, MinTechMultUltra, MaxTechMultUltra);
+                toolResolverMultUltra = Mathf.Round(toolResolverMultUltra * 100f) / 100f;
+
+                ClampToolResolverMultipliers();
+
+                GUI.color = Color.gray;
+                Text.Font = GameFont.Tiny;
+                listing.Label("These affect auto-enhanced modded tools. Current values are the lowest allowed; sliders only reduce pain, not challenge.");
+                listing.Label("For already-resolved defs in an active save, changes are safest after reload/restart.");
+                GUI.color = prevColor;
+                Text.Font = prevFont;
             }
 
             // Degradation slider
@@ -716,6 +811,11 @@ namespace SurvivalTools
             requireCleaningTools = true;
             requireButcheryTools = true;
             requireMedicalTools = true;
+            toolResolverMultNeolithic = MinTechMultNeolithic;
+            toolResolverMultMedieval = MinTechMultMedieval;
+            toolResolverMultIndustrial = MinTechMultIndustrial;
+            toolResolverMultSpacer = MinTechMultSpacer;
+            toolResolverMultUltra = MinTechMultUltra;
         }
         #endregion
 
