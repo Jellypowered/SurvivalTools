@@ -144,7 +144,7 @@ namespace SurvivalTools.Scoring
             // Does not affect the gate (score > 0 check); only affects output speed contribution.
             if (settings != null && (settings.hardcoreMode || settings.extraHardcoreMode))
             {
-                float eff = Math.Max(0.5f, Math.Min(1.5f, settings.hardcoreToolEffectiveness));
+                float eff = Math.Max(0.5f, Math.Min(1.5f, settings.EffectiveHardcoreEffectiveness));
                 score *= eff;
             }
 

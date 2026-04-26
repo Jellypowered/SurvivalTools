@@ -747,9 +747,9 @@ namespace SurvivalTools.Assign
                 }
 
                 // Determine thresholds (reuse defaults similar to TryUpgradeForWork)
-                float minGainPct = settings != null ? settings.assignMinGainPct : 0.1f;
-                float searchRadius = settings != null ? settings.assignSearchRadius : 25f;
-                int pathCostBudget = settings != null ? settings.assignPathCostBudget : 500;
+                float minGainPct = settings != null ? settings.EffectiveAssignMinGainPct : 0.1f;
+                float searchRadius = settings != null ? settings.EffectiveSearchRadius : 25f;
+                int pathCostBudget = settings != null ? settings.EffectivePathBudget : 500;
 
                 // Opportunistically queue an upgrade but DO NOT block WorkGiver jobs
                 // Blocking here can cause the selected AI job to disappear. Let it proceed.
@@ -1007,7 +1007,7 @@ namespace SurvivalTools.Assign
                 return 0.1f; // Default 10%
 
             // Use configured value with difficulty scaling
-            float baseGainPct = settings.assignMinGainPct;
+            float baseGainPct = settings.EffectiveAssignMinGainPct;
 
             // Scale by difficulty
             if (settings.extraHardcoreMode)
@@ -1026,7 +1026,7 @@ namespace SurvivalTools.Assign
             if (settings == null)
                 return 25f; // Default radius
 
-            float baseRadius = settings.assignSearchRadius;
+            float baseRadius = settings.EffectiveSearchRadius;
 
             // Scale by difficulty  
             if (settings.extraHardcoreMode)
@@ -1045,7 +1045,7 @@ namespace SurvivalTools.Assign
             if (settings == null)
                 return 500; // Default budget
 
-            int baseBudget = settings.assignPathCostBudget;
+            int baseBudget = settings.EffectivePathBudget;
 
             // Scale by difficulty
             if (settings.extraHardcoreMode)

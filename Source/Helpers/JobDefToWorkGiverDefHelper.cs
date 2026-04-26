@@ -72,6 +72,15 @@ namespace SurvivalTools.Helpers
         {
             if (jobDef == null) return null;
 
+            // STC compatibility: designated tree jobs often use TreesChop workgiver.
+            // Prefer it when present to keep gating/validation aligned with live job source.
+            if (jobDef.defName == "CutPlantDesignated" || jobDef.defName == "HarvestDesignated")
+            {
+                var treesChop = DefDatabase<WorkGiverDef>.GetNamedSilentFail("TreesChop");
+                if (treesChop != null)
+                    return treesChop;
+            }
+
             // Step 1: explicit mapping
             if (ExplicitJobToWorkGiverMap.TryGetValue(jobDef.defName, out string wgDefName))
             {

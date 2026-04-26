@@ -461,6 +461,22 @@ namespace SurvivalTools.Compat.ResearchReinvented
         }
 
         // ---------------- Dynamic RR award discovery & patching ----------------
+
+        // Allowlist: methods explicitly patched above — skip duplicating in the dynamic scan.
+        private static readonly System.Collections.Generic.HashSet<string> _explicitlyPatchedKeys = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "ResearchOpportunity.ResearchPerformed",
+            "ResearchOpportunity.ResearchTickPerformed",
+            "ResearchOpportunity.ResearchChunkPerformed",
+            "ResearchManager.ResearchPerformed",
+        };
+
+        // Fallback list: methods only covered by the dynamic scan (observable via diagnostics).
+        private static readonly System.Collections.Generic.List<string> _dynamicPatchedMethods = new System.Collections.Generic.List<string>();
+
+        /// <summary>Read-only view of methods patched by the dynamic fallback scan.</summary>
+        internal static System.Collections.Generic.IReadOnlyList<string> DynamicPatchedMethods => _dynamicPatchedMethods;
+
         private static bool _awardDiscoveryDone;
         private static void DiscoverAndPatchRRAwardMethods(Harmony h)
         {
@@ -494,13 +510,27 @@ namespace SurvivalTools.Compat.ResearchReinvented
                             if (!(hasPawn && hasAmount)) continue;
                             // Exclude ResearchManager.ResearchPerformed (already patched)
                             if (m.DeclaringType == typeof(ResearchManager) && name == nameof(ResearchManager.ResearchPerformed)) continue;
+
+                            // Skip methods already covered by the allowlist (explicit patches)
+                            string methodKey = (m.DeclaringType?.Name ?? "?") + "." + name;
+                            if (_explicitlyPatchedKeys.Contains(methodKey)) continue;
+
                             try
                             {
                                 h.Patch(m, prefix: new HarmonyMethod(typeof(RRPatches), nameof(GenericAwardZeroPrefix)));
+                                _dynamicPatchedMethods.Add(methodKey);
                             }
                             catch { }
                         }
                     }
+                }
+
+                if (IsCompatLogging())
+                {
+                    if (_dynamicPatchedMethods.Count > 0)
+                        LogCompat($"RR dynamic scan patched {_dynamicPatchedMethods.Count} fallback method(s): {string.Join(", ", _dynamicPatchedMethods)}");
+                    else
+                        LogCompat("RR dynamic scan: no additional methods found beyond explicit allowlist.");
                 }
             }
             catch (Exception e)

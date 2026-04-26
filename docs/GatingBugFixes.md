@@ -60,3 +60,48 @@ A new debug setting **"Verbose gating logs"** (`debugGatingVerbose`) was added u
 These logs emit once per `ShouldBlock` call, per pawn, per stat. **They are very noisy in normal gameplay** — only enable when diagnosing gating bugs.
 
 The previous behaviour was that these logs were gated by the general `debugLogging` flag, which also controls many other systems. The new separate toggle allows precise control.
+
+---
+
+## Fixes — April 2026 (Stat Gating Audit Tickets 1–8)
+
+### Ticket 1 — CleaningSpeed gating restored
+
+**File:** `Source/Helpers/StatGatingHelper.cs`  
+`CleaningSpeed` was in an early `return false` guard inside `ShouldBlockJobForStat`, making the optional-family check at the bottom of the method unreachable. Removed `CleaningSpeed` from the early return so it now falls through to the `return xhc || settings.requireCleaningTools` policy check. Result: HC respects `requireCleaningTools` toggle; XHC makes cleaning mandatory.
+
+### Ticket 2 — Mode normalization (HC/XHC)
+
+**Files:** `Source/Helpers/SurvivalToolValidation.cs`, `Source/Alerts/Alert_ColonistNeedsSurvivalTool.cs`  
+Multiple places checked `settings.hardcoreMode` but not `settings.extraHardcoreMode`, so XHC-only mode (extraHardcoreMode=true, hardcoreMode=false) silently skipped validation and alerts. All mode-discriminating checks updated to use `settings.CurrentMode` comparisons (`DifficultyMode.Normal / Hardcore / Nightmare`).
+
+### Ticket 3 — Butchery equivalence consolidation
+
+**File:** `Source/Harmony/Patch_WorkGiver_MissingRequiredCapacity.cs`  
+Inline `HasToolForRequiredStatOrEquivalent` local function duplicated butchery equivalence logic (accepts either `ButcheryFleshSpeed` or `ButcheryFleshEfficiency`). Removed and routed to `SurvivalToolUtility.HasRequiredToolForStatOrEquivalent` so all gating/reporting paths agree.
+
+### Ticket 4 — Alert coverage expanded
+
+**File:** `Source/Alerts/Alert_ToolGatedWork.cs`  
+Added Research, Deconstruction, Medical, and Butchery work-type checks. Each uses a `Has*Work()` guard before scanning to prevent noise when there is nothing available to do. Translation keys added to `1.6/Languages/English/keyed/ST_Gating.xml`.
+
+### Ticket 5 — Research Reinvented gating hardening
+
+**File:** `Source/Compatibility/ResearchReinvented/RRPatches.cs`  
+Dynamic RR method scan now has an explicit allowlist of already-explicitly-patched methods to prevent double-patching. A `_dynamicPatchedMethods` list tracks fallback-patched methods; count and names are logged at compat-log verbosity. `RRDebug.DumpRRDynamicPatchList()` added for diagnostics.
+
+### Ticket 6 — Eligibility contract consolidation
+
+**File:** `Source/Alerts/Alert_ToolGatedWork.cs`  
+`UpdateGatedPawns` previously used an inline `!pawn.IsColonist` check. Updated to use `PawnToolValidator.CanUseSurvivalTools(pawn)` — the same contract used by `Alert_ColonistNeedsSurvivalTool` and `JobGate` — plus an explicit `Downed` / `Awake` guard. `StatPart_SurvivalTools.CanUseSurvivalTools` (private, penalty application only) intentionally remains distinct: it applies to any humanlike with Manipulation capacity, not just player-faction pawns.
+
+### Ticket 7 — WorkGiver heuristic resolution diagnostics
+
+**File:** `Source/Helpers/StatGatingHelper.cs`  
+`GetStatsForWorkGiver` now logs (once per defName, at debug verbosity) when it resolves stats via heuristics rather than an explicit `WorkGiverExtension.requiredStats`. This makes heuristic-only coverage visible in logs so authors can decide whether to add an explicit extension.
+
+### Ticket 8 — Settings UX alignment
+
+**File:** `Source/SurvivalToolsSettings.cs`  
+Auto-enhanced tool multiplier slider section header updated to "bounded: min floor — max ceiling" and the tooltip clarified: minimum enforces a baseline-challenge floor; maximum prevents overtuning. Runtime caveat text updated to "fully take effect after reload/restart."
+

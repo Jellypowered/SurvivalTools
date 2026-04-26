@@ -100,6 +100,28 @@ namespace SurvivalTools.Compat.ResearchReinvented
             return false;
         }
 
+#if DEBUG
+        [DebugAction("Survival Tools", "Dump RR dynamic patch list")]
+        public static void DumpRRDynamicPatchList_DebugAction() => DumpRRDynamicPatchList();
+#endif
+
+        /// <summary>
+        /// Logs the list of RR methods covered by the dynamic fallback scan (vs. explicit allowlist).
+        /// Useful for verifying that new RR versions are still covered.
+        /// </summary>
+        public static void DumpRRDynamicPatchList()
+        {
+            var list = RRPatches.DynamicPatchedMethods;
+            if (list == null || list.Count == 0)
+            {
+                Verse.Log.Message("[SurvivalTools][RR] Dynamic fallback patch list: (empty — all coverage from explicit allowlist)");
+                return;
+            }
+            Verse.Log.Message($"[SurvivalTools][RR] Dynamic fallback patch list ({list.Count} method(s)):");
+            foreach (var entry in list)
+                Verse.Log.Message($"  - {entry}");
+        }
+
         public static string FormatMethodFullDescription(MethodBase mb)
         {
             if (mb == null) return "(null MethodBase)";

@@ -59,8 +59,61 @@ namespace SurvivalTools
             bool HasImprovingToolFor(StatDef checkStat)
             {
                 if (checkStat == null || !checkStat.RequiresSurvivalTool()) return false;
-                Scoring.ToolScoring.GetBestTool(pawn, checkStat, out float score);
-                return score > 0.001f;
+
+                float baseline = GetToolValidationBaseline(checkStat);
+                STToolKind expectedKind = ToolUtility.ToolKindForStats(new[] { checkStat });
+
+                var tools = pawn.GetAllUsableSurvivalTools();
+                if (tools == null) return false;
+
+                foreach (var thing in tools)
+                {
+                    if (thing?.def == null) continue;
+
+                    float factor = ToolStatResolver.GetToolStatFactor(thing.def, thing.Stuff, checkStat);
+                    if (factor <= baseline + 0.001f) continue;
+
+                    // If this stat maps to a specific expected kind (e.g. TreeFellingSpeed -> Axe),
+                    // only accept exact-kind tools by default.
+                    // For true multi-purpose tools, allow off-kind only when the factor source is
+                    // declared (Explicit/StatBases), not a loose NameHint fallback.
+                    if (expectedKind != STToolKind.None)
+                    {
+                        var toolKind = ToolUtility.ToolKindOf(thing);
+                        if (toolKind == expectedKind)
+                        {
+                            if (IsDebugLoggingEnabled)
+                            {
+                                var infoExact = ToolStatResolver.GetToolStatInfo(thing.def, thing.Stuff, checkStat);
+                                LogDebug($"[SurvivalTools.ToolCheck] pawn={pawn.LabelShort} stat={checkStat.defName} accepted={thing.LabelShort} reason=ExactKind kind={toolKind} factor={factor:0.###} source={infoExact?.Source ?? "<null>"}", $"ToolCheck_Accept_{pawn.ThingID}_{checkStat.defName}");
+                            }
+                            return true;
+                        }
+
+                        var info = ToolStatResolver.GetToolStatInfo(thing.def, thing.Stuff, checkStat);
+                        // Off-kind tools are only accepted when they EXPLICITLY declare this stat
+                        // in SurvivalToolProperties.baseWorkStatFactors (e.g. Stone Flake bootstrap tool).
+                        // Reject NameHint/Default and generic stat-bases bleed-through to avoid
+                        // wrong tool families satisfying hard gates.
+                        var ext = thing.def.GetModExtension<SurvivalToolProperties>();
+                        bool explicitExtStat = ext?.baseWorkStatFactors != null &&
+                                               ext.baseWorkStatFactors.Any(m => m?.stat == checkStat && m.value > baseline + 0.001f);
+                        if (info != null && info.Source == "Explicit" && explicitExtStat)
+                        {
+                            if (IsDebugLoggingEnabled)
+                            {
+                                LogDebug($"[SurvivalTools.ToolCheck] pawn={pawn.LabelShort} stat={checkStat.defName} accepted={thing.LabelShort} reason=ExplicitOffKind kind={toolKind} expected={expectedKind} factor={factor:0.###} source={info.Source}", $"ToolCheck_Accept_{pawn.ThingID}_{checkStat.defName}");
+                            }
+                            return true;
+                        }
+
+                        continue;
+                    }
+
+                    return true;
+                }
+
+                return false;
             }
 
             if (HasImprovingToolFor(requiredStat)) return true;
@@ -672,7 +725,8 @@ namespace SurvivalTools
             // Gate-eligible keywords
             var gateKeywords = new[]
             {
-                    "repair", "buildroofs","craft", "smith", "tailor", "art", "sculpt", "fabricate", "produce", "drug", "butcher", "cook", "medical", "surgery", "research", "analyse", "deconstruct"
+                    "repair", "buildroofs", "craft", "smith", "tailor", "art", "sculpt", "fabricate", "produce", "drug", "butcher", "cook", "medical", "surgery", "research", "analyse", "deconstruct",
+                    "felltree", "treeschop", "choptree", "chopwood", "cutplant", "plantscut", "harvest"
                 };
             if (gateKeywords.Any(keyword => name.Contains(keyword) || label.Contains(keyword)))
             {

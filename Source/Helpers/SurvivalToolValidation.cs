@@ -85,9 +85,9 @@ namespace SurvivalTools.Helpers
             var settings = SurvivalToolsMod.Settings;
             LogDebug($"[SurvivalTools.JobValidation] Settings state - hardcoreMode: {settings?.hardcoreMode}, extraHardcoreMode: {settings?.extraHardcoreMode}", $"JobValidation_Settings_{settings?.hardcoreMode}_{settings?.extraHardcoreMode}");
 
-            if (settings?.hardcoreMode != true)
+            if (settings?.CurrentMode == DifficultyMode.Normal)
             {
-                LogDebug($"[SurvivalTools.JobValidation] Skipping validation - hardcore mode not enabled (reason: {reason})", $"JobValidation_Skip_{reason}");
+                LogDebug($"[SurvivalTools.JobValidation] Skipping validation - not in Hardcore or Nightmare mode (reason: {reason})", $"JobValidation_Skip_{reason}");
                 return;
             }
 
@@ -114,16 +114,13 @@ namespace SurvivalTools.Helpers
                     continue;
                 }
 
-                // Only gate jobs that are eligible and enabled in settings
-                if (!SurvivalToolUtility.ShouldGateByDefault(workGiverDef))
-                {
-                    LogDebug($"[SurvivalTools.JobValidation] Job {currentJob.def.defName} is not gate-eligible, skipping.", $"JobValidation_NotGateEligible_{currentJob.def.defName}");
-                    continue;
-                }
-
                 // Phase 11.10: workSpeedGlobalJobGating check removed - only gate explicitly declared jobs
 
-                var requiredStats = SurvivalToolUtility.RelevantStatsFor(null, currentJob.def);
+                // Use target-aware job-instance resolution first so designated tree jobs map
+                // to TreeFellingSpeed instead of generic plant-harvest stats.
+                var requiredStats = SurvivalToolUtility.RelevantStatsFor(workGiverDef, currentJob);
+                if (requiredStats.NullOrEmpty())
+                    requiredStats = SurvivalToolUtility.RelevantStatsFor(workGiverDef, currentJob.def);
 
                 if (requiredStats.NullOrEmpty())
                 {
@@ -141,7 +138,7 @@ namespace SurvivalTools.Helpers
                     bool shouldBlock = StatGatingHelper.ShouldBlockJobForStat(stat, settings, pawn);
                     bool hasRequiredTool = SurvivalToolUtility.HasRequiredToolForStatOrEquivalent(pawn, stat);
 
-                    LogDebug($"[SurvivalTools.JobValidation] Stat {stat.defName}: shouldBlock={shouldBlock}, hasRequiredTool={hasRequiredTool}", $"JobValidation_Stat_{pawn.ThingID}_{currentJob.def.defName}_{stat.defName}");
+                    LogDebug($"[SurvivalTools.JobValidation] Pawn {pawn.LabelShort} stat {stat.defName}: shouldBlock={shouldBlock}, hasRequiredTool={hasRequiredTool}", $"JobValidation_Stat_{pawn.ThingID}_{currentJob.def.defName}_{stat.defName}");
 
                     if (shouldBlock && !hasRequiredTool)
                     {

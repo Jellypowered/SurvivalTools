@@ -43,34 +43,14 @@ namespace SurvivalTools.HarmonyStuff
                     var key = $"MissingToolCapacity_{pawn.ThingID}_{wgDef.defName}";
                     if (ShouldLogWithCooldown(key))
                     {
-                        bool HasImprovingToolFor(StatDef checkStat)
-                        {
-                            if (checkStat == null || !checkStat.RequiresSurvivalTool()) return false;
-                            Scoring.ToolScoring.GetBestTool(pawn, checkStat, out float score);
-                            return score > 0.001f;
-                        }
-
-                        bool HasToolForRequiredStatOrEquivalent(StatDef requiredStat)
-                        {
-                            if (requiredStat == null) return true;
-                            if (HasImprovingToolFor(requiredStat)) return true;
-
-                            // Keep butchery-family equivalence consistent with MeetsWorkGiverStatRequirements.
-                            if (requiredStat == ST_StatDefOf.ButcheryFleshSpeed || requiredStat == ST_StatDefOf.ButcheryFleshEfficiency)
-                            {
-                                if (HasImprovingToolFor(ST_StatDefOf.ButcheryFleshSpeed)) return true;
-                                if (HasImprovingToolFor(ST_StatDefOf.ButcheryFleshEfficiency)) return true;
-                            }
-
-                            return false;
-                        }
-
+                        // Route equivalence check through shared helper to avoid drift from
+                        // any future changes to butchery or other family equivalence rules.
                         var settings = SurvivalToolsMod.Settings;
                         var missingStats = string.Join(", ",
                             required.Where(stat => stat != null)
                                     .Where(stat => stat.RequiresSurvivalTool())
                                     .Where(stat => settings != null && StatGatingHelper.ShouldBlockJobForStat(stat, settings, pawn))
-                                    .Where(stat => !HasToolForRequiredStatOrEquivalent(stat))
+                                    .Where(stat => !SurvivalToolUtility.HasRequiredToolForStatOrEquivalent(pawn, stat))
                                     .Select(stat => stat.defName));
 
                         LogDecision(key, $"[SurvivalTools] Blocking {wgDef.defName} for {pawn.LabelShort}: " +

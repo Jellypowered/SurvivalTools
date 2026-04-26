@@ -85,7 +85,7 @@ namespace SurvivalTools
                 foreach (var stat in ext.requiredStats)
                 {
                     if (stat == null) continue;
-                    if (!settings.hardcoreMode && StatFilters.IsOptionalStat(stat)) continue;
+                    if (settings.CurrentMode == DifficultyMode.Normal && StatFilters.IsOptionalStat(stat)) continue;
                     if (!SurvivalToolUtility.ToolsExistForStat(stat)) continue;
                     if (!ShouldShowAlertForStat(pawn, stat, settings)) continue;
                     if (!HasToolImprovingStat(pawn, stat)) { anyMissingRequired = true; break; }
@@ -141,7 +141,7 @@ namespace SurvivalTools
                     foreach (var stat in ext.requiredStats)
                     {
                         if (stat == null) continue;
-                        if (!settings.hardcoreMode && StatFilters.IsOptionalStat(stat)) continue;
+                        if (settings.CurrentMode == DifficultyMode.Normal && StatFilters.IsOptionalStat(stat)) continue;
                         if (!SurvivalToolUtility.ToolsExistForStat(stat)) continue;
                         if (!ShouldShowAlertForStat(pawn, stat, settings)) continue;
                         if (HasToolImprovingStat(pawn, stat)) continue;
@@ -290,7 +290,7 @@ namespace SurvivalTools
         private static bool ShouldShowAlertForStat(Pawn pawn, StatDef stat, SurvivalToolsSettings settings)
         {
             if (stat == null || pawn == null || settings == null) return false;
-            if (settings.hardcoreMode) return true;
+            if (settings.CurrentMode != DifficultyMode.Normal) return true;
             if (!settings.enableNormalModePenalties) return false;
             if (StatFilters.IsOptionalStat(stat)) return false;
 
@@ -298,7 +298,7 @@ namespace SurvivalTools
             float current = Math.Max(0f, pawn.GetStatValue(stat));
             float ratio = current / baseEfficiency;
 
-            float threshold = Math.Max(0.01f, settings.noToolStatFactorNormal);
+            float threshold = Math.Max(0.01f, settings.EffectiveNoToolFactor);
             return ratio <= (threshold + 0.05f);
         }
 

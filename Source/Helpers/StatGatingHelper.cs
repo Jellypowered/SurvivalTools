@@ -7,6 +7,7 @@ using System.Linq;
 using RimWorld;
 using SurvivalTools.Compat;
 using Verse;
+using static SurvivalTools.ST_Logging;
 
 namespace SurvivalTools.Helpers
 {
@@ -16,6 +17,8 @@ namespace SurvivalTools.Helpers
     /// </summary>
     public static class StatGatingHelper
     {
+        // Once-per-defName log gate for heuristic resolution diagnostics
+        private static readonly HashSet<string> _heuristicLoggedWGs = new HashSet<string>();
         /// <summary>
         /// Determines whether a stat should block a job for the given pawn under current settings.
         /// Integrates with Research Reinvented (RR) so research jobs behave like before.
@@ -27,9 +30,10 @@ namespace SurvivalTools.Helpers
 
             // (Removed prior STC bypass: TreeFellingSpeed should still gate even when STC is active.)
 
-            // Never hard-block CleaningSpeed or WorkSpeedGlobal here - these are handled
-            // by StatPart_SurvivalTool as a penalty-based fallback and should not abort jobs.
-            if (stat == ST_StatDefOf.CleaningSpeed || stat == ST_StatDefOf.WorkSpeedGlobal)
+            // Never hard-block WorkSpeedGlobal here — it is handled as a penalty-based fallback
+            // via StatPart_SurvivalTool and should not abort jobs.
+            // CleaningSpeed is optional-family gated below (HC: per requireCleaningTools setting, XHC: mandatory).
+            if (stat == ST_StatDefOf.WorkSpeedGlobal)
                 return false;
 
             // Core work stats (mining, construction, etc.) gate in hardcore/nightmare mode only.
@@ -77,17 +81,18 @@ namespace SurvivalTools.Helpers
         /// <summary>
         /// Detect required stats for a WorkGiver by extension or defName patterns.
         /// Covers vanilla WorkGivers that lack WorkGiverExtension.
+        /// Resolution source is logged at debug level when falling back to heuristics.
         /// </summary>
         public static List<StatDef> GetStatsForWorkGiver(WorkGiverDef wgDef)
         {
             if (wgDef == null) return new List<StatDef>();
 
-            // 1) Explicit extension wins
+            // 1) Explicit extension wins — deterministic, no heuristics
             var fromExtension = wgDef.GetModExtension<WorkGiverExtension>()?.requiredStats;
             if (fromExtension != null && fromExtension.Any())
                 return fromExtension.Where(s => s != null && s.RequiresSurvivalTool()).ToList();
 
-            // 2) Heuristics by defName
+            // 2) Heuristics by defName — flag in diagnostics so callers know this was heuristic-only
             string name = wgDef.defName?.ToLowerInvariant() ?? string.Empty;
 
             // Explicit fallback: vanilla grower sow WG (ensure consistent coverage even if heuristics shift)
@@ -197,7 +202,13 @@ namespace SurvivalTools.Helpers
             }
 
             // Keep only real survival-tool stats, unique
-            return stats.Where(s => s != null && s.RequiresSurvivalTool()).Distinct().ToList();
+            var result = stats.Where(s => s != null && s.RequiresSurvivalTool()).Distinct().ToList();
+
+            // Heuristic-only resolution: log once per WorkGiver so the caller can see what was inferred
+            if (IsDebugLoggingEnabled && result.Count > 0 && _heuristicLoggedWGs.Add(wgDef.defName))
+                LogDebug($"[StatGatingHelper] WorkGiver '{wgDef.defName}' resolved via HEURISTIC to [{string.Join(", ", result.Select(s => s.defName))}]. Consider adding explicit WorkGiverExtension.requiredStats.", $"StatGatingHelper_Heuristic_{wgDef.defName}");
+
+            return result;
         }
 
         /// <summary>

@@ -620,9 +620,9 @@ namespace SurvivalTools.UI.RightClickRescue
             bool upgradeQueued = AssignmentSearch.TryUpgradeFor(
                 pawn,
                 stat,
-                settings.assignMinGainPct,
-                settings.assignSearchRadius,
-                settings.assignPathCostBudget,
+                settings.EffectiveAssignMinGainPct,
+                settings.EffectiveSearchRadius,
+                settings.EffectivePathBudget,
                 Assign.AssignmentSearch.QueuePriority.Front,
                 "RightClickRescue");
             if (!upgradeQueued)
@@ -1364,9 +1364,9 @@ namespace SurvivalTools.UI.RightClickRescue
             if (AssignmentSearch.TryFindUpgradeCandidate(
                 pawn,
                 focusStat,
-                settings.assignMinGainPct,
-                settings.assignSearchRadius,
-                settings.assignPathCostBudget,
+                settings.EffectiveAssignMinGainPct,
+                settings.EffectiveSearchRadius,
+                settings.EffectivePathBudget,
                 out Thing bestTool) && bestTool != null)
             {
                 friendlyToolName = bestTool.LabelShortCap;

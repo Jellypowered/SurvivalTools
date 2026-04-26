@@ -114,8 +114,8 @@ namespace SurvivalTools
             var stats = GetCoreGatingStats();
             if (stats == null || stats.Count == 0) return;
 
-            float searchRadius = settings.assignSearchRadius * (settings.hardcoreMode ? 0.75f : 1f);
-            int pathBudget = settings.assignPathCostBudget;
+            float searchRadius = settings.EffectiveSearchRadius * (settings.hardcoreMode ? 0.75f : 1f);
+            int pathBudget = settings.EffectivePathBudget;
 
             for (int mi = 0; mi < maps.Count; mi++)
             {

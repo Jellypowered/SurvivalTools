@@ -117,7 +117,7 @@ namespace SurvivalTools.Stats
                 var settings = SurvivalToolsMod.Settings;
                 if (settings != null && !settings.hardcoreMode && !settings.extraHardcoreMode && settings.enableNormalModePenalties)
                 {
-                    val *= settings.noToolStatFactorNormal;
+                    val *= settings.EffectiveNoToolFactor;
                 }
                 // In Hardcore/Nightmare: do not block here, just leave value unmodified
                 // The actual blocking happens in Phase 5 gating
@@ -189,7 +189,7 @@ namespace SurvivalTools.Stats
                 var settings = SurvivalToolsMod.Settings;
                 if (settings != null && !settings.hardcoreMode && !settings.extraHardcoreMode && settings.enableNormalModePenalties)
                 {
-                    _explanationBuilder.AppendLine("ST_StatPart_NoToolPenalty".Translate(settings.noToolStatFactorNormal.ToStringPercent()));
+                    _explanationBuilder.AppendLine("ST_StatPart_NoToolPenalty".Translate(settings.EffectiveNoToolFactor.ToStringPercent()));
                 }
                 else
                 {

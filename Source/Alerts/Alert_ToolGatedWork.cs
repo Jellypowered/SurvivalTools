@@ -11,9 +11,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using HarmonyLib;
 using RimWorld;
 using Verse;
 using SurvivalTools.Gating;
+using SurvivalTools.Helpers;
 
 namespace SurvivalTools
 {
@@ -32,6 +34,11 @@ namespace SurvivalTools
         private static WorkGiverDef _constructWG;
         private static WorkGiverDef _plantCutWG;
         private static WorkGiverDef _plantHarvestWG;
+        private static WorkGiverDef _researchWG;
+        private static WorkGiverDef _deconstructWG;
+        // Medical and butchery are resolved via stat-family scan (no guaranteed defName)
+        private static WorkGiverDef _medicalWG;
+        private static WorkGiverDef _butcheryWG;
 
         static Alert_ToolGatedWork()
         {
@@ -43,6 +50,25 @@ namespace SurvivalTools
                          ?? DefDatabase<WorkGiverDef>.GetNamedSilentFail("PlantsCut");
             _plantHarvestWG = DefDatabase<WorkGiverDef>.GetNamedSilentFail("PlantHarvest")
                              ?? DefDatabase<WorkGiverDef>.GetNamedSilentFail("GrowerHarvest");
+            // Registered via StaticConstructorClass
+            _researchWG = DefDatabase<WorkGiverDef>.GetNamedSilentFail("Research");
+            _deconstructWG = DefDatabase<WorkGiverDef>.GetNamedSilentFail("Deconstruct");
+            // Scan for first WG that maps to the relevant stat (no universal vanilla defName)
+            _medicalWG = FindRepresentativeWGForStat(ST_StatDefOf.MedicalOperationSpeed);
+            _butcheryWG = FindRepresentativeWGForStat(ST_StatDefOf.ButcheryFleshSpeed);
+        }
+
+        /// <summary>Returns the first WorkGiverDef in the database that requires the given stat.</summary>
+        private static WorkGiverDef FindRepresentativeWGForStat(StatDef stat)
+        {
+            if (stat == null) return null;
+            foreach (var wgDef in DefDatabase<WorkGiverDef>.AllDefs)
+            {
+                if (wgDef == null) continue;
+                var stats = StatGatingHelper.GetStatsForWorkGiver(wgDef);
+                if (stats != null && stats.Contains(stat)) return wgDef;
+            }
+            return null;
         }
 
         public override AlertPriority Priority => AlertPriority.Medium;
@@ -144,9 +170,9 @@ namespace SurvivalTools
             for (int i = 0; i < colonists.Count; i++)
             {
                 var pawn = colonists[i];
-                if (pawn == null || pawn.Dead || pawn.Downed || !pawn.Awake()) continue;
-                if (pawn.RaceProps == null || !pawn.RaceProps.Humanlike) continue;
-                if (pawn.guest != null && !pawn.IsColonist) continue;
+                // Use unified eligibility contract (consistent with Alert_ColonistNeedsSurvivalTool and JobGate)
+                if (!PawnToolValidator.CanUseSurvivalTools(pawn)) continue;
+                if (pawn.Downed || !pawn.Awake()) continue;
 
                 // Check work types with available work
                 CheckPawnForGatedWork(pawn, map, currentTick);
@@ -189,6 +215,46 @@ namespace SurvivalTools
             if (_plantHarvestWG != null && pawn.workSettings != null && pawn.workSettings.GetPriority(WorkTypeDefOf.PlantCutting) > 0)
             {
                 if (HasPlantHarvestWork(map) && IsBlockedForWork(pawn, _plantHarvestWG, "ST_Alert_WorkType_PlantHarvest".Translate()))
+                {
+                    RegisterSticky(pawn, currentTick);
+                    return;
+                }
+            }
+
+            // Check Research (if active research project)
+            if (_researchWG != null && pawn.workSettings != null && pawn.workSettings.GetPriority(WorkTypeDefOf.Research) > 0)
+            {
+                if (HasResearchWork() && IsBlockedForWork(pawn, _researchWG, "ST_Alert_WorkType_Research".Translate()))
+                {
+                    RegisterSticky(pawn, currentTick);
+                    return;
+                }
+            }
+
+            // Check Deconstruction (if any deconstruct designations exist)
+            if (_deconstructWG != null && pawn.workSettings != null && pawn.workSettings.GetPriority(WorkTypeDefOf.Construction) > 0)
+            {
+                if (HasDeconstructWork(map) && IsBlockedForWork(pawn, _deconstructWG, "ST_Alert_WorkType_Deconstruct".Translate()))
+                {
+                    RegisterSticky(pawn, currentTick);
+                    return;
+                }
+            }
+
+            // Check Medical (if any patients need tending)
+            if (_medicalWG != null && _medicalWG.workType != null && pawn.workSettings != null && pawn.workSettings.GetPriority(_medicalWG.workType) > 0)
+            {
+                if (HasMedicalWork(map) && IsBlockedForWork(pawn, _medicalWG, "ST_Alert_WorkType_Medical".Translate()))
+                {
+                    RegisterSticky(pawn, currentTick);
+                    return;
+                }
+            }
+
+            // Check Butchery (if slaughter or butchery work is available)
+            if (_butcheryWG != null && _butcheryWG.workType != null && pawn.workSettings != null && pawn.workSettings.GetPriority(_butcheryWG.workType) > 0)
+            {
+                if (HasButcheryWork(map) && IsBlockedForWork(pawn, _butcheryWG, "ST_Alert_WorkType_Butchery".Translate()))
                 {
                     RegisterSticky(pawn, currentTick);
                     return;
@@ -265,6 +331,73 @@ namespace SurvivalTools
             {
                 if (des != null && des.def == DesignationDefOf.HarvestPlant)
                     return true;
+            }
+            return false;
+        }
+
+        private static bool HasResearchWork()
+        {
+            var rm = Find.ResearchManager;
+            if (rm == null) return false;
+            try
+            {
+                // currentProj may be a non-public field or renamed property across versions
+                var fi = AccessTools.Field(rm.GetType(), "currentProj");
+                if (fi != null) return fi.GetValue(rm) != null;
+                var pi = AccessTools.Property(rm.GetType(), "CurrentProj");
+                if (pi != null) return pi.GetValue(rm, null) != null;
+            }
+            catch { }
+            return false;
+        }
+
+        private static bool HasDeconstructWork(Map map)
+        {
+            var designations = map.designationManager?.AllDesignations;
+            if (designations == null) return false;
+            foreach (var des in designations)
+            {
+                if (des != null && des.def == DesignationDefOf.Deconstruct)
+                    return true;
+            }
+            return false;
+        }
+
+        private static bool HasMedicalWork(Map map)
+        {
+            var pawns = map.mapPawns?.AllPawnsSpawned;
+            if (pawns == null) return false;
+            for (int i = 0; i < pawns.Count; i++)
+            {
+                var p = pawns[i];
+                if (p != null && p.Spawned && p.health?.HasHediffsNeedingTend() == true)
+                    return true;
+            }
+            return false;
+        }
+
+        private static bool HasButcheryWork(Map map)
+        {
+            // Slaughter-designated animals
+            var designations = map.designationManager?.AllDesignations;
+            if (designations != null)
+            {
+                foreach (var des in designations)
+                {
+                    if (des != null && des.def == DesignationDefOf.Slaughter)
+                        return true;
+                }
+            }
+            // Animal corpses in storage (awaiting butcher bills)
+            var corpses = map.listerThings?.ThingsInGroup(ThingRequestGroup.Corpse);
+            if (corpses != null)
+            {
+                for (int i = 0; i < corpses.Count; i++)
+                {
+                    var corpse = corpses[i] as Corpse;
+                    if (corpse?.InnerPawn?.RaceProps?.Animal == true && corpse.IsInAnyStorage())
+                        return true;
+                }
             }
             return false;
         }

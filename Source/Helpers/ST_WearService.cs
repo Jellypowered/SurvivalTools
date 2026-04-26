@@ -136,7 +136,7 @@ namespace SurvivalTools.Helpers
             state.lastTick = now;
 
             // Compute delta HP with remainder carry, ensuring at least 1 per 10 pulses (by fractional accumulation)
-            float mult = settings.toolDegradationFactor * StatMultiplier(stat);
+            float mult = settings.EffectiveToolDegradationFactor * StatMultiplier(stat);
             float raw = BaseHpPerPulse * mult; // e.g. 0.1 * factors
             raw += state.remainder;
             int whole = (int)raw; // truncate

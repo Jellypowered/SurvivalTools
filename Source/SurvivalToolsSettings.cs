@@ -78,6 +78,12 @@ namespace SurvivalTools
         // Only applied in Hardcore and Nightmare modes.
         public float hardcoreToolEffectiveness = 1.0f;
 
+        // Global difficulty scale — single slider tuning all subsystems simultaneously.
+        // 1.0 = neutral (current defaults). 0.5 = significantly easier. 2.0 = significantly harder.
+        // When useLegacyDifficultyBehavior is true, all computed Effective* properties bypass scaling.
+        public float overallDifficultyScale = 1.0f;
+        public bool useLegacyDifficultyBehavior = false;
+
         // Tree felling system toggle
         public bool enableSurvivalToolTreeFelling = true;
 
@@ -159,26 +165,71 @@ namespace SurvivalTools
                 float factor = toolDegradationFactor;
                 if (hardcoreMode) factor *= 1.5f;
                 if (extraHardcoreMode) factor *= 1.25f;
+                if (!useLegacyDifficultyBehavior)
+                    factor *= DifficultyScaling.DegradationMultiplier(overallDifficultyScale);
                 return factor;
             }
         }
+
+        // -----------------------------------------------------------------------
+        // Global-scale computed properties — all gameplay code reads these
+        // instead of the raw setting fields so the slider applies uniformly.
+        // At overallDifficultyScale == 1.0 every property returns its raw value.
+        // -----------------------------------------------------------------------
+
+        public float EffectiveNoToolFactor =>
+            useLegacyDifficultyBehavior
+                ? noToolStatFactorNormal
+                : DifficultyScaling.ScaleNoToolFactor(noToolStatFactorNormal, overallDifficultyScale);
+
+        public float EffectiveHardcoreEffectiveness =>
+            useLegacyDifficultyBehavior
+                ? hardcoreToolEffectiveness
+                : DifficultyScaling.ScaleHardcoreEffectiveness(hardcoreToolEffectiveness, overallDifficultyScale);
+
+        public float EffectiveAssignMinGainPct =>
+            useLegacyDifficultyBehavior
+                ? assignMinGainPct
+                : DifficultyScaling.ScaleAssignMinGainPct(assignMinGainPct, overallDifficultyScale);
+
+        public float EffectiveSearchRadius =>
+            useLegacyDifficultyBehavior
+                ? assignSearchRadius
+                : DifficultyScaling.ScaleSearchRadius(assignSearchRadius, overallDifficultyScale);
+
+        public int EffectivePathBudget =>
+            useLegacyDifficultyBehavior
+                ? assignPathCostBudget
+                : DifficultyScaling.ScalePathBudget(assignPathCostBudget, overallDifficultyScale);
 
         public float GetToolResolverTechMultiplier(TechLevel techLevel)
         {
             switch (techLevel)
             {
                 case TechLevel.Neolithic:
-                    return Mathf.Clamp(toolResolverMultNeolithic, MinTechMultNeolithic, MaxTechMultNeolithic);
+                    return useLegacyDifficultyBehavior
+                        ? Mathf.Clamp(toolResolverMultNeolithic, MinTechMultNeolithic, MaxTechMultNeolithic)
+                        : DifficultyScaling.ScaleResolverMult(toolResolverMultNeolithic, overallDifficultyScale, MinTechMultNeolithic, MaxTechMultNeolithic);
                 case TechLevel.Medieval:
-                    return Mathf.Clamp(toolResolverMultMedieval, MinTechMultMedieval, MaxTechMultMedieval);
+                    return useLegacyDifficultyBehavior
+                        ? Mathf.Clamp(toolResolverMultMedieval, MinTechMultMedieval, MaxTechMultMedieval)
+                        : DifficultyScaling.ScaleResolverMult(toolResolverMultMedieval, overallDifficultyScale, MinTechMultMedieval, MaxTechMultMedieval);
                 case TechLevel.Industrial:
-                    return Mathf.Clamp(toolResolverMultIndustrial, MinTechMultIndustrial, MaxTechMultIndustrial);
+                    return useLegacyDifficultyBehavior
+                        ? Mathf.Clamp(toolResolverMultIndustrial, MinTechMultIndustrial, MaxTechMultIndustrial)
+                        : DifficultyScaling.ScaleResolverMult(toolResolverMultIndustrial, overallDifficultyScale, MinTechMultIndustrial, MaxTechMultIndustrial);
                 case TechLevel.Spacer:
-                    return Mathf.Clamp(toolResolverMultSpacer, MinTechMultSpacer, MaxTechMultSpacer);
+                    return useLegacyDifficultyBehavior
+                        ? Mathf.Clamp(toolResolverMultSpacer, MinTechMultSpacer, MaxTechMultSpacer)
+                        : DifficultyScaling.ScaleResolverMult(toolResolverMultSpacer, overallDifficultyScale, MinTechMultSpacer, MaxTechMultSpacer);
                 case TechLevel.Ultra:
-                    return Mathf.Clamp(toolResolverMultUltra, MinTechMultUltra, MaxTechMultUltra);
+                    return useLegacyDifficultyBehavior
+                        ? Mathf.Clamp(toolResolverMultUltra, MinTechMultUltra, MaxTechMultUltra)
+                        : DifficultyScaling.ScaleResolverMult(toolResolverMultUltra, overallDifficultyScale, MinTechMultUltra, MaxTechMultUltra);
                 default:
-                    return Mathf.Clamp(toolResolverMultMedieval, MinTechMultMedieval, MaxTechMultMedieval);
+                    return useLegacyDifficultyBehavior
+                        ? Mathf.Clamp(toolResolverMultMedieval, MinTechMultMedieval, MaxTechMultMedieval)
+                        : DifficultyScaling.ScaleResolverMult(toolResolverMultMedieval, overallDifficultyScale, MinTechMultMedieval, MaxTechMultMedieval);
             }
         }
 
@@ -342,6 +393,8 @@ namespace SurvivalTools
             Scribe_Values.Look(ref useQualityToolScaling, nameof(useQualityToolScaling), true);
             Scribe_Values.Look(ref enableNormalModePenalties, nameof(enableNormalModePenalties), true);
             Scribe_Values.Look(ref hardcoreToolEffectiveness, nameof(hardcoreToolEffectiveness), 1.0f);
+            Scribe_Values.Look(ref overallDifficultyScale, nameof(overallDifficultyScale), 1.0f);
+            Scribe_Values.Look(ref useLegacyDifficultyBehavior, nameof(useLegacyDifficultyBehavior), false);
             Scribe_Values.Look(ref enableRRCompatibility, nameof(enableRRCompatibility), true);
             Scribe_Values.Look(ref rrResearchRequiredInExtraHardcore, nameof(rrResearchRequiredInExtraHardcore), false);
             Scribe_Values.Look(ref rrFieldResearchRequiredInExtraHardcore, nameof(rrFieldResearchRequiredInExtraHardcore), false);
@@ -707,7 +760,7 @@ namespace SurvivalTools
 
                 listing.Gap(4f);
                 GUI.color = new Color(1f, 0.85f, 0.45f);
-                listing.Label("Auto-enhanced tool multipliers (balanced range)");
+                listing.Label("Auto-enhanced tool multipliers (bounded: min floor — max ceiling)");
                 GUI.color = prevColor;
 
                 listing.Label($"Neolithic: {toolResolverMultNeolithic:F2}x");
@@ -734,8 +787,8 @@ namespace SurvivalTools
 
                 GUI.color = Color.gray;
                 Text.Font = GameFont.Tiny;
-                listing.Label("These affect auto-enhanced modded tools. Current values are the lowest allowed; sliders only reduce pain, not challenge.");
-                listing.Label("For already-resolved defs in an active save, changes are safest after reload/restart.");
+                listing.Label("These affect auto-enhanced modded tools. Each slider is bounded: the minimum is a floor (preserves baseline challenge), the maximum caps overtuning.");
+                listing.Label("For already-resolved defs in an active save, changes fully take effect after reload/restart.");
                 GUI.color = prevColor;
                 Text.Font = prevFont;
             }
@@ -954,6 +1007,9 @@ namespace SurvivalTools
             // Pacifist equipping checkbox
             baseHeight += 30f;
 
+            // Global difficulty scale slider + legacy checkbox + separator
+            baseHeight += 85f;
+
             // Extra hardcore settings (when enabled and applicable)
             if (settings.hardcoreMode && settings.HasAnyOptionalTools)
             {
@@ -995,6 +1051,33 @@ namespace SurvivalTools
             listing.CheckboxLabeled("Settings_AllowPacifistEquip".Translate(), ref settings.allowPacifistEquip, "Settings_AllowPacifistEquip_Tooltip".Translate());
 
             listing.Gap();
+
+            // ----------------------------------------------------------------
+            // Global Difficulty Scale
+            // ----------------------------------------------------------------
+            GUI.color = Color.white;
+            listing.Label("Settings_GlobalDifficultyScale".Translate());
+
+            float prevScale = settings.overallDifficultyScale;
+            float sliderVal = settings.overallDifficultyScale;
+            Rect sliderRow = listing.GetRect(Text.LineHeight);
+            float resetBtnWidth = 70f;
+            Rect scaleSliderRect = new Rect(sliderRow.x, sliderRow.y, sliderRow.width - resetBtnWidth - 4f, sliderRow.height);
+            Rect resetBtnRect = new Rect(sliderRow.xMax - resetBtnWidth, sliderRow.y, resetBtnWidth, sliderRow.height);
+            string scaleLabel = string.Format("{0:0.00}×", sliderVal);
+            sliderVal = Widgets.HorizontalSlider(scaleSliderRect, sliderVal, DifficultyScaling.MinScale, DifficultyScaling.MaxScale, true, scaleLabel);
+            sliderVal = Mathf.Round(sliderVal * 20f) / 20f; // snap to 0.05 steps
+            sliderVal = Mathf.Clamp(sliderVal, DifficultyScaling.MinScale, DifficultyScaling.MaxScale);
+            settings.overallDifficultyScale = sliderVal;
+            if (Widgets.ButtonText(resetBtnRect, "Reset".Translate()))
+                settings.overallDifficultyScale = DifficultyScaling.NeutralScale;
+            if (Mouse.IsOver(sliderRow))
+                TooltipHandler.TipRegion(sliderRow, "Settings_GlobalDifficultyScale_Tooltip".Translate());
+
+            listing.CheckboxLabeled("Settings_UseLegacyDifficultyBehavior".Translate(), ref settings.useLegacyDifficultyBehavior, "Settings_UseLegacyDifficultyBehavior_Tooltip".Translate());
+
+            listing.GapLine();
+            listing.Gap(6f);
 
             // Extra Hardcore Mode section (only shown if hardcore is enabled and optional tools exist)
             if (settings.hardcoreMode && settings.HasAnyOptionalTools)

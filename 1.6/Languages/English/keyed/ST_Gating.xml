@@ -13,6 +13,10 @@
     <ST_Alert_WorkType_PlantCutting>Plant Cutting</ST_Alert_WorkType_PlantCutting>
     <ST_Alert_WorkType_PlantHarvest>Plant Harvest</ST_Alert_WorkType_PlantHarvest>
     <ST_Alert_WorkType_Smithing>Smithing</ST_Alert_WorkType_Smithing>
+    <ST_Alert_WorkType_Research>Research</ST_Alert_WorkType_Research>
+    <ST_Alert_WorkType_Deconstruct>Deconstruction</ST_Alert_WorkType_Deconstruct>
+    <ST_Alert_WorkType_Medical>Medical</ST_Alert_WorkType_Medical>
+    <ST_Alert_WorkType_Butchery>Butchery</ST_Alert_WorkType_Butchery>
 
     <!-- Settings UI -->
     <Settings_ShowGatingAlert>Show 'Tool gating' alert</Settings_ShowGatingAlert>
