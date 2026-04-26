@@ -104,24 +104,7 @@ namespace SurvivalTools
 
         private static bool HasToolImprovingStat(Pawn pawn, StatDef stat)
         {
-            if (pawn == null || stat == null) return false;
-            var enumerable = pawn.GetAllUsableSurvivalTools();
-            if (enumerable == null) return false;
-            // Materialize once to list for indexed loop (GetAllUsableSurvivalTools returns IEnumerable)
-            var tools = enumerable as IList<Thing> ?? enumerable.ToList();
-            // Reuse unified helper: wrap single stat in temp list to avoid alloc reuse across calls
-            // For perf, avoid constructing list each iteration; simple direct factor comparison instead.
-            float baseline = SurvivalToolUtility.GetNoToolBaseline(stat);
-            for (int i = 0; i < tools.Count; i++)
-            {
-                var thing = tools[i]; if (thing == null) continue;
-                SurvivalTool st = thing as SurvivalTool;
-                if (st == null && thing.def != null && thing.def.IsToolStuff()) st = VirtualTool.FromThing(thing);
-                if (st == null) continue;
-                float factor = SurvivalToolUtility.GetToolProvidedFactor(st, stat);
-                if (factor > baseline + 0.001f) return true;
-            }
-            return false;
+            return SurvivalToolUtility.HasRequiredToolForStatOrEquivalent(pawn, stat);
         }
 
         public override TaggedString GetExplanation()

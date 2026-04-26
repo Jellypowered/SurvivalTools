@@ -1,0 +1,54 @@
+Current version: v2.026 (April 2026)
+[h1] [url=https://github.com/Jellypowered/SurvivalTools/tree/Refactor]For the Debug version of the mod Click here[/url] [/h1]
+Download Survival Tools Reborn (testing branch)_1.6-Debug.zip and unzip it in your mods folder. 
+
+[h1]
+Disable or Unsubscribe the [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3554664966]old branch[/url], I put this almost dead last in my mod order. [/h1]
+
+Transforms RimWorld into a challenging tool-dependent survival experience where proper equipment becomes essential for colony success.
+
+⚠️ REFACTOR BRANCH - TESTING BUILD ⚠️
+This is a complete rewrite with major improvements but may contain bugs. Please report issues you encounter.
+
+KEY FEATURES:
+• Stone Flake Bootstrap: Knap a crude flake from any stone chunk — no research, no workbench. Fragile and slow, but it lifts the tool gate long enough to craft something real. Also drops when stone chunks are destroyed.
+• Smart Tool Assignment: Automated system finds and equips optimal tools before work begins
+• Right-Click Rescue: Prioritize actions by acquiring needed tools with a single click
+• Hardcore Mode: Tools become essential - most work impossible without proper equipment
+• Nightmare Mode: Ultimate challenge with carry limit 1 and strict tool requirements
+• Tool Effectiveness Slider: In Hardcore/Nightmare, tune how much tool quality and condition affect work speed — compress or exaggerate the gap between an awful and a legendary tool
+• Granular Controls: Choose exactly which tasks require tools (cleaning, butchery, medical)
+• Anti-Thrashing Logic: Prevents excessive tool swapping for minor stat gains
+• Realistic Degradation: Tools wear down with use and must be maintained or replaced
+• Early Game Survival: Find tools in ancient ruins or craft them to establish your colony
+
+DIFFICULTY MODES:
+• Normal: Tools improve efficiency but work remains possible without them
+• Hardcore: Most tasks require proper tools, penalties for working without them
+• Nightmare: Strict carry limits and mandatory tool requirements
+
+WHAT'S NEW (April 2026):
+• Stone Flake: New zero-tier tool knapped from any stone chunk. Provides 25% work speed on gated jobs — just enough to survive until real tools are made
+• HC/NM Tool Effectiveness Slider: A new slider (0.5×–1.5×) controls how much tool quality and condition scale work speed in Hardcore and Nightmare modes, independent of the Normal mode penalty setting
+• Medieval Overhaul compatibility: Fixed a softlock where MO's wood chain system required refined planks (behind research) to craft any basic tools. Raw logs now accepted; MO's Anvil added as a crafting station
+• Right-click freeze fixed: Eliminated 1–10 second UI freezes when right-clicking rubble tiles and other objects
+• Colonists respect work assignments: Pawns no longer attempt jobs (e.g. tree cutting) that they aren't actually assigned to
+• Tool "in use" visibility: Tools now show when they are actively being used in item tooltips
+• Complete architecture rewrite with deterministic tool decisions
+• Fixed crashes and infinite tool-swap loops from earlier versions
+• Research jobs now respect critical needs (food, rest, mood) preventing interruptions
+• Alert system only shows for work actually assigned to pawns
+• Virtual tool support (cloth/wool for cleaning, medical work)
+
+COMPATIBILITY:
+• Medieval Overhaul: raw log tool crafting + Anvil bench support (fixes day-1 softlock)
+• Separate Tree Chopping: full integration, ST's internal tree system auto-disables when STC is active
+• Combat Extended: inventory capacity fully respected
+• Nice Inventory Tab: gear tab display fixed
+• YAYO's Animation (Continued): tool equip animations work correctly
+• Automatic tool detection for modded items
+
+Originally by XeoNovaDan. Completely rebuilt for RimWorld 1.6 with modern architecture, intelligent automation, and focus on stability. This test branch represents a systematic ground-up refactor.
+
+Report bugs with your log file and reproduction steps!
+I've created a [url=https://discord.gg/CYJjE9nxA9]Jelly's Mods[/url] Discord server as well. 

@@ -163,11 +163,12 @@ namespace SurvivalTools.Gating
                 float bestScore;
                 var best = Scoring.ToolScoring.GetBestTool(pawn, stat, out bestScore);
                 var baseline = SurvivalToolUtility.GetToolValidationBaseline(stat);
+                bool hasEquivalentTool = SurvivalToolUtility.HasRequiredToolForStatOrEquivalent(pawn, stat);
                 if (IsGatingLoggingEnabled)
                 {
-                    LogDebug($"[JobGate.PreCheck] pawn={pawn.LabelShort} ctx={Ctx(wg, job)} stat={stat.defName} best={(best?.LabelShort ?? "<null>")} score={bestScore:0.###} baseline={baseline:0.###}", $"JobGate.PreCheck|{pawn.ThingID}|{wg?.defName ?? job?.defName}|{stat.defName}");
+                    LogDebug($"[JobGate.PreCheck] pawn={pawn.LabelShort} ctx={Ctx(wg, job)} stat={stat.defName} best={(best?.LabelShort ?? "<null>")} score={bestScore:0.###} baseline={baseline:0.###} hasEquivalent={hasEquivalentTool}", $"JobGate.PreCheck|{pawn.ThingID}|{wg?.defName ?? job?.defName}|{stat.defName}");
                 }
-                if (best == null || bestScore <= baseline + Eps) { hasAllToolsPre = false; break; }
+                if (!hasEquivalentTool) { hasAllToolsPre = false; break; }
             }
             if (IsGatingLoggingEnabled)
             {
@@ -268,11 +269,12 @@ namespace SurvivalTools.Gating
                 var best = Scoring.ToolScoring.GetBestTool(pawn, stat, out bestScore);
                 // Compare against toolless baseline from resolver
                 var baseline = SurvivalToolUtility.GetToolValidationBaseline(stat);
+                bool hasEquivalentTool = SurvivalToolUtility.HasRequiredToolForStatOrEquivalent(pawn, stat);
                 if (IsGatingLoggingEnabled)
                 {
-                    LogDebug($"[JobGate.FinalCheck] pawn={pawn.LabelShort} ctx={Ctx(wg, job)} stat={stat.defName} best={(best?.LabelShort ?? "<null>")} score={bestScore:0.###} baseline={baseline:0.###} willBlock={(best == null || bestScore <= baseline + Eps)}", $"JobGate.FinalCheck|{pawn.ThingID}|{wg?.defName ?? job?.defName}|{stat.defName}");
+                    LogDebug($"[JobGate.FinalCheck] pawn={pawn.LabelShort} ctx={Ctx(wg, job)} stat={stat.defName} best={(best?.LabelShort ?? "<null>")} score={bestScore:0.###} baseline={baseline:0.###} hasEquivalent={hasEquivalentTool} willBlock={!hasEquivalentTool}", $"JobGate.FinalCheck|{pawn.ThingID}|{wg?.defName ?? job?.defName}|{stat.defName}");
                 }
-                if (best == null || bestScore <= baseline + Eps)
+                if (!hasEquivalentTool)
                 {
                     // If we arrive here, either rescue was disabled or we couldn't queue any rescue. Provide standard reason.
                     reasonKey = "ST_Gate_MissingToolStat"; // "Requires a tool for {0} to do {1}."

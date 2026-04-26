@@ -48,6 +48,33 @@ namespace SurvivalTools
             return GetNoToolBaseline(stat);
         }
 
+        /// <summary>
+        /// True when the pawn has a tool that satisfies the required stat, including
+        /// supported equivalent-stat families for gating/reporting consistency.
+        /// </summary>
+        public static bool HasRequiredToolForStatOrEquivalent(Pawn pawn, StatDef requiredStat)
+        {
+            if (pawn == null || requiredStat == null || !requiredStat.RequiresSurvivalTool()) return false;
+
+            bool HasImprovingToolFor(StatDef checkStat)
+            {
+                if (checkStat == null || !checkStat.RequiresSurvivalTool()) return false;
+                Scoring.ToolScoring.GetBestTool(pawn, checkStat, out float score);
+                return score > 0.001f;
+            }
+
+            if (HasImprovingToolFor(requiredStat)) return true;
+
+            // Butchery accepts either speed or efficiency tool profiles.
+            if (requiredStat == ST_StatDefOf.ButcheryFleshSpeed || requiredStat == ST_StatDefOf.ButcheryFleshEfficiency)
+            {
+                if (HasImprovingToolFor(ST_StatDefOf.ButcheryFleshSpeed)) return true;
+                if (HasImprovingToolFor(ST_StatDefOf.ButcheryFleshEfficiency)) return true;
+            }
+
+            return false;
+        }
+
         public static float GetToolProvidedFactor(SurvivalTool tool, StatDef stat)
         {
             // If there is no tool instance or stat, return the baseline no-tool factor.
@@ -1712,7 +1739,7 @@ namespace SurvivalTools
             if (requiredStats.NullOrEmpty()) return true;
 
             var s = SurvivalToolsMod.Settings;
-            if (s != null && s.hardcoreMode)
+            if (s != null && (s.hardcoreMode || s.extraHardcoreMode))
             {
                 var toolStats = requiredStats.Where(st => st != null && st.RequiresSurvivalTool()).ToList();
                 if (toolStats.NullOrEmpty()) return true;
@@ -1720,7 +1747,7 @@ namespace SurvivalTools
                 foreach (var stat in toolStats)
                 {
                     // Unified gating check (uses StatGatingHelper)
-                    if (StatGatingHelper.ShouldBlockJobForStat(stat, s, pawn))
+                    if (StatGatingHelper.ShouldBlockJobForStat(stat, s, pawn) && !HasRequiredToolForStatOrEquivalent(pawn, stat))
                     {
                         string logKey = $"Missing_Tool_{pawn.ThingID}_{stat.defName}";
                         if (ShouldLog(logKey))

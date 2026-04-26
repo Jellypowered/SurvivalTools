@@ -139,10 +139,11 @@ namespace SurvivalTools.Helpers
                 {
                     // ✅ Unified gating logic via StatGatingHelper
                     bool shouldBlock = StatGatingHelper.ShouldBlockJobForStat(stat, settings, pawn);
+                    bool hasRequiredTool = SurvivalToolUtility.HasRequiredToolForStatOrEquivalent(pawn, stat);
 
-                    LogDebug($"[SurvivalTools.JobValidation] Stat {stat.defName}: shouldBlock={shouldBlock}, hasTool={pawn.HasSurvivalToolFor(stat)}", $"JobValidation_Stat_{pawn.ThingID}_{currentJob.def.defName}_{stat.defName}");
+                    LogDebug($"[SurvivalTools.JobValidation] Stat {stat.defName}: shouldBlock={shouldBlock}, hasRequiredTool={hasRequiredTool}", $"JobValidation_Stat_{pawn.ThingID}_{currentJob.def.defName}_{stat.defName}");
 
-                    if (shouldBlock)
+                    if (shouldBlock && !hasRequiredTool)
                     {
                         shouldCancel = true;
                         LogDebug($"[SurvivalTools.JobValidation] {pawn.LabelShort} job {currentJob.def.defName} cancelled: missing tool for {stat.defName} ({reason})", $"JobValidation_Cancel_{pawn.ThingID}_{currentJob.def.defName}_{stat.defName}");
