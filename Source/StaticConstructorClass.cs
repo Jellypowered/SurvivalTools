@@ -15,6 +15,7 @@ namespace SurvivalTools
         {
             try
             {
+                Log.Message($"[SurvivalToolsReborn] {BuildVersion.Version} loaded.");
                 if (SurvivalToolUtility.IsDebugLoggingEnabled)
                 {
                     Log.Message("[SurvivalTools] Starting static constructor initialization...");
