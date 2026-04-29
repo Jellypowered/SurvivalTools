@@ -109,6 +109,8 @@ namespace SurvivalTools
         {
             if (!extraHardcoreMode) return false;
 
+            if (stat == ST_StatDefOf.ResearchSpeed)
+                return true;
             if (stat == ST_StatDefOf.CleaningSpeed)
                 return requireCleaningTools && HasCleaningTools;
             if (stat == ST_StatDefOf.ButcheryFleshSpeed || stat == ST_StatDefOf.ButcheryFleshEfficiency)

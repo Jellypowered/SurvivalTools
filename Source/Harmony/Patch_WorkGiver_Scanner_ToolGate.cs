@@ -25,22 +25,24 @@ namespace SurvivalTools.HarmonyStuff
 
         private static bool CheckToolRequirements(WorkGiver_Scanner instance, Pawn pawn, ref bool result)
         {
-            if (SurvivalTools.Settings?.hardcoreMode != true || !pawn.CanUseSurvivalTools())
+            var settings = SurvivalTools.Settings;
+            if (settings == null || (!settings.hardcoreMode && !settings.extraHardcoreMode) || !pawn.CanUseSurvivalTools())
                 return true;
 
             var requiredStats = GetRequiredToolStats(instance.def);
             if (requiredStats.NullOrEmpty())
                 return true;
 
-            // EXCEPTION: Cleaning, research, medical, and butchery jobs are always allowed (just less effective without tools)
-            // This prevents blocking critical colony functions and allows tribal progression
+            // In hardcore, optional families remain allowed and just run poorly.
+            // In extra-hardcore, let MeetsWorkGiverStatRequirements decide which optional
+            // families become blocking, including research.
             bool isCleaningJob = requiredStats.Contains(ST_StatDefOf.CleaningSpeed);
             bool isResearchJob = requiredStats.Contains(ST_StatDefOf.ResearchSpeed);
             bool isMedicalJob = requiredStats.Contains(ST_StatDefOf.MedicalOperationSpeed) ||
                               requiredStats.Contains(ST_StatDefOf.MedicalSurgerySuccessChance);
             bool isButcheryJob = requiredStats.Contains(ST_StatDefOf.ButcheryFleshSpeed) ||
                                requiredStats.Contains(ST_StatDefOf.ButcheryFleshEfficiency);
-            if (isCleaningJob || isResearchJob || isMedicalJob || isButcheryJob)
+            if (!settings.extraHardcoreMode && (isCleaningJob || isResearchJob || isMedicalJob || isButcheryJob))
                 return true;
 
             if (pawn.MeetsWorkGiverStatRequirements(requiredStats, instance.def))

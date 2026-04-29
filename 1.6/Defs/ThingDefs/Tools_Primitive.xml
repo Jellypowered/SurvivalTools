@@ -47,6 +47,7 @@
                     <DiggingSpeed>0.25</DiggingSpeed>
                     <ConstructionSpeed>0.25</ConstructionSpeed>
                     <SowingSpeed>0.25</SowingSpeed>
+                    <ResearchSpeed>0.25</ResearchSpeed>
                 </baseWorkStatFactors>
             </li>
         </modExtensions>
