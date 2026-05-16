@@ -47,6 +47,185 @@
     <!-- Basic tools for early colony survival              -->
     <!-- =================================================== -->
 
+        <!-- Zaljerem Neolithic Tools (additional options, with assignment tags) -->
+        <ThingDef Name="SurvivalTool_Neolithic_Basic" ParentName="BaseSurvivalTool" Abstract="True">
+            <techLevel>Neolithic</techLevel>
+            <statBases>
+                <WorkToMake>1000</WorkToMake>
+            </statBases>
+            <stuffCategories>
+                <li>Woody</li>
+                <li>Stony</li>
+                <li>Metallic</li>
+            </stuffCategories>
+            <smeltable>true</smeltable>
+            <recipeMaker>
+                <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+                <workSkill>Crafting</workSkill>
+                <effectWorking>Smith</effectWorking>
+                <soundWorking>Recipe_Smith</soundWorking>
+                <recipeUsers>
+                    <li>CraftingSpot</li>
+                    <li>ElectricSmithy</li>
+                    <li>FueledSmithy</li>
+                </recipeUsers>
+                <defaultIngredientFilter>
+                    <categories>
+                        <li>Root</li>
+                    </categories>
+                    <disallowedThingDefs>
+                        <li>Silver</li>
+                        <li>Gold</li>
+                    </disallowedThingDefs>
+                </defaultIngredientFilter>
+                <unfinishedThingDef>UnfinishedWeapon</unfinishedThingDef>
+            </recipeMaker>
+            <thingCategories>
+                <li>SurvivalToolsNeolithic</li>
+            </thingCategories>
+            <comps>
+                <li>
+                    <compClass>CompQuality</compClass>
+                </li>
+            </comps>
+        </ThingDef>
+
+        <ThingDef ParentName="SurvivalTool_Neolithic_Basic">
+            <defName>SurvivalTools_Primitive_Axe</defName>
+            <label>primitive axe</label>
+            <description>Effective at chopping down trees thanks to the head that's attached to its handle. This can also be used as a melee weapon in a pinch.</description>
+            <graphicData>
+                <texPath>Things/Item/Equipment/Tool/Zaljerem/primal_axe</texPath>
+                <graphicClass>Graphic_Single</graphicClass>
+                <shaderType>CutoutComplex</shaderType>
+            </graphicData>
+            <costStuffCount>40</costStuffCount>
+            <statBases>
+                <Mass>2.5</Mass>
+            </statBases>
+            <modExtensions>
+                <li Class="SurvivalTools.SurvivalToolProperties">
+                    <baseWorkStatFactors>
+                        <TreeFellingSpeed>1</TreeFellingSpeed>
+                    </baseWorkStatFactors>
+                    <defaultSurvivalToolAssignmentTags>
+                        <li>PlantWorker</li>
+                    </defaultSurvivalToolAssignmentTags>
+                </li>
+            </modExtensions>
+            <tools>
+                <li>
+                    <label>handle</label>
+                    <capacities>
+                        <li>Poke</li>
+                    </capacities>
+                    <power>9</power>
+                    <cooldownTime>2</cooldownTime>
+                </li>
+                <!-- 83% of the club's DPS with the main tool -->
+                <li>
+                    <label>head</label>
+                    <labelUsedInLogging>false</labelUsedInLogging>
+                    <capacities>
+                        <li>Cut</li>
+                    </capacities>
+                    <power>15.1</power>
+                    <cooldownTime>2.6</cooldownTime>
+                </li>
+            </tools>
+        </ThingDef>
+
+        <ThingDef ParentName="SurvivalTool_Neolithic_Basic">
+            <defName>SurvivalTools_Primitive_Hammer</defName>
+            <label>primitive hammer</label>
+            <description>A simple hammer that's a vital part of any constructor's arsenal of tools. This can also be used as a melee weapon in a pinch.</description>
+            <costStuffCount>30</costStuffCount>
+            <statBases>
+                <Mass>0.5</Mass>
+            </statBases>
+            <graphicData>
+                <texPath>Things/Item/Equipment/Tool/Zaljerem/primal_hammer</texPath>
+                <graphicClass>Graphic_Single</graphicClass>
+                <shaderType>CutoutComplex</shaderType>
+            </graphicData>
+            <modExtensions>
+                <li Class="SurvivalTools.SurvivalToolProperties">
+                    <baseWorkStatFactors>
+                        <ConstructionSpeed>1</ConstructionSpeed>
+                        <ConstructSuccessChance>1</ConstructSuccessChance>
+                        <MiningSpeed>1</MiningSpeed>
+                    </baseWorkStatFactors>
+                    <defaultSurvivalToolAssignmentTags>
+                        <li>Constructor</li>
+                        <li>Miner</li>
+                    </defaultSurvivalToolAssignmentTags>
+                </li>
+            </modExtensions>
+            <tools>
+                <li>
+                    <label>handle</label>
+                    <capacities>
+                        <li>Blunt</li>
+                    </capacities>
+                    <power>9</power>
+                    <cooldownTime>2</cooldownTime>
+                </li>
+                <li>
+                    <label>head</label>
+                    <labelUsedInLogging>false</labelUsedInLogging>
+                    <capacities>
+                        <li>Blunt</li>
+                    </capacities>
+                    <power>11.6</power>
+                    <cooldownTime>2</cooldownTime>
+                </li>
+            </tools>
+        </ThingDef>
+
+        <ThingDef ParentName="SurvivalTool_Neolithic_Basic">
+            <defName>SurvivalTools_Primitive_Sickle</defName>
+            <label>primitive sickle</label>
+            <description>A curved blade that's attached to a small handle which is typically used to cut plants. This can also be used as a melee weapon in a pinch.</description>
+            <costStuffCount>30</costStuffCount>
+            <statBases>
+                <Mass>0.5</Mass>
+            </statBases>
+            <graphicData>
+                <texPath>Things/Item/Equipment/Tool/Zaljerem/primal_sickle</texPath>
+                <graphicClass>Graphic_Single</graphicClass>
+                <shaderType>CutoutComplex</shaderType>
+            </graphicData>
+            <modExtensions>
+                <li Class="SurvivalTools.SurvivalToolProperties">
+                    <baseWorkStatFactors>
+                        <PlantHarvestingSpeed>1</PlantHarvestingSpeed>
+                    </baseWorkStatFactors>
+                    <defaultSurvivalToolAssignmentTags>
+                        <li>PlantWorker</li>
+                    </defaultSurvivalToolAssignmentTags>
+                </li>
+            </modExtensions>
+            <tools>
+                <li>
+                    <label>handle</label>
+                    <capacities>
+                        <li>Blunt</li>
+                    </capacities>
+                    <power>9</power>
+                    <cooldownTime>2</cooldownTime>
+                </li>
+                <li>
+                    <label>head</label>
+                    <labelUsedInLogging>false</labelUsedInLogging>
+                    <capacities>
+                        <li>Cut</li>
+                    </capacities>
+                    <power>11.6</power>
+                    <cooldownTime>2</cooldownTime>
+                </li>
+            </tools>
+        </ThingDef>
+
     <ThingDef ParentName="SurvivalToolBasic">
         <defName>SurvivalTools_Axe</defName>
         <label>axe</label>
