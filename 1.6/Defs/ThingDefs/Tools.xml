@@ -1180,6 +1180,7 @@
                     <ButcheryFleshSpeed>1</ButcheryFleshSpeed>
                     <ButcheryFleshEfficiency>1</ButcheryFleshEfficiency>
                     <MedicalOperationSpeed>1</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>1.05</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
                 <defaultSurvivalToolAssignmentTags>
                     <li>Butcher</li>
