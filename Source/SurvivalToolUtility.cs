@@ -1226,7 +1226,7 @@ namespace SurvivalTools
                 return list;
             }
 
-            if (s.Contains("medical") || s.Contains("surgery") || s.Contains("operate") || s.Contains("tend") ||
+            if (s.Contains("medical") || s.Contains("surgery") || s.Contains("operate") || 
                 s.Contains("doctor") || (s.Contains("install") && s.Contains("bionic")))
             {
                 list.Add(ST_StatDefOf.MedicalOperationSpeed);
