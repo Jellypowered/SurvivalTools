@@ -1134,6 +1134,7 @@
                     <ButcheryFleshSpeed>1.05</ButcheryFleshSpeed>
                     <ButcheryFleshEfficiency>1.05</ButcheryFleshEfficiency>
                     <MedicalOperationSpeed>1.05</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>1.05</MedicalSurgerySuccessChance>
                 </baseWorkStatFactors>
             </li>
         </modExtensions>
