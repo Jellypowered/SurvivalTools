@@ -280,7 +280,7 @@ namespace SurvivalTools
             if (s.Contains("clean") || s.Contains("sweep") || s.Contains("mop")) return STToolKind.Cleaning;
 
             if (s.Contains("medical") || s.Contains("surgery") || s.Contains("operate") ||
-                s.Contains("tend") || s.Contains("doctor")) return STToolKind.Medical;
+                s.Contains("doctor")) return STToolKind.Medical;
 
             if (s.Contains("research") || s.Contains("study") || s.Contains("analyze")) return STToolKind.Research;
 
