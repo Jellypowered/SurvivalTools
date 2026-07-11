@@ -105,9 +105,6 @@
         </defaultIngredientFilter>
         <recipeUsers>
             <li>CraftingSpot</li>
-            <li>FueledSmithy</li>
-            <li>ElectricSmithy</li>
-            <li>TableStonecutter</li>
         </recipeUsers>
     </RecipeDef>
 
