@@ -362,8 +362,8 @@ namespace SurvivalTools
             }
 
             // Medical operations - require at least one of the two stats in hardcore mode
-            if (s.Contains("medical") || s.Contains("surgery") || s.Contains("operate") || s.Contains("tend") ||
-                s.Contains("doctor") || s.Contains("amputat") || s.Contains("install") && s.Contains("bionic"))
+            if (s.Contains("medical") || s.Contains("surgery") || s.Contains("operate") || 
+                s.Contains("doctor") || s.Contains("amputate") || s.Contains("install") && s.Contains("bionic"))
             {
                 list.Add(ST_StatDefOf.MedicalOperationSpeed);
                 list.Add(ST_StatDefOf.MedicalSurgerySuccessChance);

@@ -48,6 +48,15 @@
                     <ConstructionSpeed>0.25</ConstructionSpeed>
                     <SowingSpeed>0.25</SowingSpeed>
                     <ResearchSpeed>0.25</ResearchSpeed>
+                    <ButcheryFleshSpeed>0.25</ButcheryFleshSpeed>
+                    <ButcheryFleshEfficiency>0.25</ButcheryFleshEfficiency>
+                    <MedicalOperationSpeed>0.25</MedicalOperationSpeed>
+                    <MedicalSurgerySuccessChance>0.25</MedicalSurgerySuccessChance>
+                    <!-- Maintenance & Repair -->
+                    <MaintenanceSpeed>0.25</MaintenanceSpeed>
+                    <DeconstructionSpeed>0.25</DeconstructionSpeed>
+                    <!-- Extended stats (only if other mods provide tools for these) -->
+                    <CleaningSpeed>0.25</CleaningSpeed>
                 </baseWorkStatFactors>
             </li>
         </modExtensions>
